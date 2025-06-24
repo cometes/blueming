@@ -12,7 +12,8 @@ import { isUserAdmin } from "@/lib/isAdmin";
 import axios from "axios";
 
 export const useAuth = () => {
-	const { isAuthenticated, user, isLoading, setAuthData, clearAuth, setUser } = useAuthStore();
+	const { isAuthenticated, user, isLoading, setAuthData, clearAuth } =
+		useAuthStore();
 
 	// 로그인 함수
 	const handleLogin = useCallback(async () => {
@@ -65,7 +66,7 @@ export const useAuth = () => {
 				message: "로그인에 실패했습니다. 다시 시도해주세요.",
 			};
 		}
-	}, [setAuthData]);
+	}, [setAuthData, clearAuth]);
 
 	// 로그아웃 함수
 	const handleLogout = useCallback(async () => {
@@ -117,7 +118,7 @@ export const useAuth = () => {
 		});
 
 		return unsubscribe;
-	}, [setAuthData]);
+	}, [setAuthData, clearAuth]);
 
 	return {
 		isAuthenticated,

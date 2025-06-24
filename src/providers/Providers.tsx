@@ -8,7 +8,10 @@ import ThemeLoader from "@/components/ThemeLoader";
 
 interface ProvidersProps {
 	children: React.ReactNode;
-	initialSettings: any;
+	initialSettings: {
+		general?: Record<string, unknown>;
+		main?: Record<string, unknown>;
+	} | null;
 }
 
 // 인증 초기화 컴포넌트

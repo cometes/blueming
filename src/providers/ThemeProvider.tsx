@@ -72,7 +72,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 				setCSSVariables(design, general);
 			});
 		}
-	}, []);
+	}, [design, general]);
 
 	const value = {
 		design,

@@ -1,6 +1,6 @@
 "use client";
 
-import WidgetProfile from "@/components/widgets/WidetProfile";
+import WidgetProfile from "@/components/widgets/WidgetProfile";
 import WidgetDday from "@/components/widgets/WidgetDday";
 import WidgetMarquee from "@/components/widgets/WidgetMarquee";
 import WidgetNotice from "@/components/widgets/WidgetNotice";

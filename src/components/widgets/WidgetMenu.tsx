@@ -7,19 +7,11 @@ import { Bell } from "lucide-react";
 import { useAdmin } from "@/hooks/auth/UseAdmin";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
+import Image from "next/image";
 
 // =============================================================================
 // TYPES
 // =============================================================================
-
-interface MenuDesign {
-	bgType?: string;
-	backgroundColor?: string;
-	backgroundImage?: string;
-	textAlign?: string;
-	logoType?: string;
-	logoImage?: string;
-}
 
 interface MenuItem {
 	uniqueId: string;
@@ -32,36 +24,55 @@ interface MenuItem {
 	subMenus?: (string | { name: string; image?: string })[];
 }
 
-interface WidgetMenuProps {
-	// Add any props if needed
+interface MenuDesign {
+	textAlign?: string;
+	bgType?: string;
+	backgroundColor?: string;
+	backgroundImage?: string;
+	logoType?: string;
+	logoImage?: string;
+	fontColor?: string;
 }
+
+interface MenuData {
+	design: MenuDesign;
+	menus: MenuItem[];
+}
+
+interface OpenFolders {
+	[key: string]: boolean;
+}
+
+type BoardRoutes = {
+	[key: string]: string;
+};
 
 // =============================================================================
 // COMPONENT
 // =============================================================================
 
-export default function WidgetMenu(props: WidgetMenuProps) {
+export default function WidgetMenu() {
 	// -------------------------------------------------------------------------
 	// HOOKS & STATE
 	// -------------------------------------------------------------------------
 
 	const { general } = useSettings();
-	const menuData = general.menu || { design: {}, menus: [] };
+	const menuData: MenuData = general.menu || { design: {}, menus: [] };
 	const router = useRouter();
 	const { isAdmin } = useAdmin();
-	const [openFolders, setOpenFolders] = useState({});
+	const [openFolders, setOpenFolders] = useState<OpenFolders>({});
 
 	// -------------------------------------------------------------------------
 	// CONSTANTS
 	// -------------------------------------------------------------------------
 
-	const BOARD_ROUTES = {
+	const BOARD_ROUTES: BoardRoutes = useMemo(() => ({
 		라이브러리: "/library",
 		아카이브: "/archive",
 		갤러리: "/gallery",
 		스레드: "/thread",
 		설정: "/setting",
-	};
+	}), []);
 
 	// -------------------------------------------------------------------------
 	// HELPER FUNCTIONS
@@ -119,24 +130,24 @@ export default function WidgetMenu(props: WidgetMenuProps) {
 	}, [menuData.menus, isAdmin]);
 
 	// Design settings
-	const design = useMemo(() => menuData.design || {}, [menuData.design]);
+	const design: MenuDesign = useMemo(() => menuData.design || {}, [menuData.design]);
 
 	const textAlignClass = useMemo(
-		() => getTextAlignClass(design.textAlign || ""),
-		[design.textAlign, getTextAlignClass]
+		() => getTextAlignClass(design?.textAlign || ""),
+		[design?.textAlign, getTextAlignClass]
 	);
 
 	const asideBackgroundStyle = useMemo(
 		() =>
 			getBackgroundStyle(
-				design.bgType,
-				design.backgroundColor,
-				design.backgroundImage
+				design?.bgType || "",
+				design?.backgroundColor,
+				design?.backgroundImage
 			),
 		[
-			design.bgType,
-			design.backgroundColor,
-			design.backgroundImage,
+			design?.bgType,
+			design?.backgroundColor,
+			design?.backgroundImage,
 			getBackgroundStyle,
 		]
 	);
@@ -158,10 +169,10 @@ export default function WidgetMenu(props: WidgetMenuProps) {
 
 			if (item.category === "폴더") {
 				toggleFolder(item.uniqueId);
-			} else if (item.category === "커스텀") {
+			} else if (item.category === "커스텀" && item.url) {
 				router.push(item.url);
 			} else {
-				const path = BOARD_ROUTES[item.category];
+				const path = BOARD_ROUTES[item.category as keyof typeof BOARD_ROUTES];
 				if (path) {
 					router.push(path);
 				} else {
@@ -169,7 +180,7 @@ export default function WidgetMenu(props: WidgetMenuProps) {
 				}
 			}
 		},
-		[router, toggleFolder]
+		[router, toggleFolder, BOARD_ROUTES]
 	);
 
 	// -------------------------------------------------------------------------
@@ -177,14 +188,16 @@ export default function WidgetMenu(props: WidgetMenuProps) {
 	// -------------------------------------------------------------------------
 
 	const renderLogo = () => {
-		if (design.logoType !== "이미지" || !design.logoImage) return null;
+		if (design?.logoType !== "이미지" || !design?.logoImage) return null;
 
 		return (
 			<div className="max-w-[200px] aspect-square">
-				<img
+				<Image
 					className="w-full h-full block object-cover object-center"
 					src={design.logoImage}
 					alt="Logo"
+					width={200}
+					height={200}
 				/>
 			</div>
 		);
@@ -253,7 +266,7 @@ export default function WidgetMenu(props: WidgetMenuProps) {
 					)}
 					style={{
 						...getItemBackgroundStyle(item.image),
-						color: menuData.design.fontColor,
+						color: design?.fontColor,
 					}}
 				>
 					{!item.image && item.name}
@@ -278,7 +291,7 @@ export default function WidgetMenu(props: WidgetMenuProps) {
 					)}
 					aria-label="알림"
 				>
-					<Bell size={20} color={menuData.design.fontColor} />
+					<Bell size={20} color={design?.fontColor || '#333'} />
 				</button>
 
 				{/* Music Button */}
@@ -295,11 +308,11 @@ export default function WidgetMenu(props: WidgetMenuProps) {
 							<span
 								key={index}
 								style={{
-									display: 'block',
-									width: '1px',
-									background: menuData.design?.fontColor || '#333333',
-									margin: '0 1px',
-									height: ['6px', '8px', '10px', '13px', '15px'][index],
+									display: "block",
+									width: "1px",
+									background: design?.fontColor || '#333333',
+									margin: "0 1px",
+									height: ["6px", "8px", "10px", "13px", "15px"][index],
 									animation: `musicBar 1.2s ease infinite ${delay}s`,
 								}}
 							/>
@@ -318,7 +331,7 @@ export default function WidgetMenu(props: WidgetMenuProps) {
 		<aside
 			className={cn(
 				"max-w-[200px] h-dvh flex flex-col items-center justify-center shrink-0 sticky top-0",
-				design.bgType === "없음" && "bg-transparent",
+				design?.bgType === "없음" && "bg-transparent",
 				"bg-center"
 			)}
 			style={asideBackgroundStyle}
