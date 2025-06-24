@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import SliderComponent from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import Image from "next/image";
 
 export default function WidgetSlide() {
 	const { main } = useSettings();
@@ -42,10 +43,12 @@ export default function WidgetSlide() {
 							target={el.target ? "blank" : ""}
 						>
 							<div className="w-full h-full relative">
-								<img
+								<Image
 									className="absolute top-0 left-0 w-full h-full object-cover object-center"
 									src={el.image}
 									alt={`Slide ${index + 1}`}
+									fill
+									sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 								/>
 							</div>
 						</a>

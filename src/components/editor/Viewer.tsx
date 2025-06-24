@@ -1,5 +1,5 @@
-import ReactPlayer from "react-player";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 
 const DynamicVideoNode = dynamic(() => import("react-player"), { ssr: false });
 
@@ -26,13 +26,16 @@ const Viewer = ({ attributes, children, element }) => {
 						className="relative"
 						contentEditable={false}
 						style={{
-							width: element.width || "fit-content", // 기본 너비 설정
-							height: element.height || "fit-content", // 기본 높이 설정
+							width: element.width || "300px", // 기본 너비 설정
+							height: element.height || "200px", // 기본 높이 설정
 						}}
 					>
-						<img
+						<Image
+							alt="이미지"
 							className="block w-full h-full object-cover"
 							src={element.url}
+							fill
+							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 						/>
 					</div>
 				</div>

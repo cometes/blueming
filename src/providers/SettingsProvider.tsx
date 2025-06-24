@@ -1,13 +1,13 @@
 // providers/SettingsProvider.jsx
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { SettingsContext } from "@/contexts/SettingsContext";
 
 export function SettingsProvider({ children, initialSettings }) {
 	const [general, setGeneral] = useState(initialSettings?.general || {});
 	const [main, setMain] = useState(initialSettings?.main || {});
-	const [loading, setLoading] = useState(!initialSettings);
+	const [loading] = useState(!initialSettings);
 
 	const updateGeneral = (newSettings) => {
 		setGeneral((prev) => ({

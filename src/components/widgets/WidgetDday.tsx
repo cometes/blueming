@@ -5,7 +5,7 @@ interface DdayItem {
 	id: string;
 	title: string;
 	date: string;
-	[key: string]: any;
+	image?: string;
 }
 
 export default function WidgetDday() {
@@ -33,7 +33,7 @@ export default function WidgetDday() {
 			} else {
 				return `D+${Math.abs(diffDays)}`;
 			}
-		} catch (error) {
+		} catch {
 			return "D-?";
 		}
 	};

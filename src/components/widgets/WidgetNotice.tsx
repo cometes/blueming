@@ -9,11 +9,20 @@ import { createEditor } from "slate";
 import Leaf from "../editor/Leaf";
 import Viewer from "../editor/Viewer";
 
+// Types
+interface SlateText {
+	text: string;
+}
+
+interface SlateElement {
+	type?: string;
+	children: SlateText[];
+	[key: string]: unknown;
+}
+
 // Custom hook: observes element size and returns content dimensions
 function useContentDimensions(
-	containerRef: React.RefObject<HTMLElement>,
-	padding = 28,
-	borderWidth = 0
+	containerRef: React.RefObject<HTMLDivElement>
 ) {
 	const [dims, setDims] = useState({ width: 0, height: 0 });
 
@@ -24,7 +33,7 @@ function useContentDimensions(
 		const calculate = () => {
 			const { width, height } = el.getBoundingClientRect();
 			// 총 오프셋 = 보더 양쪽 + 패딩 양쪽
-			const totalOffset = 14;
+			const totalOffset = 28; // 14px padding on each side
 			setDims({
 				width: Math.max(0, width - totalOffset),
 				height: Math.max(0, height - totalOffset),
@@ -36,7 +45,7 @@ function useContentDimensions(
 		calculate();
 
 		return () => resizeObserver.disconnect();
-	}, [containerRef, padding, borderWidth]);
+	}, [containerRef]);
 
 	return dims;
 }
@@ -49,7 +58,7 @@ const LayoutPreservingViewer = React.memo<{
 	viewerWidth: number;
 	viewerHeight: number;
 }>(({ children, editorWidth, editorHeight, viewerWidth, viewerHeight }) => {
-	const contentRef = useRef(null);
+	const contentRef = useRef<HTMLDivElement>(null);
 	const { general } = useSettings();
 
 	useLayoutEffect(() => {
@@ -72,7 +81,7 @@ const LayoutPreservingViewer = React.memo<{
 		<div
 			className="overflow-y-scroll relative w-full h-full flex justify-center items-center"
 			style={{
-				scrollbarColor: `${general.design.widget.borderColor} transparent`,
+				scrollbarColor: `${general?.design?.widget?.borderColor || '#ccc'} transparent`,
 				scrollbarWidth: "thin",
 			}}
 		>
@@ -84,9 +93,9 @@ const LayoutPreservingViewer = React.memo<{
 LayoutPreservingViewer.displayName = "LayoutPreservingViewer";
 
 export default function WidgetNotice() {
-	const { main, general } = useSettings();
+	const { main } = useSettings();
 	const noticeData = main?.notice;
-	const containerRef = useRef(null);
+	const containerRef = useRef<HTMLDivElement>(null);
 
 	// Slate editor setup memoized
 	const editor = useMemo(
@@ -97,17 +106,20 @@ export default function WidgetNotice() {
 		[]
 	);
 
+	// Widget (viewer) dimensions via custom hook - must be called before any early returns
+	const widgetDimensions = useContentDimensions(containerRef);
+
 	// 기본값 설정
-	const defaultValue = [
+	const defaultValue: SlateElement[] = [
 		{
 			type: "paragraph",
 			children: [{ text: "" }],
 		},
 	];
 
-	// 실제 editorDimensions 데이터가 없으면 렌더링하지 않음
+	// 실제 editorDimensions 데이터가 없으면 빈 컴포넌트 반환
 	if (!noticeData?.editorDimensions) {
-		return null;
+		return <div className="widget-wrapper" ref={containerRef} />;
 	}
 
 	// 공지사항 내용 파싱
@@ -118,26 +130,21 @@ export default function WidgetNotice() {
 				typeof noticeData.noticeContent === "string"
 					? JSON.parse(noticeData.noticeContent)
 					: noticeData.noticeContent;
-		} catch (error) {
-			console.error("공지사항 내용 파싱 오류:", error);
+		} catch {
+			console.error("공지사항 내용 파싱 오류");
 			noticeContent = defaultValue;
 		}
 	}
 
 	const editorDimensions = noticeData.editorDimensions;
 
-	// Widget (viewer) dimensions via custom hook
-	const widgetDimensions = useContentDimensions(
-		containerRef,
-		28, // 총 패딩 (좌우 각 14px)
-		general?.design.widget.borderWidth
+	// 공지사항 내용이 비어있으면 빈 컴포넌트 반환
+	const isEmpty = noticeContent.every((block: SlateElement) =>
+		block.children.every((child: SlateText) => !child.text.trim())
 	);
-
-	// 공지사항 내용이 비어있으면 렌더링하지 않음
-	const isEmpty = noticeContent.every((block: any) =>
-		block.children.every((child: any) => !child.text.trim())
-	);
-	if (isEmpty) return null;
+	if (isEmpty) {
+		return <div className="widget-wrapper" ref={containerRef} />;
+	}
 
 	// Render
 	return (

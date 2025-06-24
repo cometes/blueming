@@ -68,6 +68,7 @@ interface MarqueeSettings {
 	gradientWidth: number;
 	type: string;
 	textColor: string;
+	marqueeType: string;
 }
 
 interface EditorDimensions {
@@ -234,7 +235,9 @@ interface SettingsContextType {
 }
 
 // Context 생성
-export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+export const SettingsContext = createContext<SettingsContextType | undefined>(
+	undefined
+);
 
 // Hook
 export const useSettings = (): SettingsContextType => {
@@ -264,5 +267,5 @@ export type {
 	Menu,
 	Design,
 	General,
-	ThemeItem
+	ThemeItem,
 };
