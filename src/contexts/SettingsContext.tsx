@@ -1,0 +1,268 @@
+// contexts/SettingsContext.tsx
+"use client";
+
+import { createContext, useContext } from "react";
+
+// Layout Types
+interface LayoutItem {
+	i: string;
+	x: number;
+	y: number;
+	w: number;
+	h: number;
+	maxW?: number;
+	maxH?: number;
+	moved?: boolean;
+	static?: boolean;
+}
+
+interface WidgetItem {
+	id: string;
+	type: string;
+	color: string;
+}
+
+interface CustomLayout {
+	layout: LayoutItem[];
+	widgets: WidgetItem[];
+	usedColors: string[];
+}
+
+// StickerBoard Types
+interface StickerComponent {
+	id: number;
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+	zIndex: number;
+	imageUrl: string;
+	isVisible: boolean;
+	isLocked: boolean;
+	rotation: number;
+	opacity: number;
+	flipX: boolean;
+	flipY: boolean;
+	lockAspectRatio: boolean;
+}
+
+interface StickerBoard {
+	components: StickerComponent[];
+	content: string;
+	capture: string;
+}
+
+// Slide Types
+interface SlideItem {
+	id: string;
+	uniqueId: string;
+	url: string;
+	image: string;
+	target: boolean;
+}
+
+// Notice Types
+interface MarqueeSettings {
+	backgroundColor: string;
+	gradientColor: string;
+	gradientWidth: number;
+	type: string;
+	textColor: string;
+}
+
+interface EditorDimensions {
+	width: number;
+	height: number;
+}
+
+interface Notice {
+	noticeContent: string;
+	editorDimensions: EditorDimensions;
+	marqueeSettings: MarqueeSettings;
+	bannerText: string;
+}
+
+// D-Day Types
+interface DdayItem {
+	id: string;
+	uniqueId: string;
+	title: string;
+	date: string;
+	image: string;
+	target: boolean;
+}
+
+// Profile Types
+interface Profile {
+	profileImage: string;
+	etc: string;
+	nickname: string;
+	introduction: string;
+	headerImage: string;
+}
+
+// Menu Types
+interface SubMenu {
+	name: string;
+	image: string;
+}
+
+interface MenuItem {
+	id: string;
+	uniqueId: string;
+	allow: string;
+	image: string;
+	target: boolean;
+	name: string;
+	type: string;
+	isPublic: boolean;
+	openInNewTab: boolean;
+	category: string;
+	subMenus?: (string | SubMenu)[];
+	url?: string;
+}
+
+interface MenuDesign {
+	fontColor: string;
+	textAlign: string;
+	type: string;
+	align: string;
+	logoText: string;
+	logoImage: string;
+	logoType: string;
+	backgroundColor: string;
+	bgType: string;
+	backgroundImage: string;
+}
+
+interface Menu {
+	menus: MenuItem[];
+	design: MenuDesign;
+}
+
+// Design Types
+interface WidgetDesign {
+	borderImage: string;
+	borderRadius: number;
+	borderColor: string;
+	background: string;
+	borderWidth: number;
+	blur: number;
+	borderStyle: string;
+}
+
+interface FontDesign {
+	bodyFontFamily: string;
+	subFontColor: string;
+	mainFontColor: string;
+	titleFontFamily: string;
+}
+
+interface CardDesign {
+	boxShadow: string;
+	borderRadius: number;
+	translateY: number;
+	borderWidth: number;
+	borderStyle: string;
+	blur: number;
+	borderColor: string;
+	background: string;
+	type: string;
+	borderActiveColor: string;
+}
+
+interface BackgroundDesign {
+	image: string;
+	color: string;
+	type: string;
+}
+
+interface Design {
+	widget: WidgetDesign;
+	font: FontDesign;
+	card: CardDesign;
+	background: BackgroundDesign;
+}
+
+// General Types
+interface General {
+	desc: string;
+	favicon: string;
+	shareImage: string;
+	secondaryColor: string;
+	primaryColor: string;
+	title: string;
+	logoImage: string;
+	logoText: string;
+	logoType: string;
+}
+
+// Theme Types
+interface ThemeItem {
+	id: string;
+	name: string;
+	createdAt: string;
+	general: {
+		general: General;
+		design: Design;
+		menu: Menu;
+	};
+	main: MainSettings;
+	exportedAt: string;
+	version: string;
+}
+
+// Main Settings
+interface MainSettings {
+	customLayout?: CustomLayout;
+	stickerBoard?: StickerBoard;
+	slide?: SlideItem[];
+	notice?: Notice;
+	dday?: DdayItem[];
+	profile?: Profile;
+}
+
+// Root Settings Context
+interface SettingsContextType {
+	general?: {
+		theme: ThemeItem[];
+		general: General;
+		menu: Menu;
+		design: Design;
+	};
+	main?: MainSettings;
+}
+
+// Context 생성
+export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+
+// Hook
+export const useSettings = (): SettingsContextType => {
+	const context = useContext(SettingsContext);
+
+	if (!context) {
+		throw new Error("useSettings must be used within a SettingsProvider");
+	}
+
+	return context;
+};
+
+export type {
+	SettingsContextType,
+	MainSettings,
+	CustomLayout,
+	LayoutItem,
+	WidgetItem,
+	StickerBoard,
+	StickerComponent,
+	SlideItem,
+	Notice,
+	DdayItem,
+	Profile,
+	MenuItem,
+	MenuDesign,
+	Menu,
+	Design,
+	General,
+	ThemeItem
+};
