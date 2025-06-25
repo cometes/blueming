@@ -66,13 +66,16 @@ export default function WidgetMenu() {
 	// CONSTANTS
 	// -------------------------------------------------------------------------
 
-	const BOARD_ROUTES: BoardRoutes = useMemo(() => ({
-		라이브러리: "/library",
-		아카이브: "/archive",
-		갤러리: "/gallery",
-		스레드: "/thread",
-		설정: "/setting",
-	}), []);
+	const BOARD_ROUTES: BoardRoutes = useMemo(
+		() => ({
+			라이브러리: "/library",
+			아카이브: "/archive",
+			갤러리: "/gallery",
+			스레드: "/thread",
+			설정: "/setting",
+		}),
+		[]
+	);
 
 	// -------------------------------------------------------------------------
 	// HELPER FUNCTIONS
@@ -130,7 +133,10 @@ export default function WidgetMenu() {
 	}, [menuData.menus, isAdmin]);
 
 	// Design settings
-	const design: MenuDesign = useMemo(() => menuData.design || {}, [menuData.design]);
+	const design: MenuDesign = useMemo(
+		() => menuData.design || {},
+		[menuData.design]
+	);
 
 	const textAlignClass = useMemo(
 		() => getTextAlignClass(design?.textAlign || ""),
@@ -235,7 +241,9 @@ export default function WidgetMenu() {
 									textAlignClass
 								)}
 								style={getItemBackgroundStyle(subMenuImage)}
-								// onClick={onClickMoveToPage(BOARD_ROUTES[subMenuName])}
+								onClick={() => {
+									router.push(BOARD_ROUTES[subMenuName]);
+								}}
 							>
 								{!subMenuImage && subMenuName}
 							</a>
@@ -291,7 +299,7 @@ export default function WidgetMenu() {
 					)}
 					aria-label="알림"
 				>
-					<Bell size={20} color={design?.fontColor || '#333'} />
+					<Bell size={20} color={design?.fontColor || "#333"} />
 				</button>
 
 				{/* Music Button */}
@@ -310,7 +318,7 @@ export default function WidgetMenu() {
 								style={{
 									display: "block",
 									width: "1px",
-									background: design?.fontColor || '#333333',
+									background: design?.fontColor || "#333333",
 									margin: "0 1px",
 									height: ["6px", "8px", "10px", "13px", "15px"][index],
 									animation: `musicBar 1.2s ease infinite ${delay}s`,
