@@ -31,6 +31,7 @@
 	--widget-border-color: #e0e0e0;
 	--widget-border-radius: 8px;
 	--widget-border-width: 1px;
+	--widget-border-style: solid;
 	--widget-blur: 4px;
 
 	/* 기본 카드 스타일 */
@@ -38,6 +39,8 @@
 	--card-border-color: #e0e0e0;
 	--card-border-active: #007bff;
 	--card-border-radius: 8px;
+	--card-border-width: 1px;
+	--card-border-style: solid;
 	--card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 	--card-translate-y: -2px;
 }
@@ -46,7 +49,7 @@
 body {
 	font-family: var(--font-body);
 	letter-spacing: -0.03em;
-	/* color: var(--color-main); */
+	color: var(--color-main);
 	background: var(--bg-color);
 	background-image: var(--bg-image);
 	background-position: center;
@@ -78,14 +81,14 @@ body {
 	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);
-	
+
 	/* 차트 색상 */
 	--color-chart-1: var(--chart-1);
 	--color-chart-2: var(--chart-2);
 	--color-chart-3: var(--chart-3);
 	--color-chart-4: var(--chart-4);
 	--color-chart-5: var(--chart-5);
-	
+
 	/* 사이드바 색상 */
 	--color-sidebar: var(--sidebar);
 	--color-sidebar-foreground: var(--sidebar-foreground);
@@ -95,7 +98,7 @@ body {
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-ring: var(--sidebar-ring);
-	
+
 	/* 커스텀 테마 색상 - 직접 정의 */
 	--color-main-text: var(--color-main);
 	--color-sub-text: var(--color-sub);
@@ -107,13 +110,17 @@ body {
 	--color-theme-bg: var(--bg-color);
 	--color-widget-bg: var(--widget-bg);
 	--color-card-bg: var(--card-bg);
-	
+
+	/* 보더 스타일 */
+	--border-widget: var(--widget-border-width) var(--widget-border-style) var(--widget-border-color);
+	--border-card: var(--card-border-width) var(--card-border-style) var(--card-border-color);
+
 	/* 폰트 패밀리 */
 	--font-sans: var(--font-geist-sans);
 	--font-mono: var(--font-geist-mono);
 	--font-body: var(--font-body);
 	--font-title: var(--font-title);
-	
+
 	/* 반지름 */
 	--radius-sm: calc(var(--radius) - 4px);
 	--radius-md: calc(var(--radius) - 2px);
@@ -121,15 +128,16 @@ body {
 	--radius-xl: calc(var(--radius) + 4px);
 	--radius-widget: var(--widget-border-radius);
 	--radius-card: var(--card-border-radius);
-	
+
 	/* 크기 (spacing, width 등) */
 	--size-widget-border: var(--widget-border-width);
+	--size-card-border: var(--card-border-width);
 	--size-widget-blur: var(--widget-blur);
 	--size-card-translate-y: var(--card-translate-y);
-	
+
 	/* 그림자 */
 	--shadow-card: var(--card-shadow);
-	
+
 	/* 애니메이션 */
 	--animate-jingle: jingle 0.6s ease-in-out;
 	--animate-music-bar: musicBar 1.2s ease infinite;
@@ -206,15 +214,28 @@ body {
 
 /* 애니메이션 키프레임 정의 */
 @keyframes jingle {
-	0%, 100% { transform: rotate(0deg); }
-	25% { transform: rotate(10deg); }
-	75% { transform: rotate(-10deg); }
+	0%,
+	100% {
+		transform: rotate(0deg);
+	}
+	25% {
+		transform: rotate(10deg);
+	}
+	75% {
+		transform: rotate(-10deg);
+	}
 }
 
 @keyframes musicBar {
-	0% { height: 4px; }
-	50% { height: 14px; }
-	100% { height: 4px; }
+	0% {
+		height: 4px;
+	}
+	50% {
+		height: 14px;
+	}
+	100% {
+		height: 4px;
+	}
 }
 
 @layer components {
@@ -226,6 +247,119 @@ body {
 		border-width: var(--widget-border-width);
 		border-style: solid;
 		backdrop-filter: blur(var(--widget-blur));
+	}
+	.card-wrapper {
+		/* @apply; */
+		background: var(--card-bg);
+		border-color: var(--card-border-color);
+		border-radius: var(--card-border-radius);
+		border-width: var(--widget-border-width);
+		border-style: solid;
+		box-shadow: var(--card-shadow);
+		transition: transform 0.2s ease, border-color 0.2s ease;
+
+		&:hover {
+			transform: translateY(var(--card-translate-y));
+			border-color: var(--card-border-active);
+		}
+	}
+}
+
+@layer utilities {
+	/* Border utilities */
+	.border-widget {
+		border: var(--border-widget);
+	}
+	.border-card {
+		border: var(--border-card);
+	}
+	.border-widget-color {
+		border-color: var(--color-widget-border);
+	}
+	.border-card-color {
+		border-color: var(--color-card-border);
+	}
+	.border-card-active {
+		border-color: var(--color-card-border-active);
+	}
+	.border-widget-width {
+		border-width: var(--size-widget-border);
+	}
+	.border-card-width {
+		border-width: var(--size-card-border);
+	}
+
+	/* Background utilities */
+	.bg-card {
+		background: var(--card-bg);
+	}
+	.bg-widget {
+		background: var(--widget-bg);
+	}
+	.bg-theme-bg {
+		background: var(--color-theme-bg);
+	}
+	.bg-theme-primary {
+		background: var(--color-theme-primary);
+	}
+	.bg-theme-secondary {
+		background: var(--color-theme-secondary);
+	}
+
+	/* Text color utilities */
+	.text-main-text {
+		color: var(--color-main-text);
+	}
+	.text-sub-text {
+		color: var(--color-sub-text);
+	}
+	.text-theme-primary {
+		color: var(--color-theme-primary);
+	}
+	.text-theme-secondary {
+		color: var(--color-theme-secondary);
+	}
+
+	/* Font family utilities */
+	.font-body {
+		font-family: var(--font-body);
+	}
+	.font-title {
+		font-family: var(--font-title);
+	}
+
+	/* Border radius utilities */
+	.rounded-card {
+		border-radius: var(--card-border-radius);
+	}
+	.rounded-widget {
+		border-radius: var(--widget-border-radius);
+	}
+
+	/* Shadow utilities */
+	.shadow-card {
+		box-shadow: var(--shadow-card);
+	}
+
+	/* Backdrop blur utilities */
+	.backdrop-blur-card {
+		backdrop-filter: blur(var(--widget-blur));
+	}
+	.backdrop-blur-widget {
+		backdrop-filter: blur(var(--size-widget-blur));
+	}
+
+	/* Animation utilities */
+	.animate-jingle {
+		animation: var(--animate-jingle);
+	}
+	.animate-music-bar {
+		animation: var(--animate-music-bar);
+	}
+
+	/* Transform utilities */
+	.translate-y-card {
+		transform: translateY(var(--size-card-translate-y));
 	}
 }
 
