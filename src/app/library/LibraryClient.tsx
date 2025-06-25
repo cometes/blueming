@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMoveToPage } from "@/hooks/useMoveToPage";
+import ItemListWithImage from "@/components/items/ListWithImage";
 
 interface LibraryClientProps {
 	listData: any[];
@@ -32,6 +34,7 @@ export default function LibraryClient({
 	const [isSeriesOn, setIsSeriesOn] = useState(false);
 	const [isCardOn, setIsCardOn] = useState(false);
 	const [segmentedValue, setSegmentedValue] = useState("row");
+	const { onClickMoveToPage } = useMoveToPage();
 
 	// 로컬 스토리지에서 상태 불러오기
 	useEffect(() => {
@@ -107,7 +110,7 @@ export default function LibraryClient({
 						loadingSkeleton={<Skeleton className="h-9 w-[82px] rounded-card" />}
 					>
 						<Button
-							// onClick={onClickMoveToPage("/library/new/")}
+							onClick={onClickMoveToPage("/library/new/")}
 							icon={<Plus size={14} />}
 						>
 							새 글쓰기
@@ -117,7 +120,10 @@ export default function LibraryClient({
 				<div className="TabWrap w-fit mx-auto mt-7">
 					<div className="TabBox flex justify-center">
 						<button
-							className="Tab block font-medium text-sub-text bg-transparent px-2.5 py-4 border-0 min-w-20 cursor-pointer"
+							className={cn(
+								"Tab block font-medium text-sub-text bg-transparent px-2.5 py-4 border-0 min-w-20 cursor-pointer",
+								isSeriesOn ? "" : "text-theme-primary"
+							)}
 							onClick={() => {
 								setIsSeriesOn(false);
 							}}
@@ -125,7 +131,10 @@ export default function LibraryClient({
 							글
 						</button>
 						<button
-							className="Tab block font-medium text-sub-text bg-transparent px-2.5 py-4 border-0 min-w-20 cursor-pointer"
+							className={cn(
+								"Tab block font-medium text-sub-text bg-transparent px-2.5 py-4 border-0 min-w-20 cursor-pointer",
+								isSeriesOn ? "text-theme-primary" : ""
+							)}
 							onClick={() => {
 								setIsSeriesOn(true);
 							}}
@@ -135,7 +144,7 @@ export default function LibraryClient({
 					</div>
 					<div
 						className={cn(
-							"h-0.5 bg-neutral-200 relative after:absolute after:top-0 after:block after:w-1/2 after:h-0.5 after:bg-sub-text after:transition-all after:duration-300 after:ease-in-out",
+							"h-0.5 bg-sub-text relative after:absolute after:top-0 after:block after:w-1/2 after:h-0.5 after:bg-theme-primary after:transition-all after:duration-300 after:ease-in-out",
 							isSeriesOn ? "after:right-0" : "after:right-1/2"
 						)}
 					/>
@@ -164,7 +173,8 @@ export default function LibraryClient({
 						{!isCardOn && (
 							<>
 								{listData.map((el) => (
-									<ItemList data={el} key={el.id} />
+									// <ItemList data={el} key={el.id} />
+									<ItemListWithImage data={el} key={el.id} />
 								))}
 							</>
 						)}
