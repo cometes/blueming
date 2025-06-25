@@ -18,6 +18,7 @@ import {
 	PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface LibraryClientProps {
 	listData: any[];
@@ -102,7 +103,9 @@ export default function LibraryClient({
 							endIcon={Search}
 						/>
 					</div>
-					<AdminOnly>
+					<AdminOnly
+						loadingSkeleton={<Skeleton className="h-9 w-[82px] rounded-card" />}
+					>
 						<Button
 							// onClick={onClickMoveToPage("/library/new/")}
 							icon={<Plus size={14} />}
