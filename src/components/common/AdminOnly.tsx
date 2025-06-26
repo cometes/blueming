@@ -26,9 +26,9 @@ export default function AdminOnly({
 	const { isLoading } = useAuthStore();
 
 	// 로딩 중일 때 스켈레톤 표시
-	if (isLoading && loadingSkeleton) {
-		return <>{loadingSkeleton}</>;
-	}
+	// if (isLoading && loadingSkeleton) {
+	// 	return <>{loadingSkeleton}</>;
+	// }
 
 	// 관리자인 경우 자식 컴포넌트 렌더링
 	if (isAdmin) {
