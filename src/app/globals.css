@@ -376,3 +376,132 @@ body {
 .custom-slider .slick-slide > div {
 	height: 100%;
 }
+
+/* React Colorful 커스텀 스타일 */
+.react-colorful {
+	width: 100% !important;
+	height: 200px !important;
+}
+
+.react-colorful__saturation {
+	border-radius: 8px 8px 0 0;
+}
+
+.react-colorful__hue,
+.react-colorful__alpha {
+	height: 24px;
+	border-radius: 0 0 8px 8px;
+}
+
+.react-colorful__pointer {
+	width: 18px;
+	height: 18px;
+}
+
+.react-colorful__interactive {
+	border-radius: 8px;
+}
+
+/* Slate Editor 리스트 스타일 */
+ul[data-slate-node="element"] {
+	list-style-type: disc;
+	margin: 8px 0;
+	padding-left: 20px;
+}
+
+ul[data-slate-node="element"][style*="text-align: center"] {
+	padding-left: 0;
+	padding-right: 0;
+	text-align: center;
+}
+
+ul[data-slate-node="element"][style*="text-align: right"] {
+	padding-left: 0;
+	padding-right: 20px;
+	direction: rtl;
+	text-align: right;
+}
+
+ul[data-slate-node="element"] li[data-slate-node="element"] {
+	display: list-item;
+	list-style-position: inside;
+}
+
+ul[data-slate-node="element"][style*="text-align: right"] li[data-slate-node="element"] {
+	direction: ltr;
+}
+
+/* Slate Editor Quote 스타일 */
+blockquote[data-slate-node="element"] {
+	padding-left: 2rem;
+	position: relative;
+	overflow: hidden;
+	margin: 1rem 0;
+	border-left: none;
+	background: transparent;
+	font-style: normal;
+}
+
+blockquote[data-slate-node="element"]::before,
+blockquote[data-slate-node="element"]::after {
+	position: absolute;
+	color: #777;
+}
+
+blockquote[data-slate-node="element"] p {
+	margin: 0;
+}
+
+blockquote[data-slate-node="element"] p + p {
+	margin-top: 1rem;
+}
+
+/* Classic quote style */
+blockquote[data-slate-node="element"][data-quote-style="classic"]::before {
+	content: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='%23777777'><path d='M9.983 3v7.391C9.983 16.095 6.252 19.961 1 21l-.995-2.151C2.437 17.932 4 15.211 4 13H0V3h9.983zM24 3v7.391c0 5.704-3.748 9.571-9 10.609l-.996-2.151C16.437 17.932 18 15.211 18 13h-3.983V3H24z'/></svg>");
+	left: 0;
+	top: 0;
+}
+
+blockquote[data-slate-node="element"][data-quote-style="classic"]::after {
+	content: "";
+	left: 5px;
+	top: 25px;
+	width: 1px;
+	height: calc(100% - 25px);
+	background-color: currentColor;
+}
+
+/* Slashes quote style */
+blockquote[data-slate-node="element"][data-quote-style="slashes"]::before {
+	content: "//";
+	transform: rotate(90deg);
+	left: 0;
+	top: 0;
+	font-weight: bold;
+}
+
+blockquote[data-slate-node="element"][data-quote-style="slashes"]::after {
+	content: "";
+	left: 5px;
+	top: 25px;
+	width: 1px;
+	height: calc(100% - 25px);
+	background-color: currentColor;
+}
+
+/* Default style (fallback to classic) */
+blockquote[data-slate-node="element"]:not([data-quote-style])::before {
+	content: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='%23777777'><path d='M9.983 3v7.391C9.983 16.095 6.252 19.961 1 21l-.995-2.151C2.437 17.932 4 15.211 4 13H0V3h9.983zM24 3v7.391c0 5.704-3.748 9.571-9 10.609l-.996-2.151C16.437 17.932 18 15.211 18 13h-3.983V3H24z'/></svg>");
+	left: 0;
+	top: 0;
+}
+
+blockquote[data-slate-node="element"]:not([data-quote-style])::after {
+	content: "";
+	left: 5px;
+	top: 25px;
+	width: 1px;
+	height: calc(100% - 25px);
+	background-color: currentColor;
+}

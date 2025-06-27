@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { AlignButtonProps, AlignOption, IconComponent } from "./types";
-import { CustomEditor, CustomElement, AlignType } from "../../../types/slate";
+import { CustomElement, AlignType } from "../../../types/slate";
 
 const AlignButton: React.FC<AlignButtonProps> = () => {
 	const editor = useSlate();
@@ -54,28 +54,30 @@ const AlignButton: React.FC<AlignButtonProps> = () => {
 		const { selection } = editor;
 		if (!selection) return;
 
-		const [match] = Editor.nodes(editor, {
-			match: (n) =>
-				SlateElement.isElement(n) &&
-				(n.type === "list-item" ||
-					n.type === "paragraph" ||
-					n.type === "image" ||
-					n.type === "heading-one" ||
-					n.type === "heading-two" ||
-					n.type === "button" ||
-					n.type === "video"),
-			mode: "lowest",
-		});
+		const matchingNodes = Array.from(
+			Editor.nodes(editor, {
+				match: (n) =>
+					SlateElement.isElement(n) &&
+					(n.type === "list-item" ||
+						n.type === "paragraph" ||
+						n.type === "image" ||
+						n.type === "heading-one" ||
+						n.type === "heading-two" ||
+						n.type === "button" ||
+						n.type === "video"),
+				mode: "lowest",
+			})
+		);
 
-		if (match) {
+		matchingNodes.forEach(([, path]) => {
 			Transforms.setNodes(
 				editor,
 				{ align },
 				{
-					at: match[1],
+					at: path,
 				}
 			);
-		}
+		});
 	};
 
 	const alignOptions: AlignOption[] = [

@@ -5,7 +5,7 @@ import { List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { BlockButtonProps } from "./types";
-import { CustomEditor } from "../../../types/slate";
+// import { CustomEditor } from "../../../types/slate";
 
 const BulletListButton: React.FC<BlockButtonProps> = () => {
 	const editor = useSlate();
