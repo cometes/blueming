@@ -126,16 +126,10 @@ export default function LibraryClient({
 						/>
 					</div>
 					<Dialog>
-						<DialogTrigger>
-							<AdminOnly
-								loadingSkeleton={
-									<Skeleton className="h-9 w-[82px] rounded-card" />
-								}
-							>
-								<Button className="bg-card border-card text-main-text rounded-full w-10 h-10">
-									<Settings />
-								</Button>
-							</AdminOnly>
+						<DialogTrigger asChild>
+							<Button className="bg-card border-card text-main-text rounded-full w-10 h-10">
+								<Settings />
+							</Button>
 						</DialogTrigger>
 						<DialogContent
 							showCloseButton={false}
@@ -275,9 +269,7 @@ export default function LibraryClient({
 							<PaginationItem>
 								<PaginationLink href="#">1</PaginationLink>
 							</PaginationItem>
-							<PaginationItem>
-								{/* <PaginationEllipsis /> */}
-							</PaginationItem>
+							<PaginationItem>{/* <PaginationEllipsis /> */}</PaginationItem>
 							<PaginationItem>
 								<PaginationNext href="#" />
 							</PaginationItem>
