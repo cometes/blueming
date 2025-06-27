@@ -4,14 +4,8 @@ import { Editor } from "slate";
 import { Bold } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-interface CustomEditor extends Editor {
-	// Slate editor 확장 타입
-}
-
-interface BoldButtonProps {
-	// 추후 필요시 props 추가
-}
+import { MarkButtonProps } from "./types";
+import { CustomEditor } from "../../../types/slate";
 
 // Bold 상태 확인 함수
 const isBoldMarkActive = (editor: CustomEditor): boolean => {
@@ -30,7 +24,7 @@ const toggleBoldMark = (editor: CustomEditor): void => {
 };
 
 // Bold 버튼 컴포넌트
-const BoldButton: React.FC<BoldButtonProps> = () => {
+const BoldButton: React.FC<MarkButtonProps> = () => {
 	const editor = useSlate(); // 현재 에디터 인스턴스 가져오기
 	const isActive = isBoldMarkActive(editor); // 현재 Bold 상태 확인
 

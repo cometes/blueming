@@ -4,14 +4,8 @@ import { Editor } from "slate";
 import { Underline } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-interface CustomEditor extends Editor {
-  // Slate editor 확장 타입
-}
-
-interface UnderlineButtonProps {
-  // 추후 필요시 props 추가
-}
+import { MarkButtonProps } from "./types";
+import { CustomEditor } from "../../../types/slate";
 
 // Underline 상태 확인 함수
 const isUnderlineMarkActive = (editor: CustomEditor): boolean => {
@@ -30,7 +24,7 @@ const toggleUnderlineMark = (editor: CustomEditor): void => {
 };
 
 // Underline 버튼 컴포넌트
-const UnderlineButton: React.FC<UnderlineButtonProps> = () => {
+const UnderlineButton: React.FC<MarkButtonProps> = () => {
   const editor = useSlate(); // 현재 에디터 인스턴스 가져오기
   const isActive = isUnderlineMarkActive(editor); // 현재 Underline 상태 확인
 
