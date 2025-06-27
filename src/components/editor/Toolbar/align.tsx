@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { ReactEditor, useSlate } from "slate-react";
-import { Transforms, Element as SlateElement } from "slate";
+import { Transforms, Element as SlateElement, Editor } from "slate";
 import { AlignCenter, AlignLeft, AlignRight, AlignJustify } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,49 +10,75 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { AlignButtonProps, AlignOption, IconComponent } from "./types";
+import { CustomEditor, CustomElement, AlignType } from "../../../types/slate";
 
-const AlignButton = (props) => {
+const AlignButton: React.FC<AlignButtonProps> = () => {
 	const editor = useSlate();
 
-	// 정렬값과 아이콘 컴포넌트 매핑
-	const alignToIcon = {
+	const alignToIcon: Record<AlignType, IconComponent> = {
 		left: AlignLeft,
 		center: AlignCenter,
 		right: AlignRight,
 		justify: AlignJustify,
 	};
 
-	const [currentAlign, setCurrentAlign] = useState(
-		props.currentAlign || "left"
-	);
+	const getCurrentAlign = (): AlignType => {
+		const { selection } = editor;
+		if (!selection) return "left";
 
-	// props.currentAlign 변경 시 아이콘 업데이트
-	useEffect(() => {
-		setCurrentAlign(props.currentAlign || "left");
-	}, [props.currentAlign]);
+		const [match] = Editor.nodes(editor, {
+			match: (n) =>
+				SlateElement.isElement(n) &&
+				(n.type === "list-item" ||
+					n.type === "paragraph" ||
+					n.type === "image" ||
+					n.type === "heading-one" ||
+					n.type === "heading-two" ||
+					n.type === "button" ||
+					n.type === "video"),
+			mode: "lowest",
+		});
 
-	const toggleAlign = (align) => {
-		Transforms.setNodes(
-			editor,
-			{ align }, // Set the align property
-			{
-				match: (n) =>
-					SlateElement.isElement(n) &&
-					(n.type === "list-item" ||
-						n.type === "paragraph" ||
-						n.type === "image" ||
-						n.type === "heading-one" ||
-						n.type === "heading-two" ||
-						n.type === "button" ||
-						n.type === "video"), // Include image nodes
-				mode: "lowest", // Apply to the lowest level elements
-			}
-		);
-		setCurrentAlign(align); // Update the current alignment state
-		props.setCurrentAlign(align); // Update the current alignment state
+		if (match && match[0] && SlateElement.isElement(match[0])) {
+			const element = match[0] as CustomElement;
+			return element.align || "left";
+		}
+
+		return "left";
 	};
 
-	const alignOptions = [
+	const currentAlign = getCurrentAlign();
+
+	const toggleAlign = (align: AlignType) => {
+		const { selection } = editor;
+		if (!selection) return;
+
+		const [match] = Editor.nodes(editor, {
+			match: (n) =>
+				SlateElement.isElement(n) &&
+				(n.type === "list-item" ||
+					n.type === "paragraph" ||
+					n.type === "image" ||
+					n.type === "heading-one" ||
+					n.type === "heading-two" ||
+					n.type === "button" ||
+					n.type === "video"),
+			mode: "lowest",
+		});
+
+		if (match) {
+			Transforms.setNodes(
+				editor,
+				{ align },
+				{
+					at: match[1],
+				}
+			);
+		}
+	};
+
+	const alignOptions: AlignOption[] = [
 		{ key: "left", icon: AlignLeft, label: "왼쪽 정렬" },
 		{ key: "center", icon: AlignCenter, label: "가운데 정렬" },
 		{ key: "right", icon: AlignRight, label: "오른쪽 정렬" },

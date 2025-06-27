@@ -4,17 +4,14 @@ import { Editor, Transforms, Element as SlateElement } from "slate";
 import { Quote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { CustomEditor, CustomElement } from "../../types/slate";
+import { BlockButtonProps } from "./types";
+import { CustomEditor, CustomElement, BlockType } from "../../../types/slate";
 
-interface QuoteButtonProps {
-  // 추후 필요시 props 추가
-}
-
-const QuoteButton: React.FC<QuoteButtonProps> = () => {
+const QuoteButton: React.FC<BlockButtonProps> = () => {
   const editor = useSlate();
 
   // 현재 블록이 "quote"인지 확인하는 함수
-  const isBlockActive = useCallback((editor: CustomEditor, format: string): boolean => {
+  const isBlockActive = useCallback((editor: CustomEditor, format: BlockType): boolean => {
     // Array.from을 사용하여 Generator를 배열로 변환
     const matches = Array.from(Editor.nodes(editor, {
       match: (n): n is CustomElement => SlateElement.isElement(n) && (n as CustomElement).type === format
@@ -23,10 +20,11 @@ const QuoteButton: React.FC<QuoteButtonProps> = () => {
   }, []);
 
   // "quote" 블록 상태를 토글하는 함수
-  const toggleBlock = useCallback((editor: CustomEditor, format: string): void => {
+  const toggleBlock = useCallback((editor: CustomEditor, format: BlockType): void => {
     const isActive = isBlockActive(editor, format);
+    const newType: BlockType = isActive ? "paragraph" : format; // 이미 "quote"면 "paragraph"로 복구
     const newProperties = {
-      type: isActive ? "paragraph" : format // 이미 "quote"면 "paragraph"로 복구
+      type: newType
     } as Partial<CustomElement>;
     Transforms.setNodes(editor, newProperties);
   }, [isBlockActive]);

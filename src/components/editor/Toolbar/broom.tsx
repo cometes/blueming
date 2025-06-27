@@ -3,8 +3,10 @@ import { Transforms, Text, Element } from "slate";
 import { useSlate, ReactEditor } from "slate-react";
 import { BrushCleaning } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BaseToolbarButtonProps } from "./types";
+import { CustomEditor } from "../../../types/slate";
 
-const clearFormatting = (editor) => {
+const clearFormatting = (editor: CustomEditor) => {
 	if (editor.selection) {
 		Transforms.unsetNodes(
 			editor,
@@ -23,7 +25,7 @@ const clearFormatting = (editor) => {
 	}
 };
 
-const BroomButton = () => {
+const BroomButton: React.FC<BaseToolbarButtonProps> = () => {
 	const editor = useSlate();
 
 	return (

@@ -4,14 +4,8 @@ import { Editor } from "slate";
 import { Italic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-interface CustomEditor extends Editor {
-  // Slate editor 확장 타입
-}
-
-interface ItalicButtonProps {
-  // 추후 필요시 props 추가
-}
+import { MarkButtonProps } from "./types";
+import { CustomEditor } from "../../../types/slate";
 
 // Italic 상태 확인 함수
 const isItalicMarkActive = (editor: CustomEditor): boolean => {
@@ -30,7 +24,7 @@ const toggleItalicMark = (editor: CustomEditor): void => {
 };
 
 // Italic 버튼 컴포넌트
-const ItalicButton: React.FC<ItalicButtonProps> = () => {
+const ItalicButton: React.FC<MarkButtonProps> = () => {
   const editor = useSlate(); // 현재 에디터 인스턴스 가져오기
   const isActive = isItalicMarkActive(editor); // 현재 이탤릭 상태 확인
 

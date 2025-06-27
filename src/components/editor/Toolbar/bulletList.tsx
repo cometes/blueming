@@ -4,12 +4,10 @@ import { Transforms, Editor, Element as SlateElement } from "slate";
 import { List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { BlockButtonProps } from "./types";
+import { CustomEditor } from "../../../types/slate";
 
-interface BulletListButtonProps {
-	// 추후 필요시 props 추가
-}
-
-const BulletListButton: React.FC<BulletListButtonProps> = () => {
+const BulletListButton: React.FC<BlockButtonProps> = () => {
 	const editor = useSlate();
 
 	// 현재 블록이 불릿 리스트인지 확인하는 함수
