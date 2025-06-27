@@ -16,12 +16,15 @@ export type BlockType =
 
 export type AlignType = "left" | "center" | "right" | "justify";
 
-export type MarkType = "bold" | "italic" | "underline" | "code";
+export type QuoteStyle = "classic" | "slashes";
+
+export type MarkType = "bold" | "italic" | "underline" | "code" | "backgroundColor" | "color";
 
 // Custom Element 타입 정의
 export interface CustomElement extends BaseElement {
   type: BlockType;
   align?: AlignType;
+  quoteStyle?: QuoteStyle;
   url?: string; // 이미지, 비디오용
   width?: number;
   height?: number;
@@ -34,6 +37,8 @@ export interface CustomText extends BaseText {
   italic?: boolean;
   underline?: boolean;
   code?: boolean;
+  backgroundColor?: string;
+  color?: string;
 }
 
 // Custom Editor 타입 정의

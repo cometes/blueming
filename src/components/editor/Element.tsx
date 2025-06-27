@@ -298,8 +298,8 @@ const Element = ({ attributes, children, element }) => {
 		case "quote": // 인용구 케이스
 			return (
 				<blockquote
-					className="border-l-4 border-gray-300 pl-4 my-4 text-gray-700 italic bg-gray-300"
 					{...attributes}
+					data-quote-style={element.quoteStyle || "classic"}
 					style={{
 						...style,
 					}}

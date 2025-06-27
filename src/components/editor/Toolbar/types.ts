@@ -18,6 +18,18 @@ export interface BaseToolbarButtonProps {
 // 마크 버튼 공통 Props
 export interface MarkButtonProps extends BaseToolbarButtonProps {}
 
+// 배경색 버튼 Props (색상 선택 관련 특화)
+export interface BackgroundColorButtonProps extends MarkButtonProps {
+  defaultColor?: string;
+  onColorChange?: (color: string) => void;
+}
+
+// 텍스트 색상 버튼 Props
+export interface TextColorButtonProps extends MarkButtonProps {
+  defaultColor?: string;
+  onColorChange?: (color: string) => void;
+}
+
 // 블록 버튼 공통 Props
 export interface BlockButtonProps extends BaseToolbarButtonProps {}
 

@@ -17,6 +17,7 @@
 // import YoutubeButton from "../../../common/editor/customToolbar/youtube";
 
 import AlignButton from "./Toolbar/align";
+import BackgroundColorButton from "./Toolbar/backgroundColor";
 import BoldButton from "./Toolbar/bold";
 import BroomButton from "./Toolbar/broom";
 import BulletListButton from "./Toolbar/bulletList";
@@ -25,9 +26,15 @@ import H1Button from "./Toolbar/h1";
 import H2Button from "./Toolbar/h2";
 import ItalicButton from "./Toolbar/italic";
 import QuoteButton from "./Toolbar/quote";
+import TextColorButton from "./Toolbar/textColor";
 import UnderlineButton from "./Toolbar/underline";
 
-export default function CustomToolbar(props) {
+interface CustomToolbarProps {
+	currentAlign?: string;
+	setCurrentAlign?: (align: string) => void;
+}
+
+export default function CustomToolbar(props: CustomToolbarProps) {
 	return (
 		<div className="flex items-center gap-4">
 			{/* <SizeButton /> */}
@@ -40,8 +47,8 @@ export default function CustomToolbar(props) {
 			<BoldButton />
 			<ItalicButton />
 			<UnderlineButton />
-			{/* <ColorButton />
-			<BackgroundColorButton /> */}
+			<TextColorButton />
+			<BackgroundColorButton />
 			<BulletListButton />
 			<BroomButton />
 			<QuoteButton />
