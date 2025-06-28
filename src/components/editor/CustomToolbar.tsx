@@ -24,6 +24,7 @@ import BulletListButton from "./Toolbar/bulletList";
 import CodeButton from "./Toolbar/code";
 import H1Button from "./Toolbar/h1";
 import H2Button from "./Toolbar/h2";
+import ImageButton from "./Toolbar/image";
 import ItalicButton from "./Toolbar/italic";
 import QuoteButton from "./Toolbar/quote";
 import TextColorButton from "./Toolbar/textColor";
@@ -53,8 +54,8 @@ export default function CustomToolbar(props: CustomToolbarProps) {
 			<BroomButton />
 			<QuoteButton />
 			<CodeButton />
-			{/* <ImageButton />
-			<YoutubeButton />
+			<ImageButton />
+			{/* <YoutubeButton />
 			<LinkButton /> */}
 		</div>
 	);
