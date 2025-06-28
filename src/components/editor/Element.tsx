@@ -11,6 +11,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
+import React from "react";
 
 const Element = ({ attributes, children, element }) => {
 	const editor = useSlate();
@@ -28,6 +29,10 @@ const Element = ({ attributes, children, element }) => {
 		const selected = useSelected();
 		const focused = useFocused();
 		const [isResizing, setIsResizing] = useState(false);
+		const [currentSize, setCurrentSize] = useState({
+			width: element.width || 400,
+			height: element.height || 300
+		});
 
 		// 이미지 클릭 핸들러
 		const handleImageClick = (event) => {
@@ -36,23 +41,20 @@ const Element = ({ attributes, children, element }) => {
 			Transforms.select(editor, path);
 		};
 
-		// CSS 리사이징 핸들러
+		// 리사이징 핸들러
 		const handleMouseDown = useCallback(
 			(e) => {
 				e.preventDefault();
 				e.stopPropagation();
 
-				const container = e.currentTarget.parentElement;
-				if (!container) return;
-
 				const startX = e.clientX;
 				const startY = e.clientY;
-				const startWidth =
-					parseInt(container.style.width) || element.width || 400;
-				const startHeight =
-					parseInt(container.style.height) || element.height || 300;
+				const startWidth = currentSize.width;
+				const startHeight = currentSize.height;
 
 				setIsResizing(true);
+				
+				let finalSize = { width: startWidth, height: startHeight };
 
 				const handleMouseMove = (moveEvent) => {
 					const deltaX = moveEvent.clientX - startX;
@@ -61,19 +63,17 @@ const Element = ({ attributes, children, element }) => {
 					const newWidth = Math.max(100, startWidth + deltaX);
 					const newHeight = Math.max(75, startHeight + deltaY);
 
-					container.style.width = `${newWidth}px`;
-					container.style.height = `${newHeight}px`;
+					finalSize = { width: newWidth, height: newHeight };
+					setCurrentSize(finalSize);
 				};
 
 				const handleMouseUp = () => {
 					setIsResizing(false);
-					const finalWidth = parseInt(container.style.width);
-					const finalHeight = parseInt(container.style.height);
-
-					// Slate 노드에 새 크기 저장
+					
+					// Slate 노드에 최종 크기 저장
 					Transforms.setNodes(
 						editor,
-						{ width: finalWidth, height: finalHeight },
+						{ width: finalSize.width, height: finalSize.height },
 						{ at: path }
 					);
 
@@ -84,8 +84,16 @@ const Element = ({ attributes, children, element }) => {
 				document.addEventListener("mousemove", handleMouseMove);
 				document.addEventListener("mouseup", handleMouseUp);
 			},
-			[editor, path, element.width, element.height]
+			[editor, path, currentSize]
 		);
+
+		// element 크기가 변경되면 currentSize 업데이트
+		React.useEffect(() => {
+			setCurrentSize({
+				width: element.width || 400,
+				height: element.height || 300
+			});
+		}, [element.width, element.height]);
 
 		// 공통 클릭 방지 핸들러
 		const preventClick = (event) => {
@@ -112,9 +120,12 @@ const Element = ({ attributes, children, element }) => {
 						<div
 							className={cn(
 								"relative",
-								isResizing ? "cursor-se-resize" : "cursor-default",
-								`w-[${element.width || 400}px] h-[${element.height || 300}px]`
+								isResizing ? "cursor-se-resize" : "cursor-default"
 							)}
+							style={{
+								width: `${currentSize.width}px`,
+								height: `${currentSize.height}px`
+							}}
 						>
 							<img
 								alt="이미지"
@@ -126,6 +137,7 @@ const Element = ({ attributes, children, element }) => {
 										? "shadow-[0_0_0_3px] shadow-theme-primary"
 										: ""
 								)}
+								draggable={false}
 							/>
 
 							{/* 리사이즈 핸들 */}
@@ -150,7 +162,7 @@ const Element = ({ attributes, children, element }) => {
 
 						{selected && focused && (
 							<button
-								className="DeleteButton m-auto bg-gray-500 text-gray-200 border-0 p-2 w-8 h-8 cursor-pointer rounded-full absolute t-2 r-2 z-30"
+								className="DeleteButton absolute top-2 right-2 z-30 bg-gray-500 text-gray-200 border-0 p-2 w-8 h-8 cursor-pointer rounded-full hover:bg-gray-600 transition-colors"
 								onMouseDown={(event) => {
 									event.preventDefault();
 									Transforms.removeNodes(editor, { at: path });
