@@ -3,6 +3,7 @@ import { useSlate, ReactEditor, useSelected, useFocused } from "slate-react";
 import { Transforms } from "slate";
 import ReactPlayer from "react-player";
 import { X, Link as LinkIcon, Play, SquarePlay } from "lucide-react";
+import { Rnd } from "react-rnd";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -28,12 +29,7 @@ const Element = ({ attributes, children, element }) => {
 		const path = ReactEditor.findPath(editor, element);
 		const selected = useSelected();
 		const focused = useFocused();
-		const [isResizing, setIsResizing] = useState(false);
 		const [isHovered, setIsHovered] = useState(false);
-		const [currentSize, setCurrentSize] = useState({
-			width: element.width || 480,
-			height: element.height || 270
-		});
 
 		// 비디오 클릭 핸들러
 		const handleVideoClick = (event) => {
@@ -58,56 +54,41 @@ const Element = ({ attributes, children, element }) => {
 				: null;
 		}, [element.url, getYouTubeVideoId]);
 
-		// 리사이징 핸들러
-		const handleMouseDown = useCallback(
-			(e) => {
-				e.preventDefault();
-				e.stopPropagation();
+		// react-rnd 리사이즈 핸들러
+		const handleResizeStop = useCallback(
+			(e, direction, ref) => {
+				const newWidth = parseInt(ref.style.width);
+				const aspectRatio = 16 / 9;
+				const newHeight = Math.round(newWidth / aspectRatio);
 
-				const startX = e.clientX;
-				const startWidth = currentSize.width;
-				const aspectRatio = 16 / 9; // YouTube 비율 고정
-
-				setIsResizing(true);
-				
-				let finalSize = { width: startWidth, height: currentSize.height };
-
-				const handleMouseMove = (moveEvent) => {
-					const deltaX = moveEvent.clientX - startX;
-					const newWidth = Math.max(200, startWidth + deltaX);
-					const newHeight = Math.round(newWidth / aspectRatio);
-
-					finalSize = { width: newWidth, height: newHeight };
-					setCurrentSize(finalSize);
-				};
-
-				const handleMouseUp = () => {
-					setIsResizing(false);
-					
-					// Slate 노드에 최종 크기 저장
-					Transforms.setNodes(
-						editor,
-						{ width: finalSize.width, height: finalSize.height },
-						{ at: path }
-					);
-
-					document.removeEventListener("mousemove", handleMouseMove);
-					document.removeEventListener("mouseup", handleMouseUp);
-				};
-
-				document.addEventListener("mousemove", handleMouseMove);
-				document.addEventListener("mouseup", handleMouseUp);
+				// Slate 노드에 최종 크기 저장
+				Transforms.setNodes(
+					editor,
+					{ width: newWidth, height: newHeight },
+					{ at: path }
+				);
 			},
-			[editor, path, currentSize]
+			[editor, path]
 		);
 
-		// element 크기가 변경되면 currentSize 업데이트
-		React.useEffect(() => {
-			setCurrentSize({
-				width: element.width || 480,
-				height: element.height || 270
-			});
-		}, [element.width, element.height]);
+		// 비디오 동적 최대 크기 계산 (16:9 비율 유지)
+		const getVideoMaxDimensions = useCallback(() => {
+			const parentElement = document.querySelector('.VideoBox')?.parentElement;
+			if (!parentElement) return { maxWidth: 800, maxHeight: 450 };
+			
+			const maxWidth = parentElement.clientWidth - (element.x || 0);
+			const maxHeight = parentElement.clientHeight - (element.y || 0);
+			
+			// 16:9 비율에 맞춰 최대 크기 조정
+			const aspectRatio = 16 / 9;
+			const constrainedByWidth = Math.round(maxWidth / aspectRatio);
+			const constrainedByHeight = Math.round(maxHeight * aspectRatio);
+			
+			return {
+				maxWidth: constrainedByHeight <= maxWidth ? constrainedByHeight : maxWidth,
+				maxHeight: constrainedByWidth <= maxHeight ? constrainedByWidth : maxHeight
+			};
+		}, []);
 
 		// 공통 클릭 방지 핸들러
 		const preventClick = (event) => {
@@ -130,29 +111,71 @@ const Element = ({ attributes, children, element }) => {
 					onMouseDown={preventClick}
 					onClick={preventClick}
 				>
-					<div className="VideoBox relative" contentEditable={false}>
-						<div
-							className={cn(
-								"relative",
-								isResizing ? "cursor-se-resize" : "cursor-pointer"
-							)}
+					<div
+						className="VideoBox relative"
+						contentEditable={false}
+						style={{
+							width: "100%",
+							height: "auto",
+							minWidth: `${element.width || 480}px`,
+							minHeight: `${element.height || 270}px`,
+						}}
+					>
+						<Rnd
+							size={{
+								width: element.width || 480,
+								height: element.height || 270,
+							}}
+							minWidth={200}
+							minHeight={112} // 200 * 9/16
+							maxWidth={getVideoMaxDimensions().maxWidth}
+							maxHeight={getVideoMaxDimensions().maxHeight}
+							lockAspectRatio={16 / 9}
+							bounds="parent"
+							enableResizing={
+								selected && focused
+									? {
+											bottom: false,
+											bottomLeft: false,
+											bottomRight: true,
+											left: false,
+											right: false,
+											top: false,
+											topLeft: false,
+											topRight: false,
+									  }
+									: false
+							}
+							disableDragging={true}
+							onResizeStop={handleResizeStop}
 							style={{
-								width: `${currentSize.width}px`,
-								height: `${currentSize.height}px`,
 								borderRadius: "4px",
 								overflow: "hidden",
+								display: "block",
+								position: "relative",
 							}}
-							onClick={handleVideoClick}
-							onMouseEnter={() => setIsHovered(true)}
-							onMouseLeave={() => setIsHovered(false)}
+							resizeHandleStyles={{
+								bottomRight: {
+									width: "12px",
+									height: "12px",
+									backgroundColor: "#B4D5FF",
+									border: "1px solid #fff",
+									borderRadius: "2px",
+									bottom: "-2px",
+									right: "-2px",
+								},
+							}}
 						>
 							<div
 								className={cn(
-									"VideoBox aspect-video relative w-full h-full",
+									"VideoBox aspect-video relative w-full h-full cursor-pointer",
 									selected && focused
 										? "shadow-[0_0_0_3px] shadow-theme-primary"
 										: ""
 								)}
+								onClick={handleVideoClick}
+								onMouseEnter={() => setIsHovered(true)}
+								onMouseLeave={() => setIsHovered(false)}
 							>
 								{/* 에디터에서는 썸네일만 표시 */}
 								{thumbnailUrl ? (
@@ -192,26 +215,7 @@ const Element = ({ attributes, children, element }) => {
 									</div>
 								)}
 							</div>
-
-							{/* 리사이즈 핸들 */}
-							{selected && focused && (
-								<div
-									style={{
-										position: "absolute",
-										bottom: "-2px",
-										right: "-2px",
-										width: "12px",
-										height: "12px",
-										backgroundColor: "#B4D5FF",
-										cursor: "se-resize",
-										borderRadius: "2px",
-										border: "1px solid #fff",
-										zIndex: 10,
-									}}
-									onMouseDown={handleMouseDown}
-								/>
-							)}
-						</div>
+						</Rnd>
 
 						{selected && focused && (
 							<button
@@ -236,11 +240,6 @@ const Element = ({ attributes, children, element }) => {
 		const path = ReactEditor.findPath(editor, element);
 		const selected = useSelected();
 		const focused = useFocused();
-		const [isResizing, setIsResizing] = useState(false);
-		const [currentSize, setCurrentSize] = useState({
-			width: element.width || 400,
-			height: element.height || 300
-		});
 
 		// 이미지 클릭 핸들러
 		const handleImageClick = (event) => {
@@ -249,59 +248,32 @@ const Element = ({ attributes, children, element }) => {
 			Transforms.select(editor, path);
 		};
 
-		// 리사이징 핸들러
-		const handleMouseDown = useCallback(
-			(e) => {
-				e.preventDefault();
-				e.stopPropagation();
+		// react-rnd 리사이즈 핸들러
+		const handleResizeStop = useCallback(
+			(e, direction, ref) => {
+				const newWidth = parseInt(ref.style.width);
+				const newHeight = parseInt(ref.style.height);
 
-				const startX = e.clientX;
-				const startY = e.clientY;
-				const startWidth = currentSize.width;
-				const startHeight = currentSize.height;
-
-				setIsResizing(true);
-				
-				let finalSize = { width: startWidth, height: startHeight };
-
-				const handleMouseMove = (moveEvent) => {
-					const deltaX = moveEvent.clientX - startX;
-					const deltaY = moveEvent.clientY - startY;
-
-					const newWidth = Math.max(100, startWidth + deltaX);
-					const newHeight = Math.max(75, startHeight + deltaY);
-
-					finalSize = { width: newWidth, height: newHeight };
-					setCurrentSize(finalSize);
-				};
-
-				const handleMouseUp = () => {
-					setIsResizing(false);
-					
-					// Slate 노드에 최종 크기 저장
-					Transforms.setNodes(
-						editor,
-						{ width: finalSize.width, height: finalSize.height },
-						{ at: path }
-					);
-
-					document.removeEventListener("mousemove", handleMouseMove);
-					document.removeEventListener("mouseup", handleMouseUp);
-				};
-
-				document.addEventListener("mousemove", handleMouseMove);
-				document.addEventListener("mouseup", handleMouseUp);
+				// Slate 노드에 최종 크기 저장
+				Transforms.setNodes(
+					editor,
+					{ width: newWidth, height: newHeight },
+					{ at: path }
+				);
 			},
-			[editor, path, currentSize]
+			[editor, path]
 		);
 
-		// element 크기가 변경되면 currentSize 업데이트
-		React.useEffect(() => {
-			setCurrentSize({
-				width: element.width || 400,
-				height: element.height || 300
-			});
-		}, [element.width, element.height]);
+		// 동적 최대 크기 계산
+		const getMaxDimensions = useCallback(() => {
+			const parentElement = document.querySelector('.ImageBox')?.parentElement;
+			if (!parentElement) return { maxWidth: 800, maxHeight: 600 };
+			
+			return {
+				maxWidth: parentElement.clientWidth - (element.x || 0),
+				maxHeight: parentElement.clientHeight - (element.y || 0)
+			};
+		}, []);
 
 		// 공통 클릭 방지 핸들러
 		const preventClick = (event) => {
@@ -316,7 +288,7 @@ const Element = ({ attributes, children, element }) => {
 		return (
 			<>
 				<div
-					className="ImageWrap flex items-center my-1.5"
+					className="ImageWrap flex items-center my-1.5 w-full"
 					{...attributes}
 					style={{
 						justifyContent: element.align,
@@ -324,15 +296,117 @@ const Element = ({ attributes, children, element }) => {
 					onMouseDown={preventClick}
 					onClick={preventClick}
 				>
-					<div className="ImageBox relative" contentEditable={false}>
-						<div
-							className={cn(
-								"relative",
-								isResizing ? "cursor-se-resize" : "cursor-default"
-							)}
+					<div
+						className="ImageBox relative w-fit h-auto"
+						contentEditable={false}
+					>
+						<Rnd
+							size={{
+								width: element.width || 400,
+								height: element.height || 300,
+							}}
+							bounds=".EditBox"
+							minWidth={100}
+							minHeight={75}
+							// maxWidth={getMaxDimensions().maxWidth}
+							// maxHeight={getMaxDimensions().maxHeight}
+							enableResizing={
+								selected && focused
+									? {
+											bottom: true,
+											bottomLeft: true,
+											bottomRight: true,
+											left: true,
+											right: true,
+											top: true,
+											topLeft: true,
+											topRight: true,
+									  }
+									: false
+							}
+							disableDragging={true}
+							// onResizeStop={handleResizeStop}
 							style={{
-								width: `${currentSize.width}px`,
-								height: `${currentSize.height}px`
+								display: "block",
+								position: "relative",
+							}}
+							resizeHandleStyles={{
+								bottomRight: {
+									width: "12px",
+									height: "12px",
+									backgroundColor: "#B4D5FF",
+									border: "1px solid #fff",
+									borderRadius: "2px",
+									bottom: "-2px",
+									right: "-2px",
+								},
+								bottom: {
+									width: "12px",
+									height: "4px",
+									backgroundColor: "#B4D5FF",
+									border: "1px solid #fff",
+									borderRadius: "2px",
+									bottom: "-2px",
+									left: "50%",
+									transform: "translateX(-50%)",
+								},
+								right: {
+									width: "4px",
+									height: "12px",
+									backgroundColor: "#B4D5FF",
+									border: "1px solid #fff",
+									borderRadius: "2px",
+									right: "-2px",
+									top: "50%",
+									transform: "translateY(-50%)",
+								},
+								bottomLeft: {
+									width: "12px",
+									height: "12px",
+									backgroundColor: "#B4D5FF",
+									border: "1px solid #fff",
+									borderRadius: "2px",
+									bottom: "-2px",
+									left: "-2px",
+								},
+								topRight: {
+									width: "12px",
+									height: "12px",
+									backgroundColor: "#B4D5FF",
+									border: "1px solid #fff",
+									borderRadius: "2px",
+									top: "-2px",
+									right: "-2px",
+								},
+								topLeft: {
+									width: "12px",
+									height: "12px",
+									backgroundColor: "#B4D5FF",
+									border: "1px solid #fff",
+									borderRadius: "2px",
+									top: "-2px",
+									left: "-2px",
+								},
+								top: {
+									width: "12px",
+									height: "4px",
+									backgroundColor: "#B4D5FF",
+									border: "1px solid #fff",
+									borderRadius: "2px",
+									top: "-2px",
+									left: "50%",
+									transform: "translateX(-50%)",
+								},
+								left: {
+									width: "4px",
+									height: "12px",
+									backgroundColor: "#B4D5FF",
+									border: "1px solid #fff",
+									borderRadius: "2px",
+									left: "-2px",
+									top: "50%",
+									transform: "translateY(-50%)",
+								},
 							}}
 						>
 							<img
@@ -340,46 +414,26 @@ const Element = ({ attributes, children, element }) => {
 								src={element.url}
 								onClick={handleImageClick}
 								className={cn(
-									"Image w-full h-full object-cover",
+									"Image w-full h-full object-cover cursor-pointer",
 									selected && focused
 										? "shadow-[0_0_0_3px] shadow-theme-primary"
 										: ""
 								)}
 								draggable={false}
 							/>
-
-							{/* 리사이즈 핸들 */}
 							{selected && focused && (
-								<div
-									style={{
-										position: "absolute",
-										bottom: "-2px",
-										right: "-2px",
-										width: "12px",
-										height: "12px",
-										backgroundColor: "#B4D5FF",
-										cursor: "se-resize",
-										borderRadius: "2px",
-										border: "1px solid #fff",
-										zIndex: 10,
+								<button
+									className="DeleteButton absolute top-2 right-2 z-30 bg-gray-500 text-gray-200 border-0 p-2 w-8 h-8 cursor-pointer rounded-full hover:bg-gray-600 transition-colors"
+									onMouseDown={(event) => {
+										event.preventDefault();
+										Transforms.removeNodes(editor, { at: path });
+										ReactEditor.focus(editor);
 									}}
-									onMouseDown={handleMouseDown}
-								/>
+								>
+									<X size={16} />
+								</button>
 							)}
-						</div>
-
-						{selected && focused && (
-							<button
-								className="DeleteButton absolute top-2 right-2 z-30 bg-gray-500 text-gray-200 border-0 p-2 w-8 h-8 cursor-pointer rounded-full hover:bg-gray-600 transition-colors"
-								onMouseDown={(event) => {
-									event.preventDefault();
-									Transforms.removeNodes(editor, { at: path });
-									ReactEditor.focus(editor);
-								}}
-							>
-								<X size={16} />
-							</button>
-						)}
+						</Rnd>
 					</div>
 				</div>
 				{children}

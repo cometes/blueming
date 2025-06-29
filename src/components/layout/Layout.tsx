@@ -58,7 +58,7 @@ export default function Layout({ children }: LayoutProps) {
 	return (
 		<>
 			<LoginButton />
-			{!shouldHideHeader && (
+			{/* {!shouldHideHeader && (
 				<header
 					className={cn(
 						"flex justify-between items-center px-6 py-0 w-full h-12",
@@ -76,7 +76,7 @@ export default function Layout({ children }: LayoutProps) {
 						{general.general.logoText}
 					</h1>
 				</header>
-			)}
+			)} */}
 
 			<div
 				className={cn(
@@ -85,7 +85,7 @@ export default function Layout({ children }: LayoutProps) {
 				)}
 			>
 				<div className="w-full h-full flex items-start justify-center gap-6">
-					{!shouldHideMenu && <WidgetMenu />}
+					{/* {!shouldHideMenu && <WidgetMenu />} */}
 					{children}
 				</div>
 			</div>
