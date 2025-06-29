@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { useCreatePost } from "@/hooks/useCreatPost";
 import CustomToolbar from "@/components/editor/CustomToolbar";
+import Tiptap from "@/components/editor/Tiptap";
 
 export default function LibararyNewClient({ seriesData, tagsData }) {
 	// const { isModalOpen, setIsModalOpen, showModal, cancelModal } = useModal();
@@ -112,7 +113,7 @@ export default function LibararyNewClient({ seriesData, tagsData }) {
 					</div>
 					<Separator className="mt-7" />
 					<div className="EditorBox pt-12 relative flex flex-col grow">
-						<Editable
+						{/* <Editable
 							renderElement={renderElement}
 							renderLeaf={renderLeaf}
 							style={{
@@ -124,7 +125,8 @@ export default function LibararyNewClient({ seriesData, tagsData }) {
 							onDrop={handleDrop}
 							autoFocus
 							placeholder="내용을 입력해주세요"
-						/>
+						/> */}
+						<Tiptap />
 					</div>
 				</div>
 			</Slate>

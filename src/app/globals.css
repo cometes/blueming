@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "../styles/_variables.scss";
+@import "../styles/_keyframe-animations.scss";
 
 /* 커스텀 폰트 정의 */
 @font-face {
@@ -112,8 +114,10 @@ body {
 	--color-card-bg: var(--card-bg);
 
 	/* 보더 스타일 */
-	--border-widget: var(--widget-border-width) var(--widget-border-style) var(--widget-border-color);
-	--border-card: var(--card-border-width) var(--card-border-style) var(--card-border-color);
+	--border-widget: var(--widget-border-width) var(--widget-border-style)
+		var(--widget-border-color);
+	--border-card: var(--card-border-width) var(--card-border-style)
+		var(--card-border-color);
 
 	/* 폰트 패밀리 */
 	--font-sans: var(--font-geist-sans);
@@ -427,7 +431,8 @@ ul[data-slate-node="element"] li[data-slate-node="element"] {
 	list-style-position: inside;
 }
 
-ul[data-slate-node="element"][style*="text-align: right"] li[data-slate-node="element"] {
+ul[data-slate-node="element"][style*="text-align: right"]
+	li[data-slate-node="element"] {
 	direction: ltr;
 }
 
