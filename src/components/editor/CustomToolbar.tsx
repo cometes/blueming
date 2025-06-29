@@ -29,6 +29,7 @@ import ItalicButton from "./Toolbar/italic";
 import QuoteButton from "./Toolbar/quote";
 import TextColorButton from "./Toolbar/textColor";
 import UnderlineButton from "./Toolbar/underline";
+import YoutubeButton from "./Toolbar/video";
 
 interface CustomToolbarProps {
 	currentAlign?: string;
@@ -55,8 +56,8 @@ export default function CustomToolbar(props: CustomToolbarProps) {
 			<QuoteButton />
 			<CodeButton />
 			<ImageButton />
-			{/* <YoutubeButton />
-			<LinkButton /> */}
+			<YoutubeButton />
+			{/* <LinkButton /> */}
 		</div>
 	);
 }

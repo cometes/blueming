@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useSlate, ReactEditor, useSelected, useFocused } from "slate-react";
 import { Transforms } from "slate";
 import ReactPlayer from "react-player";
-import { X, Link as LinkIcon, Play } from "lucide-react";
+import { X, Link as LinkIcon, Play, SquarePlay } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -22,6 +22,214 @@ const Element = ({ attributes, children, element }) => {
 			element.type !== "heading-one" && element.type !== "heading-two"
 				? element.fontSize
 				: undefined,
+	};
+
+	const VideoNode = () => {
+		const path = ReactEditor.findPath(editor, element);
+		const selected = useSelected();
+		const focused = useFocused();
+		const [isResizing, setIsResizing] = useState(false);
+		const [isHovered, setIsHovered] = useState(false);
+		const [currentSize, setCurrentSize] = useState({
+			width: element.width || 480,
+			height: element.height || 270
+		});
+
+		// 비디오 클릭 핸들러
+		const handleVideoClick = (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			Transforms.select(editor, path);
+		};
+
+		// YouTube URL에서 비디오 ID 추출
+		const getYouTubeVideoId = useCallback((url) => {
+			const match = url.match(
+				/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
+			);
+			return match ? match[1] : null;
+		}, []);
+
+		// YouTube 썸네일 URL 생성
+		const thumbnailUrl = useMemo(() => {
+			const videoId = getYouTubeVideoId(element.url);
+			return videoId
+				? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+				: null;
+		}, [element.url, getYouTubeVideoId]);
+
+		// 리사이징 핸들러
+		const handleMouseDown = useCallback(
+			(e) => {
+				e.preventDefault();
+				e.stopPropagation();
+
+				const startX = e.clientX;
+				const startWidth = currentSize.width;
+				const aspectRatio = 16 / 9; // YouTube 비율 고정
+
+				setIsResizing(true);
+				
+				let finalSize = { width: startWidth, height: currentSize.height };
+
+				const handleMouseMove = (moveEvent) => {
+					const deltaX = moveEvent.clientX - startX;
+					const newWidth = Math.max(200, startWidth + deltaX);
+					const newHeight = Math.round(newWidth / aspectRatio);
+
+					finalSize = { width: newWidth, height: newHeight };
+					setCurrentSize(finalSize);
+				};
+
+				const handleMouseUp = () => {
+					setIsResizing(false);
+					
+					// Slate 노드에 최종 크기 저장
+					Transforms.setNodes(
+						editor,
+						{ width: finalSize.width, height: finalSize.height },
+						{ at: path }
+					);
+
+					document.removeEventListener("mousemove", handleMouseMove);
+					document.removeEventListener("mouseup", handleMouseUp);
+				};
+
+				document.addEventListener("mousemove", handleMouseMove);
+				document.addEventListener("mouseup", handleMouseUp);
+			},
+			[editor, path, currentSize]
+		);
+
+		// element 크기가 변경되면 currentSize 업데이트
+		React.useEffect(() => {
+			setCurrentSize({
+				width: element.width || 480,
+				height: element.height || 270
+			});
+		}, [element.width, element.height]);
+
+		// 공통 클릭 방지 핸들러
+		const preventClick = (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			ReactEditor.focus(editor);
+			if (selected) {
+				Transforms.deselect(editor);
+			}
+		};
+
+		return (
+			<>
+				<div
+					className="VideoWrap flex items-center my-1.5"
+					{...attributes}
+					style={{
+						justifyContent: element.align,
+					}}
+					onMouseDown={preventClick}
+					onClick={preventClick}
+				>
+					<div className="VideoBox relative" contentEditable={false}>
+						<div
+							className={cn(
+								"relative",
+								isResizing ? "cursor-se-resize" : "cursor-pointer"
+							)}
+							style={{
+								width: `${currentSize.width}px`,
+								height: `${currentSize.height}px`,
+								borderRadius: "4px",
+								overflow: "hidden",
+							}}
+							onClick={handleVideoClick}
+							onMouseEnter={() => setIsHovered(true)}
+							onMouseLeave={() => setIsHovered(false)}
+						>
+							<div
+								className={cn(
+									"VideoBox aspect-video relative w-full h-full",
+									selected && focused
+										? "shadow-[0_0_0_3px] shadow-theme-primary"
+										: ""
+								)}
+							>
+								{/* 에디터에서는 썸네일만 표시 */}
+								{thumbnailUrl ? (
+									<>
+										<img
+											src={thumbnailUrl}
+											alt="Video thumbnail"
+											className="w-full h-full object-cover"
+											draggable={false}
+										/>
+										{/* 재생 버튼 아이콘 */}
+										<div
+											style={{
+												position: "absolute",
+												top: "50%",
+												left: "50%",
+												transform: "translate(-50%, -50%)",
+												backgroundColor: "rgba(0, 0, 0, 0.7)",
+												borderRadius: "50%",
+												width: "60px",
+												height: "60px",
+												display: "flex",
+												alignItems: "center",
+												justifyContent: "center",
+												opacity: isHovered ? 1 : 0.8,
+												transition: "opacity 0.2s ease",
+												pointerEvents: "none",
+											}}
+										>
+											<Play size={24} color="white" fill="white" />
+										</div>
+									</>
+								) : (
+									/* YouTube 썸네일을 가져올 수 없는 경우 기본 표시 */
+									<div className="w-full h-full bg-gray-200 flex items-center justify-center">
+										<SquarePlay size={48} className="text-gray-400" />
+									</div>
+								)}
+							</div>
+
+							{/* 리사이즈 핸들 */}
+							{selected && focused && (
+								<div
+									style={{
+										position: "absolute",
+										bottom: "-2px",
+										right: "-2px",
+										width: "12px",
+										height: "12px",
+										backgroundColor: "#B4D5FF",
+										cursor: "se-resize",
+										borderRadius: "2px",
+										border: "1px solid #fff",
+										zIndex: 10,
+									}}
+									onMouseDown={handleMouseDown}
+								/>
+							)}
+						</div>
+
+						{selected && focused && (
+							<button
+								className="DeleteButton absolute top-2 right-2 z-30 bg-gray-500 text-gray-200 border-0 p-2 w-8 h-8 cursor-pointer rounded-full hover:bg-gray-600 transition-colors"
+								onMouseDown={(event) => {
+									event.preventDefault();
+									Transforms.removeNodes(editor, { at: path });
+									ReactEditor.focus(editor);
+								}}
+							>
+								<X size={16} />
+							</button>
+						)}
+					</div>
+				</div>
+				{children}
+			</>
+		);
 	};
 
 	const ImageNode = () => {
@@ -236,7 +444,7 @@ const Element = ({ attributes, children, element }) => {
 						content="수정하기"
 						className="bg-primary text-white"
 						onClick={() => {
-							preventBlur;
+							preventBlur(event);
 							Transforms.setNodes(
 								editor,
 								{ url: newUrl }, // 새로운 URL로 노드 업데이트
@@ -330,6 +538,9 @@ const Element = ({ attributes, children, element }) => {
 		case "image":
 			return <ImageNode />;
 		case "video":
+			return <VideoNode />;
+		case "video-deprecated":
+			// 기존 비디오 코드 (하위 호환성)
 			const [isHovered, setIsHovered] = useState(false);
 			const [isResizing, setIsResizing] = useState(false);
 

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from "react";
 import { ReactEditor, useSlate } from "slate-react";
 import { Editor, Transforms, Element } from "slate";
-import { Images, Upload, FileImage, X } from "lucide-react";
+import { Images, Upload, FileImage } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -105,7 +105,7 @@ const ImageButton: React.FC<ImageButtonProps> = () => {
 
 	// 이미지 원본 크기 가져오기
 	const getImageDimensions = useCallback((url: string): Promise<{ width: number; height: number }> => {
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			const img = new Image();
 			img.onload = () => {
 				const calculatedSize = calculateImageSize(img.naturalWidth, img.naturalHeight);
