@@ -236,7 +236,7 @@ const ImageUploadDragArea: React.FC<ImageUploadDragAreaProps> = ({
 
   return (
     <div
-      className={`tiptap-image-upload-dragger ${dragover ? "tiptap-image-upload-dragger-active" : ""}`}
+      className={`tiptap-image-upload-dragger bg-card ${dragover ? "tiptap-image-upload-dragger-active" : ""}`}
       onDrop={onDrop}
       onDragOver={onDragover}
       onDragLeave={onDragleave}

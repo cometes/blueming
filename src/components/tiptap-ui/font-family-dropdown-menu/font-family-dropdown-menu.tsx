@@ -29,6 +29,9 @@ export interface FontFamilyDropdownMenuProps extends Omit<ButtonProps, "type"> {
 }
 
 export const defaultFontFamilies = [
+  { name: "Pretendard", value: "Pretendard" },
+  { name: "Noto Sans KR", value: "Noto Sans KR" },
+  { name: "Malgun Gothic", value: "Malgun Gothic" },
   { name: "Inter", value: "Inter" },
   { name: "Arial", value: "Arial" },
   { name: "Helvetica", value: "Helvetica" },

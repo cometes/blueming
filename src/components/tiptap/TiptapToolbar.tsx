@@ -59,13 +59,6 @@ const MainToolbarContent = ({
 	return (
 		<>
 			<Spacer />
-
-			<ToolbarGroup>
-				<UndoRedoButton action="undo" editor={editor} />
-				<UndoRedoButton action="redo" editor={editor} />
-			</ToolbarGroup>
-
-			<ToolbarSeparator />
 			<ToolbarGroup>
 				<FontFamilyDropdownMenu editor={editor} />
 				<FontSizeInput editor={editor} />
