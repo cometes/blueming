@@ -1,82 +1,55 @@
 "use client";
 
-import { Slate, Editable } from "slate-react";
+import * as React from "react";
 import { useMoveToPage } from "@/hooks/useMoveToPage";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
-import { useCreatePost } from "@/hooks/useCreatPost";
-import CustomToolbar from "@/components/editor/CustomToolbar";
-import Tiptap from "@/components/editor/Tiptap";
+import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
+import { extensions } from "@/components/editor/TiptapEditor";
+import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
 
-export default function LibararyNewClient({ seriesData, tagsData }) {
-	// const { isModalOpen, setIsModalOpen, showModal, cancelModal } = useModal();
+export default function LibararyNewClient() {
 	const { onClickMoveToPage } = useMoveToPage();
+	const [subOpen, setSubOpen] = React.useState(false);
+	const [title, setTitle] = React.useState("");
+	const [subtitle, setSubtitle] = React.useState("");
+	const [content, setContent] = React.useState("");
 
-	const {
-		handleSubmit,
-		onClickSubmit,
-		editor,
-		initialValue,
-		getContent,
-		currentAlign,
-		setCurrentAlign,
-		setPopupOpen,
-		handlePopoverOpenChange,
-		setValue,
-		register,
-		seriesArr,
-		tagsArr,
-		popupOpen,
-		subOpen,
-		setSubOpen,
-		renderElement,
-		renderLeaf,
-		handleDrop,
-	} = useCreatePost(seriesData, tagsData);
+	const editor = useEditor({
+		extensions: extensions,
+		content: "<p>내용을 입력해주세요</p>",
+		onUpdate: ({ editor }) => {
+			setContent(editor.getHTML());
+		},
+		editorProps: {
+			attributes: {
+				class: "prose max-w-none focus:outline-none min-h-[400px] p-4",
+			},
+		},
+	});
+
+	const handleSubmit = () => {
+		console.log({
+			title,
+			subtitle,
+			content,
+		});
+		// TODO: 실제 제출 로직 구현
+	};
 
 	return (
-		<div className="w-full min-h-dvh">
-			<Slate editor={editor} initialValue={initialValue} onChange={getContent}>
+		<EditorContext.Provider value={{ editor }}>
+			<div className="w-full min-h-dvh">
 				{/* Header */}
 				<header className="Header w-full h-[60px] border-b border-card-bg backdrop-blur-card fixed top-0 left-0 z-50">
 					<div className="HeaderContainer px-20 h-full flex justify-between items-center">
 						<Button onClick={onClickMoveToPage("/library/")}>뒤로가기</Button>
-						<CustomToolbar
-							currentAlign={currentAlign}
-							setCurrentAlign={setCurrentAlign}
-						/>
-						{/* <Popover
-							placement="bottomLeft"
-							arrow={false}
-							content={
-								<MetaModal
-									setPopupOpen={setPopupOpen}
-									setValue={setValue}
-									register={register}
-									seriesArr={seriesArr}
-									tagsArr={tagsArr}
-									isModalOpen={isModalOpen}
-									setIsModalOpen={setIsModalOpen}
-									showModal={showModal}
-									cancelModal={cancelModal}
-								/>
-							}
-							trigger="click"
-							open={popupOpen}
-							onOpenChange={handlePopoverOpenChange}
-							overlayInnerStyle={{
-								width: "fit-content",
-								background: "transparent",
-								padding: 0,
-								marginTop: "10px",
-							}}
-						>
-							<Button>글쓰기</Button>
-						</Popover> */}
-						<Button>글쓰기</Button>
+						{/* Tiptap Toolbar */}
+						<TiptapToolbar editor={editor} />
+						<Button onClick={handleSubmit}>글쓰기</Button>
 					</div>
 				</header>
 				{/* Body */}
@@ -84,7 +57,8 @@ export default function LibararyNewClient({ seriesData, tagsData }) {
 					<div className="TitleWrap relative">
 						<Input
 							placeholder="제목을 입력해주세요."
-							// {...register("title")}
+							value={title}
+							onChange={(e) => setTitle(e.target.value)}
 							className="text-5xl border-0 text-main-text bg-background-none placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 p-0"
 						/>
 						<span
@@ -107,29 +81,23 @@ export default function LibararyNewClient({ seriesData, tagsData }) {
 					>
 						<Input
 							placeholder="소제목을 입력해주세요."
-							// {...register("subtitle")}
+							value={subtitle}
+							onChange={(e) => setSubtitle(e.target.value)}
 							className="text-lg border-0 text-sub-text bg-background-none placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 transition-all duration-300 ease p-0"
 						/>
 					</div>
 					<Separator className="mt-7" />
-					<div className="EditorBox pt-12 relative flex flex-col grow">
-						{/* <Editable
-							renderElement={renderElement}
-							renderLeaf={renderLeaf}
-							style={{
-								height: "100%", // 부모 높이에 맞추기
-								paddingBottom: "60px", // 하단 패딩 추가
-								flexGrow: 1, // 남은 공간을 차지
-								outline: "none",
-							}}
-							onDrop={handleDrop}
-							autoFocus
-							placeholder="내용을 입력해주세요"
-						/> */}
-						<Tiptap />
+					<div className="EditorBox pt-12 relative flex flex-col grow min-h-[400px]">
+						{/* Editor Content */}
+						<div className="mt-4 flex-1">
+							<EditorContent
+								editor={editor}
+								className="prose max-w-none focus:outline-none w-full"
+							/>
+						</div>
 					</div>
 				</div>
-			</Slate>
-		</div>
+			</div>
+		</EditorContext.Provider>
 	);
 }

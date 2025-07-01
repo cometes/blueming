@@ -525,7 +525,7 @@
 
 "@floating-ui/react@^0.27.13":
   version "0.27.13"
-  resolved "https://registry.npmjs.org/@floating-ui/react/-/react-0.27.13.tgz"
+  resolved "https://registry.yarnpkg.com/@floating-ui/react/-/react-0.27.13.tgz#fa6f458c4b90e45f40ed3b12a0bacfa7c8a1a146"
   integrity sha512-Qmj6t9TjgWAvbygNEu1hj4dbHI9CY0ziCMIJrmYoDIn9TUAH5lRmiIeZmRd4c6QEZkzdoH7jNnoNyoY1AIESiA==
   dependencies:
     "@floating-ui/react-dom" "^2.1.4"
@@ -1543,7 +1543,7 @@
 
 "@tiptap/extension-link@^2.23.0":
   version "2.23.0"
-  resolved "https://registry.npmjs.org/@tiptap/extension-link/-/extension-link-2.23.0.tgz"
+  resolved "https://registry.yarnpkg.com/@tiptap/extension-link/-/extension-link-2.23.0.tgz#5e665fcecda56133abf5a7e40d12a6691a8ff760"
   integrity sha512-D+ethAE8+2f7RH7kqS+//EsC2wNblhmssJYVE0hCXM5BKIBixjs8eCOAvLbJsw0u/5LqFYjsyAimTqa4hD5uvg==
   dependencies:
     linkifyjs "^4.2.0"
@@ -1620,7 +1620,7 @@
 
 "@tiptap/pm@^2.23.0":
   version "2.23.0"
-  resolved "https://registry.npmjs.org/@tiptap/pm/-/pm-2.23.0.tgz"
+  resolved "https://registry.yarnpkg.com/@tiptap/pm/-/pm-2.23.0.tgz#0f93e7a98498bb3ae4e7c457b02e66b56c1cbb7f"
   integrity sha512-PQFi8H+OrcaNXNGxbXSjJmZFh1wxiFMbUg25LjOX148d7i+21uWKy6avsr5rsBQNBAKIIMB6PQY61Lhv5r61uA==
   dependencies:
     prosemirror-changeset "^2.3.0"
@@ -1644,7 +1644,7 @@
 
 "@tiptap/react@^2.23.0":
   version "2.23.0"
-  resolved "https://registry.npmjs.org/@tiptap/react/-/react-2.23.0.tgz"
+  resolved "https://registry.yarnpkg.com/@tiptap/react/-/react-2.23.0.tgz#1e2e91a28b4a7395490b82d2e5c700de643f5e93"
   integrity sha512-HiEIMYXa4/JWJq1USm0BWXDX0nrXUyG3T1UwZXwFCWZWaRBXmBRv+X5GkyP7fYuuiTTcqmTO3bBhb9CGNDr+AA==
   dependencies:
     "@tiptap/extension-bubble-menu" "^2.23.0"
@@ -4360,7 +4360,7 @@ safe-regex-test@^1.0.3, safe-regex-test@^1.1.0:
 
 sass@^1.89.2:
   version "1.89.2"
-  resolved "https://registry.npmjs.org/sass/-/sass-1.89.2.tgz"
+  resolved "https://registry.yarnpkg.com/sass/-/sass-1.89.2.tgz#a771716aeae774e2b529f72c0ff2dfd46c9de10e"
   integrity sha512-xCmtksBKd/jdJ9Bt9p7nPKiuqrlBMBuuGkQlkhZjjQk3Ty48lv93k5Dq6OPkKt4XwxDJ7tvlfrTa1MPA9bf+QA==
   dependencies:
     chokidar "^4.0.0"
