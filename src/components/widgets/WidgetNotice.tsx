@@ -82,15 +82,16 @@ export default function WidgetNotice() {
 	// Widget (viewer) dimensions via custom hook - must be called before any early returns
 	const widgetDimensions = useContentDimensions(containerRef);
 
+	// useMemo는 조건문보다 먼저 호출되어야 함 (React Hooks 규칙)
+	const noticeHtml = useMemo(
+		() => noticeData?.noticeContent ? renderRichText(noticeData.noticeContent) : "",
+		[noticeData?.noticeContent]
+	);
+
 	// 실제 editorDimensions 데이터가 없으면 빈 컴포넌트 반환
 	if (!noticeData?.editorDimensions) {
 		return <div className="widget-wrapper" ref={containerRef} />;
 	}
-
-	const noticeHtml = useMemo(
-		() => renderRichText(noticeData.noticeContent),
-		[noticeData.noticeContent]
-	);
 
 	const editorDimensions = noticeData.editorDimensions;
 

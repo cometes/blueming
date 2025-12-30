@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import ItemCard from "@/components/items/Card";
 import ItemGallery from "@/components/items/Gallery";
-import ItemList from "@/components/items/List";
 import {
-	Grid3x2,
 	Lock,
 	Plus,
 	Rows3,
@@ -20,14 +18,12 @@ import { Button } from "@/components/ui/button";
 import {
 	Pagination,
 	PaginationContent,
-	PaginationEllipsis,
 	PaginationItem,
 	PaginationLink,
 	PaginationNext,
 	PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useMoveToPage } from "@/hooks/useMoveToPage";
 import ItemListWithImage from "@/components/items/ListWithImage";
 import {
@@ -39,9 +35,18 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 
+interface LibraryItem {
+	id: string;
+	title: string;
+	subtitle?: string;
+	createdAt: string;
+	tags?: string[];
+	thumbnail?: string;
+}
+
 interface LibraryClientProps {
-	listData: any[];
-	seriesData: any[];
+	listData: LibraryItem[];
+	seriesData: LibraryItem[];
 }
 
 export default function LibraryClient({
@@ -186,9 +191,7 @@ export default function LibraryClient({
 						</DialogContent>
 					</Dialog>
 
-					<AdminOnly
-						loadingSkeleton={<Skeleton className="h-9 w-[82px] rounded-card" />}
-					>
+				<AdminOnly>
 						<Button
 							onClick={onClickMoveToPage("/library/new/")}
 							className="bg-theme-primary hover:bg-theme-primary/90"

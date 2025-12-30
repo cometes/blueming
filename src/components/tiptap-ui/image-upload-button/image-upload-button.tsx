@@ -1,5 +1,6 @@
 import * as React from "react";
 import { type Editor } from "@tiptap/react";
+import type { Node as PMNode } from "@tiptap/pm/model";
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
@@ -32,8 +33,8 @@ export function insertImage(
 	if (!editor) return false;
 
 	// If an image or youtube is selected, move cursor to the end of selection before inserting
-	const { from, to } = editor.state.selection;
-	const selectedNode = editor.state.selection.node;
+	const { to } = editor.state.selection;
+	const selectedNode = ('node' in editor.state.selection ? editor.state.selection.node : null) as PMNode | null;
 
 	if (selectedNode && (selectedNode.type.name === 'image' || selectedNode.type.name === 'youtube')) {
 		// Move cursor after the selected node
@@ -81,7 +82,6 @@ export const ImageUploadButton = React.forwardRef<
 		{
 			editor: providedEditor,
 			extensionName = "imageUpload",
-			text,
 			className = "",
 			disabled,
 			onClick,
