@@ -135,37 +135,17 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 				className={`image-box ${selected ? "ProseMirror-selectednode" : ""} ${
 					isResizing ? "is-resizing" : ""
 				}`}
-				data-drag-handle
-				draggable={false}
 			>
 				{selected && <ImageBubbleMenu editor={editor} currentAlign={align} />}
 				{selected && (
 					<>
 						<div
 							className="resize-handle resize-handle-left"
-							onMouseDown={(e) => {
-								e.preventDefault();
-								e.stopPropagation();
-								handleResizeStart(e, "left");
-							}}
-							draggable={false}
-							onDragStart={(e) => {
-								e.preventDefault();
-								e.stopPropagation();
-							}}
+							onMouseDown={(e) => handleResizeStart(e, "left")}
 						/>
 						<div
 							className="resize-handle resize-handle-right"
-							onMouseDown={(e) => {
-								e.preventDefault();
-								e.stopPropagation();
-								handleResizeStart(e, "right");
-							}}
-							draggable={false}
-							onDragStart={(e) => {
-								e.preventDefault();
-								e.stopPropagation();
-							}}
+							onMouseDown={(e) => handleResizeStart(e, "right")}
 						/>
 					</>
 				)}
@@ -175,11 +155,6 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 					alt={alt}
 					title={title}
 					style={imgStyle}
-					draggable={false}
-					onDragStart={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-					}}
 				/>
 			</div>
 		</NodeViewWrapper>

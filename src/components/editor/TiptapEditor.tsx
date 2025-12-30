@@ -18,7 +18,6 @@ import { TaskList } from "@tiptap/extension-task-list";
 import { TaskItem } from "@tiptap/extension-task-item";
 import { Link } from "@tiptap/extension-link";
 import { Placeholder } from "@tiptap/extension-placeholder";
-import { Dropcursor } from "@tiptap/extension-dropcursor";
 import { CustomImage } from "@/components/tiptap-extension/custom-image";
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node";
 import { CustomYoutubeNode } from "@/components/tiptap-node/youtube-node/youtube-node";
@@ -38,10 +37,6 @@ export const extensions = [
 		orderedList: false,
 		listItem: false,
 		dropcursor: false,
-	}),
-	Dropcursor.configure({
-		width: 2,
-		color: '#3b82f6',
 	}),
 	Link.configure({ openOnClick: false }),
 	Placeholder.configure({

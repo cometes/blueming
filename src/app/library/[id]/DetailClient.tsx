@@ -1,55 +1,18 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
 import { useMoveToPage } from "@/hooks/useMoveToPage";
 import { dateConvert } from "@/lib/date";
-import withVideo from "@/hooks/editor/UseWithVideo";
-import { withInlines } from "@/hooks/editor/UseWithInline";
-import { withImages } from "@/hooks/editor/UseWithImage";
-import { withHistory } from "slate-history";
-import { Editable, Slate, withReact } from "slate-react";
-import { createEditor } from "slate";
-import Leaf from "@/components/editor/Leaf";
-import Viewer from "@/components/editor/Viewer";
-import {
-	ChevronDown,
-	ChevronLeft,
-	ChevronRight,
-	ChevronUp,
-} from "lucide-react";
+import { renderRichText, isRichTextEmpty } from "@/lib/richText";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
 export default function DetailClient({ detailData }) {
-	const [isSeriesOn, setIsSeriesOn] = useState(false);
-
 	const { onClickMoveToPage } = useMoveToPage();
 
-	const editor = useMemo(() => {
-		return withVideo(
-			withInlines(withImages(withHistory(withReact(createEditor()))))
-		);
-	}, []);
-
-	const renderLeaf = useCallback((props) => {
-		return <Leaf {...props} />;
-	}, []);
-
-	const renderElement = useCallback((props) => {
-		return <Viewer {...props} />;
-	}, []);
-
-	const initialValue = detailData?.content
-		? JSON.parse(detailData.content)
-		: [{ type: "paragraph", children: [{ text: "" }] }];
-
-	const onClickMoveToSeries = (id) => () => {
-		if (detailData?.id !== id) {
-			onClickMoveToPage(`/library/${id}/`);
-		}
-	};
+	const contentHtml = renderRichText(detailData?.content);
 
 	return (
 		<div className="Wrapper min-h-100vh">
@@ -103,18 +66,15 @@ export default function DetailClient({ detailData }) {
 						</div>
 					</div>
 					<Separator className="mb-[60px] mt-7 bg-card-border" />
-					<div>
-						<Slate
-							key={detailData?.id}
-							editor={editor}
-							initialValue={initialValue}
-						>
-							<Editable
-								readOnly
-								renderElement={renderElement}
-								renderLeaf={renderLeaf}
+					<div className="tiptap prose max-w-none text-main-text">
+						{isRichTextEmpty(contentHtml) ? (
+							<p className="text-sub-text">내용이 없습니다.</p>
+						) : (
+							<div
+								className="rich-text-viewer"
+								dangerouslySetInnerHTML={{ __html: contentHtml }}
 							/>
-						</Slate>
+						)}
 					</div>
 				</div>
 				<div className="PrevNextWrap flex justify-between mt-24">
