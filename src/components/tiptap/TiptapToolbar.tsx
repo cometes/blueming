@@ -12,7 +12,6 @@ import {
 } from "@/components/tiptap-ui-primitive/toolbar";
 
 // --- Tiptap UI ---
-import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu";
 import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button";
 import { YoutubeUploadButton } from "@/components/tiptap-ui/youtube-upload-button";
 import { FontSizeInput } from "@/components/tiptap-ui/font-size-input";
@@ -22,11 +21,7 @@ import { TextBackgroundColorButton } from "@/components/tiptap-ui/text-backgroun
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu";
 import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button";
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button";
-import {
-	ColorHighlightPopover,
-	ColorHighlightPopoverContent,
-	ColorHighlightPopoverButton,
-} from "@/components/tiptap-ui/color-highlight-popover";
+import { ColorHighlightPopoverContent } from "@/components/tiptap-ui/color-highlight-popover";
 import {
 	LinkPopover,
 	LinkContent,
@@ -34,7 +29,6 @@ import {
 } from "@/components/tiptap-ui/link-popover";
 import { MarkButton } from "@/components/tiptap-ui/mark-button";
 import { TextAlignDropdownMenu } from "@/components/tiptap-ui/text-align-dropdown-menu";
-import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button";
 
 // --- Icons ---
 import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon";
@@ -46,12 +40,10 @@ import { useMobile } from "@/hooks/use-mobile";
 import type { Editor } from "@tiptap/react";
 
 const MainToolbarContent = ({
-	onHighlighterClick,
 	onLinkClick,
 	isMobile,
 	editor,
 }: {
-	onHighlighterClick: () => void;
 	onLinkClick: () => void;
 	isMobile: boolean;
 	editor: Editor | null;
@@ -66,7 +58,6 @@ const MainToolbarContent = ({
 			<ToolbarSeparator />
 
 			<ToolbarGroup>
-				{/* <HeadingDropdownMenu levels={[1, 2, 3, 4]} editor={editor} /> */}
 				<TextAlignDropdownMenu editor={editor} />
 				<ListDropdownMenu
 					types={["bulletList", "orderedList", "taskList"]}
@@ -89,18 +80,10 @@ const MainToolbarContent = ({
 				<BlockquoteButton editor={editor} />
 				<MarkButton type="code" editor={editor} />
 				<CodeBlockButton editor={editor} />
-				{/* {!isMobile ? (
-					<ColorHighlightPopover editor={editor} />
-				) : (
-					<ColorHighlightPopoverButton
-						onClick={onHighlighterClick}
-						editor={editor}
-					/>
-				)} */}
 				{!isMobile ? (
 					<LinkPopover editor={editor} />
 				) : (
-					<LinkButton onClick={onLinkClick} editor={editor} />
+					<LinkButton onClick={onLinkClick} />
 				)}
 			</ToolbarGroup>
 
@@ -176,7 +159,6 @@ export default function TiptapToolbar({ editor }: TiptapToolbarProps) {
 		<Toolbar>
 			{mobileView === "main" ? (
 				<MainToolbarContent
-					onHighlighterClick={() => setMobileView("highlighter")}
 					onLinkClick={() => setMobileView("link")}
 					isMobile={isMobile}
 					editor={editor}

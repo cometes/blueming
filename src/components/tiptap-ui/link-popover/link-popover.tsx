@@ -105,7 +105,7 @@ export const useLinkHandler = (props: LinkHandlerProps) => {
 	const setLink = React.useCallback(() => {
 		if (!url || !editor) return;
 
-		const { from, to } = editor.state.selection;
+		const { to } = editor.state.selection;
 		const docSize = editor.state.doc.content.size;
 
 		// 선택된 영역이 있으면 그 영역에만 링크 적용
@@ -129,7 +129,6 @@ export const useLinkHandler = (props: LinkHandlerProps) => {
 	const removeLink = React.useCallback(() => {
 		if (!editor) return;
 
-		const { from, to } = editor.state.selection;
 		const isLinkActive = editor.isActive("link");
 
 		// 링크가 활성화되어 있으면 링크 범위 전체를 제거

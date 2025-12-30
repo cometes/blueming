@@ -12,9 +12,19 @@ import { extensions } from "@/components/editor/TiptapEditor";
 import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
 import CreateModal, { CreateMetaValue } from "@/components/modal/createModal";
 
+interface SeriesItem {
+	id: string;
+	name: string;
+}
+
+interface TagItem {
+	id: string;
+	name: string;
+}
+
 interface LibraryNewClientProps {
-	seriesData: any[];
-	tagsData: any[];
+	seriesData: SeriesItem[];
+	tagsData: TagItem[];
 }
 
 export default function LibararyNewClient({
@@ -40,6 +50,7 @@ export default function LibararyNewClient({
 	const editor = useEditor({
 		extensions: extensions,
 		content: "",
+		immediatelyRender: false,
 		onUpdate: ({ editor }) => {
 			setContent(editor.getHTML());
 		},

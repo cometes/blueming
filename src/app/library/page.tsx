@@ -10,7 +10,7 @@ export default async function LibararyListPage() {
 		const { data: seriesData } = await fetchLibrarySeries();
 
 		return <LibraryClient listData={listData} seriesData={seriesData} />;
-	} catch (error) {
+	} catch {
 		return <LibraryClient listData={[]} seriesData={[]} />;
 	}
 }

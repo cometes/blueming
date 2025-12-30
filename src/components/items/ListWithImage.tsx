@@ -10,7 +10,7 @@ interface ItemListProps {
 		title: string;
 		subtitle?: string;
 		createdAt: string;
-		tags: string[];
+		tags?: string[];
 		thumbnail?: string;
 	};
 }

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { type Editor } from "@tiptap/react"
+import type { Node as PMNode } from "@tiptap/pm/model"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
@@ -100,7 +101,7 @@ export const useYoutubeHandler = (props: YoutubeHandlerProps) => {
 
     // If an image or youtube is selected, move cursor to the end of selection before inserting
     const { to } = editor.state.selection
-    const selectedNode = editor.state.selection.node
+    const selectedNode = ('node' in editor.state.selection ? editor.state.selection.node : null) as PMNode | null
 
     if (selectedNode && (selectedNode.type.name === 'image' || selectedNode.type.name === 'youtube')) {
       // Move cursor after the selected node

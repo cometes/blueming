@@ -40,10 +40,7 @@ export const CustomImage = Image.extend({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(ImageNodeView, {
-      // Tiptap 표준 드래그 앤 드롭을 위해 contentDOM을 사용하지 않음
-      contentDOM: null,
-    })
+    return ReactNodeViewRenderer(ImageNodeView)
   },
 })
 
