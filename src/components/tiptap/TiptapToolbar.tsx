@@ -66,7 +66,7 @@ const MainToolbarContent = ({
 			<ToolbarSeparator />
 
 			<ToolbarGroup>
-				<HeadingDropdownMenu levels={[1, 2, 3, 4]} editor={editor} />
+				{/* <HeadingDropdownMenu levels={[1, 2, 3, 4]} editor={editor} /> */}
 				<TextAlignDropdownMenu editor={editor} />
 				<ListDropdownMenu
 					types={["bulletList", "orderedList", "taskList"]}
@@ -89,14 +89,14 @@ const MainToolbarContent = ({
 				<BlockquoteButton editor={editor} />
 				<MarkButton type="code" editor={editor} />
 				<CodeBlockButton editor={editor} />
-				{!isMobile ? (
+				{/* {!isMobile ? (
 					<ColorHighlightPopover editor={editor} />
 				) : (
 					<ColorHighlightPopoverButton
 						onClick={onHighlighterClick}
 						editor={editor}
 					/>
-				)}
+				)} */}
 				{!isMobile ? (
 					<LinkPopover editor={editor} />
 				) : (

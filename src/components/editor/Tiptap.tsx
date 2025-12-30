@@ -11,6 +11,8 @@ import { Superscript } from "@tiptap/extension-superscript";
 import { Subscript } from "@tiptap/extension-subscript";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { Youtube } from "@tiptap/extension-youtube";
+import { Link } from "@tiptap/extension-link";
+import { FontSize } from "@/components/tiptap-extension/font-size";
 
 interface TiptapProps {
 	onEditorReady?: (editor: any) => void;
@@ -21,6 +23,13 @@ const Tiptap = ({ onEditorReady }: TiptapProps) => {
 		extensions: [
 			StarterKit,
 			TextStyle,
+			FontSize,
+			Link.configure({
+				openOnClick: false,
+				HTMLAttributes: {
+					class: "tiptap-link",
+				},
+			}),
 			Color.configure({
 				types: ["textStyle"],
 			}),
