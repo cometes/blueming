@@ -8,7 +8,7 @@ import {
 } from "firebase/auth";
 import { auth, provider } from "@/lib/Firebase";
 import { useAuthStore, AuthUser } from "@/store/auth/store";
-import { isUserAdmin } from "@/lib/isAdmin";
+import { checkAdminClaims } from "@/lib/isAdmin";
 import axios from "axios";
 
 export const useAuth = () => {
@@ -87,15 +87,22 @@ export const useAuth = () => {
 			try {
 				if (firebaseUser) {
 					// 사용자가 로그인된 상태
+					let isAdmin = false;
+					
+					try {
+						// Custom Claims에서 관리자 권한 확인
+						isAdmin = await checkAdminClaims();
+					} catch (claimsError) {
+						console.warn("Custom Claims 확인 실패:", claimsError);
+						// Claims 확인에 실패해도 로그인은 유지
+					}
+
 					const user: AuthUser = {
 						uid: firebaseUser.uid,
 						email: firebaseUser.email || "",
 						displayName: firebaseUser.displayName,
 						photoURL: firebaseUser.photoURL,
-						isAdmin: isUserAdmin({
-							email: firebaseUser.email || "",
-							uid: firebaseUser.uid,
-						}),
+						isAdmin,
 					};
 
 					setAuthData({

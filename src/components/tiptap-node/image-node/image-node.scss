@@ -1,0 +1,115 @@
+.tiptap.ProseMirror {
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  > img:not([data-type="emoji"] img) {
+    // margin: 2rem 0;
+    outline: 0.125rem solid transparent;
+    border-radius: var(--tt-radius-xs, 0.25rem);
+  }
+
+  &.ProseMirror-focused
+    img:not([data-type="emoji"] img).ProseMirror-selectednode {
+    outline-color: var(--tt-brand-color-500);
+  }
+
+  // Image wrapper styles
+  .image-wrapper {
+    display: flex;
+    margin: 0.5rem 0;
+
+    &.image-align-left {
+      justify-content: flex-start;
+    }
+
+    &.image-align-center {
+      justify-content: center;
+    }
+
+    &.image-align-right {
+      justify-content: flex-end;
+    }
+
+    .image-box {
+      position: relative;
+
+      img {
+        outline: 0.125rem solid transparent;
+        border-radius: var(--tt-radius-xs, 0.25rem);
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .resize-handle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 10px;
+        cursor: ew-resize;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.2s;
+
+        &:hover {
+          opacity: 1;
+        }
+
+        &::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 4px;
+          height: 40px;
+          background-color: var(--tt-brand-color-500);
+          border-radius: 2px;
+        }
+
+        &.resize-handle-left {
+          left: 0;
+          cursor: w-resize;
+
+          &::after {
+            left: 3px;
+          }
+        }
+
+        &.resize-handle-right {
+          right: 0;
+          cursor: e-resize;
+
+          &::after {
+            right: 3px;
+          }
+        }
+      }
+
+      &:hover .resize-handle,
+      &.is-resizing .resize-handle {
+        opacity: 1;
+      }
+    }
+  }
+
+  &.ProseMirror-focused .image-wrapper .image-box.ProseMirror-selectednode img {
+    outline-color: var(--tt-brand-color-500);
+  }
+
+  // Thread image handling
+  .tiptap-thread:has(> img) {
+    margin: 2rem 0;
+
+    img {
+      outline: 0.125rem solid transparent;
+      border-radius: var(--tt-radius-xs, 0.25rem);
+    }
+  }
+
+  .tiptap-thread img {
+    margin: 0;
+  }
+}

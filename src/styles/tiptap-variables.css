@@ -1,0 +1,21 @@
+/* Tiptap CSS Variables */
+:root {
+  /* Colors */
+  --white: #ffffff;
+  --black: #000000;
+  
+  /* Gray Light */
+  --tt-gray-light-a-100: rgba(0, 0, 0, 0.05);
+  --tt-gray-light-a-200: rgba(0, 0, 0, 0.1);
+  --tt-gray-light-a-500: rgba(0, 0, 0, 0.4);
+  --tt-gray-light-a-900: rgba(0, 0, 0, 0.8);
+  
+  /* Gray Dark */
+  --tt-gray-dark-a-100: rgba(255, 255, 255, 0.05);
+  --tt-gray-dark-a-200: rgba(255, 255, 255, 0.1);
+  --tt-gray-dark-a-500: rgba(255, 255, 255, 0.4);
+  --tt-gray-dark-a-900: rgba(255, 255, 255, 0.8);
+  
+  /* Border Radius */
+  --tt-radius-xs: 0.25rem;
+}
