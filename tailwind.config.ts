@@ -11,6 +11,7 @@ const config: Config = {
       animation: {
         'jingle': 'jingle 0.6s ease-in-out',
         'music-bar': 'musicBar 1.2s ease infinite',
+        'fade-in': 'fadeIn 0.5s ease forwards',
       },
       keyframes: {
         jingle: {
@@ -22,6 +23,10 @@ const config: Config = {
           '0%': { height: '4px' },
           '50%': { height: '14px' },
           '100%': { height: '4px' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
         },
       },
       backgroundImage: {
