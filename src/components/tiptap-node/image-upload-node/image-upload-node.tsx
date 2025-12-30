@@ -334,13 +334,49 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
   const { accept, limit, maxSize } = props.node.attrs
   const inputRef = React.useRef<HTMLInputElement>(null)
   const extension = props.extension
+  const filesRef = React.useRef<File[]>([])
+
+  const handleImageInsert = React.useCallback((url: string) => {
+    const pos = props.getPos()
+    const filename = filesRef.current[0]?.name.replace(/\.[^/.]+$/, "") || "unknown"
+
+    console.log("Inserting image:", { url, pos, filename })
+
+    // Replace the upload node with the actual image
+    setTimeout(() => {
+      try {
+        const { tr } = props.editor.state
+        const node = tr.doc.nodeAt(pos)
+
+        console.log("Current node:", node?.type.name)
+
+        // Delete the upload node and insert image at the same position
+        props.editor
+          .chain()
+          .focus()
+          .deleteRange({ from: pos, to: pos + 1 })
+          .insertContentAt(pos, {
+            type: 'image',
+            attrs: { src: url, alt: filename, title: filename }
+          })
+          .run()
+
+        console.log("Image inserted successfully")
+      } catch (error) {
+        console.error("Error inserting image:", error)
+      }
+    }, 100)
+  }, [props])
 
   const uploadOptions: UploadOptions = {
     maxSize,
     limit,
     accept,
     upload: extension.options.upload,
-    onSuccess: extension.options.onSuccess,
+    onSuccess: (url: string) => {
+      extension.options.onSuccess?.(url)
+      handleImageInsert(url)
+    },
     onError: extension.options.onError,
   }
 
@@ -356,24 +392,8 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
   }
 
   const handleUpload = async (files: File[]) => {
-    const url = await uploadFiles(files)
-
-    if (url) {
-      const pos = props.getPos()
-      const filename = files[0]?.name.replace(/\.[^/.]+$/, "") || "unknown"
-
-      props.editor
-        .chain()
-        .focus()
-        .deleteRange({ from: pos, to: pos + 1 })
-        .insertContentAt(pos, [
-          {
-            type: "image",
-            attrs: { src: url, alt: filename, title: filename },
-          },
-        ])
-        .run()
-    }
+    filesRef.current = files
+    await uploadFiles(files)
   }
 
   const handleClick = () => {

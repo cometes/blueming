@@ -31,12 +31,28 @@ export function insertImage(
 ): boolean {
 	if (!editor) return false;
 
+	// If an image or youtube is selected, move cursor to the end of selection before inserting
+	const { from, to } = editor.state.selection;
+	const selectedNode = editor.state.selection.node;
+
+	if (selectedNode && (selectedNode.type.name === 'image' || selectedNode.type.name === 'youtube')) {
+		// Move cursor after the selected node
+		return editor
+			.chain()
+			.focus()
+			.setTextSelection(to)
+			.insertContent([
+				{ type: extensionName },
+			])
+			.run();
+	}
+
 	return editor
 		.chain()
 		.focus()
-		.insertContent({
-			type: extensionName,
-		})
+		.insertContent([
+			{ type: extensionName },
+		])
 		.run();
 }
 

@@ -150,19 +150,51 @@ export const handleImageUpload = async (
     )
   }
 
-  // For demo/testing: Simulate upload progress
-  for (let progress = 0; progress <= 100; progress += 10) {
-    if (abortSignal?.aborted) {
+  try {
+    // 파일명 인코딩
+    const sanitizedFileName = encodeURIComponent(file.name)
+    const processedFile = new File([file], sanitizedFileName, {
+      type: file.type,
+    })
+
+    // FormData 생성
+    const formData = new FormData()
+    formData.append("file", processedFile)
+
+    // Progress 시뮬레이션 (실제 XHR progress는 복잡하므로 간단히 구현)
+    onProgress?.({ progress: 30 })
+
+    // 서버에 업로드
+    const response = await fetch(
+      "https://api-w5buphcleq-du.a.run.app/images/uploadImage",
+      {
+        method: "POST",
+        body: formData,
+        signal: abortSignal,
+      }
+    )
+
+    onProgress?.({ progress: 70 })
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    if (!data.file?.url) {
+      throw new Error("서버에서 올바른 응답을 받지 못했습니다.")
+    }
+
+    onProgress?.({ progress: 100 })
+
+    return data.file.url
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
       throw new Error("Upload cancelled")
     }
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    onProgress?.({ progress })
+    throw error
   }
-
-  return "/images/placeholder-image.png"
-
-  // Uncomment for production use:
-  // return convertFileToBase64(file, abortSignal);
 }
 
 /**

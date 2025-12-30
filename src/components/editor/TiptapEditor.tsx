@@ -8,17 +8,20 @@ import { ListItem } from "@tiptap/extension-list-item";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
 import { FontFamily } from "@tiptap/extension-font-family";
+import { FontSize } from "@/components/tiptap-extension/font-size";
 import { Highlight } from "@tiptap/extension-highlight";
 import { Underline } from "@tiptap/extension-underline";
 import { Superscript } from "@tiptap/extension-superscript";
 import { Subscript } from "@tiptap/extension-subscript";
 import { TextAlign } from "@tiptap/extension-text-align";
-import { Youtube } from "@tiptap/extension-youtube";
 import { TaskList } from "@tiptap/extension-task-list";
 import { TaskItem } from "@tiptap/extension-task-item";
 import { Link } from "@tiptap/extension-link";
-import { Image } from "@tiptap/extension-image";
+import { Placeholder } from "@tiptap/extension-placeholder";
+import { Dropcursor } from "@tiptap/extension-dropcursor";
+import { CustomImage } from "@/components/tiptap-extension/custom-image";
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node";
+import { CustomYoutubeNode } from "@/components/tiptap-node/youtube-node/youtube-node";
 import { MAX_FILE_SIZE, handleImageUpload } from "@/lib/tiptap-utils";
 
 import "@/styles/tiptap-variables.css";
@@ -27,14 +30,23 @@ import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
 import "@/components/tiptap-node/code-block-node/code-block-node.scss";
 import "@/components/tiptap-node/image-node/image-node.scss";
 import "@/components/tiptap-node/image-upload-node/image-upload-node.scss";
+import "@/components/tiptap-node/youtube-node/youtube-node.scss";
 
 export const extensions = [
 	StarterKit.configure({
 		bulletList: false,
 		orderedList: false,
 		listItem: false,
+		dropcursor: false,
+	}),
+	Dropcursor.configure({
+		width: 2,
+		color: '#3b82f6',
 	}),
 	Link.configure({ openOnClick: false }),
+	Placeholder.configure({
+		placeholder: "내용을 입력해주세요",
+	}),
 	BulletList,
 	OrderedList,
 	ListItem,
@@ -45,16 +57,14 @@ export const extensions = [
 	FontFamily.configure({
 		types: ["textStyle"],
 	}),
+	FontSize.configure({
+		types: ["textStyle"],
+	}),
 	Highlight.configure({ multicolor: true }),
 	Underline,
 	Superscript,
 	Subscript,
 	TextAlign.configure({ types: ["heading", "paragraph"] }),
-	Youtube.configure({
-		inline: false,
-		width: 640,
-		height: 480,
-	}),
 	TaskList.configure({
 		HTMLAttributes: {
 			class: "task-list",
@@ -66,13 +76,15 @@ export const extensions = [
 			class: "task-item",
 		},
 	}),
-	Image,
+	CustomYoutubeNode,
+	CustomImage,
 	ImageUploadNode.configure({
 		accept: "image/*",
 		maxSize: MAX_FILE_SIZE,
 		limit: 3,
 		upload: handleImageUpload,
 		onError: (error) => console.error("Upload failed:", error),
+		onSuccess: (url) => console.log("Upload success:", url),
 	}),
 ];
 

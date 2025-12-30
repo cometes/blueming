@@ -61,6 +61,8 @@ export const ImageUploadNode = Node.create<ImageUploadNodeOptions>({
 
   atom: true,
 
+  isolating: true,
+
   addOptions() {
     return {
       accept: "image/*",

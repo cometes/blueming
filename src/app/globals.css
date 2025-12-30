@@ -436,6 +436,51 @@ ul[data-slate-node="element"][style*="text-align: right"]
 	direction: ltr;
 }
 
+/* Tiptap Image 스타일 - 드래그 차단, 리사이징/align 허용 */
+.tiptap-image-resizable {
+	cursor: default !important;
+	-webkit-user-drag: none !important;
+	user-select: none !important;
+}
+
+/* 이미지 요소 자체는 드래그 차단 */
+.tiptap-image-resizable img {
+	-webkit-user-drag: none !important;
+	user-drag: none !important;
+	pointer-events: none !important;
+}
+
+/* 리사이즈 핸들과 컨트롤 버튼은 상호작용 가능 */
+.tiptap-image-resizable .resize-trigger,
+.tiptap-image-resizable button,
+.tiptap-image-resizable [class*="align"],
+.tiptap-image-resizable [class*="control"] {
+	pointer-events: auto !important;
+}
+
+/* Tiptap Editor 기본 스타일 */
+.tiptap.ProseMirror {
+	font-size: 16px;
+	line-height: 1.6;
+}
+
+/* Tiptap Toolbar 버튼 아이콘 색상 */
+.tiptap-button {
+	--tt-button-default-icon-color: var(--color-main) !important;
+	--tt-button-hover-icon-color: var(--color-main) !important;
+	--tt-button-active-icon-color: var(--color-main) !important;
+	--tt-button-hover-bg-color: var(--color-sub) !important;
+}
+
+/* ProseMirror 드래그 가능 요소 */
+.ProseMirror [data-drag-handle] {
+	cursor: grab;
+}
+
+.ProseMirror [data-drag-handle]:active {
+	cursor: grabbing;
+}
+
 /* Slate Editor Quote 스타일 */
 blockquote[data-slate-node="element"] {
 	padding-left: 2rem;
