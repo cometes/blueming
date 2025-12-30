@@ -63,15 +63,47 @@ export function unsetFontSize(editor: Editor | null): boolean {
     .run()
 }
 
-export function getCurrentFontSize(editor: Editor | null): number | null {
+export function getCurrentFontSize(editor: Editor | null): number | null | "mixed" {
   if (!editor) return null
 
-  const { fontSize } = editor.getAttributes("textStyle")
-  if (!fontSize) return null
-  
-  // "16px" → 16으로 변환
-  const sizeMatch = fontSize.match(/^(\d+)px$/)
-  return sizeMatch ? parseInt(sizeMatch[1], 10) : null
+  const { from, to } = editor.state.selection
+
+  // 선택 영역이 없으면 현재 커서 위치의 속성 반환
+  if (from === to) {
+    const { fontSize } = editor.getAttributes("textStyle")
+    if (!fontSize) return 16 // 기본값 16px
+
+    const sizeMatch = fontSize.match(/^(\d+)px$/)
+    return sizeMatch ? parseInt(sizeMatch[1], 10) : 16
+  }
+
+  // 선택 영역의 모든 폰트 크기 수집
+  const fontSizes = new Set<string>()
+
+  editor.state.doc.nodesBetween(from, to, (node) => {
+    if (node.isText && node.marks.length > 0) {
+      const textStyleMark = node.marks.find((mark) => mark.type.name === "textStyle")
+      if (textStyleMark?.attrs.fontSize) {
+        fontSizes.add(textStyleMark.attrs.fontSize)
+      } else {
+        fontSizes.add("16px") // 기본값
+      }
+    } else if (node.isText) {
+      fontSizes.add("16px") // 마크 없는 텍스트는 기본값
+    }
+  })
+
+  // 크기가 혼합되어 있으면 "mixed" 반환
+  if (fontSizes.size > 1) return "mixed"
+
+  // 단일 크기면 해당 값 반환
+  if (fontSizes.size === 1) {
+    const fontSize = Array.from(fontSizes)[0]
+    const sizeMatch = fontSize.match(/^(\d+)px$/)
+    return sizeMatch ? parseInt(sizeMatch[1], 10) : 16
+  }
+
+  return 16 // 기본값
 }
 
 export function FontSizeInput({
@@ -113,7 +145,13 @@ export function FontSizeInput({
   // 현재 폰트 크기가 변경되면 입력값 업데이트 (포커스 중이 아닐 때만)
   React.useEffect(() => {
     if (!isFocused) {
-      setInputValue(currentFontSize ? currentFontSize.toString() : "")
+      if (currentFontSize === "mixed") {
+        setInputValue("") // 혼합된 크기는 빈칸
+      } else if (currentFontSize) {
+        setInputValue(currentFontSize.toString())
+      } else {
+        setInputValue("16") // 기본값
+      }
     }
   }, [currentFontSize, isFocused])
 
@@ -181,7 +219,7 @@ export function FontSizeInput({
         onFocus={handleFocus}
         onBlur={handleBlur}
         disabled={isDisabled}
-        placeholder="크기"
+        placeholder="16"
         className="w-12 px-1 py-1 text-sm text-center border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
         aria-label="Font size"
         title="폰트 크기 (12-56px)"

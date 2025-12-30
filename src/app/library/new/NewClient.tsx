@@ -10,7 +10,6 @@ import { Separator } from "@/components/ui/separator";
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
 import { extensions } from "@/components/editor/TiptapEditor";
 import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
-
 export default function LibararyNewClient() {
 	const { onClickMoveToPage } = useMoveToPage();
 	const [subOpen, setSubOpen] = React.useState(false);
@@ -20,7 +19,7 @@ export default function LibararyNewClient() {
 
 	const editor = useEditor({
 		extensions: extensions,
-		content: "<p>내용을 입력해주세요</p>",
+		content: "",
 		onUpdate: ({ editor }) => {
 			setContent(editor.getHTML());
 		},

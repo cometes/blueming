@@ -3,7 +3,7 @@
   --link-text-color: var(--tt-brand-color-500);
   --separator-color: var(--tt-gray-light-a-200);
   --thread-text: var(--tt-gray-light-900);
-  --placeholder-color: var(--tt-gray-light-a-400);
+  --placeholder-color: var(--color-sub-text);
 
   // Mathematics variables
   --tiptap-mathematics-bg-color: var(--tt-gray-light-a-200);
@@ -14,7 +14,7 @@
     --link-text-color: var(--tt-brand-color-400);
     --separator-color: var(--tt-gray-dark-a-200);
     --thread-text: var(--tt-gray-dark-900);
-    --placeholder-color: var(--tt-gray-dark-a-400);
+    --placeholder-color: var(--color-sub-text);
 
     --tiptap-mathematics-bg-color: var(--tt-gray-dark-a-200);
     --tiptap-mathematics-border-color: var(--tt-brand-color-400);
@@ -34,7 +34,7 @@
     font-size: 1rem;
     line-height: 1.6;
     font-weight: normal;
-    margin-top: 20px;
+    // margin-top: 20px;
   }
 
   // Selection styles

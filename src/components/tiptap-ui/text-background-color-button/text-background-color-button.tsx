@@ -5,6 +5,7 @@ import { type Editor } from "@tiptap/react"
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
+import { useSettings } from "@/contexts/SettingsContext"
 
 // --- Icons ---
 import { BackgroundColorIcon } from "@/components/tiptap-icons/background-color-icon"
@@ -103,7 +104,12 @@ export function TextBackgroundColorButton({
   ...buttonProps
 }: TextBackgroundColorButtonProps) {
   const editor = useTiptapEditor(providedEditor)
+  const { general } = useSettings()
+  const mainFontColor = general?.design?.font?.mainFontColor || "#000000"
   const [isOpen, setIsOpen] = React.useState(false)
+  const [customColor, setCustomColor] = React.useState("")
+  const popupRef = React.useRef<HTMLDivElement>(null)
+  const buttonRef = React.useRef<HTMLButtonElement>(null)
 
   const highlightAvailable = React.useMemo(
     () => checkHighlightExtension(editor),
@@ -111,6 +117,38 @@ export function TextBackgroundColorButton({
   )
 
   const currentColor = getCurrentBackgroundColor(editor)
+
+  // 팝업 위치 계산
+  const [popupPosition, setPopupPosition] = React.useState<{
+    top: number
+    left: number
+  } | null>(null)
+
+  React.useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setPopupPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+      })
+    }
+  }, [isOpen])
+
+  // 외부 클릭 시 팝업 닫기
+  React.useEffect(() => {
+    if (!isOpen) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isOpen])
 
   const canToggle = React.useCallback((): boolean => {
     if (!editor || !highlightAvailable) return false
@@ -149,11 +187,14 @@ export function TextBackgroundColorButton({
 
   const handleButtonClick = React.useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
-      onClick?.(e)
-      
-      if (!e.defaultPrevented && !isDisabled) {
+      e.preventDefault()
+      e.stopPropagation()
+
+      if (!isDisabled) {
         setIsOpen(!isOpen)
       }
+
+      onClick?.(e)
     },
     [onClick, isDisabled, isOpen]
   )
@@ -165,6 +206,7 @@ export function TextBackgroundColorButton({
   return (
     <div className="relative">
       <Button
+        ref={buttonRef}
         type="button"
         className={className.trim()}
         disabled={isDisabled}
@@ -182,46 +224,86 @@ export function TextBackgroundColorButton({
         {children || (
           <div className="relative">
             <BackgroundColorIcon className="tiptap-button-icon" />
-            <div 
+            <div
               className="absolute bottom-0 left-0 right-0 h-1 rounded-sm"
-              style={{ backgroundColor: currentColor || "#FFFF00" }}
+              style={{ backgroundColor: currentColor || mainFontColor }}
             />
           </div>
         )}
       </Button>
 
-      {isOpen && (
-        <div className="absolute top-full left-0 mt-1 p-2 bg-white border border-gray-300 rounded-lg shadow-lg z-50">
-          <div className="grid grid-cols-6 gap-1 mb-2">
-            {defaultBackgroundColors.map((color) => (
-              <button
-                key={color}
-                type="button"
-                className="w-6 h-6 rounded border border-gray-300 hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                style={{ backgroundColor: color }}
-                onClick={() => handleColorSelect(color)}
-                aria-label={`Set background color to ${color}`}
-              />
-            ))}
-          </div>
-          
-          <div className="flex gap-2">
-            <input
-              type="color"
-              className="w-8 h-6 border border-gray-300 rounded cursor-pointer"
-              onChange={(e) => handleColorSelect(e.target.value)}
-              aria-label="Custom background color"
-            />
-            
+      {isOpen && popupPosition && (
+        <div
+          ref={popupRef}
+          className="fixed p-3 bg-white border border-gray-300 rounded-lg shadow-xl z-[9999] min-w-[240px]"
+          style={{
+            top: `${popupPosition.top}px`,
+            left: `${popupPosition.left}px`,
+            boxShadow: '0 10px 25px rgba(0,0,0,0.3)'
+          }}
+        >
+          <div className="space-y-3">
+            {/* Preset colors */}
+            <div>
+              <div className="text-xs text-gray-600 mb-1">Quick colors</div>
+              <div className="grid grid-cols-6 gap-1">
+                {defaultBackgroundColors.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    className="w-6 h-6 rounded border border-gray-300 hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ backgroundColor: color }}
+                    onClick={() => handleColorSelect(color)}
+                    aria-label={`Set background color to ${color}`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Color picker */}
+            <div>
+              <div className="text-xs text-gray-600 mb-1">Custom color</div>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="color"
+                  value={customColor || currentColor || "#FFFF00"}
+                  className="w-10 h-8 border border-gray-300 rounded cursor-pointer"
+                  onChange={(e) => {
+                    setCustomColor(e.target.value)
+                    handleColorSelect(e.target.value)
+                  }}
+                  aria-label="Custom background color picker"
+                />
+                <input
+                  type="text"
+                  value={customColor || currentColor || ""}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setCustomColor(value)
+                    // Validate hex color
+                    if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+                      handleColorSelect(value)
+                    }
+                  }}
+                  placeholder="#FFFF00"
+                  className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  aria-label="HEX color code"
+                />
+              </div>
+            </div>
+
+            {/* Clear button */}
             {currentColor && (
-              <Button
-                type="button"
-                data-style="ghost"
-                onClick={handleClearColor}
-                className="text-xs px-2 py-1"
-              >
-                Clear
-              </Button>
+              <div className="pt-2 border-t border-gray-200">
+                <Button
+                  type="button"
+                  data-style="ghost"
+                  onClick={handleClearColor}
+                  className="text-xs px-2 py-1 w-full"
+                >
+                  Clear color
+                </Button>
+              </div>
             )}
           </div>
         </div>
