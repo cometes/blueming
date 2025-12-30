@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSettings } from "@/contexts/SettingsContext";
 import { cn } from "@/lib/utils";
 import WidgetMenu from "../widgets/WidgetMenu";
+import LoginButton from "../common/LoginButton";
 
 interface LayoutProps {
 	children: React.ReactNode;
@@ -56,11 +57,12 @@ export default function Layout({ children }: LayoutProps) {
 
 	return (
 		<>
-			{!shouldHideHeader && (
+			<LoginButton />
+			{/* {!shouldHideHeader && (
 				<header
 					className={cn(
 						"flex justify-between items-center px-6 py-0 w-full h-12",
-						"fixed top-0 left-0 border-b border-blue-400 z-50",
+						"fixed top-0 left-0 border-b border-card-bg z-50",
 						"transition-transform ease-in-out duration-300 backdrop-blur-sm",
 						isHeaderVisible ? "translate-y-0" : "-translate-y-full"
 					)}
@@ -69,12 +71,12 @@ export default function Layout({ children }: LayoutProps) {
 						onClick={() => {
 							router.push("/");
 						}}
-						className="text-lg cursor-pointer"
+						className="text-lg cursor-pointer font-title font-bold tracking-normal"
 					>
 						{general.general.logoText}
 					</h1>
 				</header>
-			)}
+			)} */}
 
 			<div
 				className={cn(
@@ -83,7 +85,7 @@ export default function Layout({ children }: LayoutProps) {
 				)}
 			>
 				<div className="w-full h-full flex items-start justify-center gap-6">
-					{!shouldHideMenu && <WidgetMenu />}
+					{/* {!shouldHideMenu && <WidgetMenu />} */}
 					{children}
 				</div>
 			</div>

@@ -1,0 +1,126 @@
+.tiptap.ProseMirror {
+  // YouTube wrapper styles (similar to image-wrapper)
+  .youtube-wrapper {
+    display: flex;
+    margin: 0.5rem 0;
+
+    &.youtube-align-left {
+      justify-content: flex-start;
+    }
+
+    &.youtube-align-center {
+      justify-content: center;
+    }
+
+    &.youtube-align-right {
+      justify-content: flex-end;
+    }
+
+    .youtube-box {
+      position: relative;
+
+      .youtube-thumbnail-container {
+        position: relative;
+        display: inline-block;
+
+        img.youtube-thumbnail-image {
+          max-width: 100%;
+          height: auto;
+          display: block;
+          outline: 0.125rem solid transparent;
+          border-radius: var(--tt-radius-xs, 0.25rem);
+          cursor: default;
+          user-select: none;
+          -webkit-user-drag: none;
+
+          &:hover {
+            outline-color: var(--tt-gray-light-a-200);
+          }
+        }
+
+        .youtube-play-icon-overlay {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 68px;
+          height: 48px;
+          background-color: rgba(255, 0, 0, 0.8);
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          pointer-events: none;
+          z-index: 1;
+        }
+      }
+
+      .resize-handle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 10px;
+        cursor: ew-resize;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.2s;
+
+        &:hover {
+          opacity: 1;
+        }
+
+        &::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 4px;
+          height: 40px;
+          background-color: var(--tt-brand-color-500);
+          border-radius: 2px;
+        }
+
+        &.resize-handle-left {
+          left: 0;
+          cursor: w-resize;
+
+          &::after {
+            left: 3px;
+          }
+        }
+
+        &.resize-handle-right {
+          right: 0;
+          cursor: e-resize;
+
+          &::after {
+            right: 3px;
+          }
+        }
+      }
+
+      &:hover .resize-handle,
+      &.is-resizing .resize-handle {
+        opacity: 1;
+      }
+    }
+  }
+
+  &.ProseMirror-focused .youtube-wrapper .youtube-box.ProseMirror-selectednode img.youtube-thumbnail-image {
+    outline-color: var(--tt-brand-color-500);
+  }
+
+  // 실제 렌더링된 HTML에서 iframe으로 표시
+  div[data-youtube-video] {
+    margin: 2rem 0;
+
+    > iframe {
+      max-width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9;
+      border: none;
+      border-radius: var(--tt-radius-md, 0.5rem);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+}

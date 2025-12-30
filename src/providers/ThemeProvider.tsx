@@ -46,6 +46,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 		root.style.setProperty('--widget-border-color', design.widget.borderColor);
 		root.style.setProperty('--widget-border-radius', `${design.widget.borderRadius}px`);
 		root.style.setProperty('--widget-border-width', `${design.widget.borderWidth}px`);
+		root.style.setProperty('--widget-border-style', 'solid');
 		root.style.setProperty('--widget-blur', `${design.widget.blur}px`);
 		
 		// 카드 디자인 변수
@@ -53,6 +54,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 		root.style.setProperty('--card-border-color', design.card.borderColor);
 		root.style.setProperty('--card-border-active', design.card.borderActiveColor);
 		root.style.setProperty('--card-border-radius', `${design.card.borderRadius}px`);
+		root.style.setProperty('--card-border-style', 'solid');
 		root.style.setProperty('--card-shadow', design.card.boxShadow);
 		root.style.setProperty('--card-translate-y', `${design.card.translateY}px`);
 	};

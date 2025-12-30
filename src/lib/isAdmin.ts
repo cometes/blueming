@@ -1,46 +1,57 @@
-// 관리자 이메일 목록
-// 이 목록에 포함된 이메일 주소는 관리자 권한을 가집니다.
-export const ADMIN_EMAILS = [
-	// 예시: "admin@example.com",
-	// 실제 관리자 이메일을 여기에 추가하세요
-];
-
-// 관리자 UID 목록 (선택사항)
-// Firebase UID로 관리자를 식별하려는 경우 사용
-export const ADMIN_UIDS = [
-	// 예시: "firebase-uid-string",
-	// 실제 관리자 UID를 여기에 추가하세요
-	"PFkvrOsHOVRFZgShECX9KKvEQ2p2",
-];
+import { getAuth, getIdTokenResult } from 'firebase/auth';
 
 /**
- * 사용자가 관리자인지 확인하는 함수
- * @param email 사용자 이메일
- * @param uid 사용자 UID (선택사항)
- * @returns 관리자 여부
+ * Firebase Custom Claims를 사용하여 관리자 여부를 확인하는 함수
+ * @returns 관리자 여부 (Promise)
  */
-export const isAdmin = (email: string, uid?: string): boolean => {
-	// 이메일로 관리자 확인
-	if (ADMIN_EMAILS.includes(email)) {
-		return true;
-	}
+export const checkAdminClaims = async (): Promise<boolean> => {
+	try {
+		const auth = getAuth();
+		const currentUser = auth.currentUser;
+		
+		if (!currentUser) {
+			return false;
+		}
 
-	// UID로 관리자 확인 (UID가 제공된 경우)
-	if (uid && ADMIN_UIDS.includes(uid)) {
-		return true;
+		// ID 토큰에서 Custom Claims 확인
+		const tokenResult = await getIdTokenResult(currentUser);
+		return !!tokenResult.claims.isAdmin;
+	} catch (error) {
+		console.error('관리자 권한 확인 중 오류:', error);
+		return false;
 	}
-
-	return false;
 };
 
 /**
- * AuthUser 객체로부터 관리자 여부를 확인하는 함수
+ * AuthUser 객체의 isAdmin 속성으로 관리자 여부를 확인하는 함수
  * @param user AuthUser 객체
  * @returns 관리자 여부
  */
 export const isUserAdmin = (
-	user: { email: string; uid: string } | null
+	user: { isAdmin?: boolean } | null
 ): boolean => {
 	if (!user) return false;
-	return isAdmin(user.email, user.uid);
+	return !!user.isAdmin;
+};
+
+/**
+ * 토큰 새로고침을 통해 최신 Custom Claims를 가져오는 함수
+ * @returns 새로운 관리자 상태
+ */
+export const refreshAdminClaims = async (): Promise<boolean> => {
+	try {
+		const auth = getAuth();
+		const currentUser = auth.currentUser;
+		
+		if (!currentUser) {
+			return false;
+		}
+
+		// 토큰 강제 새로고침하여 최신 claims 가져오기
+		const tokenResult = await getIdTokenResult(currentUser, true);
+		return !!tokenResult.claims.isAdmin;
+	} catch (error) {
+		console.error('관리자 권한 새로고침 중 오류:', error);
+		return false;
+	}
 };
