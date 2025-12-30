@@ -14,8 +14,10 @@ import { Youtube } from "@tiptap/extension-youtube";
 import { Link } from "@tiptap/extension-link";
 import { FontSize } from "@/components/tiptap-extension/font-size";
 
+import type { Editor } from "@tiptap/react";
+
 interface TiptapProps {
-	onEditorReady?: (editor: any) => void;
+	onEditorReady?: (editor: Editor) => void;
 }
 
 const Tiptap = ({ onEditorReady }: TiptapProps) => {
@@ -48,6 +50,7 @@ const Tiptap = ({ onEditorReady }: TiptapProps) => {
 			}),
 		],
 		content: "<p>내용을 입력해주세요</p>",
+		immediatelyRender: false,
 		editorProps: {
 			attributes: {
 				class: "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[200px] p-4",

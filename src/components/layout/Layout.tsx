@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { useSettings } from "@/contexts/SettingsContext";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import WidgetMenu from "../widgets/WidgetMenu";
 import LoginButton from "../common/LoginButton";
 
 interface LayoutProps {
@@ -13,38 +11,13 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
 	const pathname = usePathname();
-	const router = useRouter();
-	const { general } = useSettings();
 
 	const isMainPage = pathname === "/";
-	const hideHeaderPages = ["/", "/library/new"];
-	const hideMenuPages = ["/setting", "/library/*"];
-	const shouldHideHeader = hideHeaderPages.includes(pathname);
-
-	const shouldHideMenu = hideMenuPages.some((pattern) => {
-		if (pattern.endsWith("/*")) {
-			// 와일드카드 패턴: /library/* -> /library의 하위 페이지만 (기본 페이지 제외)
-			const basePath = pattern.slice(0, -2); // /* 제거
-			return pathname.startsWith(basePath) && pathname !== basePath;
-		} else {
-			// 정확한 경로 매칭
-			return pathname === pattern;
-		}
-	});
-
-	const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 	const [lastScrollY, setLastScrollY] = useState(0);
 
 	useEffect(() => {
 		const handleScroll = () => {
 			const currentScrollY = window.scrollY;
-
-			if (currentScrollY > lastScrollY && currentScrollY > 50) {
-				setIsHeaderVisible(false);
-			} else {
-				setIsHeaderVisible(true);
-			}
-
 			setLastScrollY(currentScrollY);
 		};
 

@@ -1,12 +1,13 @@
 import { fetchLibraryDetail } from "@/queries/fetch/fetchLibrary";
 import DetailClient from "./DetailClient";
 
-export default async function LibararyDetailPage({ params }) {
+export default async function LibararyDetailPage({ params }: { params: Promise<{ id: string }> }) {
 	try {
-		const { data: detailData } = await fetchLibraryDetail(params.id);
+		const { id } = await params;
+		const { data: detailData } = await fetchLibraryDetail(id);
 
 		return <DetailClient detailData={detailData} />;
-	} catch (error) {
+	} catch {
 		return <DetailClient detailData={[]} />;
 	}
 }

@@ -10,7 +10,7 @@ export default async function LibararyNewPage() {
 		const { data: seriesData } = await fetchLibrarySeries();
 
 		return <LibararyNewClient seriesData={seriesData} tagsData={tagsData} />;
-	} catch (error) {
+	} catch {
 		return <LibararyNewClient seriesData={[]} tagsData={[]} />;
 	}
 }

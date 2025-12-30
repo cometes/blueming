@@ -15,15 +15,9 @@ export const useMoveDataToPage = () => {
 	const router = useRouter();
 
 	const onClickMoveDataToPage = (path: string, data: string) => () => {
-		router.push(
-			{
-				pathname: path,
-				query: {
-					data,
-				},
-			},
-			path
-		);
+		const url = new URL(path, window.location.origin);
+		url.searchParams.set('data', data);
+		router.push(url.pathname + url.search);
 	};
 
 	return {

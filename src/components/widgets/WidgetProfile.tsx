@@ -17,15 +17,16 @@ export default function WidgetProfile() {
 	const { main } = useSettings();
 	const profileData: ProfileData | undefined = main?.profile;
 
+	// useMemo는 조건문보다 먼저 호출되어야 함 (React Hooks 규칙)
+	const introductionHtml = useMemo(
+		() => profileData?.introduction ? renderRichText(profileData.introduction) : "",
+		[profileData?.introduction]
+	);
+
 	// 프로필 데이터가 없으면 빈 컴포넌트 반환
 	if (!profileData) {
 		return <div className="widget-wrapper" />;
 	}
-
-	const introductionHtml = useMemo(
-		() => renderRichText(profileData.introduction),
-		[profileData.introduction]
-	);
 
 	const hasIntroduction =
 		introductionHtml && !isRichTextEmpty(introductionHtml ?? "");
