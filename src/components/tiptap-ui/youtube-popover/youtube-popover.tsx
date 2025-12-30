@@ -98,11 +98,24 @@ export const useYoutubeHandler = (props: YoutubeHandlerProps) => {
     const normalizedUrl = normalizeYoutubeUrl(url)
     if (!normalizedUrl) return
 
-    editor.commands.setYoutubeVideo({
-      src: normalizedUrl,
-      width: 640,
-      height: 480
-    })
+    // If an image or youtube is selected, move cursor to the end of selection before inserting
+    const { to } = editor.state.selection
+    const selectedNode = editor.state.selection.node
+
+    if (selectedNode && (selectedNode.type.name === 'image' || selectedNode.type.name === 'youtube')) {
+      // Move cursor after the selected node
+      editor.chain().focus().setTextSelection(to).setYoutubeVideo({
+        src: normalizedUrl,
+        width: 640,
+        height: 480
+      }).run()
+    } else {
+      editor.commands.setYoutubeVideo({
+        src: normalizedUrl,
+        width: 640,
+        height: 480
+      })
+    }
 
     setUrl(null)
     onSetYoutube?.()

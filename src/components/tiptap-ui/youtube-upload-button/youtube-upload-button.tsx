@@ -32,6 +32,24 @@ export function insertYoutubeVideo(
   if (!editor) return false
 
   try {
+    // If an image or youtube is selected, move cursor to the end of selection before inserting
+    const { to } = editor.state.selection
+    const selectedNode = editor.state.selection.node
+
+    if (selectedNode && (selectedNode.type.name === 'image' || selectedNode.type.name === 'youtube')) {
+      // Move cursor after the selected node
+      return editor
+        .chain()
+        .focus()
+        .setTextSelection(to)
+        .setYoutubeVideo({
+          src,
+          width: width || 640,
+          height: height || 480,
+        })
+        .run()
+    }
+
     return editor
       .chain()
       .focus()

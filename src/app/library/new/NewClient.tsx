@@ -10,12 +10,32 @@ import { Separator } from "@/components/ui/separator";
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
 import { extensions } from "@/components/editor/TiptapEditor";
 import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
-export default function LibararyNewClient() {
+import CreateModal, { CreateMetaValue } from "@/components/modal/createModal";
+
+interface LibraryNewClientProps {
+	seriesData: any[];
+	tagsData: any[];
+}
+
+export default function LibararyNewClient({
+	seriesData = [],
+	tagsData = [],
+}: LibraryNewClientProps) {
 	const { onClickMoveToPage } = useMoveToPage();
 	const [subOpen, setSubOpen] = React.useState(false);
 	const [title, setTitle] = React.useState("");
 	const [subtitle, setSubtitle] = React.useState("");
 	const [content, setContent] = React.useState("");
+	const [metaOpen, setMetaOpen] = React.useState(false);
+	const [metaValue, setMetaValue] = React.useState<CreateMetaValue>({
+		tags: [],
+		series: "",
+		slug: "",
+		summary: "",
+		visibility: "all",
+		password: "",
+		thumbnail: "",
+	});
 
 	const editor = useEditor({
 		extensions: extensions,
@@ -30,13 +50,55 @@ export default function LibararyNewClient() {
 		},
 	});
 
-	const handleSubmit = () => {
-		console.log({
+	const handleOpenMeta = () => {
+		const plainText = editor?.getText().trim() ?? "";
+
+		if (!title.trim()) {
+			alert("제목을 입력해 주세요.");
+			return;
+		}
+
+		if (!plainText) {
+			alert("내용을 입력해 주세요.");
+			return;
+		}
+
+		setMetaValue((prev) => ({ ...prev, title }));
+		setMetaOpen(true);
+	};
+
+	const handleConfirmSubmit = () => {
+		const payload = {
 			title,
 			subtitle,
 			content,
-		});
-		// TODO: 실제 제출 로직 구현
+			slug: metaValue.slug,
+			summary: metaValue.summary,
+			tags: metaValue.tags,
+			series: metaValue.series,
+			visibility: metaValue.visibility,
+			password:
+				metaValue.visibility === "password" ? metaValue.password : undefined,
+			thumbnail: metaValue.thumbnail,
+		};
+
+		console.log("📝 게시글 제출 데이터:", payload);
+		console.log("📊 상세 정보:");
+		console.log("  - 제목:", payload.title);
+		console.log("  - 부제목:", payload.subtitle || "(없음)");
+		console.log("  - 내용 길이:", payload.content.length, "자");
+		console.log("  - 커스텀 Slug:", payload.slug || "(자동 생성)");
+		console.log("  - 요약:", payload.summary || "(없음)");
+		console.log(
+			"  - 태그:",
+			payload.tags.length > 0 ? payload.tags.join(", ") : "(없음)"
+		);
+		console.log("  - 시리즈:", payload.series || "(없음)");
+		console.log("  - 공개 설정:", payload.visibility);
+		console.log("  - 비밀번호:", payload.password ? "******" : "(없음)");
+		console.log("  - 썸네일:", payload.thumbnail ? "있음" : "(없음)");
+
+		setMetaOpen(false);
 	};
 
 	return (
@@ -48,7 +110,7 @@ export default function LibararyNewClient() {
 						<Button onClick={onClickMoveToPage("/library/")}>뒤로가기</Button>
 						{/* Tiptap Toolbar */}
 						<TiptapToolbar editor={editor} />
-						<Button onClick={handleSubmit}>글쓰기</Button>
+						<Button onClick={handleOpenMeta}>글쓰기</Button>
 					</div>
 				</header>
 				{/* Body */}
@@ -97,6 +159,15 @@ export default function LibararyNewClient() {
 					</div>
 				</div>
 			</div>
+			<CreateModal
+				open={metaOpen}
+				onOpenChange={setMetaOpen}
+				tagsOptions={tagsData}
+				seriesOptions={seriesData}
+				value={metaValue}
+				onChange={setMetaValue}
+				onConfirm={handleConfirmSubmit}
+			/>
 		</EditorContext.Provider>
 	);
 }
