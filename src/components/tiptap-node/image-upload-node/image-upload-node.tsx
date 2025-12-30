@@ -340,32 +340,57 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
     const pos = props.getPos()
     const filename = filesRef.current[0]?.name.replace(/\.[^/.]+$/, "") || "unknown"
 
-    console.log("Inserting image:", { url, pos, filename })
+    // Load image to get natural dimensions
+    const img = new Image()
+    img.onload = () => {
+      const naturalWidth = img.naturalWidth
+      const maxWidth = 800 // Maximum width for inserted images
+      const initialWidth = Math.min(naturalWidth, maxWidth)
 
-    // Replace the upload node with the actual image
-    setTimeout(() => {
-      try {
-        const { tr } = props.editor.state
-        const node = tr.doc.nodeAt(pos)
+      // Replace the upload node with the actual image
+      setTimeout(() => {
+        try {
+          props.editor
+            .chain()
+            .focus()
+            .deleteRange({ from: pos, to: pos + 1 })
+            .insertContentAt(pos, {
+              type: 'image',
+              attrs: {
+                src: url,
+                alt: filename,
+                title: filename,
+                width: initialWidth,
+                'data-align': 'left'
+              }
+            })
+            .run()
+        } catch (error) {
+          console.error("Error inserting image:", error)
+        }
+      }, 100)
+    }
 
-        console.log("Current node:", node?.type.name)
+    img.onerror = () => {
+      // Insert without width if image fails to load
+      setTimeout(() => {
+        try {
+          props.editor
+            .chain()
+            .focus()
+            .deleteRange({ from: pos, to: pos + 1 })
+            .insertContentAt(pos, {
+              type: 'image',
+              attrs: { src: url, alt: filename, title: filename, 'data-align': 'left' }
+            })
+            .run()
+        } catch (error) {
+          console.error("Error inserting image:", error)
+        }
+      }, 100)
+    }
 
-        // Delete the upload node and insert image at the same position
-        props.editor
-          .chain()
-          .focus()
-          .deleteRange({ from: pos, to: pos + 1 })
-          .insertContentAt(pos, {
-            type: 'image',
-            attrs: { src: url, alt: filename, title: filename }
-          })
-          .run()
-
-        console.log("Image inserted successfully")
-      } catch (error) {
-        console.error("Error inserting image:", error)
-      }
-    }, 100)
+    img.src = url
   }, [props])
 
   const uploadOptions: UploadOptions = {

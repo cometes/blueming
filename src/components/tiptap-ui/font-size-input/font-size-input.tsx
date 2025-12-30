@@ -115,6 +115,7 @@ export function FontSizeInput({
   const editor = useTiptapEditor(providedEditor)
   const [inputValue, setInputValue] = React.useState("")
   const [isFocused, setIsFocused] = React.useState(false)
+  const previousValueRef = React.useRef<string>("")
 
   const textStyleAvailable = React.useMemo(
     () => checkTextStyleExtension(editor),
@@ -145,41 +146,69 @@ export function FontSizeInput({
   // 현재 폰트 크기가 변경되면 입력값 업데이트 (포커스 중이 아닐 때만)
   React.useEffect(() => {
     if (!isFocused) {
+      let newValue = ""
       if (currentFontSize === "mixed") {
-        setInputValue("") // 혼합된 크기는 빈칸
+        newValue = "" // 혼합된 크기는 빈칸
       } else if (currentFontSize) {
-        setInputValue(currentFontSize.toString())
+        newValue = currentFontSize.toString()
       } else {
-        setInputValue("16") // 기본값
+        newValue = "16" // 기본값
       }
+      setInputValue(newValue)
+      previousValueRef.current = newValue
     }
   }, [currentFontSize, isFocused])
 
   const handleInputChange = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value
+      const prevValue = previousValueRef.current
+
       setInputValue(value)
+      previousValueRef.current = value
+
+      // 스피너 버튼 클릭 감지: 값이 정확히 1 차이나고 유효한 숫자면 즉시 적용
+      const currentNum = parseInt(value, 10)
+      const prevNum = parseInt(prevValue, 10)
+
+      if (!isNaN(currentNum) && !isNaN(prevNum)) {
+        const diff = Math.abs(currentNum - prevNum)
+
+        // 스피너 버튼으로 판단 (정확히 1 차이)
+        if (diff === 1 && editor && !isDisabled) {
+          const clampedValue = Math.max(12, Math.min(56, currentNum))
+          setFontSize(editor, `${clampedValue}px`)
+
+          // 범위를 벗어나면 input 값도 수정
+          if (currentNum !== clampedValue) {
+            setInputValue(clampedValue.toString())
+            previousValueRef.current = clampedValue.toString()
+          }
+        }
+      }
     },
-    []
+    [editor, isDisabled]
   )
 
   const handleApplySize = React.useCallback(() => {
     if (!editor || isDisabled) return
-    
+
     const sizeValue = parseInt(inputValue, 10)
-    
+
     if (inputValue === "" || isNaN(sizeValue)) {
       // 빈 값이면 폰트 크기 제거
       unsetFontSize(editor)
       return
     }
-    
-    if (sizeValue < 12 || sizeValue > 56) {
-      alert("폰트 크기는 12px ~ 56px 사이의 값이어야 합니다.")
-      return
+
+    // 범위를 벗어나면 자동으로 최소값/최대값으로 제한
+    const clampedValue = Math.max(12, Math.min(56, sizeValue))
+    setFontSize(editor, `${clampedValue}px`)
+
+    // 범위를 벗어난 경우 input 값도 수정
+    if (sizeValue !== clampedValue) {
+      setInputValue(clampedValue.toString())
     }
-    
-    setFontSize(editor, `${sizeValue}px`)
   }, [editor, isDisabled, inputValue])
 
   const handleKeyDown = React.useCallback(
@@ -195,7 +224,8 @@ export function FontSizeInput({
 
   const handleFocus = React.useCallback(() => {
     setIsFocused(true)
-  }, [])
+    previousValueRef.current = inputValue
+  }, [inputValue])
 
   const handleBlur = React.useCallback(() => {
     setIsFocused(false)
@@ -219,7 +249,7 @@ export function FontSizeInput({
         onFocus={handleFocus}
         onBlur={handleBlur}
         disabled={isDisabled}
-        placeholder="16"
+        placeholder={currentFontSize === "mixed" ? "" : "16"}
         className="w-12 px-1 py-1 text-sm text-center border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
         aria-label="Font size"
         title="폰트 크기 (12-56px)"

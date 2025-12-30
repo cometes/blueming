@@ -26,6 +26,7 @@
     margin-top: 1.5em;
     margin-bottom: 1.5em;
     padding-left: 1.5em;
+    list-style-position: inside;
 
     &:first-child {
       margin-top: 0;
@@ -40,12 +41,51 @@
       margin-top: 0;
       margin-bottom: 0;
     }
+
+    // 텍스트 정렬에 따라 리스트 아이템 정렬
+    &[style*="text-align: center"],
+    &[style*="text-align:center"] {
+      padding-left: 0;
+      padding-right: 0;
+      text-align: center;
+    }
+
+    &[style*="text-align: right"],
+    &[style*="text-align:right"] {
+      padding-left: 0;
+      padding-right: 1.5em;
+      text-align: right;
+    }
+
+    &[style*="text-align: justify"],
+    &[style*="text-align:justify"] {
+      text-align: justify;
+    }
   }
 
   li {
     p {
       margin-top: 0;
     }
+  }
+
+  // 가운데/오른쪽 정렬시 li를 컨텐츠 크기에 맞춤
+  ol[style*="text-align: center"] > li,
+  ul[style*="text-align: center"]:not([data-type="taskList"]) > li,
+  ol[style*="text-align:center"] > li,
+  ul[style*="text-align:center"]:not([data-type="taskList"]) > li {
+    display: table;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  ol[style*="text-align: right"] > li,
+  ul[style*="text-align: right"]:not([data-type="taskList"]) > li,
+  ol[style*="text-align:right"] > li,
+  ul[style*="text-align:right"]:not([data-type="taskList"]) > li {
+    display: table;
+    margin-left: auto;
+    margin-right: 0;
   }
 
   // Ordered lists
@@ -77,11 +117,33 @@
   // Task lists
   ul[data-type="taskList"] {
     padding-left: 0.25em;
+    list-style-position: outside;
+
+    // 텍스트 정렬에 따라 task list 정렬
+    &[style*="text-align: center"],
+    &[style*="text-align:center"] {
+      padding-left: 0;
+      padding-right: 0;
+
+      li {
+        justify-content: center;
+      }
+    }
+
+    &[style*="text-align: right"],
+    &[style*="text-align:right"] {
+      padding-left: 0;
+      padding-right: 0.25em;
+
+      li {
+        justify-content: flex-end;
+      }
+    }
 
     li {
       display: flex;
       flex-direction: row;
-      align-items: flex-start;
+      align-items: center;
 
       &:not(:has(> p:first-child)) {
         list-style-type: none;
@@ -90,7 +152,7 @@
       &[data-checked="true"] {
         > div > p {
           opacity: 0.5;
-          text-decoration: line-through;
+          // text-decoration: line-through;
         }
 
         > div > p span {

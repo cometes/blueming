@@ -1,7 +1,6 @@
 "use client"
 
 import { Image } from "@tiptap/extension-image"
-import { mergeAttributes, Node } from "@tiptap/core"
 import { ReactNodeViewRenderer } from "@tiptap/react"
 import { ImageNodeView } from "@/components/tiptap-extension/image-node-view"
 
@@ -24,13 +23,16 @@ export const CustomImage = Image.extend({
       },
       width: {
         default: null,
-        parseHTML: element => element.getAttribute('width'),
+        parseHTML: element => {
+          const width = element.getAttribute('width')
+          return width ? parseInt(width, 10) : null
+        },
         renderHTML: attributes => {
           if (!attributes.width) {
             return {}
           }
           return {
-            width: attributes.width,
+            width: String(attributes.width),
           }
         },
       },
@@ -38,7 +40,10 @@ export const CustomImage = Image.extend({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(ImageNodeView)
+    return ReactNodeViewRenderer(ImageNodeView, {
+      // Tiptap 표준 드래그 앤 드롭을 위해 contentDOM을 사용하지 않음
+      contentDOM: null,
+    })
   },
 })
 

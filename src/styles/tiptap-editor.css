@@ -1,0 +1,41 @@
+/* Tiptap Editor Default Styles */
+
+.ProseMirror {
+  /* 기본 폰트 사이즈 16px 설정 */
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.ProseMirror p {
+  /* 기본 문단 스타일 */
+  margin: 0.5rem 0;
+}
+
+.ProseMirror p:first-child {
+  margin-top: 0;
+}
+
+.ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+
+/* TextStyle mark 기본 폰트 사이즈 */
+.ProseMirror span[style*="font-size"] {
+  /* 폰트 사이즈가 명시적으로 설정된 경우 */
+}
+
+/* 디폴트 폰트 사이즈가 없는 텍스트 */
+.ProseMirror p:not([style*="font-size"]) {
+  font-size: 16px;
+}
+
+/* Link Styles */
+.ProseMirror a.tiptap-link {
+  color: #3b82f6;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ProseMirror a.tiptap-link:hover {
+  color: #2563eb;
+}

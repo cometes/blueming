@@ -1,310 +1,326 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { type Editor } from "@tiptap/react"
+import * as React from "react";
+import { type Editor } from "@tiptap/react";
+import { SketchPicker } from "react-color";
+import type { ColorResult } from "react-color";
 
 // --- Hooks ---
-import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
-import { useSettings } from "@/contexts/SettingsContext"
+import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
+import { useSettings } from "@/contexts/SettingsContext";
 
 // --- Icons ---
-import { TextColorIcon } from "@/components/tiptap-icons/text-color-icon"
+import { TextColorIcon } from "@/components/tiptap-icons/text-color-icon";
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap-ui-primitive/button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button";
+import { Button } from "@/components/tiptap-ui-primitive/button";
 
 export interface TextColorButtonProps extends ButtonProps {
-  editor?: Editor | null
-  hideWhenUnavailable?: boolean
+	editor?: Editor | null;
+	hideWhenUnavailable?: boolean;
 }
 
 export const defaultTextColors = [
-  "#000000", // Black
-  "#666666", // Dark Gray
-  "#999999", // Gray
-  "#CCCCCC", // Light Gray
-  "#FFFFFF", // White
-  "#FF0000", // Red
-  "#FF6600", // Orange
-  "#FFCC00", // Yellow
-  "#66CC00", // Green
-  "#00CCCC", // Cyan
-  "#0066CC", // Blue
-  "#6600CC", // Purple
-  "#CC0066", // Pink
-]
+	"#000000", // Black
+	"#666666", // Dark Gray
+	"#999999", // Gray
+	"#CCCCCC", // Light Gray
+	"#FFFFFF", // White
+	"#FF0000", // Red
+	"#FF6600", // Orange
+	"#FFCC00", // Yellow
+	"#66CC00", // Green
+	"#00CCCC", // Cyan
+	"#0066CC", // Blue
+	"#6600CC", // Purple
+	"#CC0066", // Pink
+];
 
 export function checkColorExtension(editor: Editor | null): boolean {
-  if (!editor) return false
+	if (!editor) return false;
 
-  const hasExtension = editor.extensionManager.extensions.some(
-    (extension) => extension.name === "color"
-  )
+	const hasExtension = editor.extensionManager.extensions.some(
+		(extension) => extension.name === "color"
+	);
 
-  if (!hasExtension) {
-    console.warn(
-      "Color extension is not available. " +
-        "Make sure it is included in your editor configuration."
-    )
-  }
+	if (!hasExtension) {
+		console.warn(
+			"Color extension is not available. " +
+				"Make sure it is included in your editor configuration."
+		);
+	}
 
-  return hasExtension
+	return hasExtension;
 }
 
 export function canSetColor(editor: Editor | null): boolean {
-  if (!editor) return false
-  
-  try {
-    return editor.can().setColor("#000000")
-  } catch {
-    return false
-  }
+	if (!editor) return false;
+
+	try {
+		return editor.can().setColor("#000000");
+	} catch {
+		return false;
+	}
 }
 
 export function setTextColor(editor: Editor | null, color: string): boolean {
-  if (!editor) return false
+	if (!editor) return false;
 
-  return editor
-    .chain()
-    .focus()
-    .setColor(color)
-    .run()
+	return editor.chain().focus().setColor(color).run();
 }
 
 export function unsetTextColor(editor: Editor | null): boolean {
-  if (!editor) return false
+	if (!editor) return false;
 
-  return editor
-    .chain()
-    .focus()
-    .unsetColor()
-    .run()
+	return editor.chain().focus().unsetColor().run();
 }
 
 export function getCurrentTextColor(editor: Editor | null): string | null {
-  if (!editor) return null
+	if (!editor) return null;
 
-  const { color } = editor.getAttributes("textStyle")
-  return color || null
+	const { color } = editor.getAttributes("textStyle");
+	return color || null;
 }
 
 export function TextColorButton({
-  editor: providedEditor,
-  hideWhenUnavailable = false,
-  className = "",
-  disabled = false,
-  onClick,
-  children,
-  ...buttonProps
+	editor: providedEditor,
+	hideWhenUnavailable = false,
+	className = "",
+	disabled = false,
+	onClick,
+	children,
+	...buttonProps
 }: TextColorButtonProps) {
-  const editor = useTiptapEditor(providedEditor)
-  const { general } = useSettings()
-  const mainFontColor = general?.design?.font?.mainFontColor || "#000000"
-  const [isOpen, setIsOpen] = React.useState(false)
-  const [customColor, setCustomColor] = React.useState("")
-  const popupRef = React.useRef<HTMLDivElement>(null)
-  const buttonRef = React.useRef<HTMLButtonElement>(null)
+	const editor = useTiptapEditor(providedEditor);
+	const { general } = useSettings();
+	const mainFontColor = general?.design?.font?.mainFontColor || "#000000";
+	const [isOpen, setIsOpen] = React.useState(false);
+	const [pickerColor, setPickerColor] = React.useState("#000000");
+	const popupRef = React.useRef<HTMLDivElement>(null);
+	const buttonRef = React.useRef<HTMLButtonElement>(null);
+	const previousIsOpenRef = React.useRef(false);
 
-  const colorAvailable = React.useMemo(
-    () => checkColorExtension(editor),
-    [editor]
-  )
+	const colorAvailable = React.useMemo(
+		() => checkColorExtension(editor),
+		[editor]
+	);
 
-  const currentColor = getCurrentTextColor(editor)
+	const currentColor = getCurrentTextColor(editor);
 
-  // 팝업 위치 계산
-  const [popupPosition, setPopupPosition] = React.useState<{
-    top: number
-    left: number
-  } | null>(null)
+	// 팝업 위치 계산
+	const [popupPosition, setPopupPosition] = React.useState<{
+		top: number;
+		left: number;
+	} | null>(null);
 
-  React.useEffect(() => {
-    if (isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect()
-      setPopupPosition({
-        top: rect.bottom + 4,
-        left: rect.left,
-      })
-    }
-  }, [isOpen])
+	React.useEffect(() => {
+		if (isOpen && buttonRef.current) {
+			const rect = buttonRef.current.getBoundingClientRect();
+			setPopupPosition({
+				top: rect.bottom + 4,
+				left: rect.left,
+			});
+			// 팝업이 열릴 때 현재 색상으로 초기화
+			if (currentColor) {
+				setPickerColor(currentColor);
+			} else {
+				setPickerColor(mainFontColor);
+			}
+		}
+	}, [isOpen, currentColor, mainFontColor]);
 
-  // 외부 클릭 시 팝업 닫기
-  React.useEffect(() => {
-    if (!isOpen) return
+	// 팝업이 닫힐 때 색상 적용
+	React.useEffect(() => {
+		// 팝업이 열려있다가 닫힐 때 색상 적용
+		if (previousIsOpenRef.current && !isOpen) {
+			handleApplyColorRef.current();
+		}
+		previousIsOpenRef.current = isOpen;
+	}, [isOpen]);
 
-    const handleClickOutside = (event: MouseEvent) => {
-      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
+	// 외부 클릭 시 팝업 닫기
+	React.useEffect(() => {
+		if (!isOpen) return;
 
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [isOpen])
+		const handleClickOutside = (event: MouseEvent) => {
+			if (
+				popupRef.current &&
+				!popupRef.current.contains(event.target as Node)
+			) {
+				setIsOpen(false);
+			}
+		};
 
-  const canToggle = React.useCallback((): boolean => {
-    if (!editor || !colorAvailable) return false
-    return canSetColor(editor)
-  }, [editor, colorAvailable])
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Enter") {
+				event.preventDefault();
+				handleApplyColorRef.current();
+			} else if (event.key === "Escape") {
+				event.preventDefault();
+				setIsOpen(false);
+			}
+		};
 
-  const isDisabled = disabled || !canToggle()
-  const isActive = Boolean(currentColor)
+		document.addEventListener("mousedown", handleClickOutside);
+		document.addEventListener("keydown", handleKeyDown);
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+			document.removeEventListener("keydown", handleKeyDown);
+		};
+	}, [isOpen]);
 
-  const show = React.useMemo(() => {
-    if (!colorAvailable || !editor) {
-      return false
-    }
+	const canToggle = React.useCallback((): boolean => {
+		if (!editor || !colorAvailable) return false;
+		return canSetColor(editor);
+	}, [editor, colorAvailable]);
 
-    if (hideWhenUnavailable && !canToggle()) {
-      return false
-    }
+	const isDisabled = disabled || !canToggle();
+	const isActive = Boolean(currentColor);
 
-    return true
-  }, [colorAvailable, editor, hideWhenUnavailable, canToggle])
+	const show = React.useMemo(() => {
+		if (!colorAvailable || !editor) {
+			return false;
+		}
 
-  const handleColorSelect = React.useCallback(
-    (color: string) => {
-      if (!editor || isDisabled) return
-      setTextColor(editor, color)
-      setIsOpen(false)
-    },
-    [editor, isDisabled]
-  )
+		if (hideWhenUnavailable && !canToggle()) {
+			return false;
+		}
 
-  const handleClearColor = React.useCallback(() => {
-    if (!editor || isDisabled) return
-    unsetTextColor(editor)
-    setIsOpen(false)
-  }, [editor, isDisabled])
+		return true;
+	}, [colorAvailable, editor, hideWhenUnavailable, canToggle]);
 
-  const handleButtonClick = React.useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault()
-      e.stopPropagation()
+	const handleColorSelect = React.useCallback(
+		(color: string) => {
+			if (!editor || isDisabled) return;
+			setTextColor(editor, color);
+			setIsOpen(false);
+		},
+		[editor, isDisabled]
+	);
 
-      if (!isDisabled) {
-        setIsOpen(!isOpen)
-      }
+	const handleClearColor = React.useCallback(() => {
+		if (!editor || isDisabled) return;
+		unsetTextColor(editor);
+		setIsOpen(false);
+	}, [editor, isDisabled]);
 
-      onClick?.(e)
-    },
-    [onClick, isDisabled, isOpen]
-  )
+	const handleColorChange = React.useCallback((color: ColorResult) => {
+		// 드래그 중에는 미리보기만 (색상 적용하지 않음)
+		setPickerColor(color.hex);
+	}, []);
 
-  if (!show || !editor || !editor.isEditable) {
-    return null
-  }
+	const handleApplyColor = React.useCallback(() => {
+		if (pickerColor && /^#[0-9A-Fa-f]{6}$/.test(pickerColor)) {
+			handleColorSelect(pickerColor);
+		}
+	}, [pickerColor, handleColorSelect]);
 
-  return (
-    <div className="relative" data-component="text-color-button">
-      <Button
-        ref={buttonRef}
-        type="button"
-        className={className.trim()}
-        disabled={isDisabled}
-        data-style="ghost"
-        data-active-state={isActive ? "on" : "off"}
-        data-disabled={isDisabled}
-        role="button"
-        tabIndex={-1}
-        aria-label="Text color"
-        aria-pressed={isActive}
-        tooltip="Text color"
-        onClick={handleButtonClick}
-        {...buttonProps}
-      >
-        {children || (
-          <div className="relative">
-            <TextColorIcon className="tiptap-button-icon" />
-            <div
-              className="absolute bottom-0 left-0 right-0 h-1 rounded-sm"
-              style={{ backgroundColor: currentColor || mainFontColor }}
-            />
-          </div>
-        )}
-      </Button>
+	// handleApplyColor를 useEffect 의존성에 안전하게 추가하기 위해 useRef 사용
+	const handleApplyColorRef = React.useRef(handleApplyColor);
+	React.useEffect(() => {
+		handleApplyColorRef.current = handleApplyColor;
+	}, [handleApplyColor]);
 
-      {isOpen && popupPosition && (
-        <div
-          ref={popupRef}
-          className="fixed p-3 bg-white border border-gray-300 rounded-lg shadow-xl z-[9999] min-w-[240px]"
-          style={{
-            top: `${popupPosition.top}px`,
-            left: `${popupPosition.left}px`,
-            boxShadow: '0 10px 25px rgba(0,0,0,0.3)'
-          }}
-        >
-          <div className="space-y-3">
-            {/* Preset colors */}
-            <div>
-              <div className="text-xs text-gray-600 mb-1">Quick colors</div>
-              <div className="grid grid-cols-7 gap-1">
-                {defaultTextColors.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    className="w-6 h-6 rounded border border-gray-300 hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    style={{ backgroundColor: color }}
-                    onClick={() => handleColorSelect(color)}
-                    aria-label={`Set text color to ${color}`}
-                  />
-                ))}
-              </div>
-            </div>
+	const handleButtonClick = React.useCallback(
+		(e: React.MouseEvent<HTMLButtonElement>) => {
+			e.preventDefault();
+			e.stopPropagation();
 
-            {/* Color picker */}
-            <div>
-              <div className="text-xs text-gray-600 mb-1">Custom color</div>
-              <div className="flex gap-2 items-center">
-                <input
-                  type="color"
-                  value={customColor || currentColor || "#000000"}
-                  className="w-10 h-8 border border-gray-300 rounded cursor-pointer"
-                  onChange={(e) => {
-                    setCustomColor(e.target.value)
-                    handleColorSelect(e.target.value)
-                  }}
-                  aria-label="Custom text color picker"
-                />
-                <input
-                  type="text"
-                  value={customColor || currentColor || ""}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    setCustomColor(value)
-                    // Validate hex color
-                    if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-                      handleColorSelect(value)
-                    }
-                  }}
-                  placeholder="#000000"
-                  className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  aria-label="HEX color code"
-                />
-              </div>
-            </div>
+			if (!isDisabled) {
+				setIsOpen(!isOpen);
+			}
 
-            {/* Clear button */}
-            {currentColor && (
-              <div className="pt-2 border-t border-gray-200">
-                <Button
-                  type="button"
-                  data-style="ghost"
-                  onClick={handleClearColor}
-                  className="text-xs px-2 py-1 w-full"
-                >
-                  Clear color
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
+			onClick?.(e);
+		},
+		[onClick, isDisabled, isOpen]
+	);
+
+	if (!show || !editor || !editor.isEditable) {
+		return null;
+	}
+
+	return (
+		<div className="relative" data-component="text-color-button">
+			<Button
+				ref={buttonRef}
+				type="button"
+				className={className.trim()}
+				disabled={isDisabled}
+				data-style="ghost"
+				data-active-state={isActive ? "on" : "off"}
+				data-disabled={isDisabled}
+				role="button"
+				tabIndex={-1}
+				aria-label="Text color"
+				aria-pressed={isActive}
+				tooltip="Text color"
+				onClick={handleButtonClick}
+				{...buttonProps}
+			>
+				{children || (
+					<div className="relative">
+						<TextColorIcon className="tiptap-button-icon" />
+						<div
+							className="absolute bottom-0 left-0 right-0 h-1 rounded-sm"
+							style={{ backgroundColor: currentColor || mainFontColor }}
+						/>
+					</div>
+				)}
+			</Button>
+
+			{isOpen && popupPosition && (
+				<div
+					ref={popupRef}
+					className="fixed z-[9999]"
+					style={{
+						top: `${popupPosition.top}px`,
+						left: `${popupPosition.left}px`,
+					}}
+				>
+					<div
+						onKeyDown={(e) => {
+							if (e.key === "Enter") {
+								e.preventDefault();
+								handleApplyColor();
+							}
+						}}
+					>
+						<SketchPicker
+							color={pickerColor}
+							onChange={handleColorChange}
+							onChangeComplete={(color: ColorResult) => {
+								// 드래그 완료 시에도 미리보기만 업데이트 (적용하지 않음)
+								setPickerColor(color.hex);
+							}}
+							width="224px"
+							presetColors={defaultTextColors}
+						/>
+					</div>
+					<div className="mt-2 flex gap-2">
+						{currentColor && (
+							<Button
+								type="button"
+								data-style="ghost"
+								onClick={handleClearColor}
+								className="flex-1 text-xs px-2 py-1"
+							>
+								Clear
+							</Button>
+						)}
+						<Button
+							type="button"
+							data-style="ghost"
+							onClick={handleApplyColor}
+							className="flex-1 text-xs px-2 py-1"
+						>
+							Apply
+						</Button>
+					</div>
+				</div>
+			)}
+		</div>
+	);
 }
 
-export default TextColorButton
+export default TextColorButton;
