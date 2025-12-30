@@ -27,18 +27,28 @@ export interface CreateMetaValue {
 	title?: string;
 }
 
+interface OptionItem {
+	id?: string | number;
+	label?: string;
+	name?: string;
+	title?: string;
+	series?: string;
+	tag?: string;
+	value?: string;
+}
+
 interface CreateModalProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	tagsOptions?: any[];
-	seriesOptions?: any[];
+	tagsOptions?: OptionItem[];
+	seriesOptions?: OptionItem[];
 	value: CreateMetaValue;
 	onChange: (next: CreateMetaValue) => void;
 	onConfirm: () => void;
 	isSubmitting?: boolean;
 }
 
-const pickLabel = (item: any): string => {
+const pickLabel = (item: string | OptionItem | null | undefined): string => {
 	if (typeof item === "string") return item;
 	if (!item) return "";
 	return (

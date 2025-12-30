@@ -36,6 +36,7 @@ export default function Sample() {
 			}),
 		],
 		content: "<p>안녕하세요! 이것은 Tiptap 에디터입니다.</p>",
+		immediatelyRender: false,
 		editorProps: {
 			attributes: {
 				class: "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none",
