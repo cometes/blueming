@@ -38,9 +38,9 @@ export default function SettingLayout({
 	};
 
 	return (
-		<div className="w-full max-w-[1200px] mx-auto mt-12 py-6">
+		<div className="w-full max-w-[1200px] mx-auto mt-12 px-4 pb-4">
 			<div
-				className="flex bg-card border border-card rounded-card h-[calc(100vh-98px)] backdrop-blur-card"
+				className="flex bg-card border border-card rounded-card h-[calc(100vh-80px)] backdrop-blur-card overflow-hidden"
 				onClick={() => {
 					if (isAsideExpanded) {
 						setIsAsideExpanded(false);
@@ -59,7 +59,6 @@ export default function SettingLayout({
 						paddingRight: isAsideExpanded ? "24px" : "12px",
 						overflowY: isAsideExpanded ? "scroll" : "hidden",
 						transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-					
 					}}
 					data-expanded={isAsideExpanded}
 					onClick={(e) => {
@@ -152,19 +151,19 @@ export default function SettingLayout({
 
 				{/* Content */}
 				<div
-					className="w-full"
-					style={{ flexShrink: "unset" }}
+					className="w-full flex flex-col h-full overflow-hidden"
+					// style={{ flexShrink: "unset" }}
 					onClick={(e) => e.stopPropagation()}
 				>
 					{/* Header */}
-					<div className="px-5 py-3 border-b border-card-bg">
+					<div className="px-5 py-3 border-b border-card-bg flex-none">
 						<p className="text-2xl font-bold text-main-text">{title}</p>
 						<p className="text-sub-text text-sm mt-2">{description}</p>
 					</div>
 
 					{/* Content Area */}
-					<div className="p-5 h-[calc(100%-85px)] overflow-y-scroll [scrollbar-color:rgb(var(--border-widget))_transparent] [scrollbar-width:thin]">
-						<section className="max-w-[768px] mx-auto">{children}</section>
+					<div className="flex-1 overflow-y-auto">
+						<section className="p-5">{children}</section>
 					</div>
 				</div>
 			</div>
