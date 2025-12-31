@@ -28,3 +28,15 @@ export const schemaCreate = yup.object({
 	}),
 	// thumbnail: yup.string().nullable(), // 썸네일은 null 또는 문자열
 });
+
+export const schemaSettingsGeneral = yup.object({
+	title: yup.string().nullable(),
+	desc: yup.string().nullable(),
+	logoText: yup.string().nullable(),
+	favicon: yup.string().nullable(),
+	shareImage: yup.string().nullable(),
+	logoImage: yup.string().nullable(),
+	logoType: yup.string().oneOf(["기본", "이미지", "텍스트"]).nullable(),
+	primaryColor: yup.string().nullable(),
+	secondaryColor: yup.string().nullable(),
+});

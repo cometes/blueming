@@ -25,8 +25,8 @@ const config: Config = {
           '100%': { height: '4px' },
         },
         fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
+          from: { opacity: '0', transform: 'translateY(10px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
         },
       },
       backgroundImage: {
