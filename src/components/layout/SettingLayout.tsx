@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { useState, ReactNode } from "react";
 import { Menu, ChevronLeft } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SettingSidebarItem {
 	id: string;
@@ -50,14 +51,11 @@ export default function SettingLayout({
 				{/* Sidebar */}
 				<aside
 					className={cn(
-						"w-full py-6 border-r border-card-bg overflow-hidden",
+						"w-full py-6 border-r border-card-bg overflow-hidden flex flex-col h-full",
 						isAsideExpanded ? "cursor-default" : "cursor-pointer"
 					)}
 					style={{
 						maxWidth: isAsideExpanded ? "240px" : "50px",
-						paddingLeft: isAsideExpanded ? "24px" : "12px",
-						paddingRight: isAsideExpanded ? "24px" : "12px",
-						overflowY: isAsideExpanded ? "scroll" : "hidden",
 						transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
 					}}
 					data-expanded={isAsideExpanded}
@@ -68,7 +66,13 @@ export default function SettingLayout({
 						}
 					}}
 				>
-					<div className="mb-6 relative">
+					<div
+						className="mb-6 relative flex-none"
+						style={{
+							paddingLeft: isAsideExpanded ? "24px" : "12px",
+							paddingRight: isAsideExpanded ? "24px" : "12px",
+						}}
+					>
 						<div
 							style={{
 								opacity: isAsideExpanded ? 1 : 0,
@@ -109,50 +113,59 @@ export default function SettingLayout({
 							</div>
 						</div>
 					</div>
-					<div
+
+					<ScrollArea
+						className="flex-1 min-h-0 [&_[data-slot=scroll-area-thumb]]:bg-widget-border "
 						style={{
 							opacity: isAsideExpanded ? 1 : 0,
 							visibility: isAsideExpanded ? "visible" : "hidden",
 							transition: "opacity 0.3s ease 0.1s, visibility 0.3s ease 0.1s",
 						}}
-						data-expanded={isAsideExpanded}
 					>
-						{sidebarGroups.map((group, groupIndex) => (
-							<div className="flex flex-col gap-5" key={groupIndex}>
-								<p className="text-sub-text font-semibold text-xs whitespace-nowrap cursor-default">
-									{group.title}
-								</p>
-								{group.items.map((item) => (
-									<p
-										className={cn(
-											"cursor-pointer py-2 px-3 rounded-card whitespace-nowrap",
-											activeSection === item.id
-												? "text-theme-primary"
-												: "text-main-text",
-											"hover:bg-card hover:text-theme-secondary"
-										)}
-										style={{
-											transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-										}}
-										key={item.id}
-										data-active={activeSection === item.id}
-										onClick={(e) => {
-											e.stopPropagation();
-											onSectionChange(item.id);
-										}}
-									>
-										{item.label}
+						<div
+							className="flex flex-col gap-8"
+							style={{
+								paddingLeft: isAsideExpanded ? "24px" : "12px",
+								paddingRight: isAsideExpanded ? "24px" : "12px",
+								paddingBottom: "24px",
+							}}
+						>
+							{sidebarGroups.map((group, groupIndex) => (
+								<div className="flex flex-col gap-5" key={groupIndex}>
+									<p className="text-sub-text font-semibold text-xs whitespace-nowrap cursor-default">
+										{group.title}
 									</p>
-								))}
-							</div>
-						))}
-					</div>
+									{group.items.map((item) => (
+										<p
+											className={cn(
+												"cursor-pointer py-2 px-3 rounded-card whitespace-nowrap",
+												activeSection === item.id
+													? "text-theme-primary"
+													: "text-main-text",
+												"hover:bg-card hover:text-theme-secondary"
+											)}
+											style={{
+												transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+											}}
+											key={item.id}
+											data-active={activeSection === item.id}
+											onClick={(e) => {
+												e.stopPropagation();
+												onSectionChange(item.id);
+											}}
+										>
+											{item.label}
+										</p>
+									))}
+								</div>
+							))}
+						</div>
+					</ScrollArea>
 				</aside>
 
 				{/* Content */}
 				<div
 					className="w-full flex flex-col h-full overflow-hidden"
-					// style={{ flexShrink: "unset" }}
 					onClick={(e) => e.stopPropagation()}
 				>
 					{/* Header */}
@@ -162,9 +175,9 @@ export default function SettingLayout({
 					</div>
 
 					{/* Content Area */}
-					<div className="flex-1 overflow-y-auto">
+					<ScrollArea className="flex-1 min-h-0 [&_[data-slot=scroll-area-thumb]]:bg-widget-border">
 						<section className="p-5">{children}</section>
-					</div>
+					</ScrollArea>
 				</div>
 			</div>
 		</div>
