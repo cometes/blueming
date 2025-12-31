@@ -1,0 +1,329 @@
+"use client";
+
+import { useState } from "react";
+import { ImagePlus, Trash2, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { ColorPicker } from "@/components/ui/color-picker";
+import RadioItem from "@/components/items/RadioItem";
+import { useModal } from "@/hooks/useModal";
+import { useSettingDesign } from "@/hooks/useSettingDesign";
+import { toast } from "sonner";
+
+const BACKGROUND_TYPES = {
+	IMAGE: "이미지",
+	SOLID: "단색",
+	GRADIENT: "그라데이션",
+} as const;
+
+const FONT_SAMPLE_TEXTS = {
+	TITLE: "제목 또는 메뉴명 Title",
+	CONTENT: "본문 서체 및 크기 미리보기 기본 문장 12345 Paragraph",
+	DESCRIPTION: "서브 폰트 미리보기 12345 Description",
+} as const;
+
+const ICON_SIZE = 28;
+const ICON_COLOR = "#9BA2A8";
+
+export default function DesignSettingClient() {
+	const {
+		BGTypes,
+		fontTitle,
+		fontBody,
+		bgThumbnail,
+		setBgThumnail,
+		background,
+		widget,
+		card,
+		font,
+		onClickSubmit,
+		openReset,
+		setOpenReset,
+		onClickReset,
+		updateDesignSetting,
+		currentDesignSetting,
+	} = useSettingDesign();
+
+	const { showModal, isModalOpen, setIsModalOpen, cancelModal } = useModal();
+	const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+	const confirmReset = () => {
+		onClickReset();
+		setShowResetConfirm(false);
+	};
+
+	return (
+		<div className="space-y-8">
+			{/* Temporary: ImageUploadModal will be created later */}
+
+			{/* 배경 디자인 설정 Section */}
+			<section className="space-y-6">
+				<h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+					배경 디자인 설정
+				</h2>
+				<div className="space-y-6">
+					{/* 배경 타입 */}
+					<div className="flex flex-col gap-3">
+						<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+							배경 타입
+						</h3>
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+							{BGTypes.map((el) => (
+								<RadioItem
+									key={el}
+									onClickRadio={() => {
+										updateDesignSetting("background.type", el);
+									}}
+									checked={background.type === el}
+									content={el}
+								/>
+							))}
+						</div>
+					</div>
+
+					{/* 배경 이미지 */}
+					{background.type === BACKGROUND_TYPES.IMAGE && (
+						<div className="flex flex-col gap-3">
+							<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+								배경 이미지
+							</h3>
+							<div className="flex items-center gap-3">
+								{background.image ? (
+									<img
+										src={background.image}
+										alt="배경 이미지"
+										className="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+									/>
+								) : (
+									<div
+										onClick={showModal}
+										className="w-24 h-24 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+									>
+										<ImagePlus
+											size={ICON_SIZE}
+											color={ICON_COLOR}
+											absoluteStrokeWidth={true}
+										/>
+										<span className="text-xs text-gray-500 dark:text-gray-400">
+											이미지 업로드
+										</span>
+									</div>
+								)}
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									onClick={() => {
+										updateDesignSetting("background.image", "");
+									}}
+								>
+									<Trash2 size={14} className="mr-2" />
+									비우기
+								</Button>
+							</div>
+						</div>
+					)}
+
+					{/* 단색 배경 */}
+					{background.type === BACKGROUND_TYPES.SOLID && (
+						<div className="flex flex-col gap-3">
+							<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+								배경 컬러
+							</h3>
+							<div className="flex items-center gap-3">
+								<ColorPicker
+									value={background.color}
+									onChange={(color: string) => {
+										updateDesignSetting("background.color", color);
+									}}
+								/>
+								<span
+									className="text-sm font-mono"
+									style={{ color: background.color }}
+								>
+									{background.color}
+								</span>
+							</div>
+						</div>
+					)}
+				</div>
+			</section>
+
+			<Separator className="my-12" />
+
+			{/* Widget & Card Settings Placeholder */}
+			<section className="space-y-6">
+				<h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+					위젯 & 카드 설정
+				</h2>
+				<div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+					<p className="text-sm text-gray-600 dark:text-gray-400">
+						위젯과 카드 설정은 복잡한 기능으로 추후 구현 예정입니다.
+					</p>
+				</div>
+			</section>
+
+			<Separator className="my-12" />
+
+			{/* 폰트 설정 Section */}
+			<section className="space-y-6">
+				<h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+					폰트 설정
+				</h2>
+				<div className="space-y-6">
+					{/* Font Preview */}
+					<div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
+						<h3
+							className="text-3xl font-bold"
+							style={{
+								fontFamily: font.titleFontFamily,
+								color: font.mainFontColor,
+							}}
+						>
+							{FONT_SAMPLE_TEXTS.TITLE}
+						</h3>
+						<p
+							className="text-base"
+							style={{
+								fontFamily: font.bodyFontFamily,
+								color: font.mainFontColor,
+							}}
+						>
+							{FONT_SAMPLE_TEXTS.CONTENT}
+						</p>
+						<p
+							className="text-sm"
+							style={{
+								fontFamily: font.bodyFontFamily,
+								color: font.subFontColor,
+							}}
+						>
+							{FONT_SAMPLE_TEXTS.DESCRIPTION}
+						</p>
+					</div>
+
+					{/* 메인 폰트 컬러 */}
+					<div className="flex flex-col gap-3">
+						<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+							메인 폰트 컬러
+						</h3>
+						<div className="flex items-center gap-3">
+							<ColorPicker
+								value={font.mainFontColor}
+								onChange={(color: string) => {
+									updateDesignSetting("font.mainFontColor", color);
+								}}
+							/>
+							<span
+								className="text-sm font-mono"
+								style={{ color: font.mainFontColor }}
+							>
+								{font.mainFontColor}
+							</span>
+						</div>
+					</div>
+
+					{/* 서브 폰트 컬러 */}
+					<div className="flex flex-col gap-3">
+						<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+							서브 폰트 컬러
+						</h3>
+						<div className="flex items-center gap-3">
+							<ColorPicker
+								value={font.subFontColor}
+								onChange={(color: string) => {
+									updateDesignSetting("font.subFontColor", color);
+								}}
+							/>
+							<span
+								className="text-sm font-mono"
+								style={{ color: font.subFontColor }}
+							>
+								{font.subFontColor}
+							</span>
+						</div>
+					</div>
+
+					{/* 제목 서체 */}
+					<div className="flex flex-col gap-3">
+						<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+							제목 서체
+						</h3>
+						<select
+							value={font.titleFontFamily}
+							onChange={(e) => {
+								updateDesignSetting("font.titleFontFamily", e.target.value);
+							}}
+							className="w-[180px] h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+						>
+							{fontTitle.map((item) => (
+								<option key={item.value} value={item.value}>
+									{item.label}
+								</option>
+							))}
+						</select>
+					</div>
+
+					{/* 본문 서체 */}
+					<div className="flex flex-col gap-3">
+						<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+							본문 서체
+						</h3>
+						<select
+							value={font.bodyFontFamily}
+							onChange={(e) => {
+								updateDesignSetting("font.bodyFontFamily", e.target.value);
+							}}
+							className="w-[180px] h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+						>
+							{fontBody.map((item) => (
+								<option key={item.value} value={item.value}>
+									{item.label}
+								</option>
+							))}
+						</select>
+					</div>
+				</div>
+			</section>
+
+			{/* Submit Buttons */}
+			<div className="flex justify-end gap-3 pt-6">
+				{showResetConfirm ? (
+					<div className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+						<span className="text-sm text-red-700 dark:text-red-300">
+							정말 초기화할까요?
+						</span>
+						<Button
+							type="button"
+							variant="destructive"
+							size="sm"
+							onClick={confirmReset}
+						>
+							O
+						</Button>
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							onClick={() => setShowResetConfirm(false)}
+						>
+							X
+						</Button>
+					</div>
+				) : (
+					<Button
+						type="button"
+						variant="destructive"
+						onClick={() => setShowResetConfirm(true)}
+					>
+						초기화하기
+					</Button>
+				)}
+
+				<Button type="button" onClick={onClickSubmit}>
+					저장하기
+				</Button>
+			</div>
+		</div>
+	);
+}

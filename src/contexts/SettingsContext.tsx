@@ -232,6 +232,10 @@ interface SettingsContextType {
 		design: Design;
 	};
 	main?: MainSettings;
+	updateGeneral?: (general: General) => void;
+	updateDesign?: (design: Design) => void;
+	updateMenu?: (menu: Menu) => void;
+	updateMain?: (main: Partial<MainSettings>) => void;
 }
 
 // Context 생성
