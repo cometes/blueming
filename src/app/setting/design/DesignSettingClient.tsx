@@ -1,14 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { ImagePlus, Trash2, ChevronDown } from "lucide-react";
+import { ImagePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ColorPicker } from "@/components/ui/color-picker";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import RadioItem from "@/components/items/RadioItem";
 import { useModal } from "@/hooks/useModal";
 import { useSettingDesign } from "@/hooks/useSettingDesign";
-import { toast } from "sonner";
 
 const BACKGROUND_TYPES = {
 	IMAGE: "이미지",
@@ -30,21 +36,14 @@ export default function DesignSettingClient() {
 		BGTypes,
 		fontTitle,
 		fontBody,
-		bgThumbnail,
-		setBgThumnail,
 		background,
-		widget,
-		card,
 		font,
 		onClickSubmit,
-		openReset,
-		setOpenReset,
 		onClickReset,
 		updateDesignSetting,
-		currentDesignSetting,
 	} = useSettingDesign();
 
-	const { showModal, isModalOpen, setIsModalOpen, cancelModal } = useModal();
+	const { showModal } = useModal();
 	const [showResetConfirm, setShowResetConfirm] = useState(false);
 
 	const confirmReset = () => {
@@ -53,20 +52,24 @@ export default function DesignSettingClient() {
 	};
 
 	return (
-		<div className="space-y-8">
+		<form
+			onSubmit={(e) => {
+				e.preventDefault();
+				onClickSubmit();
+			}}
+			className="space-y-8"
+		>
 			{/* Temporary: ImageUploadModal will be created later */}
 
 			{/* 배경 디자인 설정 Section */}
-			<section className="space-y-6">
-				<h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-					배경 디자인 설정
-				</h2>
-				<div className="space-y-6">
+			<section>
+				<h2 className="text-[20px] font-semibold">배경 디자인 설정</h2>
+				<div className="section-wrap mt-6">
 					{/* 배경 타입 */}
-					<div className="flex flex-col gap-3">
-						<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-							배경 타입
-						</h3>
+					<div className="section-box flex items-center mt-4">
+						<div className="text-box w-[220px] pr-5">
+							<h3 className="font-medium text-sub-text">배경 타입</h3>
+						</div>
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 							{BGTypes.map((el) => (
 								<RadioItem
@@ -83,21 +86,23 @@ export default function DesignSettingClient() {
 
 					{/* 배경 이미지 */}
 					{background.type === BACKGROUND_TYPES.IMAGE && (
-						<div className="flex flex-col gap-3">
-							<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-								배경 이미지
-							</h3>
+						<div className="section-box flex items-center mt-4">
+							<div className="text-box w-[220px] pr-5">
+								<h3 className="font-medium text-sub-text">배경 이미지</h3>
+							</div>
 							<div className="flex items-center gap-3">
 								{background.image ? (
-									<img
-										src={background.image}
-										alt="배경 이미지"
-										className="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
-									/>
+									<div className="w-3xs aspect-video rounded-card border-card bg-card-bg overflow-hidden">
+										<img
+											src={background.image}
+											alt="배경 이미지"
+											className="w-full h-full object-contain"
+										/>
+									</div>
 								) : (
 									<div
 										onClick={showModal}
-										className="w-24 h-24 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+										className="w-3xs aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors"
 									>
 										<ImagePlus
 											size={ICON_SIZE}
@@ -116,8 +121,18 @@ export default function DesignSettingClient() {
 									onClick={() => {
 										updateDesignSetting("background.image", "");
 									}}
+									className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+									style={{
+										transition: "all 0.3s ease-in-out",
+									}}
 								>
-									<Trash2 size={14} className="mr-2" />
+									<Trash2
+										size={14}
+										className="mr-2"
+										style={{
+											transition: "all 0.3s ease-in-out",
+										}}
+									/>
 									비우기
 								</Button>
 							</div>
@@ -126,10 +141,10 @@ export default function DesignSettingClient() {
 
 					{/* 단색 배경 */}
 					{background.type === BACKGROUND_TYPES.SOLID && (
-						<div className="flex flex-col gap-3">
-							<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-								배경 컬러
-							</h3>
+						<div className="section-box flex items-center mt-4">
+							<div className="text-box w-[220px]">
+								<h3 className="font-medium text-sub-text">배경 컬러</h3>
+							</div>
 							<div className="flex items-center gap-3">
 								<ColorPicker
 									value={background.color}
@@ -152,27 +167,25 @@ export default function DesignSettingClient() {
 			<Separator className="my-12" />
 
 			{/* Widget & Card Settings Placeholder */}
-			<section className="space-y-6">
-				<h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-					위젯 & 카드 설정
-				</h2>
-				<div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
-					<p className="text-sm text-gray-600 dark:text-gray-400">
-						위젯과 카드 설정은 복잡한 기능으로 추후 구현 예정입니다.
-					</p>
+			<section>
+				<h2 className="text-[20px] font-semibold">위젯 & 카드 설정</h2>
+				<div className="section-wrap mt-6">
+					<div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+						<p className="text-sm text-gray-600 dark:text-gray-400">
+							위젯과 카드 설정은 복잡한 기능으로 추후 구현 예정입니다.
+						</p>
+					</div>
 				</div>
 			</section>
 
 			<Separator className="my-12" />
 
 			{/* 폰트 설정 Section */}
-			<section className="space-y-6">
-				<h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-					폰트 설정
-				</h2>
-				<div className="space-y-6">
+			<section>
+				<h2 className="text-[20px] font-semibold">폰트 설정</h2>
+				<div className="section-wrap mt-6">
 					{/* Font Preview */}
-					<div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4">
+					<div className="font-sample-wrap flex flex-col items-center p-7 rounded-card border-card bg-card-bg filter-blur-card mt-4">
 						<h3
 							className="text-3xl font-bold"
 							style={{
@@ -203,10 +216,10 @@ export default function DesignSettingClient() {
 					</div>
 
 					{/* 메인 폰트 컬러 */}
-					<div className="flex flex-col gap-3">
-						<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-							메인 폰트 컬러
-						</h3>
+					<div className="section-box flex items-center mt-4">
+						<div className="text-box w-[220px]">
+							<h3 className="font-medium text-sub-text">메인 폰트 컬러</h3>
+						</div>
 						<div className="flex items-center gap-3">
 							<ColorPicker
 								value={font.mainFontColor}
@@ -224,10 +237,10 @@ export default function DesignSettingClient() {
 					</div>
 
 					{/* 서브 폰트 컬러 */}
-					<div className="flex flex-col gap-3">
-						<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-							서브 폰트 컬러
-						</h3>
+					<div className="section-box flex items-center mt-4">
+						<div className="text-box w-[220px]">
+							<h3 className="font-medium text-sub-text">서브 폰트 컬러</h3>
+						</div>
 						<div className="flex items-center gap-3">
 							<ColorPicker
 								value={font.subFontColor}
@@ -245,43 +258,51 @@ export default function DesignSettingClient() {
 					</div>
 
 					{/* 제목 서체 */}
-					<div className="flex flex-col gap-3">
-						<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-							제목 서체
-						</h3>
-						<select
+					<div className="section-box flex items-center mt-4">
+						<div className="text-box w-[220px]">
+							<h3 className="font-medium text-sub-text">제목 서체</h3>
+						</div>
+						<Select
 							value={font.titleFontFamily}
-							onChange={(e) => {
-								updateDesignSetting("font.titleFontFamily", e.target.value);
+							onValueChange={(value: string) => {
+								updateDesignSetting("font.titleFontFamily", value);
 							}}
-							className="w-[180px] h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
 						>
-							{fontTitle.map((item) => (
-								<option key={item.value} value={item.value}>
-									{item.label}
-								</option>
-							))}
-						</select>
+							<SelectTrigger className="w-[200px] rounded-card border-card bg-card-bg">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								{fontTitle.map((item) => (
+									<SelectItem key={item.value} value={item.value}>
+										{item.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
 
 					{/* 본문 서체 */}
-					<div className="flex flex-col gap-3">
-						<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-							본문 서체
-						</h3>
-						<select
+					<div className="section-box flex items-center mt-4">
+						<div className="text-box w-[220px]">
+							<h3 className="font-medium text-sub-text">본문 서체</h3>
+						</div>
+						<Select
 							value={font.bodyFontFamily}
-							onChange={(e) => {
-								updateDesignSetting("font.bodyFontFamily", e.target.value);
+							onValueChange={(value: string) => {
+								updateDesignSetting("font.bodyFontFamily", value);
 							}}
-							className="w-[180px] h-9 px-3 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
 						>
-							{fontBody.map((item) => (
-								<option key={item.value} value={item.value}>
-									{item.label}
-								</option>
-							))}
-						</select>
+							<SelectTrigger className="w-[200px] rounded-card border-card bg-card-bg">
+								<SelectValue />
+							</SelectTrigger>
+							<SelectContent>
+								{fontBody.map((item) => (
+									<SelectItem key={item.value} value={item.value}>
+										{item.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
 					</div>
 				</div>
 			</section>
@@ -320,10 +341,8 @@ export default function DesignSettingClient() {
 					</Button>
 				)}
 
-				<Button type="button" onClick={onClickSubmit}>
-					저장하기
-				</Button>
+				<Button type="submit">저장하기</Button>
 			</div>
-		</div>
+		</form>
 	);
 }
