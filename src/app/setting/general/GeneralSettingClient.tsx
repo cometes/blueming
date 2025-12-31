@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ColorPicker } from "@/components/ui/color-picker";
+import { ColorPalettePreview } from "@/components/ui/color-palette-preview";
 import RadioItem from "@/components/items/RadioItem";
 import { useModal } from "@/hooks/useModal";
 import { useSettingGeneral } from "@/hooks/useSettingGeneral";
@@ -39,11 +40,9 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 	onImageClick,
 	onClearClick,
 }) => (
-	<div className="flex flex-col gap-3">
-		<div className="flex flex-col gap-1">
-			<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-				{title}
-			</h3>
+	<div className="section-box flex items-center mt-4">
+		<div className="text-box w-[220px]">
+			<h3 className="font-medium text-sub-text">{title}</h3>
 			{description && (
 				<p className="text-xs text-gray-500 dark:text-gray-400">
 					{description}
@@ -52,15 +51,38 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 		</div>
 		<div className="flex items-center gap-3">
 			{imageSrc ? (
-				<img
-					src={imageSrc}
-					alt={title}
-					className="w-24 h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
-				/>
+				<>
+					<div className="w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden">
+						<img
+							src={imageSrc}
+							alt={title}
+							className="w-full h-full object-contain"
+						/>
+					</div>
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						onClick={onClearClick}
+						className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+						style={{
+							transition: "all 0.3s ease-in-out",
+						}}
+					>
+						<Trash2
+							size={14}
+							className="mr-2"
+							style={{
+								transition: "all 0.3s ease-in-out",
+							}}
+						/>
+						비우기
+					</Button>
+				</>
 			) : (
 				<div
 					onClick={onImageClick}
-					className="w-24 h-24 flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 cursor-pointer hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+					className="w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors"
 				>
 					<ImagePlus
 						size={ICON_SIZE}
@@ -72,15 +94,6 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 					</span>
 				</div>
 			)}
-			<Button
-				type="button"
-				variant="outline"
-				size="sm"
-				onClick={onClearClick}
-			>
-				<Trash2 size={14} className="mr-2" />
-				비우기
-			</Button>
 		</div>
 	</div>
 );
@@ -136,55 +149,59 @@ export default function GeneralSettingClient() {
 			{/* Temporary: ImageUploadModal will be created later */}
 
 			{/* 홈페이지 설정 Section */}
-			<section className="space-y-6">
-				<h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-					홈페이지 설정
-				</h2>
-				<div className="space-y-6">
+			<section>
+				<h2 className="text-[20px] font-semibold">홈페이지 설정</h2>
+				<div className="section-wrap mt-6">
 					{/* 홈페이지 타이틀 */}
-					<div className="flex flex-col gap-3">
-						<div className="flex flex-col gap-1">
-							<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-								홈페이지 타이틀
-							</h3>
+					<div className="section-box flex items-center mt-4">
+						<div className="text-box w-[220px] pr-5 relative">
+							<h3 className="font-medium text-sub-text">홈페이지 타이틀</h3>
 							{formState.errors.title?.message && (
-								<p className="text-xs text-red-500">
+								<p className="text-sm absolute left-1 top-full text-red-500 mt-1">
 									{formState.errors.title.message}
 								</p>
 							)}
 						</div>
-						<Input
-							placeholder={PLACEHOLDERS.TITLE}
-							value={getValues("title") || generalSetting.title || ""}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-								setValue("title", e.target.value);
-								updateGeneralSetting("title", e.target.value);
-							}}
-							className={INPUT_HEIGHT}
-						/>
+						<div className="input-box relative w-calc(100% - 220px) flex-1">
+							<Input
+								placeholder={PLACEHOLDERS.TITLE}
+								value={getValues("title") || generalSetting.title || ""}
+								onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+									setValue("title", e.target.value);
+									updateGeneralSetting("title", e.target.value);
+								}}
+								className={
+									INPUT_HEIGHT +
+									"rounded-card border-card focus:border-card-active bg-card-bg"
+								}
+							/>
+						</div>
 					</div>
 
 					{/* 홈페이지 설명 */}
-					<div className="flex flex-col gap-3">
-						<div className="flex flex-col gap-1">
-							<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-								홈페이지 설명
-							</h3>
+					<div className="section-box flex items-center mt-4">
+						<div className="text-box w-[220px] pr-5 relative">
+							<h3 className="font-medium text-sub-text">홈페이지 설명</h3>
 							{formState.errors.desc?.message && (
-								<p className="text-xs text-red-500">
+								<p className="text-sm absolute left-1 top-full text-red-500 mt-1">
 									{formState.errors.desc.message}
 								</p>
 							)}
 						</div>
-						<Input
-							placeholder={PLACEHOLDERS.DESC}
-							value={getValues("desc") || generalSetting.desc || ""}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-								setValue("desc", e.target.value);
-								updateGeneralSetting("desc", e.target.value);
-							}}
-							className={INPUT_HEIGHT}
-						/>
+						<div className="input-box relative w-calc(100% - 220px) flex-1">
+							<Input
+								placeholder={PLACEHOLDERS.DESC}
+								value={getValues("desc") || generalSetting.desc || ""}
+								onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+									setValue("desc", e.target.value);
+									updateGeneralSetting("desc", e.target.value);
+								}}
+								className={
+									INPUT_HEIGHT +
+									"rounded-card border-card focus:border-card-active bg-card-bg"
+								}
+							/>
+						</div>
 					</div>
 
 					{/* 파비콘 */}
@@ -206,10 +223,10 @@ export default function GeneralSettingClient() {
 					/>
 
 					{/* 메인 컬러 */}
-					<div className="flex flex-col gap-3">
-						<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-							메인 컬러
-						</h3>
+					<div className="section-box flex items-center mt-4">
+						<div className="text-box w-[220px]">
+							<h3 className="font-medium text-sub-text">메인 컬러</h3>
+						</div>
 						<div className="flex items-center gap-3">
 							<ColorPicker
 								value={generalSetting.primaryColor}
@@ -223,14 +240,15 @@ export default function GeneralSettingClient() {
 							>
 								{generalSetting.primaryColor}
 							</span>
+							<ColorPalettePreview color={generalSetting.primaryColor} />
 						</div>
 					</div>
 
 					{/* 서브 컬러 */}
-					<div className="flex flex-col gap-3">
-						<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-							서브 컬러
-						</h3>
+					<div className="section-box flex items-center mt-4">
+						<div className="text-box w-[220px]">
+							<h3 className="font-medium text-sub-text">서브 컬러</h3>
+						</div>
 						<div className="flex items-center gap-3">
 							<ColorPicker
 								value={generalSetting.secondaryColor}
@@ -244,6 +262,7 @@ export default function GeneralSettingClient() {
 							>
 								{generalSetting.secondaryColor}
 							</span>
+							<ColorPalettePreview color={generalSetting.secondaryColor} />
 						</div>
 					</div>
 				</div>
@@ -252,16 +271,14 @@ export default function GeneralSettingClient() {
 			<Separator className="my-12" />
 
 			{/* 로고 Section */}
-			<section className="space-y-6">
-				<h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-					로고
-				</h2>
-				<div className="space-y-6">
+			<section>
+				<h2 className="text-[20px] font-semibold">로고</h2>
+				<div className="section-wrap mt-6">
 					{/* 로고 타입 */}
-					<div className="flex flex-col gap-3">
-						<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-							로고 타입
-						</h3>
+					<div className="section-box flex items-center mt-4">
+						<div className="text-box w-[220px] pr-5 relative">
+							<h3 className="font-medium text-sub-text">로고 타입</h3>
+						</div>
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 							{logoTypes.map((el) => (
 								<RadioItem
@@ -287,26 +304,29 @@ export default function GeneralSettingClient() {
 
 					{/* 텍스트 로고 */}
 					{currentLogo === "텍스트" && (
-						<div className="flex flex-col gap-3">
-							<div className="flex flex-col gap-1">
-								<h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-									로고 타이틀
-								</h3>
+						<div className="section-box flex items-center mt-4">
+							<div className="text-box w-[220px] pr-5 relative">
+								<h3 className="font-medium text-sub-text">로고 타이틀</h3>
 								{formState.errors.logoText?.message && (
-									<p className="text-xs text-red-500">
+									<p className="text-sm absolute left-1 top-full text-red-500 mt-1">
 										{formState.errors.logoText.message}
 									</p>
 								)}
 							</div>
-							<Input
-								placeholder="로고 타이틀을 입력해주세요"
-								value={getValues("logoText") || generalSetting.logoText || ""}
-								onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-									setValue("logoText", e.target.value);
-									updateGeneralSetting("logoText", e.target.value);
-								}}
-								className={INPUT_HEIGHT}
-							/>
+							<div className="input-box relative w-calc(100% - 220px) flex-1">
+								<Input
+									placeholder="로고 타이틀을 입력해주세요"
+									value={getValues("logoText") || generalSetting.logoText || ""}
+									onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+										setValue("logoText", e.target.value);
+										updateGeneralSetting("logoText", e.target.value);
+									}}
+									className={
+										INPUT_HEIGHT +
+										"rounded-card border-card focus:border-card-active bg-card-bg"
+									}
+								/>
+							</div>
 						</div>
 					)}
 				</div>

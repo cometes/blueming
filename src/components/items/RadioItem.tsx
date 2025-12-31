@@ -21,11 +21,11 @@ export default function RadioItem({
 		<div
 			onClick={onClickRadio}
 			className={cn(
-				"flex items-center w-full p-5 cursor-pointer rounded-lg transition-all",
-				"border backdrop-blur-sm",
+				"flex items-center w-full p-5 cursor-pointer rounded-card transition-all",
+				"border",
 				checked
-					? "border-gray-400 bg-gray-50/80 dark:border-gray-600 dark:bg-gray-900/80"
-					: "border-gray-300 bg-gray-50/80 dark:border-gray-700 dark:bg-gray-900/80 hover:border-gray-400 dark:hover:border-gray-600",
+					? "border-theme-primary bg-theme-primary/10"
+					: "border-card bg-card-bg hover:border-card-active",
 				className
 			)}
 		>
@@ -33,20 +33,16 @@ export default function RadioItem({
 				className={cn(
 					"w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors",
 					checked
-						? "border-blue-500 bg-blue-500"
-						: "border-gray-400 dark:border-gray-500"
+						? "border-theme-primary bg-theme-primary"
+						: "border-card bg-card-bg hover:border-card-active"
 				)}
 			>
-				{checked && (
-					<div className="w-2 h-2 rounded-full bg-white" />
-				)}
+				{checked && <div className="w-2 h-2 rounded-full bg-white" />}
 			</div>
 			<span
 				className={cn(
 					"ml-2 transition-colors",
-					checked
-						? "text-gray-900 dark:text-gray-100 font-medium"
-						: "text-gray-500 dark:text-gray-400"
+					checked ? "text-theme-primary font-medium" : "text-sub-text"
 				)}
 			>
 				{content}
