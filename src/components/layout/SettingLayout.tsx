@@ -138,11 +138,11 @@ export default function SettingLayout({
 									{group.items.map((item) => (
 										<p
 											className={cn(
-												"cursor-pointer py-2 px-3 rounded-card whitespace-nowrap",
+												"cursor-pointer py-2 px-3 rounded-card whitespace-nowrap leading-4.5",
 												activeSection === item.id
 													? "text-theme-primary"
 													: "text-main-text",
-												"hover:bg-card hover:text-theme-secondary"
+												"hover:bg-card-bg hover:text-theme-secondary"
 											)}
 											style={{
 												transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",

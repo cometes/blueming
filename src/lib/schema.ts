@@ -40,3 +40,43 @@ export const schemaSettingsGeneral = yup.object({
 	primaryColor: yup.string().nullable(),
 	secondaryColor: yup.string().nullable(),
 });
+
+export const schemaSettingsMenu = yup.object({
+	fontColor: yup.string().nullable(),
+	textAlign: yup.string().oneOf(["왼쪽", "가가운데", "오른쪽"]).nullable(),
+	type: yup.string().nullable(),
+	align: yup.string().oneOf(["왼쪽", "오른쪽"]).nullable(),
+	logoText: yup.string().nullable(),
+	logoImage: yup.string().nullable(),
+	logoType: yup.string().oneOf(["없음", "텍스트", "이미지"]).nullable(),
+	backgroundColor: yup.string().nullable(),
+	bgType: yup.string().oneOf(["없음", "단색", "이미지"]).nullable(),
+	backgroundImage: yup.string().nullable(),
+});
+
+export const schemaAddMenu = {
+	posting: yup.object({
+		name: yup.string().required("메뉴 이름을 입력해주세요."),
+		category: yup.string().required("카테고리를 선택해주세요."),
+		isPublic: yup.boolean().default(true),
+		openInNewTab: yup.boolean().default(false),
+		image: yup.string().nullable(),
+	}),
+	folder: yup.object({
+		name: yup.string().required("메뉴 이름을 입력해주세요."),
+		isPublic: yup.boolean().default(true),
+		openInNewTab: yup.boolean().default(false),
+		image: yup.string().nullable(),
+		subMenus: yup.array().of(yup.string()).nullable(),
+	}),
+	custom: yup.object({
+		name: yup.string().required("메뉴 이름을 입력해주세요."),
+		url: yup
+			.string()
+			.url("올바른 URL 형식이 아닙니다.")
+			.required("URL을 입력해주세요."),
+		isPublic: yup.boolean().default(true),
+		openInNewTab: yup.boolean().default(false),
+		image: yup.string().nullable(),
+	}),
+};
