@@ -5,18 +5,14 @@ import AdminRoute from "@/components/common/AdminRoute";
 import SettingLayout from "@/components/layout/SettingLayout";
 import GeneralSettingClient from "./general/GeneralSettingClient";
 import DesignSettingClient from "./design/DesignSettingClient";
-
-const MenuSetting = () => (
-	<div className="p-6 bg-card rounded-lg">
-		<h3 className="text-xl font-bold mb-4">메뉴 디자인 설정</h3>
-		<p className="text-sub-text">메뉴의 디자인과 구성을 설정할 수 있습니다.</p>
-	</div>
-);
+import MenuSettingClient from "./menu/MenuSettingClient";
 
 const EffectSetting = () => (
 	<div className="p-6 bg-card rounded-lg">
 		<h3 className="text-xl font-bold mb-4">기타 설정</h3>
-		<p className="text-sub-text">홈페이지의 기타 효과와 설정을 관리할 수 있습니다.</p>
+		<p className="text-sub-text">
+			홈페이지의 기타 효과와 설정을 관리할 수 있습니다.
+		</p>
 	</div>
 );
 
@@ -30,7 +26,9 @@ const ThemeSetting = () => (
 const MainLayoutSetting = () => (
 	<div className="p-6 bg-card rounded-lg">
 		<h3 className="text-xl font-bold mb-4">메인 레이아웃 설정</h3>
-		<p className="text-sub-text">메인 페이지의 레이아웃을 편집할 수 있습니다.</p>
+		<p className="text-sub-text">
+			메인 페이지의 레이아웃을 편집할 수 있습니다.
+		</p>
 	</div>
 );
 
@@ -44,7 +42,9 @@ const FreeBoardSetting = () => (
 const NoticeSetting = () => (
 	<div className="p-6 bg-card rounded-lg">
 		<h3 className="text-xl font-bold mb-4">메인 공지 설정</h3>
-		<p className="text-sub-text">메인 페이지의 공지사항을 설정할 수 있습니다.</p>
+		<p className="text-sub-text">
+			메인 페이지의 공지사항을 설정할 수 있습니다.
+		</p>
 	</div>
 );
 
@@ -85,7 +85,7 @@ export default function SettingClient() {
 			desc: "홈페이지의 전체적인 디자인을 설정할 수 있습니다.",
 		},
 		menu: {
-			component: <MenuSetting />,
+			component: <MenuSettingClient />,
 			title: "메뉴 디자인 설정",
 			desc: "메뉴의 디자인과 구성을 설정할 수 있습니다.",
 		},

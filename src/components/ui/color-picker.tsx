@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { SketchPicker, ColorResult } from "react-color";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 
 interface ColorPickerProps {
@@ -11,7 +15,11 @@ interface ColorPickerProps {
 	className?: string;
 }
 
-export function ColorPicker({ value = "#000000", onChange, className }: ColorPickerProps) {
+export function ColorPicker({
+	value = "#000000",
+	onChange,
+	className,
+}: ColorPickerProps) {
 	const [color, setColor] = useState(value);
 
 	const handleChange = (newColor: ColorResult) => {
@@ -25,11 +33,11 @@ export function ColorPicker({ value = "#000000", onChange, className }: ColorPic
 			<PopoverTrigger asChild>
 				<Button
 					variant="outline"
-					className={className}
+					className={
+						className + "block aspect-square rounded-card border-card"
+					}
 					style={{
 						backgroundColor: color,
-						minWidth: "64px",
-						minHeight: "40px",
 					}}
 				>
 					<span className="sr-only">Pick a color</span>

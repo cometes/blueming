@@ -267,6 +267,7 @@ export type {
 	DdayItem,
 	Profile,
 	MenuItem,
+	SubMenu,
 	MenuDesign,
 	Menu,
 	Design,

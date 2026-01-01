@@ -15,6 +15,7 @@ import {
 import RadioItem from "@/components/items/RadioItem";
 import { useModal } from "@/hooks/useModal";
 import { useSettingDesign } from "@/hooks/useSettingDesign";
+import WidgetSetting from "@/components/setting/widget";
 
 const BACKGROUND_TYPES = {
 	IMAGE: "이미지",
@@ -38,6 +39,8 @@ export default function DesignSettingClient() {
 		fontBody,
 		background,
 		font,
+		widget,
+		card,
 		onClickSubmit,
 		onClickReset,
 		updateDesignSetting,
@@ -166,17 +169,12 @@ export default function DesignSettingClient() {
 
 			<Separator className="my-12" />
 
-			{/* Widget & Card Settings Placeholder */}
-			<section>
-				<h2 className="text-[20px] font-semibold">위젯 & 카드 설정</h2>
-				<div className="section-wrap mt-6">
-					<div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
-						<p className="text-sm text-gray-600 dark:text-gray-400">
-							위젯과 카드 설정은 복잡한 기능으로 추후 구현 예정입니다.
-						</p>
-					</div>
-				</div>
-			</section>
+			{/* 위젯 & 카드 설정 */}
+			<WidgetSetting
+				widget={widget}
+				card={card}
+				updateDesignSetting={updateDesignSetting}
+			/>
 
 			<Separator className="my-12" />
 

@@ -1,0 +1,266 @@
+import { useForm } from "react-hook-form";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { toast } from "sonner";
+import {
+	useSettings,
+	type MenuItem,
+	type MenuDesign,
+} from "@/contexts/SettingsContext";
+import { setSettingsGeneralMenu } from "@/queries/set/setSettingsGeneralMenu";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { schemaAddMenu } from "@/lib/schema";
+
+export const useSettingMenu = () => {
+	const { general, updateGeneral } = useSettings();
+	const menuData = general?.menu;
+
+	const boardArr = [
+		{ label: "라이브러리", value: "라이브러리" },
+		{ label: "아카이브", value: "아카이브" },
+		{ label: "갤러리", value: "갤러리" },
+		{ label: "스레드", value: "스레드" },
+		{ label: "설정", value: "설정" },
+	];
+
+	const menuTypes = ["없음", "텍스트", "이미지"];
+	const align = ["왼쪽", "오른쪽"];
+	const textAlign = ["왼쪽", "가운데", "오른쪽"];
+	const bgType = ["없음", "단색", "이미지"];
+
+	const [currentMenuTab, setCurrentMenuTab] = useState<
+		"posting" | "folder" | "custom"
+	>("posting");
+	const [bgThumbnail, setBgThumnail] = useState("");
+
+	// 메뉴 디자인 설정 기본값
+	const defaultMenuDesign: MenuDesign = {
+		align: "왼쪽",
+		type: "텍스트형",
+		fontColor: "#000000",
+		textAlign: "가운데",
+		logoType: "텍스트",
+		logoImage: "",
+		logoText: "",
+		bgType: "없음",
+		backgroundColor: "#ffffff",
+		backgroundImage: "",
+	};
+
+	const [currentMenuList, setCurrentMenuList] = useState<MenuItem[]>([]);
+	const [menuDesign, setMenuDesign] = useState<MenuDesign>(defaultMenuDesign);
+
+	// Load initial data
+	useEffect(() => {
+		if (menuData) {
+			if (menuData.menus && Array.isArray(menuData.menus)) {
+				setCurrentMenuList(menuData.menus);
+			}
+			if (menuData.design) {
+				setMenuDesign({
+					...defaultMenuDesign,
+					...menuData.design,
+				});
+			}
+		}
+	}, [menuData]);
+
+	// Form for adding/editing menu items
+	const {
+		control,
+		setValue,
+		getValues,
+		handleSubmit,
+		formState,
+		reset,
+		watch,
+	} = useForm({
+		mode: "onSubmit",
+		// @ts-ignore - dynamic resolver
+		resolver: yupResolver(schemaAddMenu[currentMenuTab]),
+	});
+
+	// Reset form when menu tab changes
+	useEffect(() => {
+		reset();
+	}, [currentMenuTab, reset]);
+
+	const updateMenuDesign = useCallback(
+		(field: keyof MenuDesign, value: string) => {
+			setMenuDesign((prev) => ({
+				...prev,
+				[field]: value,
+			}));
+		},
+		[]
+	);
+
+	const updateMenuSetting = useCallback(
+		(path: string, value: string) => {
+			if (path === "background.color") {
+				updateMenuDesign("backgroundColor", value);
+			} else if (path === "font.color") {
+				updateMenuDesign("fontColor", value);
+			} else if (path === "background.image") {
+				updateMenuDesign("backgroundImage", value);
+			} else if (path === "logo.image") {
+				updateMenuDesign("logoImage", value);
+			} else if (path === "logo.text") {
+				updateMenuDesign("logoText", value);
+			}
+		},
+		[updateMenuDesign]
+	);
+
+	const handleAddMenu = useCallback(
+		(data: any) => {
+			if (currentMenuList.length >= 8) {
+				toast.error("최대 8개의 메뉴만 추가할 수 있습니다.");
+				return;
+			}
+
+			const newMenuData: MenuItem = {
+				id: `${currentMenuList.length + 1}`,
+				uniqueId: crypto.randomUUID(),
+				name: data.name,
+				type: currentMenuTab,
+				isPublic: data.isPublic ?? true,
+				openInNewTab: data.openInNewTab ?? false,
+				allow: data.isPublic ? "all" : "private",
+				image: data.image || "",
+				target: data.openInNewTab ?? false,
+				category:
+					data.category ||
+					(currentMenuTab === "folder"
+						? "폴더"
+						: currentMenuTab === "custom"
+						? "커스텀"
+						: ""),
+				url: data.url || "",
+				subMenus: data.subMenus || [],
+			};
+
+			setCurrentMenuList((prev) => [...prev, newMenuData]);
+			reset();
+		},
+		[currentMenuList, currentMenuTab, reset]
+	);
+
+	const handleDeleteMenu = useCallback((uniqueId: string) => {
+		setCurrentMenuList((prev) => {
+			const filtered = prev.filter((m) => m.uniqueId !== uniqueId);
+			return filtered.map((m, index) => ({ ...m, id: `${index + 1}` }));
+		});
+	}, []);
+
+	const handleUpdateMenu = useCallback(
+		(index: number, updatedMenu: Partial<MenuItem>) => {
+			setCurrentMenuList((prev) => {
+				const newList = [...prev];
+				newList[index] = { ...newList[index], ...updatedMenu };
+				return newList;
+			});
+		},
+		[]
+	);
+
+	const handleDragEnd = useCallback((result: any) => {
+		const { destination, source } = result;
+		if (!destination || destination.index === source.index) return;
+
+		setCurrentMenuList((prev) => {
+			const newList = Array.from(prev);
+			const [movedItem] = newList.splice(source.index, 1);
+			newList.splice(destination.index, 0, movedItem);
+			return newList.map((m, index) => ({ ...m, id: `${index + 1}` }));
+		});
+	}, []);
+
+	const handleReset = useCallback(async () => {
+		try {
+			setMenuDesign(defaultMenuDesign);
+			setCurrentMenuList([]);
+			reset();
+
+			const menuData = {
+				design: defaultMenuDesign,
+				menus: [],
+			};
+
+			const response = await setSettingsGeneralMenu(menuData);
+			// @ts-ignore - response structure might differ slightly but handled by provider
+			updateGeneral(response.data.general);
+
+			const channel = new BroadcastChannel("menuSettingsUpdated");
+			channel.postMessage({
+				menuSettings: response.data.general,
+				timestamp: Date.now(),
+			});
+			channel.close();
+
+			toast.success("메뉴 설정이 초기화되었습니다.");
+		} catch (error) {
+			console.error("메뉴 설정 초기화 실패:", error);
+			toast.error("메뉴 설정을 초기화하지 못했습니다.");
+		}
+	}, [reset, updateGeneral]);
+
+	const handleSave = useCallback(async () => {
+		try {
+			const preparedMenuDesign = {
+				...menuDesign,
+				backgroundColor:
+					menuDesign.bgType === "없음"
+						? "rgba(0, 0, 0, 0)"
+						: menuDesign.backgroundColor,
+			};
+
+			const menuData = {
+				design: preparedMenuDesign,
+				menus: currentMenuList,
+			};
+
+			const response = await setSettingsGeneralMenu(menuData);
+			// @ts-ignore
+			updateGeneral(response.data.general);
+
+			const channel = new BroadcastChannel("menuSettingsUpdated");
+			channel.postMessage({
+				menuSettings: response.data.general,
+				timestamp: Date.now(),
+			});
+			channel.close();
+
+			toast.success("메뉴 설정이 성공적으로 저장되었습니다.");
+		} catch (error) {
+			console.error("메뉴 설정 저장 실패:", error);
+			toast.error("메뉴 설정을 저장하지 못했습니다.");
+		}
+	}, [menuDesign, currentMenuList, updateGeneral]);
+
+	return {
+		handleSubmit,
+		handleAddMenu,
+		reset,
+		currentMenuTab,
+		setCurrentMenuTab,
+		setValue,
+		formState,
+		getValues,
+		boardArr,
+		handleUpdateMenu,
+		handleDeleteMenu,
+		handleDragEnd,
+		menus: currentMenuList,
+		menuTypes,
+		align,
+		textAlign,
+		bgType,
+		updateMenuSetting,
+		menuDesign,
+		updateMenuDesign,
+		handleReset,
+		handleSave,
+		bgThumbnail,
+		setBgThumnail,
+	};
+};

@@ -1,581 +1,520 @@
-import { useTheme } from "@emotion/react";
-import { Button, ColorPicker, InputNumber, Slider } from "antd";
-import { Trash2 } from "lucide-react";
+"use client";
 
-import * as S from "../../../../pages/setting/general/style";
-import DivideLine from "../../divideLine";
-import RadioItem from "../../items/radio";
-import { useSettingDesign } from "../../../../etc/hooks/useSettingDesign";
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { ColorPicker } from "@/components/ui/color-picker";
+import RadioItem from "@/components/items/RadioItem";
+import { useSettingDesign } from "@/hooks/useSettingDesign";
+import { cn } from "@/lib/utils";
+import { Slider } from "@/components/ui/slider";
 
 interface WidgetSettings {
-  background: string;
-  borderColor: string;
-  borderRadius: number;
-  borderStyle: string;
-  borderWidth: number;
-  blur: number;
-  borderImage: string;
+	background: string;
+	borderColor: string;
+	borderRadius: number;
+	borderStyle: string;
+	borderWidth: number;
+	blur: number;
+	borderImage: string;
 }
 
 interface CardSettings extends WidgetSettings {
-  type: string;
-  borderActiveColor: string;
-  boxShadow: string;
-  translateY: number;
-}
-
-interface ColorChangeEvent {
-  toRgbString(): string;
+	type: string;
+	borderActiveColor: string;
+	boxShadow: string;
+	translateY: number;
 }
 
 interface WidgetSettingProps {
-  widget: WidgetSettings;
-  card: CardSettings;
-  updateDesignSetting: (path: string, value: any) => void;
+	widget: WidgetSettings;
+	card: CardSettings;
+	updateDesignSetting: (path: string, value: any) => void;
 }
 
-const SLIDER_CONFIG = {
-  BORDER_WIDTH: { min: 1, max: 5 },
-  BLUR: { min: 0, max: 20 }
-} as const;
-
-const INPUT_STYLES = {
-  SLIDER_FULL_WIDTH: { width: "100%" },
-  INPUT_NUMBER_MARGIN: { margin: "0 16px" }
-} as const;
-
-const SECTION_TEXTS = {
-  WIDGET_TITLE: "위젯 설정",
-  WIDGET_PREVIEW: "위젯 프리뷰입니다.",
-  CARD_TITLE: "카드 설정",
-  CARD_PREVIEW: "카드 프리뷰입니다.",
-  CLEAR_BUTTON: "비우기"
-} as const;
-
-const FIELD_LABELS = {
-  WIDGET: {
-    BACKGROUND: "위젯 배경 컬러",
-    BORDER_COLOR: "위젯 라인 컬러",
-    BORDER_RADIUS: "위젯 모서리 둥글기",
-    BORDER_STYLE: "위젯 라인 타입",
-    BORDER_WIDTH: "위젯 라인 굵기",
-    BLUR: "위젯 블러",
-    BORDER_IMAGE: "위젯 보더 이미지 (옵션)"
-  },
-  CARD: {
-    PRESET: "프리셋",
-    BACKGROUND: "카드 배경 컬러",
-    BORDER_COLOR: "카드 라인 컬러",
-    BORDER_RADIUS: "카드 모서리 둥글기",
-    BORDER_STYLE: "카드 라인 타입",
-    BORDER_WIDTH: "카드 라인 굵기",
-    BLUR: "카드 블러",
-    BORDER_IMAGE: "카드 보더 이미지 (옵션)"
-  }
-} as const;
-
 const PRESET_TYPES = {
-  LIGHT: "라이트",
-  DARK: "다크",
-  CUSTOM: "커스텀"
+	LIGHT: "라이트",
+	DARK: "다크",
+	CUSTOM: "커스텀",
 } as const;
 
-const DIVIDER_MARGIN = "60px 0";
-const RECOMMENDED_SIZE = "권장 90 * 90";
+export default function WidgetSetting({
+	widget,
+	card,
+	updateDesignSetting,
+}: WidgetSettingProps) {
+	const { lightPreset, darkPreset, presetTypes, radiusTypes, lineTypes } =
+		useSettingDesign();
 
-export default function WidgetSetting(props: WidgetSettingProps) {
-  const theme = useTheme();
-  const {
-    lightPreset,
-    darkPreset,
-    design,
-    presetTypes,
-    radiusTypes,
-    lineTypes
-  } = useSettingDesign();
+	const applyPreset = (presetType: string) => {
+		if (presetType === PRESET_TYPES.LIGHT) {
+			Object.keys(lightPreset).forEach((key) => {
+				updateDesignSetting(
+					`card.${key}`,
+					lightPreset[key as keyof typeof lightPreset]
+				);
+			});
+			updateDesignSetting("card.type", presetType);
+		} else if (presetType === PRESET_TYPES.DARK) {
+			Object.keys(darkPreset).forEach((key) => {
+				updateDesignSetting(
+					`card.${key}`,
+					darkPreset[key as keyof typeof darkPreset]
+				);
+			});
+			updateDesignSetting("card.type", presetType);
+		} else {
+			updateDesignSetting("card.type", presetType);
+		}
+	};
 
-  const applyPreset = (presetType: string) => {
-    if (presetType === PRESET_TYPES.LIGHT) {
-      const presetKeys = Object.keys(lightPreset) as Array<
-        keyof typeof lightPreset
-      >;
-      presetKeys.forEach(key => {
-        props.updateDesignSetting(`card.${key}`, lightPreset[key]);
-      });
-      props.updateDesignSetting("card.type", presetType);
-    } else if (presetType === PRESET_TYPES.DARK) {
-      const presetKeys = Object.keys(darkPreset) as Array<
-        keyof typeof darkPreset
-      >;
-      presetKeys.forEach(key => {
-        props.updateDesignSetting(`card.${key}`, darkPreset[key]);
-      });
-      props.updateDesignSetting("card.type", presetType);
-    } else {
-      props.updateDesignSetting("card.type", presetType);
-    }
-  };
+	const getCardPreset = () => {
+		if (card.type === PRESET_TYPES.LIGHT || card.type === PRESET_TYPES.DARK) {
+			return card.type === PRESET_TYPES.LIGHT ? lightPreset : darkPreset;
+		}
+		return card;
+	};
 
-  const getCardPreset = () => {
-    if (
-      props.card.type === PRESET_TYPES.LIGHT ||
-      props.card.type === PRESET_TYPES.DARK
-    ) {
-      return props.card.type === PRESET_TYPES.LIGHT ? lightPreset : darkPreset;
-    }
-    return props.card;
-  };
+	const currentCardPreset = getCardPreset();
 
-  const renderColorPicker = (
-    value: string,
-    onChange: (color: ColorChangeEvent) => void
-  ) => (
-    <>
-      <ColorPicker defaultValue={value} size="large" onChange={onChange} />
-      <S.ColorText color={value}>{value}</S.ColorText>
-    </>
-  );
+	return (
+		<div className="space-y-12">
+			{/* 위젯 설정 Section */}
+			<section>
+				<h2 className="text-[20px] font-semibold">위젯 설정</h2>
+				<div className="mt-6">
+					{/* 위젯 프리뷰 */}
+					<div className="flex flex-col items-center p-8 rounded-card border-card bg-card-bg filter-blur-card mb-8 relative">
+						<div
+							className="relative z-10 flex items-center justify-center h-[100px] aspect-[3/1] bg-clip-padding transition-all"
+							style={{
+								borderStyle: widget.borderStyle,
+								borderWidth: `${widget.borderWidth}px`,
+								borderRadius: `${widget.borderRadius}px`,
+								borderColor: widget.borderColor,
+								backgroundColor: widget.background,
+								backdropFilter: `blur(${widget.blur}px)`,
+							}}
+						>
+							<p className="text-sub-text font-medium">위젯 프리뷰입니다.</p>
+						</div>
+						<img
+							src="/꼬솜.png"
+							alt="preview deco"
+							className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+						/>
+					</div>
 
-  const renderSliderWithInput = (
-    config: { min: number; max: number },
-    value: number,
-    onChange: (value: number) => void
-  ) => (
-    <>
-      <Slider
-        min={config.min}
-        max={config.max}
-        onChange={onChange}
-        value={typeof value === "number" ? value : 0}
-        style={INPUT_STYLES.SLIDER_FULL_WIDTH}
-      />
-      <InputNumber
-        min={config.min}
-        max={config.max}
-        style={INPUT_STYLES.INPUT_NUMBER_MARGIN}
-        value={value}
-        onChange={onChange}
-        onPressEnter={e =>
-          onChange(Number((e.target as HTMLInputElement).value))
-        }
-      />
-    </>
-  );
+					<div className="space-y-4">
+						{/* 위젯 배경 컬러 */}
+						<div className="flex items-center">
+							<div className="w-[220px] pr-5">
+								<h3 className="font-medium text-sub-text">위젯 배경 컬러</h3>
+							</div>
+							<div className="flex items-center gap-3">
+								<ColorPicker
+									value={widget.background}
+									onChange={(color) =>
+										updateDesignSetting("widget.background", color)
+									}
+								/>
+								<span
+									className="text-sm font-mono"
+									style={{ color: widget.background }}
+								>
+									{widget.background}
+								</span>
+							</div>
+						</div>
 
-  const renderRadioGroup = (
-    items: any[],
-    currentValue: any,
-    onChange: (value: any) => void,
-    getLabel?: (item: any) => string
-  ) => (
-    <S.SectionCheckWrap>
-      {items.map(item => (
-        <RadioItem
-          key={item.value || item}
-          onClickRadio={() => onChange(item.value || item)}
-          checked={currentValue === (item.value || item)}
-          content={getLabel ? getLabel(item) : `${item}px`}
-        />
-      ))}
-    </S.SectionCheckWrap>
-  );
+						{/* 위젯 라인 컬러 */}
+						<div className="flex items-center">
+							<div className="w-[220px] pr-5">
+								<h3 className="font-medium text-sub-text">위젯 라인 컬러</h3>
+							</div>
+							<div className="flex items-center gap-3">
+								<ColorPicker
+									value={widget.borderColor}
+									onChange={(color) =>
+										updateDesignSetting("widget.borderColor", color)
+									}
+								/>
+								<span
+									className="text-sm font-mono"
+									style={{ color: widget.borderColor }}
+								>
+									{widget.borderColor}
+								</span>
+							</div>
+						</div>
 
-  return (
-    <>
-      <S.Section>
-        <S.SectionTitle>{SECTION_TEXTS.WIDGET_TITLE}</S.SectionTitle>
-        <S.WidgetPreviewWrap>
-          <S.WidgetPreviewBox preset={props.widget}>
-            <S.WidgetPreviewText preset={""}>
-              {SECTION_TEXTS.WIDGET_PREVIEW}
-            </S.WidgetPreviewText>
-          </S.WidgetPreviewBox>
-          <S.WidgetLorem src="/꼬솜.png" />
-        </S.WidgetPreviewWrap>
-        <S.SectionWrap>
-          <S.SectionBox>
-            <S.SectionTextBox>
-              <S.SectionCategory>
-                {FIELD_LABELS.WIDGET.BACKGROUND}
-              </S.SectionCategory>
-            </S.SectionTextBox>
-            <S.SectionInputBox>
-              {renderColorPicker(props.widget.background, value =>
-                props.updateDesignSetting(
-                  "widget.background",
-                  value.toRgbString()
-                )
-              )}
-            </S.SectionInputBox>
-          </S.SectionBox>
-          <S.SectionBox>
-            <S.SectionTextBox>
-              <S.SectionCategory>위젯 라인 컬러</S.SectionCategory>
-            </S.SectionTextBox>
-            <S.SectionInputBox>
-              <ColorPicker
-                defaultValue={props.widget.borderColor}
-                size="large"
-                onChange={value => {
-                  props.updateDesignSetting(
-                    "widget.borderColor",
-                    value.toRgbString()
-                  );
-                }}
-              />
-              <S.ColorText color={props.widget.borderColor}>
-                {props.widget.borderColor}
-              </S.ColorText>
-            </S.SectionInputBox>
-          </S.SectionBox>
-          <S.SectionBox>
-            <S.SectionTextBox>
-              <S.SectionCategory>위젯 모서리 둥글기</S.SectionCategory>
-            </S.SectionTextBox>
-            <S.SectionCheckWrap>
-              {radiusTypes.map(el => (
-                <RadioItem
-                  key={el}
-                  onClickRadio={() => {
-                    props.updateDesignSetting("widget.borderRadius", el);
-                  }}
-                  checked={props.widget.borderRadius === el}
-                  content={`${el}px`}
-                />
-              ))}
-            </S.SectionCheckWrap>
-          </S.SectionBox>
-          <S.SectionBox>
-            <S.SectionTextBox>
-              <S.SectionCategory>위젯 라인 타입</S.SectionCategory>
-            </S.SectionTextBox>
-            <S.SectionCheckWrap>
-              {lineTypes.map(el => (
-                <RadioItem
-                  key={el.value}
-                  onClickRadio={() => {
-                    props.updateDesignSetting("widget.borderStyle", el.value);
-                  }}
-                  checked={props.widget.borderStyle === el.value}
-                  content={el.label}
-                />
-              ))}
-            </S.SectionCheckWrap>
-          </S.SectionBox>
-          <S.SectionBox>
-            <S.SectionTextBox>
-              <S.SectionCategory>위젯 라인 굵기</S.SectionCategory>
-            </S.SectionTextBox>
-            <S.SectionInputBox>
-              <Slider
-                min={1}
-                max={5}
-                onChange={value => {
-                  props.updateDesignSetting("widget.borderWidth", value);
-                }}
-                value={
-                  typeof props.widget.borderWidth === "number"
-                    ? props.widget.borderWidth
-                    : 0
-                }
-                style={{
-                  width: "100%"
-                }}
-              />
-              <InputNumber
-                min={1}
-                max={5}
-                style={{
-                  margin: "0 16px"
-                }}
-                value={props.widget.borderWidth}
-                onChange={value => {
-                  props.updateDesignSetting("widget.borderWidth", value);
-                }}
-                onPressEnter={e =>
-                  props.updateDesignSetting(
-                    "widget.borderWidth",
-                    Number((e.target as HTMLInputElement).value)
-                  )
-                }
-              />
-            </S.SectionInputBox>
-          </S.SectionBox>
-          <S.SectionBox>
-            <S.SectionTextBox>
-              <S.SectionCategory>위젯 블러</S.SectionCategory>
-            </S.SectionTextBox>
-            <S.SectionInputBox>
-              <Slider
-                min={0}
-                max={20}
-                onChange={value => {
-                  props.updateDesignSetting("widget.blur", value);
-                }}
-                value={
-                  typeof props.widget.blur === "number" ? props.widget.blur : 0
-                }
-                style={{
-                  width: "100%"
-                }}
-              />
-              <InputNumber
-                min={1}
-                max={20}
-                style={{
-                  margin: "0 16px"
-                }}
-                value={props.widget.blur}
-                onChange={value => {
-                  props.updateDesignSetting("widget.blur", value);
-                }}
-                onPressEnter={e =>
-                  props.updateDesignSetting(
-                    "widget.blur",
-                    Number((e.target as HTMLInputElement).value)
-                  )
-                }
-              />
-            </S.SectionInputBox>
-          </S.SectionBox>
-          <S.SectionBox>
-            <S.SectionTextBox>
-              <S.SectionCategory>위젯 보더 이미지 (옵션)</S.SectionCategory>
-              <S.SectionDesc>권장 90 * 90</S.SectionDesc>
-            </S.SectionTextBox>
-            <S.SectionImageBox></S.SectionImageBox>
-            <S.SectionButtonBox>
-              <Button
-                icon={<Trash2 size={14} />}
-                onClick={() => {
-                  props.updateDesignSetting("widget.borderImage", "");
-                }}
-              >
-                비우기
-              </Button>
-            </S.SectionButtonBox>
-          </S.SectionBox>
-        </S.SectionWrap>
-      </S.Section>
-      <DivideLine margin={DIVIDER_MARGIN} />
-      <S.Section>
-        <S.SectionTitle>{SECTION_TEXTS.CARD_TITLE}</S.SectionTitle>
-        <S.WidgetPreviewWrap>
-          <S.CardPreviewBox preset={getCardPreset()}>
-            <S.CardPreviewText preset={props.card.type}>
-              {SECTION_TEXTS.CARD_PREVIEW}
-            </S.CardPreviewText>
-          </S.CardPreviewBox>
-          <S.WidgetLorem src="/꼬솜.png" />
-        </S.WidgetPreviewWrap>
-        <S.SectionWrap>
-          <S.SectionBox>
-            <S.SectionTextBox>
-              <S.SectionCategory>프리셋</S.SectionCategory>
-            </S.SectionTextBox>
-            <S.SectionCheckWrap>
-              {presetTypes.map(el => (
-                <RadioItem
-                  key={el}
-                  onClickRadio={() => {
-                    applyPreset(el);
-                  }}
-                  checked={props.card.type === el}
-                  content={el}
-                />
-              ))}
-            </S.SectionCheckWrap>
-          </S.SectionBox>
-          {props.card.type === PRESET_TYPES.CUSTOM && (
-            <>
-              <S.SectionBox>
-                <S.SectionTextBox>
-                  <S.SectionCategory>카드 배경 컬러</S.SectionCategory>
-                </S.SectionTextBox>
-                <S.SectionInputBox>
-                  <ColorPicker
-                    defaultValue={props.card.background}
-                    size="large"
-                    onChange={value => {
-                      props.updateDesignSetting(
-                        "card.background",
-                        value.toRgbString()
-                      );
-                    }}
-                  />
-                  <S.ColorText color={props.card.background}>
-                    {props.card.background}
-                  </S.ColorText>
-                </S.SectionInputBox>
-              </S.SectionBox>
-              <S.SectionBox>
-                <S.SectionTextBox>
-                  <S.SectionCategory>카드 라인 컬러</S.SectionCategory>
-                </S.SectionTextBox>
-                <S.SectionInputBox>
-                  <S.ColorPickerBox>
-                    <ColorPicker
-                      defaultValue={props.card.borderColor}
-                      size="large"
-                      onChange={value => {
-                        props.updateDesignSetting(
-                          "card.borderColor",
-                          value.toRgbString()
-                        );
-                      }}
-                    />
-                    <S.ColorText color={props.card.borderColor}>
-                      {props.card.borderColor}
-                    </S.ColorText>
-                  </S.ColorPickerBox>
-                  <S.ColorPickerBox>
-                    <ColorPicker
-                      defaultValue={props.card.borderActiveColor}
-                      size="large"
-                      onChange={value => {
-                        props.updateDesignSetting(
-                          "card.borderActiveColor",
-                          value.toRgbString()
-                        );
-                      }}
-                    />
-                    <S.ColorText color={props.card.borderActiveColor}>
-                      {props.card.borderActiveColor}
-                    </S.ColorText>
-                  </S.ColorPickerBox>
-                </S.SectionInputBox>
-              </S.SectionBox>
-              <S.SectionBox>
-                <S.SectionTextBox>
-                  <S.SectionCategory>카드 모서리 둥글기</S.SectionCategory>
-                </S.SectionTextBox>
-                <S.SectionCheckWrap>
-                  {radiusTypes.map(el => (
-                    <RadioItem
-                      key={el}
-                      onClickRadio={() => {
-                        props.updateDesignSetting("card.borderRadius", el);
-                      }}
-                      checked={props.card.borderRadius === el}
-                      content={`${el}px`}
-                    />
-                  ))}
-                </S.SectionCheckWrap>
-              </S.SectionBox>
-              <S.SectionBox>
-                <S.SectionTextBox>
-                  <S.SectionCategory>카드 라인 타입</S.SectionCategory>
-                </S.SectionTextBox>
-                <S.SectionCheckWrap>
-                  {lineTypes.map(el => (
-                    <RadioItem
-                      key={el.value}
-                      onClickRadio={() => {
-                        props.updateDesignSetting("card.borderStyle", el.value);
-                      }}
-                      checked={props.card.borderStyle === el.value}
-                      content={el.label}
-                    />
-                  ))}
-                </S.SectionCheckWrap>
-              </S.SectionBox>
-              <S.SectionBox>
-                <S.SectionTextBox>
-                  <S.SectionCategory>카드 라인 굵기</S.SectionCategory>
-                </S.SectionTextBox>
-                <S.SectionInputBox>
-                  <Slider
-                    min={1}
-                    max={5}
-                    onChange={value => {
-                      props.updateDesignSetting("card.borderWidth", value);
-                    }}
-                    value={
-                      typeof props.card.borderWidth === "number"
-                        ? props.card.borderWidth
-                        : 0
-                    }
-                    style={{
-                      width: "100%"
-                    }}
-                  />
-                  <InputNumber
-                    min={1}
-                    max={5}
-                    style={{
-                      margin: "0 16px"
-                    }}
-                    value={props.card.borderWidth}
-                    onChange={value => {
-                      props.updateDesignSetting("card.borderWidth", value);
-                    }}
-                    onPressEnter={e =>
-                      props.updateDesignSetting(
-                        "card.borderWidth",
-                        Number((e.target as HTMLInputElement).value)
-                      )
-                    }
-                  />
-                </S.SectionInputBox>
-              </S.SectionBox>
-              <S.SectionBox>
-                <S.SectionTextBox>
-                  <S.SectionCategory>카드 블러</S.SectionCategory>
-                </S.SectionTextBox>
-                <S.SectionInputBox>
-                  <Slider
-                    min={0}
-                    max={20}
-                    onChange={value => {
-                      props.updateDesignSetting("card.blur", value);
-                    }}
-                    value={
-                      typeof props.card.blur === "number" ? props.card.blur : 0
-                    }
-                    style={{
-                      width: "100%"
-                    }}
-                  />
-                  <InputNumber
-                    min={0}
-                    max={20}
-                    style={{
-                      margin: "0 16px"
-                    }}
-                    value={props.card.blur}
-                    onChange={value => {
-                      props.updateDesignSetting("card.blur", value);
-                    }}
-                    onPressEnter={e =>
-                      props.updateDesignSetting(
-                        "card.blur",
-                        Number((e.target as HTMLInputElement).value)
-                      )
-                    }
-                  />
-                </S.SectionInputBox>
-              </S.SectionBox>
-              <S.SectionBox>
-                <S.SectionTextBox>
-                  <S.SectionCategory>카드 보더 이미지 (옵션)</S.SectionCategory>
-                  <S.SectionDesc>권장 90 * 90</S.SectionDesc>
-                </S.SectionTextBox>
-                <S.SectionImageBox></S.SectionImageBox>
-                <S.SectionButtonBox>
-                  <Button
-                    icon={<Trash2 size={14} />}
-                    onClick={() => {
-                      props.updateDesignSetting("card.borderImage", "");
-                    }}
-                  >
-                    비우기
-                  </Button>
-                </S.SectionButtonBox>
-              </S.SectionBox>
-            </>
-          )}
-        </S.SectionWrap>
-      </S.Section>
-    </>
-  );
+						{/* 위젯 모서리 둥글기 */}
+						<div className="flex items-center">
+							<div className="w-[220px] pr-5">
+								<h3 className="font-medium text-sub-text">
+									위젯 모서리 둥글기
+								</h3>
+							</div>
+							<div className="grid grid-cols-4 gap-2 flex-1 max-w-sm">
+								{radiusTypes.map((el) => (
+									<RadioItem
+										key={el}
+										onClickRadio={() =>
+											updateDesignSetting("widget.borderRadius", el)
+										}
+										checked={widget.borderRadius === el}
+										content={`${el}px`}
+										className="p-2"
+									/>
+								))}
+							</div>
+						</div>
+
+						{/* 위젯 라인 타입 */}
+						<div className="flex items-center">
+							<div className="w-[220px] pr-5">
+								<h3 className="font-medium text-sub-text">위젯 라인 타입</h3>
+							</div>
+							<div className="grid grid-cols-4 gap-2 flex-1 max-w-sm">
+								{lineTypes.map((el) => (
+									<RadioItem
+										key={el.value}
+										onClickRadio={() =>
+											updateDesignSetting("widget.borderStyle", el.value)
+										}
+										checked={widget.borderStyle === el.value}
+										content={el.label}
+										className="p-2"
+									/>
+								))}
+							</div>
+						</div>
+
+						{/* 위젯 라인 굵기 */}
+						<div className="flex items-center">
+							<div className="w-[220px] pr-5">
+								<h3 className="font-medium text-sub-text">위젯 라인 굵기</h3>
+							</div>
+							<div className="flex items-center gap-4 flex-1 max-w-md w-full">
+								<Slider
+									min={1}
+									max={5}
+									step={1}
+									value={[widget.borderWidth]}
+									onValueChange={(val) =>
+										updateDesignSetting("widget.borderWidth", val[0])
+									}
+									className="flex-1 min-w-[150px]"
+								/>
+								<Input
+									type="number"
+									min={1}
+									max={5}
+									value={widget.borderWidth}
+									onChange={(e) =>
+										updateDesignSetting(
+											"widget.borderWidth",
+											Number(e.target.value)
+										)
+									}
+									className="w-20"
+								/>
+							</div>
+						</div>
+
+						{/* 위젯 블러 */}
+						<div className="flex items-center">
+							<div className="w-[220px] pr-5">
+								<h3 className="font-medium text-sub-text">위젯 블러</h3>
+							</div>
+							<div className="flex items-center gap-4 flex-1 max-w-md w-full">
+								<Slider
+									min={0}
+									max={20}
+									step={1}
+									value={[widget.blur]}
+									onValueChange={(val) =>
+										updateDesignSetting("widget.blur", val[0])
+									}
+									className="flex-1 min-w-[150px]"
+								/>
+								<Input
+									type="number"
+									min={0}
+									max={20}
+									value={widget.blur}
+									onChange={(e) =>
+										updateDesignSetting("widget.blur", Number(e.target.value))
+									}
+									className="w-20"
+								/>
+							</div>
+						</div>
+
+						{/* 위젯 보더 이미지 */}
+						<div className="flex items-center">
+							<div className="w-[220px] pr-5">
+								<h3 className="font-medium text-sub-text">
+									위젯 보더 이미지 (옵션)
+								</h3>
+								<p className="text-xs text-sub-text-light mt-1">권장 90 * 90</p>
+							</div>
+							<div className="flex items-center gap-3">
+								<div className="w-24 h-24 rounded-card border-card bg-card-bg overflow-hidden flex items-center justify-center">
+									{widget.borderImage ? (
+										<img
+											src={widget.borderImage}
+											alt="border"
+											className="w-full h-full object-cover"
+										/>
+									) : (
+										<span className="text-[10px] text-gray-400">
+											이미지 없음
+										</span>
+									)}
+								</div>
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => updateDesignSetting("widget.borderImage", "")}
+									className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+									style={{
+										transition: "all 0.3s ease-in-out",
+									}}
+								>
+									<Trash2 size={14} className="mr-2" />
+									비우기
+								</Button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<Separator className="my-12" />
+
+			{/* 카드 설정 Section */}
+			<section>
+				<h2 className="text-[20px] font-semibold">카드 설정</h2>
+				<div className="mt-6">
+					{/* 카드 프리뷰 */}
+					<div className="flex flex-col items-center p-8 rounded-card border-card bg-card-bg filter-blur-card mb-8 relative">
+						<div
+							className="relative z-10 flex items-center justify-center h-[100px] aspect-[3/1] transition-all hover:-translate-y-1 hover:shadow-lg"
+							style={{
+								borderStyle: currentCardPreset.borderStyle,
+								borderWidth: `${currentCardPreset.borderWidth}px`,
+								borderRadius: `${currentCardPreset.borderRadius}px`,
+								borderColor: currentCardPreset.borderColor,
+								backgroundColor: currentCardPreset.background,
+								backdropFilter: `blur(${currentCardPreset.blur}px)`,
+								boxShadow:
+									card.type !== PRESET_TYPES.CUSTOM
+										? currentCardPreset.boxShadow
+										: undefined,
+								transform: `translateY(${currentCardPreset.translateY}px)`,
+							}}
+						>
+							<p
+								className={cn(
+									"font-medium",
+									card.type === "다크" ? "text-white" : "text-sub-text"
+								)}
+							>
+								카드 프리뷰입니다.
+							</p>
+						</div>
+						<img
+							src="/꼬솜.png"
+							alt="preview deco"
+							className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+						/>
+					</div>
+
+					<div className="space-y-6">
+						{/* 프리셋 */}
+						<div className="flex items-center">
+							<div className="w-[220px] pr-5">
+								<h3 className="font-medium text-sub-text">프리셋</h3>
+							</div>
+							<div className="grid grid-cols-3 gap-3 flex-1 max-w-sm">
+								{presetTypes.map((el) => (
+									<RadioItem
+										key={el}
+										onClickRadio={() => applyPreset(el)}
+										checked={card.type === el}
+										content={el}
+									/>
+								))}
+							</div>
+						</div>
+
+						{card.type === PRESET_TYPES.CUSTOM && (
+							<div className="space-y-4 pt-4 border-t border-dashed">
+								{/* 카드 배경 컬러 */}
+								<div className="flex items-center">
+									<div className="w-[220px] pr-5">
+										<h3 className="font-medium text-sub-text">
+											카드 배경 컬러
+										</h3>
+									</div>
+									<div className="flex items-center gap-3">
+										<ColorPicker
+											value={card.background}
+											onChange={(color) =>
+												updateDesignSetting("card.background", color)
+											}
+										/>
+										<span
+											className="text-sm font-mono"
+											style={{ color: card.background }}
+										>
+											{card.background}
+										</span>
+									</div>
+								</div>
+
+								{/* 카드 라인 컬러 */}
+								<div className="flex items-center">
+									<div className="w-[220px] pr-5">
+										<h3 className="font-medium text-sub-text">
+											카드 라인 컬러
+										</h3>
+									</div>
+									<div className="flex items-center gap-6">
+										<div className="flex items-center gap-2">
+											<ColorPicker
+												value={card.borderColor}
+												onChange={(color) =>
+													updateDesignSetting("card.borderColor", color)
+												}
+											/>
+											<span className="text-xs text-sub-text">기본</span>
+										</div>
+										<div className="flex items-center gap-2">
+											<ColorPicker
+												value={card.borderActiveColor}
+												onChange={(color) =>
+													updateDesignSetting("card.borderActiveColor", color)
+												}
+											/>
+											<span className="text-xs text-sub-text">활성</span>
+										</div>
+									</div>
+								</div>
+
+								{/* 카드 모서리 둥글기 */}
+								<div className="flex items-center">
+									<div className="w-[220px] pr-5">
+										<h3 className="font-medium text-sub-text">
+											카드 모서리 둥글기
+										</h3>
+									</div>
+									<div className="grid grid-cols-4 gap-2 flex-1 max-w-sm">
+										{radiusTypes.map((el) => (
+											<RadioItem
+												key={el}
+												onClickRadio={() =>
+													updateDesignSetting("card.borderRadius", el)
+												}
+												checked={card.borderRadius === el}
+												content={`${el}px`}
+												className="p-2"
+											/>
+										))}
+									</div>
+								</div>
+
+								{/* 카드 라인 타입 */}
+								<div className="flex items-center">
+									<div className="w-[220px] pr-5">
+										<h3 className="font-medium text-sub-text">
+											카드 라인 타입
+										</h3>
+									</div>
+									<div className="grid grid-cols-4 gap-2 flex-1 max-w-sm">
+										{lineTypes.map((el) => (
+											<RadioItem
+												key={el.value}
+												onClickRadio={() =>
+													updateDesignSetting("card.borderStyle", el.value)
+												}
+												checked={card.borderStyle === el.value}
+												content={el.label}
+												className="p-2"
+											/>
+										))}
+									</div>
+								</div>
+
+								{/* 카드 라인 굵기 */}
+								<div className="flex items-center">
+									<div className="w-[220px] pr-5">
+										<h3 className="font-medium text-sub-text">
+											카드 라인 굵기
+										</h3>
+									</div>
+									<div className="flex items-center gap-4 flex-1 max-w-md w-full">
+										<Slider
+											min={1}
+											max={5}
+											step={1}
+											value={[card.borderWidth]}
+											onValueChange={(val) =>
+												updateDesignSetting("card.borderWidth", val[0])
+											}
+											className="flex-1 min-w-[150px]"
+										/>
+										<Input
+											type="number"
+											min={1}
+											max={5}
+											value={card.borderWidth}
+											onChange={(e) =>
+												updateDesignSetting(
+													"card.borderWidth",
+													Number(e.target.value)
+												)
+											}
+											className="w-20"
+										/>
+									</div>
+								</div>
+
+								{/* 카드 블러 */}
+								<div className="flex items-center">
+									<div className="w-[220px] pr-5">
+										<h3 className="font-medium text-sub-text">카드 블러</h3>
+									</div>
+									<div className="flex items-center gap-4 flex-1 max-w-md w-full">
+										<Slider
+											min={0}
+											max={20}
+											step={1}
+											value={[card.blur]}
+											onValueChange={(val) =>
+												updateDesignSetting("card.blur", val[0])
+											}
+											className="flex-1 min-w-[150px]"
+										/>
+										<Input
+											type="number"
+											min={0}
+											max={20}
+											value={card.blur}
+											onChange={(e) =>
+												updateDesignSetting("card.blur", Number(e.target.value))
+											}
+											className="w-20"
+										/>
+									</div>
+								</div>
+							</div>
+						)}
+					</div>
+				</div>
+			</section>
+		</div>
+	);
 }
