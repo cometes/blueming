@@ -1,0 +1,39 @@
+interface CustomLayoutData {
+  layout: Array<{
+    i: string;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    maxW: number;
+    maxH: number;
+  }>;
+  widgets: Array<{
+    id: string;
+    type: string;
+    color: string;
+  }>;
+  usedColors: string[];
+}
+
+export const setCustomLayout = async (value: CustomLayoutData) => {
+  const result = await fetch(
+    "https://api-w5buphcleq-du.a.run.app/settings/main/customLayout",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ value }),
+      next: {
+        revalidateTag: "customLayout"
+      }
+    } as RequestInit
+  );
+
+  const data = await result.json();
+
+  return {
+    data
+  };
+};

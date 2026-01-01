@@ -6,28 +6,16 @@ import SettingLayout from "@/components/layout/SettingLayout";
 import GeneralSettingClient from "./general/GeneralSettingClient";
 import DesignSettingClient from "./design/DesignSettingClient";
 import MenuSettingClient from "./menu/MenuSettingClient";
+import ThemeSettingClient from "./theme/ThemeSettingClient";
+import CustomLayoutClient from "./customLayout/CustomLayoutClient";
+import NoticeSettingClient from "./notice/NoticeSettingClient";
+import ProfileSettingClient from "./profile/ProfileSettingClient";
 
 const EffectSetting = () => (
 	<div className="p-6 bg-card rounded-lg">
 		<h3 className="text-xl font-bold mb-4">기타 설정</h3>
 		<p className="text-sub-text">
 			홈페이지의 기타 효과와 설정을 관리할 수 있습니다.
-		</p>
-	</div>
-);
-
-const ThemeSetting = () => (
-	<div className="p-6 bg-card rounded-lg">
-		<h3 className="text-xl font-bold mb-4">테마 설정</h3>
-		<p className="text-sub-text">홈페이지의 테마를 설정할 수 있습니다.</p>
-	</div>
-);
-
-const MainLayoutSetting = () => (
-	<div className="p-6 bg-card rounded-lg">
-		<h3 className="text-xl font-bold mb-4">메인 레이아웃 설정</h3>
-		<p className="text-sub-text">
-			메인 페이지의 레이아웃을 편집할 수 있습니다.
 		</p>
 	</div>
 );
@@ -39,21 +27,7 @@ const FreeBoardSetting = () => (
 	</div>
 );
 
-const NoticeSetting = () => (
-	<div className="p-6 bg-card rounded-lg">
-		<h3 className="text-xl font-bold mb-4">메인 공지 설정</h3>
-		<p className="text-sub-text">
-			메인 페이지의 공지사항을 설정할 수 있습니다.
-		</p>
-	</div>
-);
 
-const ProfileSetting = () => (
-	<div className="p-6 bg-card rounded-lg">
-		<h3 className="text-xl font-bold mb-4">프로필 설정</h3>
-		<p className="text-sub-text">사용자 프로필 정보를 설정할 수 있습니다.</p>
-	</div>
-);
 
 const SlideSetting = () => (
 	<div className="p-6 bg-card rounded-lg">
@@ -95,14 +69,14 @@ export default function SettingClient() {
 			desc: "홈페이지의 기타 효과와 설정을 관리할 수 있습니다.",
 		},
 		theme: {
-			component: <ThemeSetting />,
+			component: <ThemeSettingClient />,
 			title: "테마 설정",
 			desc: "홈페이지의 테마를 설정할 수 있습니다.",
 		},
 
 		// 메인 설정 그룹
 		mainLayout: {
-			component: <MainLayoutSetting />,
+			component: <CustomLayoutClient />,
 			title: "메인 레이아웃 설정",
 			desc: "메인 페이지의 레이아웃을 편집할 수 있습니다.",
 		},
@@ -112,12 +86,12 @@ export default function SettingClient() {
 			desc: "스티커보드의 설정을 관리할 수 있습니다.",
 		},
 		notice: {
-			component: <NoticeSetting />,
+			component: <NoticeSettingClient />,
 			title: "메인 공지 설정",
 			desc: "메인 페이지의 공지사항을 설정할 수 있습니다.",
 		},
 		profile: {
-			component: <ProfileSetting />,
+			component: <ProfileSettingClient />,
 			title: "프로필 설정",
 			desc: "사용자 프로필 정보를 설정할 수 있습니다.",
 		},

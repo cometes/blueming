@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SketchPicker, ColorResult } from "react-color";
 import {
 	Popover,
@@ -22,10 +22,18 @@ export function ColorPicker({
 }: ColorPickerProps) {
 	const [color, setColor] = useState(value);
 
+	// Sync internal state with prop value
+	useEffect(() => {
+		setColor(value);
+	}, [value]);
+
 	const handleChange = (newColor: ColorResult) => {
-		const rgbaColor = `rgba(${newColor.rgb.r}, ${newColor.rgb.g}, ${newColor.rgb.b}, ${newColor.rgb.a})`;
-		setColor(rgbaColor);
-		onChange?.(rgbaColor);
+		// Use hex if alpha is 1, otherwise use rgba
+		const colorValue = newColor.rgb.a === 1 
+			? newColor.hex 
+			: `rgba(${newColor.rgb.r}, ${newColor.rgb.g}, ${newColor.rgb.b}, ${newColor.rgb.a})`;
+		setColor(colorValue);
+		onChange?.(colorValue);
 	};
 
 	return (
