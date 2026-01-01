@@ -224,6 +224,13 @@ interface MainSettings {
 }
 
 // Root Settings Context
+interface GeneralSettings {
+	theme?: ThemeItem[];
+	general?: General;
+	menu?: Menu;
+	design?: Design;
+}
+
 interface SettingsContextType {
 	general?: {
 		theme: ThemeItem[];
@@ -232,7 +239,7 @@ interface SettingsContextType {
 		design: Design;
 	};
 	main?: MainSettings;
-	updateGeneral?: (general: General) => void;
+	updateGeneral?: (general: Partial<GeneralSettings>) => void;
 	updateDesign?: (design: Design) => void;
 	updateMenu?: (menu: Menu) => void;
 	updateMain?: (main: Partial<MainSettings>) => void;
