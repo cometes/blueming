@@ -10,6 +10,8 @@ import ThemeSettingClient from "./theme/ThemeSettingClient";
 import CustomLayoutClient from "./customLayout/CustomLayoutClient";
 import NoticeSettingClient from "./notice/NoticeSettingClient";
 import ProfileSettingClient from "./profile/ProfileSettingClient";
+import SlideSettingClient from "./slide/SlideSettingClient";
+import DdaySettingClient from "./dday/DdaySettingClient";
 
 const EffectSetting = () => (
 	<div className="p-6 bg-card rounded-lg">
@@ -29,19 +31,7 @@ const FreeBoardSetting = () => (
 
 
 
-const SlideSetting = () => (
-	<div className="p-6 bg-card rounded-lg">
-		<h3 className="text-xl font-bold mb-4">슬라이드 배너 설정</h3>
-		<p className="text-sub-text">슬라이드 배너를 설정할 수 있습니다.</p>
-	</div>
-);
 
-const DdaySetting = () => (
-	<div className="p-6 bg-card rounded-lg">
-		<h3 className="text-xl font-bold mb-4">디데이 설정</h3>
-		<p className="text-sub-text">디데이 기능을 설정할 수 있습니다.</p>
-	</div>
-);
 
 export default function SettingClient() {
 	const [activeSection, setActiveSection] = useState("general");
@@ -96,12 +86,12 @@ export default function SettingClient() {
 			desc: "사용자 프로필 정보를 설정할 수 있습니다.",
 		},
 		slide: {
-			component: <SlideSetting />,
+			component: <SlideSettingClient />,
 			title: "슬라이드 배너 설정",
 			desc: "슬라이드 배너를 설정할 수 있습니다.",
 		},
 		dday: {
-			component: <DdaySetting />,
+			component: <DdaySettingClient />,
 			title: "디데이 설정",
 			desc: "디데이 기능을 설정할 수 있습니다.",
 		},

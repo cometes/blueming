@@ -16,7 +16,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { extensions } from "@/components/editor/TiptapEditor";
-import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
+import SimpleTiptapToolbar from "@/components/tiptap/SimpleTiptapToolbar";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import { useSettings } from "@/contexts/SettingsContext";
 import {
@@ -332,10 +332,10 @@ export default function ProfileSettingClient() {
 
 						{/* Nickname */}
 						<div className="section-box flex items-center mt-4">
-							<div className="text-box w-[220px] pr-5">
+							<div className="text-box w-[220px] pr-5 shrink-0">
 								<h3 className="font-medium text-sub-text">닉네임</h3>
 							</div>
-							<div className="flex-1">
+							<div className="flex-1 min-w-0">
 								<Input
 									placeholder={PLACEHOLDERS.NICKNAME}
 									value={profileData.nickname}
@@ -355,7 +355,7 @@ export default function ProfileSettingClient() {
 									<div className="space-y-2">
 										{/* Toolbar */}
 										<div className="border-card rounded-card bg-card-bg p-2">
-											<TiptapToolbar editor={editor} />
+											<SimpleTiptapToolbar editor={editor} />
 										</div>
 
 										{/* Editor */}
@@ -372,10 +372,10 @@ export default function ProfileSettingClient() {
 
 						{/* Etc */}
 						<div className="section-box flex items-center mt-4">
-							<div className="text-box w-[220px] pr-5">
+							<div className="text-box w-[220px] pr-5 shrink-0">
 								<h3 className="font-medium text-sub-text">etc</h3>
 							</div>
-							<div className="flex-1">
+							<div className="flex-1 min-w-0">
 								<Input
 									placeholder={PLACEHOLDERS.ETC}
 									value={profileData.etc}
