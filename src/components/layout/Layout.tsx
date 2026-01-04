@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import LoginButton from "../common/LoginButton";
 import WidgetMenu from "../widgets/WidgetMenu";
+import BackgroundEffect from "../effects/BackgroundEffect";
 import { useSettings } from "@/contexts/SettingsContext";
 
 interface LayoutProps {
@@ -74,6 +75,7 @@ export default function Layout({ children }: LayoutProps) {
 	if (useCustomLayout) {
 		return (
 			<>
+				<BackgroundEffect />
 				<LoginButton />
 				{children}
 			</>
@@ -115,6 +117,7 @@ export default function Layout({ children }: LayoutProps) {
 					{children}
 				</div>
 			</div>
+			<BackgroundEffect />
 		</>
 	);
 }
