@@ -12,15 +12,7 @@ import NoticeSettingClient from "./notice/NoticeSettingClient";
 import ProfileSettingClient from "./profile/ProfileSettingClient";
 import SlideSettingClient from "./slide/SlideSettingClient";
 import DdaySettingClient from "./dday/DdaySettingClient";
-
-const EffectSetting = () => (
-	<div className="p-6 bg-card rounded-lg">
-		<h3 className="text-xl font-bold mb-4">기타 설정</h3>
-		<p className="text-sub-text">
-			홈페이지의 기타 효과와 설정을 관리할 수 있습니다.
-		</p>
-	</div>
-);
+import EffectSettingClient from "./effect/EffectSettingClient";
 
 const FreeBoardSetting = () => (
 	<div className="p-6 bg-card rounded-lg">
@@ -28,10 +20,6 @@ const FreeBoardSetting = () => (
 		<p className="text-sub-text">스티커보드의 설정을 관리할 수 있습니다.</p>
 	</div>
 );
-
-
-
-
 
 export default function SettingClient() {
 	const [activeSection, setActiveSection] = useState("general");
@@ -54,9 +42,9 @@ export default function SettingClient() {
 			desc: "메뉴의 디자인과 구성을 설정할 수 있습니다.",
 		},
 		effect: {
-			component: <EffectSetting />,
-			title: "기타 설정",
-			desc: "홈페이지의 기타 효과와 설정을 관리할 수 있습니다.",
+			component: <EffectSettingClient />,
+			title: "배경 이펙트 설정",
+			desc: "홈페이지의 배경 이펙트를 설정할 수 있습니다.",
 		},
 		theme: {
 			component: <ThemeSettingClient />,
@@ -104,7 +92,7 @@ export default function SettingClient() {
 				{ id: "general", label: "홈페이지 설정" },
 				{ id: "design", label: "전체 디자인 설정" },
 				{ id: "menu", label: "메뉴 디자인 설정" },
-				{ id: "effect", label: "기타 설정" },
+				{ id: "effect", label: "배경 이펙트 설정" },
 				{ id: "theme", label: "테마 설정" },
 			],
 		},

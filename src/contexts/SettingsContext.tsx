@@ -178,11 +178,17 @@ interface BackgroundDesign {
 	type: string;
 }
 
+interface EffectSettings {
+	enabled: boolean;
+	type: "없음" | "눈" | "비" | "별똥별" | "밤하늘" | "프리즘" | "반딧불이" | "수중" | "빗물창문" | "영화관";
+}
+
 interface Design {
 	widget: WidgetDesign;
 	font: FontDesign;
 	card: CardDesign;
 	background: BackgroundDesign;
+	effect?: EffectSettings;
 }
 
 // General Types
@@ -280,4 +286,5 @@ export type {
 	Design,
 	General,
 	ThemeItem,
+	EffectSettings,
 };
