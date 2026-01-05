@@ -24,7 +24,7 @@ export default function Layout({ children }: LayoutProps) {
 	const useCustomLayout = customLayoutPages.includes(pathname);
 
 	// WidgetMenu를 숨길 페이지 목록
-	const hideMenuPages = ["/setting", "/library/*"];
+	const hideMenuPages = ["/setting", "/setting/*", "/library/*"];
 
 	// 헤더를 숨길 페이지 목록
 	const hideHeaderPages = ["/", "/library/new"];

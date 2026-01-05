@@ -1,8 +1,9 @@
 "use client";
 
 import type { ComponentType } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import AdminRoute from "@/components/common/AdminRoute";
 import SettingLayout from "@/components/layout/SettingLayout";
 
@@ -30,7 +31,12 @@ type SettingGroup = {
 	items: SettingSection[];
 };
 
-export default function SettingClient() {
+interface SettingClientProps {
+	initialSection?: string;
+}
+
+export default function SettingClient({ initialSection }: SettingClientProps) {
+	const router = useRouter();
 	const settingGroups: SettingGroup[] = useMemo(
 		() => [
 			{
@@ -122,7 +128,37 @@ export default function SettingClient() {
 		[settingGroups]
 	);
 
-	const [activeSection, setActiveSection] = useState(allSections[0]?.id || "");
+	const defaultSectionId = allSections[0]?.id || "";
+	const initialActiveSection =
+		initialSection && allSections.some((section) => section.id === initialSection)
+			? initialSection
+			: defaultSectionId;
+	const [activeSection, setActiveSection] = useState(initialActiveSection);
+	const isValidSection = useMemo(
+		() => (sectionId: string) =>
+			allSections.some((section) => section.id === sectionId),
+		[allSections]
+	);
+	useEffect(() => {
+		if (!initialSection) return;
+
+		if (isValidSection(initialSection)) {
+			if (initialSection !== activeSection) {
+				setActiveSection(initialSection);
+			}
+			return;
+		}
+
+		if (defaultSectionId) {
+			setActiveSection(defaultSectionId);
+			router.replace(`/setting/${defaultSectionId}`);
+		}
+	}, [activeSection, defaultSectionId, initialSection, isValidSection, router]);
+
+	const handleSectionChange = (sectionId: string) => {
+		setActiveSection(sectionId);
+		router.push(`/setting/${sectionId}`);
+	};
 	const currentSection =
 		allSections.find((section) => section.id === activeSection) ||
 		allSections[0];
@@ -143,7 +179,7 @@ export default function SettingClient() {
 			<SettingLayout
 				sidebarGroups={sidebarGroups}
 				activeSection={activeSection}
-				onSectionChange={setActiveSection}
+				onSectionChange={handleSectionChange}
 				title={currentSection?.title || ""}
 				description={currentSection?.desc || ""}
 			>
