@@ -5,7 +5,6 @@ import WidgetDday from "@/components/widgets/WidgetDday";
 import WidgetMarquee from "@/components/widgets/WidgetMarquee";
 import WidgetNotice from "@/components/widgets/WidgetNotice";
 import WidgetSlide from "@/components/widgets/WidgetSlide";
-import WidgetStickerBoard from "@/components/widgets/WidgetStickerBoard";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useCallback } from "react";
 
@@ -20,8 +19,6 @@ export default function Home() {
 		switch (widgetType) {
 			case "슬라이드 배너":
 				return <WidgetSlide />;
-			case "스티커보드":
-				return <WidgetStickerBoard />;
 			case "프로필":
 				return <WidgetProfile />;
 			case "공지":
