@@ -36,8 +36,10 @@ interface Widget {
 interface CustomLayoutData {
 	layout: LayoutItem[];
 	mobileLayout?: LayoutItem[];
-	widgets: Widget[];
-	usedColors: string[];
+	desktopWidgets: Widget[];
+	mobileWidgets: Widget[];
+	desktopUsedColors: string[];
+	mobileUsedColors: string[];
 }
 
 const widgetOptions = [
@@ -68,9 +70,11 @@ export default function CustomLayoutClient() {
 
 	const [desktopLayout, setDesktopLayout] = useState<LayoutItem[]>([]);
 	const [mobileLayout, setMobileLayout] = useState<LayoutItem[]>([]);
-	const [widgets, setWidgets] = useState<Widget[]>([]);
+	const [desktopWidgets, setDesktopWidgets] = useState<Widget[]>([]);
+	const [mobileWidgets, setMobileWidgets] = useState<Widget[]>([]);
 	const [selectedWidget, setSelectedWidget] = useState<string>("");
-	const [usedColors, setUsedColors] = useState<string[]>([]);
+	const [desktopUsedColors, setDesktopUsedColors] = useState<string[]>([]);
+	const [mobileUsedColors, setMobileUsedColors] = useState<string[]>([]);
 	const [showClearDialog, setShowClearDialog] = useState(false);
 	const [layoutMode, setLayoutMode] = useState<"desktop" | "mobile">(
 		"desktop"
@@ -85,17 +89,24 @@ export default function CustomLayoutClient() {
 	const mobileCollision = useCollisionDetection(mobileGrid);
 	const isDesktopMode = layoutMode === "desktop";
 	const activeLayout = isDesktopMode ? desktopLayout : mobileLayout;
+	const activeWidgetList = isDesktopMode ? desktopWidgets : mobileWidgets;
+	const activeUsedColors = isDesktopMode ? desktopUsedColors : mobileUsedColors;
 	const activeWidgets = activeLayout
-		.map((item) => widgets.find((widget) => widget.id === item.i))
+		.map((item) => activeWidgetList.find((widget) => widget.id === item.i))
 		.filter((widget): widget is Widget => Boolean(widget));
 
 	// Load saved layout from settings
 	useEffect(() => {
 		if (customLayout) {
+			const legacyWidgets = (customLayout as any).widgets;
+			const legacyUsedColors = (customLayout as any).usedColors;
+
 			setDesktopLayout(customLayout.layout || []);
 			setMobileLayout(customLayout.mobileLayout || []);
-			setWidgets(customLayout.widgets || []);
-			setUsedColors(customLayout.usedColors || []);
+			setDesktopWidgets(customLayout.desktopWidgets || legacyWidgets || []);
+			setMobileWidgets(customLayout.mobileWidgets || []);
+			setDesktopUsedColors(customLayout.desktopUsedColors || legacyUsedColors || []);
+			setMobileUsedColors(customLayout.mobileUsedColors || []);
 		}
 	}, [customLayout]);
 
@@ -110,12 +121,16 @@ export default function CustomLayoutClient() {
 	// Get a unique color for new widgets
 	const getUniqueColor = useCallback(() => {
 		const availableColors = widgetColors.filter(
-			(color) => !usedColors.includes(color)
+			(color) => !activeUsedColors.includes(color)
 		);
 
 		if (availableColors.length === 0) {
 			// Reset if all colors are used
-			setUsedColors([]);
+			if (isDesktopMode) {
+				setDesktopUsedColors([]);
+			} else {
+				setMobileUsedColors([]);
+			}
 			return widgetColors[0];
 		}
 
@@ -123,7 +138,7 @@ export default function CustomLayoutClient() {
 		const randomColor =
 			availableColors[Math.floor(Math.random() * availableColors.length)];
 		return randomColor;
-	}, [usedColors]);
+	}, [activeUsedColors, isDesktopMode]);
 
 	// Add a new widget
 	const handleAddWidget = useCallback(() => {
@@ -159,7 +174,9 @@ export default function CustomLayoutClient() {
 			return;
 		}
 
-		const existingWidget = widgets.find((widget) => widget.id === selectedWidget);
+		const existingWidget = activeWidgetList.find(
+			(widget) => widget.id === selectedWidget
+		);
 		const newWidgetColor = existingWidget?.color || getUniqueColor();
 		const newWidgetId = selectedWidget;
 		const newWidget: LayoutItem = {
@@ -179,22 +196,26 @@ export default function CustomLayoutClient() {
 		}
 
 		if (!existingWidget) {
-			setWidgets((prev) => [
-				...prev,
-				{
-					id: newWidgetId,
-					type: selectedWidget,
-					color: newWidgetColor,
-				},
-			]);
-			setUsedColors((prev) => [...prev, newWidgetColor]);
+			const newWidget = {
+				id: newWidgetId,
+				type: selectedWidget,
+				color: newWidgetColor,
+			};
+
+			if (isDesktopMode) {
+				setDesktopWidgets((prev) => [...prev, newWidget]);
+				setDesktopUsedColors((prev) => [...prev, newWidgetColor]);
+			} else {
+				setMobileWidgets((prev) => [...prev, newWidget]);
+				setMobileUsedColors((prev) => [...prev, newWidgetColor]);
+			}
 		}
 		setSelectedWidget("");
 		toast.success(`${selectedWidget} 위젯이 추가되었습니다.`);
 	}, [
 		selectedWidget,
-		widgets,
 		activeLayout,
+		activeWidgetList,
 		isDesktopMode,
 		desktopCollision,
 		mobileCollision,
@@ -213,25 +234,27 @@ export default function CustomLayoutClient() {
 
 			if (isDesktopMode) {
 				setDesktopLayout(updateLayout);
+				const removedWidget = desktopWidgets.find(
+					(widget) => widget.id === widgetId
+				);
+				setDesktopWidgets((prev) =>
+					prev.filter((widget) => widget.id !== widgetId)
+				);
+				if (removedWidget) {
+					setDesktopUsedColors((prev) =>
+						prev.filter((color) => color !== removedWidget.color)
+					);
+				}
 			} else {
 				setMobileLayout(updateLayout);
-			}
-
-			const nextDesktop = isDesktopMode
-				? updateLayout(desktopLayout)
-				: desktopLayout;
-			const nextMobile = !isDesktopMode
-				? updateLayout(mobileLayout)
-				: mobileLayout;
-			const isStillUsed =
-				nextDesktop.some((item) => item.i === widgetId) ||
-				nextMobile.some((item) => item.i === widgetId);
-
-			if (!isStillUsed) {
-				const removedWidget = widgets.find((widget) => widget.id === widgetId);
-				setWidgets((prev) => prev.filter((widget) => widget.id !== widgetId));
+				const removedWidget = mobileWidgets.find(
+					(widget) => widget.id === widgetId
+				);
+				setMobileWidgets((prev) =>
+					prev.filter((widget) => widget.id !== widgetId)
+				);
 				if (removedWidget) {
-					setUsedColors((prev) =>
+					setMobileUsedColors((prev) =>
 						prev.filter((color) => color !== removedWidget.color)
 					);
 				}
@@ -239,7 +262,7 @@ export default function CustomLayoutClient() {
 
 			toast.success("위젯이 제거되었습니다.");
 		},
-		[widgets, isDesktopMode, desktopLayout, mobileLayout]
+		[desktopWidgets, isDesktopMode, mobileWidgets]
 	);
 
 	// Update widget position
@@ -274,8 +297,10 @@ export default function CustomLayoutClient() {
 			const layoutData: CustomLayoutData = {
 				layout: desktopLayout,
 				mobileLayout,
-				widgets,
-				usedColors,
+				desktopWidgets,
+				mobileWidgets,
+				desktopUsedColors,
+				mobileUsedColors,
 			};
 
 			await setCustomLayout(layoutData);
@@ -289,7 +314,15 @@ export default function CustomLayoutClient() {
 			console.error("Layout save error:", error);
 			toast.error("레이아웃 저장 중 오류가 발생했습니다.");
 		}
-	}, [desktopLayout, mobileLayout, widgets, usedColors, updateMain]);
+	}, [
+		desktopLayout,
+		mobileLayout,
+		desktopWidgets,
+		mobileWidgets,
+		desktopUsedColors,
+		mobileUsedColors,
+		updateMain,
+	]);
 
 	// Clear layout
 	const handleClearLayout = useCallback(async () => {
@@ -297,8 +330,10 @@ export default function CustomLayoutClient() {
 			const emptyLayoutData: CustomLayoutData = {
 				layout: [],
 				mobileLayout: [],
-				widgets: [],
-				usedColors: [],
+				desktopWidgets: [],
+				mobileWidgets: [],
+				desktopUsedColors: [],
+				mobileUsedColors: [],
 			};
 
 			await setCustomLayout(emptyLayoutData);
@@ -306,8 +341,10 @@ export default function CustomLayoutClient() {
 			// Reset state
 			setDesktopLayout([]);
 			setMobileLayout([]);
-			setWidgets([]);
-			setUsedColors([]);
+			setDesktopWidgets([]);
+			setMobileWidgets([]);
+			setDesktopUsedColors([]);
+			setMobileUsedColors([]);
 			setSelectedWidget("");
 
 			// Update context and broadcast
@@ -423,7 +460,7 @@ export default function CustomLayoutClient() {
 								maxWidth={isDesktopMode ? undefined : "400px"}
 							>
 								{activeLayout.map((item) => {
-									const widget = widgets.find((w) => w.id === item.i);
+									const widget = activeWidgetList.find((w) => w.id === item.i);
 									if (!widget) return null;
 
 									return (
