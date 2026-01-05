@@ -33,11 +33,19 @@ export default function SettingLayout({
 	description,
 }: SettingLayoutProps) {
 	const [isAsideExpanded, setIsAsideExpanded] = useState(false);
-	const [isMounted, setIsMounted] = useState(false);
+	const [shouldAnimate, setShouldAnimate] = useState(() => {
+		if (typeof window === "undefined") return false;
+		return !(window as Window & { __settingFadeInSeen?: boolean })
+			.__settingFadeInSeen;
+	});
 
 	useEffect(() => {
-		setIsMounted(true);
-	}, []);
+		if (shouldAnimate) {
+			(
+				window as Window & { __settingFadeInSeen?: boolean }
+			).__settingFadeInSeen = true;
+		}
+	}, [shouldAnimate]);
 
 	const toggleAside = () => {
 		setIsAsideExpanded(!isAsideExpanded);
@@ -47,35 +55,42 @@ export default function SettingLayout({
 		<div
 			className={cn(
 				"w-full max-w-[1200px] mx-auto mt-12 px-4 pb-4",
-				isMounted ? "animate-in fade-in-0 duration-500" : "opacity-0"
+				shouldAnimate ? "animate-in fade-in-0 duration-500" : "opacity-100"
 			)}
 		>
 			<div
-				className="flex bg-card border border-card rounded-card h-[calc(100vh-80px)] backdrop-blur-card overflow-hidden"
+				className="relative bg-card border border-card rounded-card h-[calc(100vh-80px)] overflow-hidden"
 				onClick={() => {
 					if (isAsideExpanded) {
 						setIsAsideExpanded(false);
 					}
 				}}
 			>
-				{/* Sidebar */}
-				<aside
-					className={cn(
-						"w-full py-6 border-r border-card-bg overflow-hidden flex flex-col h-full",
-						isAsideExpanded ? "cursor-default" : "cursor-pointer"
-					)}
+				<div
+					className="absolute inset-0 rounded-card backdrop-blur-card pointer-events-none"
 					style={{
-						maxWidth: isAsideExpanded ? "240px" : "50px",
-						transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+						backgroundColor: "color-mix(in srgb, var(--card-bg) 12%, transparent)",
 					}}
-					data-expanded={isAsideExpanded}
-					onClick={(e) => {
-						e.stopPropagation();
-						if (!isAsideExpanded) {
-							toggleAside();
-						}
-					}}
-				>
+				/>
+				<div className="relative z-10 flex h-full">
+					{/* Sidebar */}
+					<aside
+						className={cn(
+							"w-full py-6 border-r border-card-bg overflow-hidden flex flex-col h-full",
+							isAsideExpanded ? "cursor-default" : "cursor-pointer"
+						)}
+						style={{
+							maxWidth: isAsideExpanded ? "240px" : "50px",
+							transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+						}}
+						data-expanded={isAsideExpanded}
+						onClick={(e) => {
+							e.stopPropagation();
+							if (!isAsideExpanded) {
+								toggleAside();
+							}
+						}}
+					>
 					<div
 						className="mb-6 relative flex-none"
 						style={{
@@ -171,23 +186,24 @@ export default function SettingLayout({
 							))}
 						</div>
 					</ScrollArea>
-				</aside>
+					</aside>
 
-				{/* Content */}
-				<div
-					className="w-full flex flex-col h-full overflow-hidden"
-					onClick={(e) => e.stopPropagation()}
-				>
-					{/* Header */}
-					<div className="px-5 py-3 border-b border-card-bg flex-none">
-						<p className="text-2xl font-bold text-main-text">{title}</p>
-						<p className="text-sub-text text-sm mt-2">{description}</p>
+					{/* Content */}
+					<div
+						className="w-full flex flex-col h-full overflow-hidden"
+						onClick={(e) => e.stopPropagation()}
+					>
+						{/* Header */}
+						<div className="px-5 py-3 border-b border-card-bg flex-none">
+							<p className="text-2xl font-bold text-main-text">{title}</p>
+							<p className="text-sub-text text-sm mt-2">{description}</p>
+						</div>
+
+						{/* Content Area */}
+						<ScrollArea className="flex-1 min-h-0 [&_[data-slot=scroll-area-thumb]]:bg-widget-border">
+							<section className="p-5">{children}</section>
+						</ScrollArea>
 					</div>
-
-					{/* Content Area */}
-					<ScrollArea className="flex-1 min-h-0 [&_[data-slot=scroll-area-thumb]]:bg-widget-border">
-						<section className="p-5">{children}</section>
-					</ScrollArea>
 				</div>
 			</div>
 		</div>
