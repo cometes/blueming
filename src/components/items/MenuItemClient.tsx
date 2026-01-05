@@ -116,6 +116,20 @@ export default function MenuItem({
 		}
 	};
 
+	const handleIconImageUpload = async (
+		e: React.ChangeEvent<HTMLInputElement>
+	) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		try {
+			const url = await uploadFile(file);
+			handleChange("iconImage", url);
+			toast.success("아이콘 이미지가 업로드되었습니다.");
+		} catch (error) {
+			toast.error("아이콘 이미지 업로드에 실패했습니다.");
+		}
+	};
+
 	return (
 		<Draggable draggableId={menu.uniqueId} index={index}>
 			{(provided) => (
@@ -377,6 +391,44 @@ export default function MenuItem({
 											className="hidden"
 											accept="image/*"
 											onChange={handleMainImageUpload}
+										/>
+									</label>
+								)}
+							</div>
+
+							<div className="space-y-2">
+								<Label className="text-xs font-medium text-muted-foreground">
+									아이콘바 아이콘 (최적 64 * 64)
+								</Label>
+								{menu.iconImage ? (
+									<div className="relative aspect-square w-20 rounded-card border overflow-hidden bg-muted/10">
+										<img
+											src={menu.iconImage}
+											className="w-full h-full object-contain"
+										/>
+										<Button
+											variant="destructive"
+											size="icon"
+											className="absolute top-2 right-2 h-6 w-6"
+											onClick={() => handleChange("iconImage", "")}
+										>
+											<X size={14} />
+										</Button>
+									</div>
+								) : (
+									<label className="flex flex-col items-center justify-center aspect-square w-20 border border-dashed rounded-card cursor-pointer hover:bg-muted/50 transition-colors">
+										<ImagePlus
+											size={20}
+											className="text-muted-foreground mb-2"
+										/>
+										<span className="text-[10px] text-muted-foreground">
+											아이콘 업로드
+										</span>
+										<input
+											type="file"
+											className="hidden"
+											accept="image/*"
+											onChange={handleIconImageUpload}
 										/>
 									</label>
 								)}

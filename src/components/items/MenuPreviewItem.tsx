@@ -110,12 +110,12 @@ export default function MenuPreviewItem({
 					{/* Sub Menu */}
 					{menu.type === "folder" && (
 						<ul
-							className={cn(
-								"w-full overflow-hidden transition-all duration-300 ease-in-out",
-								openFolders[menu.uniqueId]
-									? "max-h-full opacity-100"
-									: "max-h-0 opacity-0"
-							)}
+							className="w-full overflow-hidden"
+							style={{
+								maxHeight: openFolders[menu.uniqueId] ? "320px" : "0px",
+								opacity: openFolders[menu.uniqueId] ? 1 : 0,
+								transition: "max-height 300ms ease, opacity 300ms ease",
+							}}
 						>
 							{(menu.subMenus || []).map((subMenu, idx) => {
 								const subMenuName = typeof subMenu === "string" ? subMenu : subMenu.name;
@@ -162,4 +162,3 @@ export default function MenuPreviewItem({
 		</Draggable>
 	);
 }
-
