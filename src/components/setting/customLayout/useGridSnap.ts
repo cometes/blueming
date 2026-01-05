@@ -14,7 +14,16 @@ export interface PixelPosition {
 	height: number;
 }
 
-export const useGridSnap = (containerRef: React.RefObject<HTMLElement>) => {
+interface GridConfig {
+	columns?: number;
+	rows?: number;
+	gap?: number;
+}
+
+export const useGridSnap = (
+	containerRef: React.RefObject<HTMLElement>,
+	{ columns = 12, rows = 12, gap = 10 }: GridConfig = {}
+) => {
 	const [cellSize, setCellSize] = useState({ width: 0, height: 0 });
 
 	// Calculate cell size based on container dimensions
@@ -23,15 +32,14 @@ export const useGridSnap = (containerRef: React.RefObject<HTMLElement>) => {
 			if (!containerRef.current) return;
 
 			const rect = containerRef.current.getBoundingClientRect();
-			const gap = 10; // gap-2.5 = 10px
 
 			// Calculate available space after gaps
-			const availableWidth = rect.width - gap * 11; // 11 gaps between 12 columns
-			const availableHeight = rect.height - gap * 11; // 11 gaps between 12 rows
+			const availableWidth = rect.width - gap * (columns - 1);
+			const availableHeight = rect.height - gap * (rows - 1);
 
 			setCellSize({
-				width: availableWidth / 12,
-				height: availableHeight / 12,
+				width: availableWidth / columns,
+				height: availableHeight / rows,
 			});
 		};
 
@@ -43,12 +51,11 @@ export const useGridSnap = (containerRef: React.RefObject<HTMLElement>) => {
 		}
 
 		return () => resizeObserver.disconnect();
-	}, [containerRef]);
+	}, [containerRef, columns, rows, gap]);
 
 	// Convert pixel position to grid coordinates
 	const pixelToGrid = useCallback(
 		(pixelPos: PixelPosition): GridPosition => {
-			const gap = 10;
 			const cellWithGap = cellSize.width + gap;
 			const cellHeightWithGap = cellSize.height + gap;
 
@@ -60,19 +67,18 @@ export const useGridSnap = (containerRef: React.RefObject<HTMLElement>) => {
 
 			// Ensure within bounds
 			return {
-				x: Math.max(0, Math.min(12 - gridW, gridX)),
-				y: Math.max(0, Math.min(12 - gridH, gridY)),
-				w: Math.min(12, gridW),
-				h: Math.min(12, gridH),
+				x: Math.max(0, Math.min(columns - gridW, gridX)),
+				y: Math.max(0, Math.min(rows - gridH, gridY)),
+				w: Math.min(columns, gridW),
+				h: Math.min(rows, gridH),
 			};
 		},
-		[cellSize]
+		[cellSize, columns, rows, gap]
 	);
 
 	// Convert grid coordinates to pixel position
 	const gridToPixel = useCallback(
 		(gridPos: GridPosition): PixelPosition => {
-			const gap = 10;
 			const cellWithGap = cellSize.width + gap;
 			const cellHeightWithGap = cellSize.height + gap;
 
@@ -83,7 +89,7 @@ export const useGridSnap = (containerRef: React.RefObject<HTMLElement>) => {
 				height: gridPos.h * cellHeightWithGap - gap,
 			};
 		},
-		[cellSize]
+		[cellSize, gap]
 	);
 
 	// Snap pixel position to nearest grid cell
@@ -102,4 +108,3 @@ export const useGridSnap = (containerRef: React.RefObject<HTMLElement>) => {
 		snapToGrid,
 	};
 };
-

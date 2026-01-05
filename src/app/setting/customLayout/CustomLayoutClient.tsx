@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +35,7 @@ interface Widget {
 
 interface CustomLayoutData {
 	layout: LayoutItem[];
+	mobileLayout?: LayoutItem[];
 	widgets: Widget[];
 	usedColors: string[];
 }
@@ -66,21 +66,34 @@ export default function CustomLayoutClient() {
 	const { main, updateMain } = useSettings();
 	const customLayout = main?.customLayout;
 
-	const [layout, setLayout] = useState<LayoutItem[]>([]);
+	const [desktopLayout, setDesktopLayout] = useState<LayoutItem[]>([]);
+	const [mobileLayout, setMobileLayout] = useState<LayoutItem[]>([]);
 	const [widgets, setWidgets] = useState<Widget[]>([]);
 	const [selectedWidget, setSelectedWidget] = useState<string>("");
 	const [usedColors, setUsedColors] = useState<string[]>([]);
 	const [showClearDialog, setShowClearDialog] = useState(false);
+	const [layoutMode, setLayoutMode] = useState<"desktop" | "mobile">(
+		"desktop"
+	);
 
 	const containerRef = useRef<HTMLDivElement>(null);
 	const layoutChannelRef = useRef<BroadcastChannel | null>(null);
 
-	const { findAvailablePosition } = useCollisionDetection();
+	const desktopGrid = { columns: 12, rows: 12 };
+	const mobileGrid = { columns: 8, rows: 12 };
+	const desktopCollision = useCollisionDetection(desktopGrid);
+	const mobileCollision = useCollisionDetection(mobileGrid);
+	const isDesktopMode = layoutMode === "desktop";
+	const activeLayout = isDesktopMode ? desktopLayout : mobileLayout;
+	const activeWidgets = activeLayout
+		.map((item) => widgets.find((widget) => widget.id === item.i))
+		.filter((widget): widget is Widget => Boolean(widget));
 
 	// Load saved layout from settings
 	useEffect(() => {
 		if (customLayout) {
-			setLayout(customLayout.layout || []);
+			setDesktopLayout(customLayout.layout || []);
+			setMobileLayout(customLayout.mobileLayout || []);
 			setWidgets(customLayout.widgets || []);
 			setUsedColors(customLayout.usedColors || []);
 		}
@@ -119,29 +132,35 @@ export default function CustomLayoutClient() {
 			return;
 		}
 
-		// Check if widget already exists
-		const isWidgetAlreadyExists = widgets.some(
-			(widget) => widget.type === selectedWidget
+		// Check if widget already exists in current layout
+		const isWidgetInActiveLayout = activeLayout.some(
+			(item) => item.i === selectedWidget
 		);
 
-		if (isWidgetAlreadyExists) {
+		if (isWidgetInActiveLayout) {
 			toast.warning(`${selectedWidget} 위젯은 이미 추가되었습니다.`);
 			return;
 		}
 
-		if (layout.length >= 9) {
+		if (activeLayout.length >= 9) {
 			toast.warning("최대 9개의 위젯만 추가할 수 있습니다.");
 			return;
 		}
 
-		const availablePosition = findAvailablePosition(layout, 2, 2);
+		const currentCollision = isDesktopMode ? desktopCollision : mobileCollision;
+		const availablePosition = currentCollision.findAvailablePosition(
+			activeLayout,
+			2,
+			2
+		);
 
 		if (!availablePosition) {
 			toast.warning("공간을 확보해주세요");
 			return;
 		}
 
-		const newWidgetColor = getUniqueColor();
+		const existingWidget = widgets.find((widget) => widget.id === selectedWidget);
+		const newWidgetColor = existingWidget?.color || getUniqueColor();
 		const newWidgetId = selectedWidget;
 		const newWidget: LayoutItem = {
 			i: newWidgetId,
@@ -149,47 +168,84 @@ export default function CustomLayoutClient() {
 			y: availablePosition.y,
 			w: availablePosition.w,
 			h: availablePosition.h,
-			maxW: 12,
-			maxH: 12,
+			maxW: isDesktopMode ? desktopGrid.columns : mobileGrid.columns,
+			maxH: isDesktopMode ? desktopGrid.rows : mobileGrid.rows,
 		};
 
-		setLayout((prev) => [...prev, newWidget]);
-		setWidgets((prev) => [
-			...prev,
-			{
-				id: newWidgetId,
-				type: selectedWidget,
-				color: newWidgetColor,
-			},
-		]);
-		setUsedColors((prev) => [...prev, newWidgetColor]);
+		if (isDesktopMode) {
+			setDesktopLayout((prev) => [...prev, newWidget]);
+		} else {
+			setMobileLayout((prev) => [...prev, newWidget]);
+		}
+
+		if (!existingWidget) {
+			setWidgets((prev) => [
+				...prev,
+				{
+					id: newWidgetId,
+					type: selectedWidget,
+					color: newWidgetColor,
+				},
+			]);
+			setUsedColors((prev) => [...prev, newWidgetColor]);
+		}
 		setSelectedWidget("");
 		toast.success(`${selectedWidget} 위젯이 추가되었습니다.`);
-	}, [selectedWidget, widgets, layout, findAvailablePosition, getUniqueColor]);
+	}, [
+		selectedWidget,
+		widgets,
+		activeLayout,
+		isDesktopMode,
+		desktopCollision,
+		mobileCollision,
+		desktopGrid.columns,
+		desktopGrid.rows,
+		mobileGrid.columns,
+		mobileGrid.rows,
+		getUniqueColor,
+	]);
 
 	// Remove a widget
 	const handleRemoveWidget = useCallback(
 		(widgetId: string) => {
-			const removedWidget = widgets.find((widget) => widget.id === widgetId);
+			const updateLayout = (prev: LayoutItem[]) =>
+				prev.filter((item) => item.i !== widgetId);
 
-			setLayout((prev) => prev.filter((item) => item.i !== widgetId));
-			setWidgets((prev) => prev.filter((widget) => widget.id !== widgetId));
+			if (isDesktopMode) {
+				setDesktopLayout(updateLayout);
+			} else {
+				setMobileLayout(updateLayout);
+			}
 
-			if (removedWidget) {
-				setUsedColors((prev) =>
-					prev.filter((color) => color !== removedWidget.color)
-				);
+			const nextDesktop = isDesktopMode
+				? updateLayout(desktopLayout)
+				: desktopLayout;
+			const nextMobile = !isDesktopMode
+				? updateLayout(mobileLayout)
+				: mobileLayout;
+			const isStillUsed =
+				nextDesktop.some((item) => item.i === widgetId) ||
+				nextMobile.some((item) => item.i === widgetId);
+
+			if (!isStillUsed) {
+				const removedWidget = widgets.find((widget) => widget.id === widgetId);
+				setWidgets((prev) => prev.filter((widget) => widget.id !== widgetId));
+				if (removedWidget) {
+					setUsedColors((prev) =>
+						prev.filter((color) => color !== removedWidget.color)
+					);
+				}
 			}
 
 			toast.success("위젯이 제거되었습니다.");
 		},
-		[widgets]
+		[widgets, isDesktopMode, desktopLayout, mobileLayout]
 	);
 
 	// Update widget position
 	const handlePositionChange = useCallback(
 		(widgetId: string, newPosition: GridPosition) => {
-			setLayout((prev) =>
+			const updateLayout = (prev: LayoutItem[]) =>
 				prev.map((item) =>
 					item.i === widgetId
 						? {
@@ -200,10 +256,15 @@ export default function CustomLayoutClient() {
 								h: newPosition.h,
 						  }
 						: item
-				)
-			);
+				);
+
+			if (isDesktopMode) {
+				setDesktopLayout(updateLayout);
+			} else {
+				setMobileLayout(updateLayout);
+			}
 		},
-		[]
+		[isDesktopMode]
 	);
 
 
@@ -211,7 +272,8 @@ export default function CustomLayoutClient() {
 	const handleSaveLayout = useCallback(async () => {
 		try {
 			const layoutData: CustomLayoutData = {
-				layout,
+				layout: desktopLayout,
+				mobileLayout,
 				widgets,
 				usedColors,
 			};
@@ -227,13 +289,14 @@ export default function CustomLayoutClient() {
 			console.error("Layout save error:", error);
 			toast.error("레이아웃 저장 중 오류가 발생했습니다.");
 		}
-	}, [layout, widgets, usedColors, updateMain]);
+	}, [desktopLayout, mobileLayout, widgets, usedColors, updateMain]);
 
 	// Clear layout
 	const handleClearLayout = useCallback(async () => {
 		try {
 			const emptyLayoutData: CustomLayoutData = {
 				layout: [],
+				mobileLayout: [],
 				widgets: [],
 				usedColors: [],
 			};
@@ -241,7 +304,8 @@ export default function CustomLayoutClient() {
 			await setCustomLayout(emptyLayoutData);
 
 			// Reset state
-			setLayout([]);
+			setDesktopLayout([]);
+			setMobileLayout([]);
 			setWidgets([]);
 			setUsedColors([]);
 			setSelectedWidget("");
@@ -268,7 +332,7 @@ export default function CustomLayoutClient() {
 							<li>• 위젯을 선택하고 추가하세요.</li>
 							<li>• 드래그로 위치를 변경하고 크기를 조정할 수 있습니다.</li>
 							<li>• 충분한 공간이 확보되어야 새로운 위젯을 추가할 수 있습니다.</li>
-							<li>• 화면 크기에 따라 레이아웃이 자동으로 조정됩니다.</li>
+							<li>• 데스크톱/모바일 레이아웃을 전환해 각각 배치할 수 있습니다.</li>
 						</ul>
 					</div>
 				</div>
@@ -312,10 +376,53 @@ export default function CustomLayoutClient() {
 			<section>
 				<h2 className="text-[20px] font-semibold">레이아웃 편집</h2>
 				<div className="section-wrap mt-6">
-					<div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
-						<div className="w-full lg:w-3/4">
-							<GridContainer ref={containerRef} showGrid={true}>
-								{layout.map((item) => {
+					<div className="section-box flex items-center mt-4">
+						<div className="text-box w-[220px] pr-5">
+							<h3 className="font-medium text-sub-text">편집 모드</h3>
+							<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+								데스크톱/모바일 레이아웃을 전환합니다.
+							</p>
+						</div>
+						<div className="flex flex-1 items-center">
+							<div className="inline-flex rounded-card border-card bg-card-bg p-1">
+								<button
+									type="button"
+									onClick={() => setLayoutMode("desktop")}
+									className={`px-3 py-2 rounded-card text-sm font-medium transition-colors ${
+										isDesktopMode
+											? "bg-theme-primary text-white"
+											: "text-sub-text hover:bg-card-bg/70"
+									}`}
+								>
+									데스크톱 12×12
+								</button>
+								<button
+									type="button"
+									onClick={() => setLayoutMode("mobile")}
+									className={`px-3 py-2 rounded-card text-sm font-medium transition-colors ${
+										!isDesktopMode
+											? "bg-theme-primary text-white"
+											: "text-sub-text hover:bg-card-bg/70"
+									}`}
+								>
+									모바일 8×12
+								</button>
+							</div>
+						</div>
+					</div>
+
+					<div className="flex flex-col lg:flex-row gap-6 lg:gap-10 mt-4">
+						<div className="w-full lg:w-3/4 flex justify-center">
+							<GridContainer
+								ref={containerRef}
+								showGrid={true}
+								columns={isDesktopMode ? desktopGrid.columns : mobileGrid.columns}
+								rows={isDesktopMode ? desktopGrid.rows : mobileGrid.rows}
+								aspectRatio={isDesktopMode ? "5 / 4" : "2 / 3"}
+								maxHeight={isDesktopMode ? undefined : "600px"}
+								maxWidth={isDesktopMode ? undefined : "400px"}
+							>
+								{activeLayout.map((item) => {
 									const widget = widgets.find((w) => w.id === item.i);
 									if (!widget) return null;
 
@@ -331,17 +438,25 @@ export default function CustomLayoutClient() {
 											}}
 											color={widget.color}
 											label={widget.type}
-											layout={layout}
+											layout={activeLayout}
 											containerRef={containerRef}
 											onPositionChange={handlePositionChange}
 											onRemove={handleRemoveWidget}
+											columns={
+												isDesktopMode
+													? desktopGrid.columns
+													: mobileGrid.columns
+											}
+											rows={
+												isDesktopMode ? desktopGrid.rows : mobileGrid.rows
+											}
 										/>
 									);
 								})}
 							</GridContainer>
 						</div>
 
-						<WidgetList widgets={widgets} onRemove={handleRemoveWidget} />
+						<WidgetList widgets={activeWidgets} onRemove={handleRemoveWidget} />
 					</div>
 				</div>
 			</section>

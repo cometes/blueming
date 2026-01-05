@@ -11,7 +11,15 @@ export interface LayoutItem {
 	maxH?: number;
 }
 
-export const useCollisionDetection = () => {
+interface GridConfig {
+	columns?: number;
+	rows?: number;
+}
+
+export const useCollisionDetection = ({
+	columns = 12,
+	rows = 12,
+}: GridConfig = {}) => {
 	// Check if two grid positions overlap
 	const checkCollision = useCallback(
 		(pos1: GridPosition, pos2: GridPosition): boolean => {
@@ -56,7 +64,7 @@ export const useCollisionDetection = () => {
 		});
 
 		return occupied;
-	}, []);
+	}, [columns, rows]);
 
 	// Find an available position for a widget of given size
 	const findAvailablePosition = useCallback(
@@ -66,8 +74,8 @@ export const useCollisionDetection = () => {
 			height: number = 2
 		): GridPosition | null => {
 			// Try to find a spot, scanning from top-left to bottom-right
-			for (let y = 0; y <= 12 - height; y++) {
-				for (let x = 0; x <= 12 - width; x++) {
+			for (let y = 0; y <= rows - height; y++) {
+				for (let x = 0; x <= columns - width; x++) {
 					const testPosition: GridPosition = { x, y, w: width, h: height };
 
 					if (!hasCollision(testPosition, layout)) {
@@ -78,7 +86,7 @@ export const useCollisionDetection = () => {
 
 			return null; // No available position found
 		},
-		[hasCollision]
+		[hasCollision, columns, rows]
 	);
 
 	// Validate if a position is within grid bounds
@@ -86,8 +94,8 @@ export const useCollisionDetection = () => {
 		return (
 			position.x >= 0 &&
 			position.y >= 0 &&
-			position.x + position.w <= 12 &&
-			position.y + position.h <= 12
+			position.x + position.w <= columns &&
+			position.y + position.h <= rows
 		);
 	}, []);
 
@@ -103,10 +111,10 @@ export const useCollisionDetection = () => {
 				// Try to constrain to bounds
 				position = {
 					...position,
-					x: Math.max(0, Math.min(12 - position.w, position.x)),
-					y: Math.max(0, Math.min(12 - position.h, position.y)),
-					w: Math.min(12 - position.x, position.w),
-					h: Math.min(12 - position.y, position.h),
+					x: Math.max(0, Math.min(columns - position.w, position.x)),
+					y: Math.max(0, Math.min(rows - position.h, position.y)),
+					w: Math.min(columns - position.x, position.w),
+					h: Math.min(rows - position.y, position.h),
 				};
 			}
 
@@ -117,7 +125,7 @@ export const useCollisionDetection = () => {
 
 			return position;
 		},
-		[isWithinBounds, hasCollision]
+		[isWithinBounds, hasCollision, columns, rows]
 	);
 
 	return {
@@ -129,4 +137,3 @@ export const useCollisionDetection = () => {
 		getValidPosition,
 	};
 };
-

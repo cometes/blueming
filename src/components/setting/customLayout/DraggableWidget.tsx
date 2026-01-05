@@ -15,6 +15,8 @@ interface DraggableWidgetProps {
 	containerRef: React.RefObject<HTMLDivElement>;
 	onPositionChange: (id: string, position: GridPosition) => void;
 	onRemove: (id: string) => void;
+	columns?: number;
+	rows?: number;
 }
 
 export const DraggableWidget = ({
@@ -26,9 +28,14 @@ export const DraggableWidget = ({
 	containerRef,
 	onPositionChange,
 	onRemove,
+	columns = 12,
+	rows = 12,
 }: DraggableWidgetProps) => {
-	const { cellSize, pixelToGrid, gridToPixel } = useGridSnap(containerRef);
-	const { getValidPosition } = useCollisionDetection();
+	const { cellSize, pixelToGrid, gridToPixel } = useGridSnap(containerRef, {
+		columns,
+		rows,
+	});
+	const { getValidPosition } = useCollisionDetection({ columns, rows });
 
 	const [pixelPosition, setPixelPosition] = useState<PixelPosition>({
 		x: 0,
@@ -168,4 +175,3 @@ export const DraggableWidget = ({
 		</Rnd>
 	);
 };
-
