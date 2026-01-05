@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { Circle } from "lucide-react";
 
 interface RadioItemProps {
 	onClickRadio: () => void;
@@ -18,27 +19,33 @@ export default function RadioItem({
 	className,
 }: RadioItemProps) {
 	return (
-		<div
+		<button
+			type="button"
 			onClick={onClickRadio}
 			className={cn(
-				"flex items-center w-full p-5 cursor-pointer rounded-card transition-all",
-				"border",
+				"flex items-center w-full p-5 cursor-pointer rounded-card transition-all border text-left",
 				checked
 					? "border-theme-primary bg-theme-primary/10"
 					: "border-card bg-card-bg hover:border-card-active",
 				className
 			)}
+			role="radio"
+			aria-checked={checked}
 		>
-			<div
+			<span
 				className={cn(
-					"w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors",
-					checked
-						? "border-theme-primary bg-theme-primary"
-						: "border-card bg-card-bg hover:border-card-active"
+					"inline-flex h-4 w-4 items-center justify-center rounded-full border text-theme-primary",
+					checked ? "border-theme-primary" : "border-card"
 				)}
+				aria-hidden="true"
 			>
-				{checked && <div className="w-2 h-2 rounded-full bg-white" />}
-			</div>
+				<Circle
+					className={cn(
+						"h-2 w-2 fill-current transition-opacity",
+						checked ? "opacity-100" : "opacity-0"
+					)}
+				/>
+			</span>
 			<span
 				className={cn(
 					"ml-2 transition-colors",
@@ -47,6 +54,6 @@ export default function RadioItem({
 			>
 				{content}
 			</span>
-		</div>
+		</button>
 	);
 }

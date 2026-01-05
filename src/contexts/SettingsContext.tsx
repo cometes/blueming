@@ -164,7 +164,7 @@ interface BackgroundDesign {
 
 interface EffectSettings {
 	enabled: boolean;
-	type: "없음" | "눈" | "비" | "별똥별" | "밤하늘" | "프리즘" | "반딧불이" | "수중" | "빗물창문" | "영화관";
+	type: "없음" | "눈" | "비" | "별똥별" | "밤하늘" | "프리즘" | "반딧불이" | "비눗방울" | "빗물창문" | "영화관";
 }
 
 interface Design {

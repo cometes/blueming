@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
 import { setSettingsEffect } from "@/queries/set/setSettingsEffect";
@@ -8,6 +8,11 @@ export const useSettingEffect = () => {
 	const { general, updateGeneral } = useSettings();
 	const designData = general?.design || {};
 	const effectData = designData?.effect;
+	const isSyncingRef = useRef(false);
+	const initialEffectRef = useRef<EffectSettings | null>(null);
+	const isDirtyRef = useRef(false);
+	const generalRef = useRef(general);
+	const updateGeneralRef = useRef(updateGeneral);
 
 	const effectTypes = [
 		"없음",
@@ -17,7 +22,7 @@ export const useSettingEffect = () => {
 		"밤하늘",
 		"프리즘",
 		"반딧불이",
-		"수중",
+		"비눗방울",
 		"빗물창문",
 		"영화관"
 	] as const;
@@ -40,67 +45,116 @@ export const useSettingEffect = () => {
 
 	// Load existing data when effectData changes
 	useEffect(() => {
-		if (effectData) {
-			setEffectSetting({
-				enabled: effectData.enabled ?? defaultEffectSetting.enabled,
-				type: effectData.type || defaultEffectSetting.type
-			});
+		generalRef.current = general;
+		updateGeneralRef.current = updateGeneral;
+	}, [general, updateGeneral]);
 
-			if (effectData.type) {
-				setCurrentEffectType(effectData.type);
+	useEffect(() => {
+		if (effectData) {
+			if (!initialEffectRef.current) {
+				initialEffectRef.current = {
+					enabled: effectData.enabled ?? defaultEffectSetting.enabled,
+					type: effectData.type || defaultEffectSetting.type,
+				};
+			}
+
+			const nextEnabled = effectData.enabled ?? defaultEffectSetting.enabled;
+			const nextType = (effectData.type ||
+				defaultEffectSetting.type) as EffectSettings["type"];
+
+			isSyncingRef.current = true;
+
+			setEffectSetting((prev) =>
+				prev.enabled === nextEnabled && prev.type === nextType
+					? prev
+					: {
+							enabled: nextEnabled,
+							type: nextType
+					  }
+			);
+
+			if (nextType !== currentEffectType) {
+				setCurrentEffectType(nextType);
 			}
 		}
 	}, [effectData]);
 
-	// Update effect setting and immediately sync to global context
-	const updateEffectSetting = useCallback((field: keyof EffectSettings, value: any) => {
-		setEffectSetting(prev => {
-			const newSetting = {
-				...prev,
-				[field]: value
-			};
-
-			// Immediately update global context for real-time preview in Layout
-			if (general?.design) {
-				updateGeneral({
-					design: {
-						...general.design,
-						effect: newSetting
-					}
-				});
-			}
-
-			return newSetting;
-		});
-	}, [general, updateGeneral]);
-
-	// Update effect type and immediately sync to global context
+	// Restore settings when leaving without saving
 	useEffect(() => {
-		if (currentEffectType !== effectSetting.type) {
-			const newEffectSetting = {
-				...effectSetting,
-				type: currentEffectType
-			};
+		return () => {
+			const latestGeneral = generalRef.current;
+			const restoreEffect = initialEffectRef.current;
+			const restore = updateGeneralRef.current;
 
-			setEffectSetting(newEffectSetting);
-
-			// Immediately update global context for real-time preview in Layout
-			if (general?.design) {
-				updateGeneral({
-					design: {
-						...general.design,
-						effect: newEffectSetting
-					}
-				});
+			if (!isDirtyRef.current || !restoreEffect || !latestGeneral?.design || !restore) {
+				return;
 			}
+
+			restore({
+				design: {
+					...latestGeneral.design,
+					effect: restoreEffect,
+				},
+			});
+		};
+	}, []);
+
+	// Update effect setting state only
+	const updateEffectSetting = useCallback(
+		(field: keyof EffectSettings, value: any) => {
+			setEffectSetting((prev) => ({
+				...prev,
+				[field]: value,
+			}));
+		},
+		[]
+	);
+
+	// Keep effect type in sync with local state
+	useEffect(() => {
+		setEffectSetting((prev) =>
+			prev.type === currentEffectType
+				? prev
+				: {
+						...prev,
+						type: currentEffectType,
+				  }
+		);
+	}, [currentEffectType]);
+
+	// Sync to global context for real-time preview (avoid updates during render)
+	useEffect(() => {
+		if (!general?.design) return;
+
+		if (isSyncingRef.current) {
+			isSyncingRef.current = false;
+			return;
 		}
-	}, [currentEffectType, effectSetting, general, updateGeneral]);
+
+		const current = general.design.effect;
+		if (
+			current?.enabled === effectSetting.enabled &&
+			current?.type === effectSetting.type
+		) {
+			return;
+		}
+
+		isDirtyRef.current = true;
+
+		updateGeneral({
+			design: {
+				...general.design,
+				effect: effectSetting,
+			},
+		});
+	}, [effectSetting, general, updateGeneral]);
 
 	// Reset all settings to default
 	const handleReset = useCallback(async () => {
 		try {
 			setEffectSetting(defaultEffectSetting);
 			setCurrentEffectType("없음");
+			isDirtyRef.current = false;
 
 			// Save reset settings to server
 			const response = await setSettingsEffect(defaultEffectSetting);
@@ -124,6 +178,7 @@ export const useSettingEffect = () => {
 			channel.close();
 
 			toast.success("이펙트 설정이 초기화되었습니다.");
+			initialEffectRef.current = defaultEffectSetting;
 		} catch (error) {
 			console.error("이펙트 설정 초기화 실패:", error);
 			toast.error("이펙트 설정을 초기화하지 못했습니다.");
@@ -154,6 +209,8 @@ export const useSettingEffect = () => {
 			channel.close();
 
 			toast.success("이펙트 설정이 성공적으로 저장되었습니다.");
+			initialEffectRef.current = effectSetting;
+			isDirtyRef.current = false;
 		} catch (error) {
 			console.error("이펙트 설정 저장 실패:", error);
 			toast.error("이펙트 설정을 저장하지 못했습니다.");
@@ -171,4 +228,3 @@ export const useSettingEffect = () => {
 		handleSave
 	};
 };
-

@@ -11,7 +11,7 @@ const MeteorEffect = dynamic(() => import("./MeteorEffect"), { ssr: false });
 const StarryEffect = dynamic(() => import("./StarryEffect"), { ssr: false });
 const PrismEffect = dynamic(() => import("./PrismEffect"), { ssr: false });
 const FireflyEffect = dynamic(() => import("./FireflyEffect"), { ssr: false });
-const UnderwaterEffect = dynamic(() => import("./UnderwaterEffect"), { ssr: false });
+const BubbleEffect = dynamic(() => import("./BubbleEffect"), { ssr: false });
 const RainWindowEffect = dynamic(() => import("./RainWindowEffect"), { ssr: false });
 const CinemaEffect = dynamic(() => import("./CinemaEffect"), { ssr: false });
 
@@ -63,8 +63,8 @@ export default function BackgroundEffect() {
 				return <PrismEffect key={effectKey} />;
 			case "반딧불이":
 				return <FireflyEffect key={effectKey} />;
-			case "수중":
-				return <UnderwaterEffect key={effectKey} />;
+			case "비눗방울":
+				return <BubbleEffect key={effectKey} />;
 			case "영화관":
 				return <CinemaEffect key={effectKey} />;
 			case "빗물창문":
