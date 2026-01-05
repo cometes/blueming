@@ -346,7 +346,7 @@ export default function ProfileSettingClient() {
 						</div>
 
 						{/* Introduction (Tiptap Editor) */}
-						<div className="flex items-start mt-4">
+						<div className="section-box flex items-start mt-4">
 							<div className="text-box w-[220px] pr-5 pt-2 shrink-0">
 								<h3 className="font-medium text-sub-text">자기소개</h3>
 							</div>
@@ -387,10 +387,10 @@ export default function ProfileSettingClient() {
 					</div>
 				</section>
 
-				<Separator />
+				<Separator className="my-12" />
 
 				{/* Action Buttons */}
-				<div className="flex justify-center gap-3">
+				<div className="flex justify-end gap-3 pt-6">
 					<Button
 						type="button"
 						variant="destructive"
@@ -427,4 +427,3 @@ export default function ProfileSettingClient() {
 		</>
 	);
 }
-

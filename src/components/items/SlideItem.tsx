@@ -45,63 +45,64 @@ export default function SlideItem({
 							snapshot.isDragging && "shadow-lg opacity-90"
 						)}
 					>
-						{/* Drag Handle */}
-						<div
-							{...provided.dragHandleProps}
-							className="flex items-center gap-2 mb-3 cursor-grab active:cursor-grabbing"
-						>
-							<GripVertical className="text-muted-foreground" size={20} />
-							<span className="text-sm font-medium text-sub-text">
-								슬라이드 {slide.id}
-							</span>
-						</div>
-
-						<div className="space-y-4">
-							{/* URL Input */}
-							<Input
-								placeholder="url을 입력하세요 (선택)"
-								value={slide.url}
-								onChange={(e) => onUpdate({ url: e.target.value })}
-								className="rounded-card border-card bg-card-bg"
-							/>
-
-							{/* Image Preview */}
-							<div className="w-full aspect-video rounded-card border-card overflow-hidden bg-muted">
-								<img
-									src={slide.image}
-									alt={`슬라이드 ${slide.id}`}
-									className="w-full h-full object-contain"
-								/>
+						<div className="flex gap-4">
+							<div className="flex items-center gap-2 pr-2">
+								<div
+									{...provided.dragHandleProps}
+									className="cursor-grab active:cursor-grabbing"
+								>
+									<GripVertical className="text-muted-foreground" size={20} />
+								</div>
+								<span className="text-sm font-medium text-sub-text">
+									{slide.id}
+								</span>
 							</div>
 
-							{/* Controls */}
-							<div className="flex items-center justify-between">
-								{/* New Tab Checkbox */}
-								<div className="flex items-center gap-2">
-									<Checkbox
-										checked={slide.target}
-										onCheckedChange={(checked) =>
-											onUpdate({ target: checked as boolean })
-										}
-										id={`target-${slide.uniqueId}`}
+							<div className="w-[260px] shrink-0">
+								<div className="w-full aspect-[13/5] rounded-card overflow-hidden bg-card-bg ring-1 ring-[var(--color-card-border)] ring-inset">
+									<img
+										src={slide.image}
+										alt={`슬라이드 ${slide.id}`}
+										className="w-full h-full object-contain"
 									/>
-									<Label
-										htmlFor={`target-${slide.uniqueId}`}
-										className="text-sm cursor-pointer"
-									>
-										새 탭에서 열기
-									</Label>
+								</div>
+							</div>
+
+							<div className="flex-1 min-w-0 flex flex-col">
+								<div className="space-y-3">
+									<Input
+										placeholder="url을 입력하세요 (선택)"
+										value={slide.url}
+										onChange={(e) => onUpdate({ url: e.target.value })}
+										className="rounded-card border-card bg-card-bg w-full"
+									/>
 								</div>
 
-								{/* Delete Button */}
-								<Button
-									variant="destructive"
-									size="sm"
-									onClick={() => setShowDeleteDialog(true)}
-								>
-									<Trash2 size={14} className="mr-2" />
-									삭제
-								</Button>
+								<div className="mt-auto flex items-center justify-between">
+									<div className="flex items-center gap-2">
+										<Checkbox
+											checked={slide.target}
+											onCheckedChange={(checked) =>
+												onUpdate({ target: checked as boolean })
+											}
+											id={`target-${slide.uniqueId}`}
+										/>
+										<Label
+											htmlFor={`target-${slide.uniqueId}`}
+											className="text-sm cursor-pointer"
+										>
+											새 탭에서 열기
+										</Label>
+									</div>
+									<Button
+										variant="destructive"
+										size="sm"
+										onClick={() => setShowDeleteDialog(true)}
+									>
+										<Trash2 size={14} className="mr-2" />
+										삭제
+									</Button>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -137,4 +138,3 @@ export default function SlideItem({
 		</>
 	);
 }
-

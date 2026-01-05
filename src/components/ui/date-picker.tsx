@@ -1,36 +1,97 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { format } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
+import * as React from "react";
+import { format } from "date-fns";
+import DatePickerLib, { registerLocale } from "react-datepicker";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { ko } from "date-fns/locale/ko";
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
-export function DatePicker() {
-  const [date, setDate] = React.useState<Date>()
+interface DatePickerProps {
+	date?: Date;
+	onDateChange?: (date?: Date) => void;
+	label?: string;
+	placeholder?: string;
+	fromYear?: number;
+	toYear?: number;
+	className?: string;
+	buttonClassName?: string;
+}
 
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          data-empty={!date}
-          className="data-[empty=true]:text-muted-foreground w-[280px] justify-start text-left font-normal"
-        >
-          <CalendarIcon />
-          {date ? format(date, "PPP") : <span>Pick a date</span>}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0">
-        <Calendar mode="single" selected={date} onSelect={setDate} />
-      </PopoverContent>
-    </Popover>
-  )
+const DateButton = React.forwardRef<
+	HTMLButtonElement,
+	{
+		value?: string;
+		onClick?: () => void;
+		placeholder?: string;
+		className?: string;
+	}
+>(({ value, onClick, placeholder, className }, ref) => (
+	<Button
+		type="button"
+		variant="outline"
+		onClick={onClick}
+		ref={ref}
+		className={cn(
+			"justify-start text-left font-normal rounded-card border-card bg-card-bg w-full",
+			!value && "text-sub-text",
+			className
+		)}
+	>
+		<CalendarIcon />
+		{value || <span>{placeholder}</span>}
+	</Button>
+));
+DateButton.displayName = "DateButton";
+
+registerLocale("ko", ko);
+
+export function DatePicker({
+	date,
+	onDateChange,
+	label,
+	placeholder = "Pick a date",
+	fromYear,
+	toYear,
+	className,
+	buttonClassName,
+}: DatePickerProps) {
+	const [internalDate, setInternalDate] = React.useState<Date>();
+	const selectedDate = date ?? internalDate;
+
+	const handleSelect = (next: Date | null) => {
+		if (onDateChange) {
+			onDateChange(next || undefined);
+		} else {
+			setInternalDate(next || undefined);
+		}
+	};
+
+	return (
+		<div className={cn(label ? "space-y-2" : "space-y-0", className)}>
+			{label && (
+				<Label className="text-xs font-medium text-sub-text">{label}</Label>
+			)}
+			<DatePickerLib
+				selected={selectedDate}
+				onChange={handleSelect}
+				locale="ko"
+				dateFormat="yyyy.MM.dd (EEE)"
+				placeholderText={placeholder}
+				minDate={fromYear ? new Date(fromYear, 0, 1) : undefined}
+				maxDate={toYear ? new Date(toYear, 11, 31) : undefined}
+				customInput={
+					<DateButton placeholder={placeholder} className={buttonClassName} />
+				}
+				calendarClassName="react-datepicker__calendar"
+				wrapperClassName="relative w-full"
+				popperClassName="react-datepicker-popper z-50"
+				popperPlacement="bottom-start"
+				dayClassName={() => "react-datepicker__day-cell"}
+			/>
+		</div>
+	);
 }

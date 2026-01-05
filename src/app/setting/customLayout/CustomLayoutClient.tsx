@@ -11,6 +11,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import {
 	Dialog,
 	DialogContent,
@@ -44,7 +45,6 @@ const widgetOptions = [
 	{ label: "슬라이드 배너", value: "슬라이드 배너" },
 	{ label: "텍스트바", value: "텍스트바" },
 	{ label: "프로필", value: "프로필" },
-	{ label: "스티커보드", value: "스티커보드" },
 	{ label: "디데이", value: "디데이" },
 	{ label: "최신글", value: "최신글" },
 	{ label: "뮤직플레이어", value: "뮤직플레이어" },
@@ -259,80 +259,94 @@ export default function CustomLayoutClient() {
 	}, [updateMain]);
 
 	return (
-		<div className="w-full max-w-7xl mx-auto px-4 py-6 space-y-6">
-			{/* Info Section */}
-			<div className="rounded-card border-card bg-card-bg p-6 backdrop-blur-sm">
-				<h2 className="text-xl font-semibold text-foreground mb-3">
-					커스텀 레이아웃 편집
-				</h2>
-				<ul className="space-y-1 text-sm text-muted-foreground">
-					<li>• 위젯을 선택하고 추가하세요.</li>
-					<li>• 드래그로 위치를 변경하고 크기를 조정할 수 있습니다.</li>
-					<li>• 충분한 공간이 확보되어야 새로운 위젯을 추가할 수 있습니다.</li>
-					<li>• 화면 크기에 따라 레이아웃이 자동으로 조정됩니다.</li>
-				</ul>
-			</div>
-
-			{/* Widget Add Section */}
-			<div className="space-y-3">
-				<h3 className="text-lg font-semibold text-foreground">위젯 추가</h3>
-				<div className="flex flex-col sm:flex-row gap-3">
-					<Select value={selectedWidget} onValueChange={setSelectedWidget}>
-						<SelectTrigger className="w-full sm:w-[200px]">
-							<SelectValue placeholder="위젯 선택" />
-						</SelectTrigger>
-						<SelectContent>
-							{widgetOptions.map((option) => (
-								<SelectItem key={option.value} value={option.value}>
-									{option.label}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-					<Button onClick={handleAddWidget}>추가하기</Button>
+		<div className="space-y-8">
+			<section>
+				<h2 className="text-[20px] font-semibold">커스텀 레이아웃 편집</h2>
+				<div className="section-wrap mt-6">
+					<div className="rounded-card border-card bg-card-bg p-6 backdrop-blur-sm">
+						<ul className="space-y-1 text-sm text-sub-text">
+							<li>• 위젯을 선택하고 추가하세요.</li>
+							<li>• 드래그로 위치를 변경하고 크기를 조정할 수 있습니다.</li>
+							<li>• 충분한 공간이 확보되어야 새로운 위젯을 추가할 수 있습니다.</li>
+							<li>• 화면 크기에 따라 레이아웃이 자동으로 조정됩니다.</li>
+						</ul>
+					</div>
 				</div>
-			</div>
+			</section>
 
-			{/* Main Layout Editor */}
-			<div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
-				{/* Grid Container */}
-				<div className="w-full lg:w-3/4">
-					<GridContainer ref={containerRef} showGrid={true}>
-						{layout.map((item) => {
-							const widget = widgets.find((w) => w.id === item.i);
-							if (!widget) return null;
+			<Separator className="my-12" />
 
-							return (
-								<DraggableWidget
-									key={item.i}
-									id={item.i}
-									gridPosition={{
-										x: item.x,
-										y: item.y,
-										w: item.w,
-										h: item.h,
-									}}
-									color={widget.color}
-									label={widget.type}
-									layout={layout}
-									containerRef={containerRef}
-									onPositionChange={handlePositionChange}
-									onRemove={handleRemoveWidget}
-								/>
-							);
-						})}
-					</GridContainer>
+			<section>
+				<h2 className="text-[20px] font-semibold">위젯 추가</h2>
+				<div className="section-wrap mt-6">
+					<div className="section-box flex items-center mt-4">
+						<div className="text-box w-[220px] pr-5">
+							<h3 className="font-medium text-sub-text">추가할 위젯</h3>
+							<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+								추가할 위젯을 선택하세요.
+							</p>
+						</div>
+						<div className="flex flex-1 flex-col sm:flex-row gap-3">
+							<Select value={selectedWidget} onValueChange={setSelectedWidget}>
+								<SelectTrigger className="w-full sm:w-[200px] rounded-card border-card bg-card-bg">
+									<SelectValue placeholder="위젯 선택" />
+								</SelectTrigger>
+								<SelectContent>
+									{widgetOptions.map((option) => (
+										<SelectItem key={option.value} value={option.value}>
+											{option.label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+							<Button type="button" onClick={handleAddWidget}>
+								추가하기
+							</Button>
+						</div>
+					</div>
 				</div>
+			</section>
 
-				{/* Widget List Sidebar */}
-				<WidgetList
-					widgets={widgets}
-					onRemove={handleRemoveWidget}
-				/>
-			</div>
+			<Separator className="my-12" />
 
-			{/* Action Buttons */}
-			<div className="flex justify-center gap-3 pt-4">
+			<section>
+				<h2 className="text-[20px] font-semibold">레이아웃 편집</h2>
+				<div className="section-wrap mt-6">
+					<div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
+						<div className="w-full lg:w-3/4">
+							<GridContainer ref={containerRef} showGrid={true}>
+								{layout.map((item) => {
+									const widget = widgets.find((w) => w.id === item.i);
+									if (!widget) return null;
+
+									return (
+										<DraggableWidget
+											key={item.i}
+											id={item.i}
+											gridPosition={{
+												x: item.x,
+												y: item.y,
+												w: item.w,
+												h: item.h,
+											}}
+											color={widget.color}
+											label={widget.type}
+											layout={layout}
+											containerRef={containerRef}
+											onPositionChange={handlePositionChange}
+											onRemove={handleRemoveWidget}
+										/>
+									);
+								})}
+							</GridContainer>
+						</div>
+
+						<WidgetList widgets={widgets} onRemove={handleRemoveWidget} />
+					</div>
+				</div>
+			</section>
+
+			<div className="flex justify-end gap-3 pt-6">
 				<Button
 					variant="destructive"
 					onClick={() => setShowClearDialog(true)}
@@ -342,7 +356,6 @@ export default function CustomLayoutClient() {
 				<Button onClick={handleSaveLayout}>저장하기</Button>
 			</div>
 
-			{/* Clear Confirmation Dialog */}
 			<Dialog open={showClearDialog} onOpenChange={setShowClearDialog}>
 				<DialogContent>
 					<DialogHeader>
@@ -367,4 +380,3 @@ export default function CustomLayoutClient() {
 		</div>
 	);
 }
-

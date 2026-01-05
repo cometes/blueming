@@ -7,6 +7,9 @@ import {
 	Dialog,
 	DialogContent,
 	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
@@ -77,7 +80,15 @@ export default function ImageUploadDialog({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-md">
+			<DialogContent className="max-w-md bg-card-bg border-card rounded-card">
+				<DialogHeader>
+					<DialogTitle className="text-[20px] font-semibold">
+						이미지 업로드
+					</DialogTitle>
+					<DialogDescription className="text-sm text-sub-text">
+						이미지를 선택하고 업로드해 주세요.
+					</DialogDescription>
+				</DialogHeader>
 				<div className="w-full max-w-sm mx-auto">
 					<div className="relative w-full aspect-[4/3] min-h-[150px]">
 						{thumbnail ? (
@@ -87,13 +98,13 @@ export default function ImageUploadDialog({
 								className="absolute inset-0 w-full h-full object-cover rounded-card border-card"
 							/>
 						) : (
-							<div className="absolute inset-0 w-full h-full border-2 border-dashed border-muted-foreground/25 rounded-card flex flex-col items-center justify-center bg-muted/10">
+							<div className="absolute inset-0 w-full h-full border-2 border-dashed border-card rounded-card flex flex-col items-center justify-center bg-card-bg">
 								<ImagePlus
 									size={28}
-									className="text-muted-foreground mb-2"
+									className="text-sub-text mb-2"
 									absoluteStrokeWidth={true}
 								/>
-								<p className="text-sm text-muted-foreground">Upload Image</p>
+								<p className="text-sm text-sub-text">Upload Image</p>
 							</div>
 						)}
 						<input
@@ -106,7 +117,14 @@ export default function ImageUploadDialog({
 					</div>
 				</div>
 
-				<DialogFooter>
+				<DialogFooter className="gap-2 sm:gap-3">
+					<Button
+						type="button"
+						variant="outline"
+						onClick={() => onOpenChange(false)}
+					>
+						취소
+					</Button>
 					<Button
 						onClick={handleUpload}
 						disabled={!thumbnail || isUploading}
@@ -120,4 +138,3 @@ export default function ImageUploadDialog({
 		</Dialog>
 	);
 }
-

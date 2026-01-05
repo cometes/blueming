@@ -355,7 +355,7 @@ export default function ThemeSettingClient() {
 				<h2 className="text-[20px] font-semibold">
 					{SECTION_TEXTS.LIST_TITLE}
 				</h2>
-				<div className="mt-6">
+				<div className="section-wrap mt-6">
 					{isLoading ? (
 						renderLoadingState()
 					) : themes?.length === 0 ? (
@@ -370,4 +370,3 @@ export default function ThemeSettingClient() {
 		</div>
 	);
 }
-

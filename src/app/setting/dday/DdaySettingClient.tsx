@@ -191,9 +191,9 @@ export default function DdaySettingClient() {
 					</div>
 				</section>
 
-				<Separator />
+				<Separator className="my-12" />
 
-				<div className="flex justify-center gap-3">
+				<div className="flex justify-end gap-3 pt-6">
 					<Button
 						type="button"
 						variant="destructive"
@@ -230,4 +230,3 @@ export default function DdaySettingClient() {
 		</>
 	);
 }
-

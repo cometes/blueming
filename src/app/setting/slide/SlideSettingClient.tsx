@@ -17,7 +17,7 @@ import {
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
 import SlideItem from "@/components/items/SlideItem";
-import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
+import SlideAddDialog from "@/components/modal/SlideAddDialog";
 import {
 	setSettingsMainSlide,
 	type SlideData,
@@ -29,7 +29,6 @@ export default function SlideSettingClient() {
 	const settings = useSettings();
 	const [slides, setSlides] = useState<SlideData[]>([]);
 	const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-	const [thumbnail, setThumbnail] = useState("");
 	const [showResetDialog, setShowResetDialog] = useState(false);
 
 	// Load from settings
@@ -41,7 +40,7 @@ export default function SlideSettingClient() {
 
 	// Add slide
 	const handleAddSlide = useCallback(
-		(image: string) => {
+		(data: { image: string; url: string; target: boolean }) => {
 			if (slides.length >= MAX_SLIDES) {
 				toast.error("최대 8장의 슬라이드까지 추가할 수 있습니다.");
 				return;
@@ -50,9 +49,9 @@ export default function SlideSettingClient() {
 			const newSlide: SlideData = {
 				id: `${slides.length + 1}`,
 				uniqueId: uuidv4(),
-				url: "",
-				image,
-				target: false,
+				url: data.url,
+				image: data.image,
+				target: data.target,
 			};
 
 			setSlides([...slides, newSlide]);
@@ -146,12 +145,10 @@ export default function SlideSettingClient() {
 
 	return (
 		<>
-			<ImageUploadDialog
+			<SlideAddDialog
 				isOpen={isUploadDialogOpen}
 				onOpenChange={setIsUploadDialogOpen}
-				thumbnail={thumbnail}
-				setThumbnail={setThumbnail}
-				onUpload={handleAddSlide}
+				onAdd={handleAddSlide}
 			/>
 
 			<form onSubmit={handleSave} className="space-y-8">
@@ -205,10 +202,10 @@ export default function SlideSettingClient() {
 					</div>
 				</section>
 
-				<Separator />
+				<Separator className="my-12" />
 
 				{/* Action Buttons */}
-				<div className="flex justify-center gap-3">
+				<div className="flex justify-end gap-3 pt-6">
 					<Button
 						type="button"
 						variant="destructive"
