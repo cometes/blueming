@@ -24,6 +24,7 @@ interface WidgetItem {
 
 interface CustomLayout {
 	layout: LayoutItem[];
+	mobileLayout?: LayoutItem[];
 	widgets: WidgetItem[];
 	usedColors: string[];
 }

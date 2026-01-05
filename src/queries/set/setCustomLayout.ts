@@ -8,6 +8,15 @@ interface CustomLayoutData {
     maxW: number;
     maxH: number;
   }>;
+  mobileLayout?: Array<{
+    i: string;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    maxW: number;
+    maxH: number;
+  }>;
   widgets: Array<{
     id: string;
     type: string;

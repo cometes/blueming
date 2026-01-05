@@ -112,6 +112,17 @@ interface MainSettings {
 			moved: boolean;
 			static: boolean;
 		}>;
+		mobileLayout?: Array<{
+			w: number;
+			h: number;
+			x: number;
+			y: number;
+			i: string;
+			maxW: number;
+			maxH: number;
+			moved: boolean;
+			static: boolean;
+		}>;
 		widgets: Array<{
 			id: string;
 			type:

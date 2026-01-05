@@ -7,27 +7,55 @@ interface GridContainerProps {
 	children: React.ReactNode;
 	showGrid?: boolean;
 	className?: string;
+	columns?: number;
+	rows?: number;
+	aspectRatio?: string;
+	maxHeight?: string;
+	maxWidth?: string;
 }
 
 export const GridContainer = forwardRef<HTMLDivElement, GridContainerProps>(
-	({ children, showGrid = true, className }, ref) => {
+	(
+		{
+			children,
+			showGrid = true,
+			className,
+			columns = 12,
+			rows = 12,
+			aspectRatio = "5 / 4",
+			maxHeight,
+			maxWidth,
+		},
+		ref
+	) => {
 		return (
-			<div
-				className={cn(
-					"relative w-full aspect-[5/4] overflow-hidden rounded-card border-card p-2",
-					"bg-card-bg backdrop-blur-sm",
-					className
-				)}
-			>
+		<div
+			className={cn(
+				"relative w-full overflow-hidden rounded-card border-card p-2",
+				"bg-card-bg backdrop-blur-sm",
+				className
+			)}
+			style={{ aspectRatio, maxHeight, maxWidth }}
+		>
 				{/* Inner grid container (ref points here) */}
 				<div
 					ref={ref}
-					className="relative w-full h-full grid grid-cols-12 grid-rows-12 gap-2.5"
+					className="relative w-full h-full grid gap-2.5"
+					style={{
+						gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+						gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+					}}
 				>
 					{/* Grid guidelines for editing mode */}
 					{showGrid && (
-						<div className="absolute inset-0 pointer-events-none grid grid-cols-12 grid-rows-12 gap-2.5">
-							{Array.from({ length: 144 }).map((_, i) => (
+						<div
+							className="absolute inset-0 pointer-events-none grid gap-2.5"
+							style={{
+								gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+								gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+							}}
+						>
+							{Array.from({ length: columns * rows }).map((_, i) => (
 								<div
 									key={i}
 									className="border border-dashed border-muted-foreground/10"
