@@ -5,6 +5,7 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
+	DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,7 +114,7 @@ export default function MenuEditModal({
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
 			<DialogContent
-				className="max-w-md bg-card-bg border-card"
+				className="max-w-md bg-card-bg border-card rounded-card"
 				onOpenAutoFocus={(e) => e.preventDefault()}
 			>
 				<DialogHeader>
@@ -125,6 +126,9 @@ export default function MenuEditModal({
 							</Badge>
 						</DialogTitle>
 					</div>
+					<DialogDescription className="text-sm text-sub-text">
+						메뉴 정보를 수정하고 저장하세요.
+					</DialogDescription>
 				</DialogHeader>
 
 				<div className="space-y-6 py-4">
@@ -132,18 +136,18 @@ export default function MenuEditModal({
 					<div className="space-y-3">
 						<div className="flex items-center gap-3">
 							<div className="flex-1 space-y-1.5">
-								<Label className="text-xs font-medium text-muted-foreground">
+								<Label className="text-xs font-medium text-sub-text">
 									메뉴명
 								</Label>
 								<Input
 									placeholder="메뉴명을 입력하세요"
 									value={menu.name}
 									onChange={(e) => handleChange("name", e.target.value)}
-									className="h-10 bg-muted/10 border-card focus:border-theme-primary transition-all"
+									className="h-10 rounded-card border-card bg-card-bg focus:border-card-active transition-all"
 								/>
 							</div>
 							<div className="w-[120px] space-y-1.5">
-								<Label className="text-xs font-medium text-muted-foreground">
+								<Label className="text-xs font-medium text-sub-text">
 									공개 여부
 								</Label>
 								<Select
@@ -156,12 +160,12 @@ export default function MenuEditModal({
 										});
 									}}
 								>
-									<SelectTrigger className="h-10 bg-muted/10 border-card">
+									<SelectTrigger className="h-10 rounded-card border-card bg-card-bg">
 										<div className="flex items-center gap-2">
 											{menu.isPublic ? (
 												<Globe size={14} className="text-theme-primary" />
 											) : (
-												<Lock size={14} className="text-muted-foreground" />
+												<Lock size={14} className="text-sub-text" />
 											)}
 											<SelectValue />
 										</div>
@@ -179,14 +183,14 @@ export default function MenuEditModal({
 					<div className="space-y-3 pt-2 border-t border-card/40">
 						{menu.type === "posting" && (
 							<div className="space-y-1.5">
-								<Label className="text-xs font-medium text-muted-foreground">
+								<Label className="text-xs font-medium text-sub-text">
 									게시판 선택
 								</Label>
 								<Select
 									value={menu.category}
 									onValueChange={(v) => handleChange("category", v)}
 								>
-									<SelectTrigger className="h-10 bg-muted/10 border-card">
+									<SelectTrigger className="h-10 rounded-card border-card bg-card-bg">
 										<SelectValue placeholder="게시판 선택" />
 									</SelectTrigger>
 									<SelectContent>
@@ -203,14 +207,14 @@ export default function MenuEditModal({
 						{menu.type === "custom" && (
 							<div className="space-y-3">
 								<div className="space-y-1.5">
-									<Label className="text-xs font-medium text-muted-foreground">
+									<Label className="text-xs font-medium text-sub-text">
 										URL
 									</Label>
 									<Input
 										placeholder="https://..."
 										value={menu.url}
 										onChange={(e) => handleChange("url", e.target.value)}
-										className="h-10 bg-muted/10 border-card focus:border-theme-primary"
+										className="h-10 rounded-card border-card bg-card-bg focus:border-card-active"
 									/>
 								</div>
 								<div className="flex items-center space-x-2">
@@ -223,7 +227,7 @@ export default function MenuEditModal({
 									/>
 									<Label
 										htmlFor="new-tab-check"
-										className="text-sm font-medium cursor-pointer"
+										className="text-sm font-medium cursor-pointer text-sub-text"
 									>
 										새 탭에서 열기
 									</Label>
@@ -234,11 +238,11 @@ export default function MenuEditModal({
 						{menu.type === "folder" && (
 							<div className="space-y-3">
 								<div className="flex items-center justify-between">
-									<Label className="text-xs font-medium text-muted-foreground">
+									<Label className="text-xs font-medium text-sub-text">
 										하위 메뉴
 									</Label>
 									<Select onValueChange={(v) => handleAddSubMenu(v)}>
-										<SelectTrigger className="h-8 w-[140px] text-xs bg-muted/20 border-card">
+										<SelectTrigger className="h-8 w-[140px] text-xs rounded-card border-card bg-card-bg">
 											<SelectValue placeholder="추가하기" />
 										</SelectTrigger>
 										<SelectContent>
@@ -269,14 +273,14 @@ export default function MenuEditModal({
 										return (
 											<div
 												key={idx}
-												className="flex items-center justify-between bg-muted/20 rounded-lg p-2 border border-card/40"
+												className="flex items-center justify-between bg-card-bg rounded-card p-2 border border-card"
 											>
 												<span className="text-sm font-medium flex-1">
 													{smName}
 												</span>
 												<div className="flex items-center gap-2">
 													{!smImage && (
-														<label className="cursor-pointer p-1.5 hover:bg-card-bg rounded-md text-muted-foreground hover:text-theme-primary transition-all">
+														<label className="cursor-pointer p-1.5 hover:bg-card-bg rounded-md text-sub-text hover:text-theme-primary transition-all">
 															<ImagePlus size={16} />
 															<input
 																type="file"
@@ -293,12 +297,12 @@ export default function MenuEditModal({
 														variant="ghost"
 														size="icon"
 														onClick={() => handleRemoveSubMenu(idx)}
-														className="h-8 w-8 text-muted-foreground hover:text-destructive"
+														className="h-8 w-8 text-sub-text hover:text-destructive"
 													>
 														<Trash2 size={16} />
 													</Button>
 													{smImage && (
-														<div className="relative w-[150px] max-h-9 rounded-md bg-theme-primary/10 border border-card overflow-hidden group">
+														<div className="relative w-[150px] max-h-9 rounded-card bg-theme-primary/10 border border-card overflow-hidden group">
 															<img
 																src={smImage}
 																className="w-full h-full object-contain"
@@ -344,16 +348,16 @@ export default function MenuEditModal({
 
 					{/* Image Settings */}
 					<div className="space-y-3 pt-2 border-t border-card/40">
-						<Label className="text-xs font-medium text-muted-foreground">
+						<Label className="text-xs font-medium text-sub-text">
 							메뉴 이미지
 						</Label>
 
-						<div className="p-3 bg-muted/15 rounded-xl border border-dashed border-card">
-							<p className="text-[10px] text-muted-foreground mb-2">
+						<div className="p-3 bg-card-bg rounded-card border border-dashed border-card">
+							<p className="text-[10px] text-sub-text mb-2">
 								권장 사이즈: 220 * 80
 							</p>
 							{menu.image ? (
-								<div className="relative aspect-[22/8] w-full max-w-[280px] rounded-lg border border-card overflow-hidden bg-card-bg group">
+								<div className="relative aspect-[22/8] w-full max-w-[280px] rounded-card border border-card overflow-hidden bg-card-bg group">
 									<img
 										src={menu.image}
 										className="w-full h-full object-contain"
@@ -369,12 +373,12 @@ export default function MenuEditModal({
 									</Button>
 								</div>
 							) : (
-								<label className="flex flex-col items-center justify-center py-4 w-full cursor-pointer bg-card-bg/40 hover:bg-card-bg/70 border border-dashed border-card/70 rounded-xl transition-all gap-1.5 group">
+								<label className="flex flex-col items-center justify-center py-4 w-full cursor-pointer bg-card-bg hover:bg-card-bg/70 border border-dashed border-card rounded-card transition-all gap-1.5 group">
 									<ImagePlus
 										size={20}
-										className="text-muted-foreground group-hover:text-theme-primary transition-colors"
+										className="text-sub-text group-hover:text-theme-primary transition-colors"
 									/>
-									<span className="text-[11px] font-medium text-muted-foreground group-hover:text-theme-primary transition-colors">
+									<span className="text-[11px] font-medium text-sub-text group-hover:text-theme-primary transition-colors">
 										이미지 업로드
 									</span>
 									<input

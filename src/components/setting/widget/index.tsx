@@ -79,11 +79,11 @@ export default function WidgetSetting({
 	const currentCardPreset = getCardPreset();
 
 	return (
-		<div className="space-y-12">
+		<div className="space-y-8">
 			{/* 위젯 설정 Section */}
 			<section>
 				<h2 className="text-[20px] font-semibold">위젯 설정</h2>
-				<div className="mt-6">
+				<div className="section-wrap mt-6">
 					{/* 위젯 프리뷰 */}
 					<div className="flex flex-col items-center p-8 rounded-card border-card bg-card-bg filter-blur-card mb-8 relative">
 						<div
@@ -106,10 +106,10 @@ export default function WidgetSetting({
 						/>
 					</div>
 
-					<div className="space-y-4">
+					<div>
 						{/* 위젯 배경 컬러 */}
-						<div className="flex items-center">
-							<div className="w-[220px] pr-5">
+						<div className="section-box flex items-center mt-4">
+							<div className="text-box w-[220px] pr-5">
 								<h3 className="font-medium text-sub-text">위젯 배경 컬러</h3>
 							</div>
 							<div className="flex items-center gap-3">
@@ -129,8 +129,8 @@ export default function WidgetSetting({
 						</div>
 
 						{/* 위젯 라인 컬러 */}
-						<div className="flex items-center">
-							<div className="w-[220px] pr-5">
+						<div className="section-box flex items-center mt-4">
+							<div className="text-box w-[220px] pr-5">
 								<h3 className="font-medium text-sub-text">위젯 라인 컬러</h3>
 							</div>
 							<div className="flex items-center gap-3">
@@ -150,8 +150,8 @@ export default function WidgetSetting({
 						</div>
 
 						{/* 위젯 모서리 둥글기 */}
-						<div className="flex items-center">
-							<div className="w-[220px] pr-5">
+						<div className="section-box flex items-center mt-4">
+							<div className="text-box w-[220px] pr-5">
 								<h3 className="font-medium text-sub-text">
 									위젯 모서리 둥글기
 								</h3>
@@ -172,8 +172,8 @@ export default function WidgetSetting({
 						</div>
 
 						{/* 위젯 라인 타입 */}
-						<div className="flex items-center">
-							<div className="w-[220px] pr-5">
+						<div className="section-box flex items-center mt-4">
+							<div className="text-box w-[220px] pr-5">
 								<h3 className="font-medium text-sub-text">위젯 라인 타입</h3>
 							</div>
 							<div className="grid grid-cols-4 gap-2 flex-1 max-w-sm">
@@ -192,8 +192,8 @@ export default function WidgetSetting({
 						</div>
 
 						{/* 위젯 라인 굵기 */}
-						<div className="flex items-center">
-							<div className="w-[220px] pr-5">
+						<div className="section-box flex items-center mt-4">
+							<div className="text-box w-[220px] pr-5">
 								<h3 className="font-medium text-sub-text">위젯 라인 굵기</h3>
 							</div>
 							<div className="flex items-center gap-4 flex-1 max-w-md w-full">
@@ -218,14 +218,14 @@ export default function WidgetSetting({
 											Number(e.target.value)
 										)
 									}
-									className="w-20"
+									className="w-20 rounded-card border-card bg-card-bg"
 								/>
 							</div>
 						</div>
 
 						{/* 위젯 블러 */}
-						<div className="flex items-center">
-							<div className="w-[220px] pr-5">
+						<div className="section-box flex items-center mt-4">
+							<div className="text-box w-[220px] pr-5">
 								<h3 className="font-medium text-sub-text">위젯 블러</h3>
 							</div>
 							<div className="flex items-center gap-4 flex-1 max-w-md w-full">
@@ -247,14 +247,14 @@ export default function WidgetSetting({
 									onChange={(e) =>
 										updateDesignSetting("widget.blur", Number(e.target.value))
 									}
-									className="w-20"
+									className="w-20 rounded-card border-card bg-card-bg"
 								/>
 							</div>
 						</div>
 
 						{/* 위젯 보더 이미지 */}
-						<div className="flex items-center">
-							<div className="w-[220px] pr-5">
+						<div className="section-box flex items-center mt-4">
+							<div className="text-box w-[220px] pr-5">
 								<h3 className="font-medium text-sub-text">
 									위젯 보더 이미지 (옵션)
 								</h3>
@@ -297,7 +297,7 @@ export default function WidgetSetting({
 			{/* 카드 설정 Section */}
 			<section>
 				<h2 className="text-[20px] font-semibold">카드 설정</h2>
-				<div className="mt-6">
+				<div className="section-wrap mt-6">
 					{/* 카드 프리뷰 */}
 					<div className="flex flex-col items-center p-8 rounded-card border-card bg-card-bg filter-blur-card mb-8 relative">
 						<div
@@ -332,10 +332,10 @@ export default function WidgetSetting({
 						/>
 					</div>
 
-					<div className="space-y-6">
+					<div>
 						{/* 프리셋 */}
-						<div className="flex items-center">
-							<div className="w-[220px] pr-5">
+						<div className="section-box flex items-center mt-4">
+							<div className="text-box w-[220px] pr-5">
 								<h3 className="font-medium text-sub-text">프리셋</h3>
 							</div>
 							<div className="grid grid-cols-3 gap-3 flex-1 max-w-sm">
@@ -351,10 +351,10 @@ export default function WidgetSetting({
 						</div>
 
 						{card.type === PRESET_TYPES.CUSTOM && (
-							<div className="space-y-4 pt-4 border-t border-dashed">
+							<div className="pt-4 border-t border-dashed">
 								{/* 카드 배경 컬러 */}
-								<div className="flex items-center">
-									<div className="w-[220px] pr-5">
+								<div className="section-box flex items-center mt-4">
+									<div className="text-box w-[220px] pr-5">
 										<h3 className="font-medium text-sub-text">
 											카드 배경 컬러
 										</h3>
@@ -376,8 +376,8 @@ export default function WidgetSetting({
 								</div>
 
 								{/* 카드 라인 컬러 */}
-								<div className="flex items-center">
-									<div className="w-[220px] pr-5">
+								<div className="section-box flex items-center mt-4">
+									<div className="text-box w-[220px] pr-5">
 										<h3 className="font-medium text-sub-text">
 											카드 라인 컬러
 										</h3>
@@ -405,8 +405,8 @@ export default function WidgetSetting({
 								</div>
 
 								{/* 카드 모서리 둥글기 */}
-								<div className="flex items-center">
-									<div className="w-[220px] pr-5">
+								<div className="section-box flex items-center mt-4">
+									<div className="text-box w-[220px] pr-5">
 										<h3 className="font-medium text-sub-text">
 											카드 모서리 둥글기
 										</h3>
@@ -427,8 +427,8 @@ export default function WidgetSetting({
 								</div>
 
 								{/* 카드 라인 타입 */}
-								<div className="flex items-center">
-									<div className="w-[220px] pr-5">
+								<div className="section-box flex items-center mt-4">
+									<div className="text-box w-[220px] pr-5">
 										<h3 className="font-medium text-sub-text">
 											카드 라인 타입
 										</h3>
@@ -449,8 +449,8 @@ export default function WidgetSetting({
 								</div>
 
 								{/* 카드 라인 굵기 */}
-								<div className="flex items-center">
-									<div className="w-[220px] pr-5">
+								<div className="section-box flex items-center mt-4">
+									<div className="text-box w-[220px] pr-5">
 										<h3 className="font-medium text-sub-text">
 											카드 라인 굵기
 										</h3>
@@ -477,14 +477,14 @@ export default function WidgetSetting({
 													Number(e.target.value)
 												)
 											}
-											className="w-20"
+											className="w-20 rounded-card border-card bg-card-bg"
 										/>
 									</div>
 								</div>
 
 								{/* 카드 블러 */}
-								<div className="flex items-center">
-									<div className="w-[220px] pr-5">
+								<div className="section-box flex items-center mt-4">
+									<div className="text-box w-[220px] pr-5">
 										<h3 className="font-medium text-sub-text">카드 블러</h3>
 									</div>
 									<div className="flex items-center gap-4 flex-1 max-w-md w-full">
@@ -506,7 +506,7 @@ export default function WidgetSetting({
 											onChange={(e) =>
 												updateDesignSetting("card.blur", Number(e.target.value))
 											}
-											className="w-20"
+											className="w-20 rounded-card border-card bg-card-bg"
 										/>
 									</div>
 								</div>

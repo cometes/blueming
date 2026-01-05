@@ -13,6 +13,7 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
+	DialogDescription,
 } from "@/components/ui/dialog";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useFileUpload } from "@/hooks/useFileUpload";
@@ -34,7 +35,7 @@ export default function DdayAddDialog({
 	const [title, setTitle] = useState("");
 	const [date, setDate] = useState<Date>();
 	const [addToWidget, setAddToWidget] = useState(false);
-	const { uploadFile, state } = useFileUpload();
+	const { uploadFile } = useFileUpload();
 
 	const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -72,15 +73,20 @@ export default function DdayAddDialog({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-2xl">
+			<DialogContent className="max-w-2xl w-full bg-card-bg border-card rounded-card">
 				<DialogHeader>
-					<DialogTitle>디데이 추가하기</DialogTitle>
+					<DialogTitle className="text-[20px] font-semibold">
+						디데이 추가하기
+					</DialogTitle>
+					<DialogDescription className="text-sm text-sub-text">
+						디데이 정보를 입력하고 위젯 추가 여부를 선택하세요.
+					</DialogDescription>
 				</DialogHeader>
 
-				<div className="flex gap-4">
+				<div className="grid gap-4 md:grid-cols-[240px_minmax(0,1fr)]">
 					{/* Left: Image Upload */}
-					<div className="w-60 shrink-0">
-						<div className="w-full aspect-[4/3] rounded-card border-card overflow-hidden bg-muted">
+					<div className="w-full">
+						<div className="w-full aspect-[4/3] rounded-card border-card overflow-hidden bg-card-bg">
 							{thumbnail ? (
 								<img
 									src={thumbnail}
@@ -88,9 +94,9 @@ export default function DdayAddDialog({
 									className="w-full h-full object-cover"
 								/>
 							) : (
-								<label className="flex flex-col items-center justify-center w-full h-full cursor-pointer hover:bg-muted/50 transition-colors">
-									<ImagePlus size={28} className="text-muted-foreground mb-2" />
-									<span className="text-xs text-muted-foreground">
+								<label className="flex flex-col items-center justify-center w-full h-full cursor-pointer hover:bg-card-bg transition-colors">
+									<ImagePlus size={28} className="text-sub-text mb-2" />
+									<span className="text-xs text-sub-text">
 										Upload Image
 									</span>
 									<input
@@ -105,26 +111,28 @@ export default function DdayAddDialog({
 					</div>
 
 					{/* Right: Form */}
-					<div className="flex-1 space-y-4">
+					<div className="w-full space-y-4 min-w-0">
 						<div className="space-y-2">
-							<Label>디데이 제목</Label>
+							<Label className="text-xs font-medium text-sub-text">
+								디데이 제목
+							</Label>
 							<Input
 								value={title}
 								onChange={(e) => setTitle(e.target.value)}
 								placeholder="디데이 제목을 입력하세요"
+								className="rounded-card border-card bg-card-bg"
 							/>
 						</div>
 
-						<div className="space-y-2">
-							<DatePicker
-								date={date}
-								onDateChange={setDate}
-								label="디데이 날짜"
-								placeholder="날짜를 선택하세요"
-								fromYear={2000}
-								toYear={new Date().getFullYear() + 10}
-							/>
-						</div>
+						<DatePicker
+							date={date}
+							onDateChange={setDate}
+							label="디데이 날짜"
+							placeholder="날짜를 선택하세요"
+							fromYear={2000}
+							toYear={new Date().getFullYear() + 10}
+							buttonClassName="w-full"
+						/>
 
 						<div className="flex items-center space-x-2">
 							<Checkbox
@@ -134,14 +142,17 @@ export default function DdayAddDialog({
 									setAddToWidget(checked as boolean)
 								}
 							/>
-							<Label htmlFor="add-to-widget" className="cursor-pointer">
+							<Label
+								htmlFor="add-to-widget"
+								className="cursor-pointer text-sm text-sub-text"
+							>
 								위젯에 추가
 							</Label>
 						</div>
 					</div>
 				</div>
 
-				<DialogFooter>
+				<DialogFooter className="gap-2 sm:gap-3">
 					<Button variant="outline" onClick={() => onOpenChange(false)}>
 						취소
 					</Button>

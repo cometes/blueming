@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Plus, ImagePlus, Trash2, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,10 +96,7 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 
 export default function MenuSettingClient() {
 	const {
-		handleSubmit,
 		handleAddMenu,
-		currentMenuTab,
-		setCurrentMenuTab,
 		menus,
 		menuTypes,
 		align,
@@ -172,12 +169,8 @@ export default function MenuSettingClient() {
 		input.click();
 	};
 
-	const onSubmit = (data: any) => {
-		handleSave();
-	};
-
 	return (
-		<div className="space-y-8">
+		<>
 			<MenuAddModal
 				isModalOpen={isAddModalOpen}
 				setIsModalOpen={setIsAddModalOpen}
@@ -186,10 +179,17 @@ export default function MenuSettingClient() {
 				cancelModal={() => setIsAddModalOpen(false)}
 			/>
 
-			{/* 메뉴 디자인 Section */}
-			<section>
-				<h2 className="text-[20px] font-semibold">메뉴 디자인</h2>
-				<div className="section-wrap mt-6">
+			<form
+				onSubmit={(e) => {
+					e.preventDefault();
+					handleSave();
+				}}
+				className="space-y-8"
+			>
+				{/* 메뉴 디자인 Section */}
+				<section>
+					<h2 className="text-[20px] font-semibold">메뉴 디자인</h2>
+					<div className="section-wrap mt-6">
 					{/* 메뉴 레이아웃 배치 */}
 					<div className="section-box flex items-center mt-4">
 						<div className="text-box w-[220px]">
@@ -343,27 +343,31 @@ export default function MenuSettingClient() {
 							onClearClick={() => updateMenuSetting("background.image", "")}
 						/>
 					)}
-				</div>
-			</section>
+					</div>
+				</section>
 
-			<Separator className="my-12" />
+				<Separator className="my-12" />
 
-			{/* 메뉴 설정 Section */}
-			<section>
-				<div className="flex items-center justify-between mb-2">
-					<h2 className="text-[20px] font-semibold">메뉴 설정</h2>
-					<Button onClick={() => setIsAddModalOpen(true)} className="gap-2">
-						<Plus size={16} />
-						메뉴 추가하기
-					</Button>
-				</div>
-				<p className="text-sm text-muted-foreground mb-6">
-					메뉴 텍스트 및 이미지를 설정합니다. 드래그 앤 드롭으로 순서를 변경할
-					수 있습니다. 최대 8개까지 추가 가능합니다.
-				</p>
+				{/* 메뉴 설정 Section */}
+				<section>
+					<div className="flex items-center justify-between mb-2">
+						<h2 className="text-[20px] font-semibold">메뉴 설정</h2>
+						<Button
+							type="button"
+							onClick={() => setIsAddModalOpen(true)}
+							className="gap-2"
+						>
+							<Plus size={16} />
+							메뉴 추가하기
+						</Button>
+					</div>
+					<p className="text-sm text-sub-text mb-6">
+						메뉴 텍스트 및 이미지를 설정합니다. 드래그 앤 드롭으로 순서를 변경할
+						수 있습니다. 최대 8개까지 추가 가능합니다.
+					</p>
 
-				{/* Menu Preview Container */}
-				<div className="section-wrap flex justify-center py-10 bg-muted/5 rounded-2xl border border-card/50">
+					{/* Menu Preview Container */}
+					<div className="section-wrap flex justify-center py-10 rounded-card border-card bg-card-bg">
 					<aside
 						className={cn(
 							"w-[160px] h-[600px] rounded-xl shadow-2xl overflow-auto flex flex-col items-center justify-center",
@@ -485,48 +489,49 @@ export default function MenuSettingClient() {
 							</div>
 						</nav>
 					</aside>
-				</div>
-			</section>
+					</div>
+				</section>
 
-			{/* Submit Buttons */}
-			<div className="flex justify-end gap-3 pt-6">
-				{showResetConfirm ? (
-					<div className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-						<span className="text-sm text-red-700 dark:text-red-300">
-							정말 초기화할까요?
-						</span>
+				{/* Submit Buttons */}
+				<div className="flex justify-end gap-3 pt-6">
+					{showResetConfirm ? (
+						<div className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+							<span className="text-sm text-red-700 dark:text-red-300">
+								정말 초기화할까요?
+							</span>
+							<Button
+								type="button"
+								variant="destructive"
+								size="sm"
+								onClick={() => {
+									handleReset();
+									setShowResetConfirm(false);
+								}}
+							>
+								O
+							</Button>
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								onClick={() => setShowResetConfirm(false)}
+							>
+								X
+							</Button>
+						</div>
+					) : (
 						<Button
 							type="button"
 							variant="destructive"
-							size="sm"
-							onClick={() => {
-								handleReset();
-								setShowResetConfirm(false);
-							}}
+							onClick={() => setShowResetConfirm(true)}
 						>
-							O
+							초기화하기
 						</Button>
-						<Button
-							type="button"
-							variant="outline"
-							size="sm"
-							onClick={() => setShowResetConfirm(false)}
-						>
-							X
-						</Button>
-					</div>
-				) : (
-					<Button
-						type="button"
-						variant="destructive"
-						onClick={() => setShowResetConfirm(true)}
-					>
-						초기화하기
-					</Button>
-				)}
+					)}
 
-				<Button onClick={handleSave}>저장하기</Button>
-			</div>
-		</div>
+					<Button type="submit">저장하기</Button>
+				</div>
+			</form>
+		</>
 	);
 }

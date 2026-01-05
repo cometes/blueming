@@ -6,6 +6,7 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
+	DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,8 +125,8 @@ export default function MenuAddModal({
 
 	return (
 		<Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-			<DialogContent 
-				className="max-w-md bg-card-bg border-card"
+			<DialogContent
+				className="max-w-md bg-card-bg border-card rounded-card"
 				onOpenAutoFocus={(e) => e.preventDefault()}
 			>
 				<DialogHeader>
@@ -137,13 +138,16 @@ export default function MenuAddModal({
 							</Badge>
 						</DialogTitle>
 					</div>
+					<DialogDescription className="text-sm text-sub-text">
+						메뉴 타입과 정보를 입력해 추가하세요.
+					</DialogDescription>
 				</DialogHeader>
 				<Tabs
 					value={activeTab}
 					onValueChange={(v: any) => setActiveTab(v)}
 					className="w-full"
 				>
-					<TabsList className="grid w-full grid-cols-3 mb-4">
+					<TabsList className="grid w-full grid-cols-3 mb-4 bg-card-bg border border-card rounded-card">
 						<TabsTrigger value="posting" className="text-xs">포스팅</TabsTrigger>
 						<TabsTrigger value="folder" className="text-xs">폴더</TabsTrigger>
 						<TabsTrigger value="custom" className="text-xs">커스텀</TabsTrigger>
@@ -152,7 +156,7 @@ export default function MenuAddModal({
 					<div className="space-y-6 py-4">
 						<div className="flex items-center gap-3">
 							<div className="flex-1 space-y-1.5">
-								<Label className="text-xs font-medium text-muted-foreground">
+								<Label className="text-xs font-medium text-sub-text">
 									메뉴명
 								</Label>
 								<Input
@@ -161,11 +165,11 @@ export default function MenuAddModal({
 										setFormData({ ...formData, name: e.target.value })
 									}
 									placeholder="메뉴명을 입력하세요"
-									className="h-10 bg-muted/10 border-card focus:border-theme-primary transition-all"
+									className="h-10 rounded-card border-card bg-card-bg focus:border-card-active transition-all"
 								/>
 							</div>
 							<div className="w-[120px] space-y-1.5">
-								<Label className="text-xs font-medium text-muted-foreground">
+								<Label className="text-xs font-medium text-sub-text">
 									공개 여부
 								</Label>
 								<Select
@@ -174,12 +178,12 @@ export default function MenuAddModal({
 										setFormData({ ...formData, isPublic: v === "public" })
 									}
 								>
-									<SelectTrigger className="h-10 bg-muted/10 border-card">
+									<SelectTrigger className="h-10 rounded-card border-card bg-card-bg">
 										<div className="flex items-center gap-2">
 											{formData.isPublic ? (
 												<Globe size={14} className="text-theme-primary" />
 											) : (
-												<Lock size={14} className="text-muted-foreground" />
+												<Lock size={14} className="text-sub-text" />
 											)}
 											<SelectValue />
 										</div>
@@ -195,7 +199,7 @@ export default function MenuAddModal({
 						<div className="space-y-3 pt-2 border-t border-card/40">
 							<TabsContent value="posting" className="mt-0">
 								<div className="space-y-1.5">
-									<Label className="text-xs font-medium text-muted-foreground">
+									<Label className="text-xs font-medium text-sub-text">
 										게시판 선택
 									</Label>
 									<Select
@@ -204,7 +208,7 @@ export default function MenuAddModal({
 											setFormData({ ...formData, category: v })
 										}
 									>
-										<SelectTrigger className="h-10 bg-muted/10 border-card">
+										<SelectTrigger className="h-10 rounded-card border-card bg-card-bg">
 											<SelectValue placeholder="게시판을 선택하세요" />
 										</SelectTrigger>
 										<SelectContent>
@@ -218,14 +222,14 @@ export default function MenuAddModal({
 								</div>
 							</TabsContent>
 
-						<TabsContent value="folder" className="mt-0">
-							<div className="space-y-3">
-								<div className="flex items-center justify-between">
-									<Label className="text-xs font-medium text-muted-foreground">
+							<TabsContent value="folder" className="mt-0">
+								<div className="space-y-3">
+									<div className="flex items-center justify-between">
+									<Label className="text-xs font-medium text-sub-text">
 										하위 메뉴
 									</Label>
 									<Select onValueChange={(v) => handleAddSubMenu(v)}>
-										<SelectTrigger className="h-8 w-[140px] text-xs bg-muted/20 border-card">
+										<SelectTrigger className="h-8 w-[140px] text-xs rounded-card border-card bg-card-bg">
 											<SelectValue placeholder="추가하기" />
 										</SelectTrigger>
 										<SelectContent>
@@ -253,14 +257,14 @@ export default function MenuAddModal({
 											return (
 												<div
 													key={idx}
-													className="flex items-center justify-between bg-muted/20 rounded-lg p-2 border border-card/40"
+													className="flex items-center justify-between bg-card-bg rounded-card p-2 border border-card"
 												>
 													<span className="text-sm font-medium flex-1">
 														{smName}
 													</span>
 													<div className="flex items-center gap-2">
 														{!smImage && (
-															<label className="cursor-pointer p-1.5 hover:bg-card-bg rounded-md text-muted-foreground hover:text-theme-primary transition-all">
+															<label className="cursor-pointer p-1.5 hover:bg-card-bg rounded-md text-sub-text hover:text-theme-primary transition-all">
 																<ImagePlus size={16} />
 																<input
 																	type="file"
@@ -277,12 +281,12 @@ export default function MenuAddModal({
 															variant="ghost"
 															size="icon"
 															onClick={() => handleRemoveSubMenu(idx)}
-															className="h-8 w-8 text-muted-foreground hover:text-destructive"
+															className="h-8 w-8 text-sub-text hover:text-destructive"
 														>
 															<Trash2 size={16} />
 														</Button>
 														{smImage && (
-															<div className="relative w-[150px] max-h-9 rounded-md bg-theme-primary/10 border border-card overflow-hidden group">
+															<div className="relative w-[150px] max-h-9 rounded-card bg-theme-primary/10 border border-card overflow-hidden group">
 																<img
 																	src={smImage}
 																	className="w-full h-full object-contain"
@@ -325,7 +329,7 @@ export default function MenuAddModal({
 									</div>
 								)}
 								{formData.subMenus.length === 0 && (
-									<p className="text-xs text-muted-foreground text-center py-2">
+									<p className="text-xs text-sub-text text-center py-2">
 										하위 메뉴를 추가해보세요
 									</p>
 								)}
@@ -335,7 +339,7 @@ export default function MenuAddModal({
 							<TabsContent value="custom" className="mt-0">
 								<div className="space-y-3">
 									<div className="space-y-1.5">
-										<Label className="text-xs font-medium text-muted-foreground">
+										<Label className="text-xs font-medium text-sub-text">
 											URL
 										</Label>
 										<Input
@@ -344,7 +348,7 @@ export default function MenuAddModal({
 												setFormData({ ...formData, url: e.target.value })
 											}
 											placeholder="https://..."
-											className="h-10 bg-muted/10 border-card focus:border-theme-primary"
+											className="h-10 rounded-card border-card bg-card-bg focus:border-card-active"
 										/>
 									</div>
 									<div className="flex items-center space-x-2">
@@ -357,7 +361,7 @@ export default function MenuAddModal({
 										/>
 										<Label
 											htmlFor="openInNewTab"
-											className="text-sm font-medium cursor-pointer"
+											className="text-sm font-medium cursor-pointer text-sub-text"
 										>
 											새 탭에서 열기
 										</Label>
@@ -368,16 +372,16 @@ export default function MenuAddModal({
 
 						{/* Image Settings */}
 						<div className="space-y-3 pt-2 border-t border-card/40">
-							<Label className="text-xs font-medium text-muted-foreground">
+							<Label className="text-xs font-medium text-sub-text">
 								메뉴 이미지
 							</Label>
 
-							<div className="p-3 bg-muted/15 rounded-xl border border-dashed border-card">
-								<p className="text-[10px] text-muted-foreground mb-2">
+							<div className="p-3 bg-card-bg rounded-card border border-dashed border-card">
+								<p className="text-[10px] text-sub-text mb-2">
 									권장 사이즈: 220 * 80
 								</p>
 								{formData.image ? (
-									<div className="relative aspect-[22/8] w-full max-w-[280px] rounded-lg border border-card overflow-hidden bg-card-bg group">
+									<div className="relative aspect-[22/8] w-full max-w-[280px] rounded-card border border-card overflow-hidden bg-card-bg group">
 										<img
 											src={formData.image}
 											className="w-full h-full object-contain"
@@ -393,12 +397,12 @@ export default function MenuAddModal({
 										</Button>
 									</div>
 								) : (
-									<label className="flex flex-col items-center justify-center py-4 w-full cursor-pointer bg-card-bg/40 hover:bg-card-bg/70 border border-dashed border-card/70 rounded-xl transition-all gap-1.5 group">
+									<label className="flex flex-col items-center justify-center py-4 w-full cursor-pointer bg-card-bg hover:bg-card-bg/70 border border-dashed border-card rounded-card transition-all gap-1.5 group">
 										<ImagePlus
 											size={20}
-											className="text-muted-foreground group-hover:text-theme-primary transition-colors"
+											className="text-sub-text group-hover:text-theme-primary transition-colors"
 										/>
-										<span className="text-[11px] font-medium text-muted-foreground group-hover:text-theme-primary transition-colors">
+										<span className="text-[11px] font-medium text-sub-text group-hover:text-theme-primary transition-colors">
 											이미지 업로드
 										</span>
 										<input

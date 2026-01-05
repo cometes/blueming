@@ -419,7 +419,7 @@ export default function NoticeSettingClient() {
 				</div>
 			</section>
 
-			<Separator />
+			<Separator className="my-12" />
 
 			{/* Editor Section */}
 			<section>
@@ -459,10 +459,10 @@ export default function NoticeSettingClient() {
 				</div>
 			</section>
 
-			<Separator />
+			<Separator className="my-12" />
 
 			{/* Action Buttons */}
-			<div className="flex justify-center gap-3">
+			<div className="flex justify-end gap-3 pt-6">
 				<Button
 					type="button"
 					variant="destructive"
