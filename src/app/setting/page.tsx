@@ -1,5 +1,5 @@
-import SettingClient from "./SettingClient";
+import { redirect } from "next/navigation";
 
 export default async function SettingPage() {
-	return <SettingClient />;
+	redirect("/setting/general");
 }

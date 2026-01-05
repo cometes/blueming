@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useState, ReactNode } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { Menu, ChevronLeft } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -33,13 +33,23 @@ export default function SettingLayout({
 	description,
 }: SettingLayoutProps) {
 	const [isAsideExpanded, setIsAsideExpanded] = useState(false);
+	const [isMounted, setIsMounted] = useState(false);
+
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
 
 	const toggleAside = () => {
 		setIsAsideExpanded(!isAsideExpanded);
 	};
 
 	return (
-		<div className="w-full max-w-[1200px] mx-auto mt-12 px-4 pb-4">
+		<div
+			className={cn(
+				"w-full max-w-[1200px] mx-auto mt-12 px-4 pb-4",
+				isMounted ? "animate-in fade-in-0 duration-500" : "opacity-0"
+			)}
+		>
 			<div
 				className="flex bg-card border border-card rounded-card h-[calc(100vh-80px)] backdrop-blur-card overflow-hidden"
 				onClick={() => {
