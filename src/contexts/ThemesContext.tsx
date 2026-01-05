@@ -132,7 +132,7 @@ interface MainSettings {
 			moved: boolean;
 			static: boolean;
 		}>;
-		widgets: Array<{
+		desktopWidgets: Array<{
 			id: string;
 			type:
 				| "로고"
@@ -142,7 +142,18 @@ interface MainSettings {
 				| "디데이";
 			color: string;
 		}>;
-		usedColors: string[];
+		mobileWidgets: Array<{
+			id: string;
+			type:
+				| "로고"
+				| "슬라이드 배너"
+				| "띠 배너"
+				| "공지"
+				| "디데이";
+			color: string;
+		}>;
+		desktopUsedColors: string[];
+		mobileUsedColors: string[];
 	};
 	slide: {
 		slides: Array<{
