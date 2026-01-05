@@ -65,7 +65,7 @@ export default function EffectSettingClient() {
 									원하는 배경 이펙트를 선택하세요.
 								</p>
 							</div>
-							<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 flex-1">
+							<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 flex-1">
 								{effectTypes.map((type) => (
 									<RadioItem
 										key={type}

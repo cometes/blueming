@@ -112,7 +112,7 @@ export default function Layout({ children }: LayoutProps) {
 					isMainPage ? "max-w-7xl h-dvh" : "max-w-5xl h-auto"
 				)}
 			>
-				<div className="w-full h-full flex items-start justify-center gap-6">
+				<div className="w-full h-full flex items-start justify-center gap-6 relative z-10">
 					{!shouldHideMenu && <WidgetMenu />}
 					{children}
 				</div>
