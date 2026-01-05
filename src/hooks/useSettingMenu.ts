@@ -44,6 +44,11 @@ export const useSettingMenu = () => {
 		bgType: "없음",
 		backgroundColor: "#ffffff",
 		backgroundImage: "",
+		iconBarLogoImage: "",
+		iconBarLogoType: "없음",
+		iconBarBgType: "없음",
+		iconBarBackgroundColor: "#ffffff",
+		iconBarBackgroundImage: "",
 	};
 
 	const [currentMenuList, setCurrentMenuList] = useState<MenuItem[]>([]);
@@ -106,6 +111,16 @@ export const useSettingMenu = () => {
 				updateMenuDesign("logoImage", value);
 			} else if (path === "logo.text") {
 				updateMenuDesign("logoText", value);
+			} else if (path === "iconbar.logo.image") {
+				updateMenuDesign("iconBarLogoImage", value);
+			} else if (path === "iconbar.logo.type") {
+				updateMenuDesign("iconBarLogoType", value);
+			} else if (path === "iconbar.bg.type") {
+				updateMenuDesign("iconBarBgType", value);
+			} else if (path === "iconbar.background.color") {
+				updateMenuDesign("iconBarBackgroundColor", value);
+			} else if (path === "iconbar.background.image") {
+				updateMenuDesign("iconBarBackgroundImage", value);
 			}
 		},
 		[updateMenuDesign]
@@ -118,21 +133,22 @@ export const useSettingMenu = () => {
 				return;
 			}
 
-			const newMenuData: MenuItem = {
-				id: `${currentMenuList.length + 1}`,
-				uniqueId: crypto.randomUUID(),
-				name: data.name,
-				type: currentMenuTab,
-				isPublic: data.isPublic ?? true,
-				openInNewTab: data.openInNewTab ?? false,
-				allow: data.isPublic ? "all" : "private",
-				image: data.image || "",
-				target: data.openInNewTab ?? false,
-				category:
-					data.category ||
-					(currentMenuTab === "folder"
-						? "폴더"
-						: currentMenuTab === "custom"
+		const newMenuData: MenuItem = {
+			id: `${currentMenuList.length + 1}`,
+			uniqueId: crypto.randomUUID(),
+			name: data.name,
+			type: currentMenuTab,
+			isPublic: data.isPublic ?? true,
+			openInNewTab: data.openInNewTab ?? false,
+			allow: data.isPublic ? "all" : "private",
+			image: data.image || "",
+			iconImage: data.iconImage || "",
+			target: data.openInNewTab ?? false,
+			category:
+				data.category ||
+				(currentMenuTab === "folder"
+					? "폴더"
+					: currentMenuTab === "custom"
 						? "커스텀"
 						: ""),
 				url: data.url || "",

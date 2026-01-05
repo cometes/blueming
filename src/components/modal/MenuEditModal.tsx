@@ -105,6 +105,20 @@ export default function MenuEditModal({
 		}
 	};
 
+	const handleIconImageUpload = async (
+		e: React.ChangeEvent<HTMLInputElement>
+	) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		try {
+			const url = await uploadFile(file);
+			handleChange("iconImage", url);
+			toast.success("아이콘 이미지가 업로드되었습니다.");
+		} catch (error) {
+			toast.error("아이콘 이미지 업로드에 실패했습니다.");
+		}
+	};
+
 	const menuTypeLabel = {
 		posting: "포스팅",
 		folder: "폴더",
@@ -386,6 +400,51 @@ export default function MenuEditModal({
 										className="hidden"
 										accept="image/*"
 										onChange={handleMainImageUpload}
+									/>
+								</label>
+							)}
+						</div>
+					</div>
+
+					<div className="space-y-3 pt-2 border-t border-card/40">
+						<Label className="text-xs font-medium text-sub-text">
+							아이콘바 아이콘 이미지
+						</Label>
+
+						<div className="p-3 bg-card-bg rounded-card border border-dashed border-card">
+							<p className="text-[10px] text-sub-text mb-2">
+								권장 사이즈: 64 * 64
+							</p>
+							{menu.iconImage ? (
+								<div className="relative aspect-square w-16 rounded-card border border-card overflow-hidden bg-card-bg group">
+									<img
+										src={menu.iconImage}
+										className="w-full h-full object-contain"
+									/>
+									<Button
+										variant="ghost"
+										size="icon"
+										onClick={() => handleChange("iconImage", "")}
+										className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full opacity-0 group-hover:opacity-100 transition-opacity p-0"
+										style={{ backgroundColor: "#111", color: "#fff" }}
+									>
+										<X size={10} />
+									</Button>
+								</div>
+							) : (
+								<label className="flex flex-col items-center justify-center py-3 w-20 cursor-pointer bg-card-bg hover:bg-card-bg/70 border border-dashed border-card rounded-card transition-all gap-1.5 group">
+									<ImagePlus
+										size={18}
+										className="text-sub-text group-hover:text-theme-primary transition-colors"
+									/>
+									<span className="text-[10px] font-medium text-sub-text group-hover:text-theme-primary transition-colors">
+										아이콘 업로드
+									</span>
+									<input
+										type="file"
+										className="hidden"
+										accept="image/*"
+										onChange={handleIconImageUpload}
 									/>
 								</label>
 							)}

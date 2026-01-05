@@ -419,6 +419,22 @@ body {
 	height: 100%;
 }
 
+/* Menu responsive toggle */
+.menu-desktop {
+	display: flex;
+}
+.menu-iconbar {
+	display: none;
+}
+@media (max-width: 1024px) {
+	.menu-desktop {
+		display: none;
+	}
+	.menu-iconbar {
+		display: flex;
+	}
+}
+
 .custom-slider .slick-list,
 .custom-slider .slick-track {
 	height: 100%;

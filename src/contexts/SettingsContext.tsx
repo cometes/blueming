@@ -91,6 +91,7 @@ interface MenuItem {
 	uniqueId: string;
 	allow: string;
 	image: string;
+	iconImage?: string;
 	target: boolean;
 	name: string;
 	type: string;
@@ -112,6 +113,11 @@ interface MenuDesign {
 	backgroundColor: string;
 	bgType: string;
 	backgroundImage: string;
+	iconBarLogoImage?: string;
+	iconBarLogoType?: string;
+	iconBarBgType?: string;
+	iconBarBackgroundColor?: string;
+	iconBarBackgroundImage?: string;
 }
 
 interface Menu {

@@ -35,6 +35,7 @@ interface GeneralSettings {
 			uniqueId: string;
 			allow: "all" | string;
 			image: string;
+			iconImage?: string;
 			target: boolean;
 			name: string;
 			category: string;
@@ -49,6 +50,14 @@ interface GeneralSettings {
 			bgType: "없음" | "단색" | "이미지";
 			textAlign: "왼쪽" | "가운데" | "오른쪽";
 			type: "텍스트형" | "이미지형";
+			logoType?: "텍스트" | "이미지" | "없음";
+			logoImage?: string;
+			logoText?: string;
+			iconBarLogoImage?: string;
+			iconBarLogoType?: "없음" | "이미지";
+			iconBarBgType?: "없음" | "단색" | "이미지";
+			iconBarBackgroundColor?: string;
+			iconBarBackgroundImage?: string;
 		};
 	};
 	design: {
