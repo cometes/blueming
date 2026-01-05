@@ -52,20 +52,49 @@ export const useSettingEffect = () => {
 		}
 	}, [effectData]);
 
-	// Update effect setting
+	// Update effect setting and immediately sync to global context
 	const updateEffectSetting = useCallback((field: keyof EffectSettings, value: any) => {
-		setEffectSetting(prev => ({
-			...prev,
-			[field]: value
-		}));
-	}, []);
+		setEffectSetting(prev => {
+			const newSetting = {
+				...prev,
+				[field]: value
+			};
 
-	// Update effect type when it changes
+			// Immediately update global context for real-time preview in Layout
+			if (general?.design) {
+				updateGeneral({
+					design: {
+						...general.design,
+						effect: newSetting
+					}
+				});
+			}
+
+			return newSetting;
+		});
+	}, [general, updateGeneral]);
+
+	// Update effect type and immediately sync to global context
 	useEffect(() => {
 		if (currentEffectType !== effectSetting.type) {
-			updateEffectSetting("type", currentEffectType);
+			const newEffectSetting = {
+				...effectSetting,
+				type: currentEffectType
+			};
+
+			setEffectSetting(newEffectSetting);
+
+			// Immediately update global context for real-time preview in Layout
+			if (general?.design) {
+				updateGeneral({
+					design: {
+						...general.design,
+						effect: newEffectSetting
+					}
+				});
+			}
 		}
-	}, [currentEffectType, effectSetting.type, updateEffectSetting]);
+	}, [currentEffectType, effectSetting, general, updateGeneral]);
 
 	// Reset all settings to default
 	const handleReset = useCallback(async () => {
