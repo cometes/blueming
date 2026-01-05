@@ -28,29 +28,6 @@ interface CustomLayout {
 	usedColors: string[];
 }
 
-// StickerBoard Types
-interface StickerComponent {
-	id: number;
-	x: number;
-	y: number;
-	width: number;
-	height: number;
-	zIndex: number;
-	imageUrl: string;
-	isVisible: boolean;
-	isLocked: boolean;
-	rotation: number;
-	opacity: number;
-	flipX: boolean;
-	flipY: boolean;
-	lockAspectRatio: boolean;
-}
-
-interface StickerBoard {
-	components: StickerComponent[];
-	content: string;
-	capture: string;
-}
 
 // Slide Types
 interface SlideItem {
@@ -222,7 +199,6 @@ interface ThemeItem {
 // Main Settings
 interface MainSettings {
 	customLayout?: CustomLayout;
-	stickerBoard?: StickerBoard;
 	slide?: SlideItem[];
 	notice?: Notice;
 	dday?: DdayItem[];
@@ -273,8 +249,6 @@ export type {
 	CustomLayout,
 	LayoutItem,
 	WidgetItem,
-	StickerBoard,
-	StickerComponent,
 	SlideItem,
 	Notice,
 	DdayItem,

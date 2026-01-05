@@ -119,7 +119,6 @@ interface MainSettings {
 				| "슬라이드 배너"
 				| "띠 배너"
 				| "공지"
-				| "스티커보드"
 				| "디데이";
 			color: string;
 		}>;
@@ -132,26 +131,6 @@ interface MainSettings {
 			url: string;
 			image: string;
 			target: boolean;
-		}>;
-	};
-	stickerBoard: {
-		content: string;
-		capture: string;
-		components: Array<{
-			id: number;
-			x: number;
-			y: number;
-			width: number;
-			height: number;
-			zIndex: number;
-			imageUrl: string;
-			isVisible: boolean;
-			isLocked: boolean;
-			rotation: number;
-			opacity: number;
-			flipX: boolean;
-			flipY: boolean;
-			lockAspectRatio: boolean;
 		}>;
 	};
 }
