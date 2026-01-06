@@ -106,6 +106,7 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 
 export default function ProfileSettingClient() {
 	const settings = useSettings();
+	const refreshSettings = settings.refreshSettings;
 	const [profileData, setProfileData] = useState<ProfileData>({
 		headerImage: "",
 		profileImage: "",
@@ -193,6 +194,7 @@ export default function ProfileSettingClient() {
 
 			try {
 				await setSettingsProfile(newData);
+				await refreshSettings?.({ broadcast: true });
 
 				// Broadcast update
 				const channel = new BroadcastChannel("profileUpdated");
@@ -201,7 +203,6 @@ export default function ProfileSettingClient() {
 
 				toast.success("이미지가 업로드되었습니다.");
 			} catch (error) {
-				console.error("Image upload save error:", error);
 				setProfileData(profileData);
 				toast.error("이미지 업로드 저장에 실패했습니다.");
 			}
@@ -220,6 +221,7 @@ export default function ProfileSettingClient() {
 
 			try {
 				await setSettingsProfile(newData);
+				await refreshSettings?.({ broadcast: true });
 
 				// Broadcast update
 				const channel = new BroadcastChannel("profileUpdated");
@@ -228,7 +230,6 @@ export default function ProfileSettingClient() {
 
 				toast.success("이미지가 삭제되었습니다.");
 			} catch (error) {
-				console.error("Image delete error:", error);
 				setProfileData(profileData);
 				toast.error("이미지 삭제 저장에 실패했습니다.");
 			}
@@ -247,6 +248,7 @@ export default function ProfileSettingClient() {
 			};
 
 			await setSettingsProfile(dataToSave);
+			await refreshSettings?.({ broadcast: true });
 
 			// Broadcast update
 			const channel = new BroadcastChannel("profileUpdated");
@@ -255,7 +257,6 @@ export default function ProfileSettingClient() {
 
 			toast.success("프로필이 저장되었습니다.");
 		} catch (error) {
-			console.error("Save error:", error);
 			toast.error("프로필 저장에 실패했습니다.");
 		}
 	}, [profileData, editor]);
@@ -271,6 +272,7 @@ export default function ProfileSettingClient() {
 			};
 
 			await setSettingsProfile(emptyProfile);
+			await refreshSettings?.({ broadcast: true });
 
 			setProfileData(emptyProfile);
 			editor?.commands.setContent("<p></p>");
@@ -283,7 +285,6 @@ export default function ProfileSettingClient() {
 			toast.success("프로필이 초기화되었습니다.");
 			setShowResetDialog(false);
 		} catch (error) {
-			console.error("Reset error:", error);
 			toast.error("프로필 초기화에 실패했습니다.");
 		}
 	}, [editor]);

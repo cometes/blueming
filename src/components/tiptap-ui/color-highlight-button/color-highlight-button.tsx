@@ -164,7 +164,6 @@ export function toggleHighlight(
 
     editor.chain().setMeta("hideDragHandle", true).run()
   } catch (error) {
-    console.error("Failed to apply highlight:", error)
   }
 }
 

@@ -134,7 +134,6 @@ export default function ThemeSettingClient() {
 			const text = await file.text();
 			await importTheme(text);
 		} catch (err) {
-			console.error("파일 읽기 실패:", err);
 		}
 
 		// Reset input

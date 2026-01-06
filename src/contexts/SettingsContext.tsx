@@ -234,6 +234,7 @@ interface SettingsContextType {
 	updateDesign?: (design: Design) => void;
 	updateMenu?: (menu: Menu) => void;
 	updateMain?: (main: Partial<MainSettings>) => void;
+	refreshSettings?: (options?: { broadcast?: boolean }) => Promise<void>;
 }
 
 // Context 생성

@@ -24,10 +24,7 @@ export function checkTextStyleExtension(editor: Editor | null): boolean {
   )
 
   if (!hasExtension) {
-    console.warn(
-      "TextStyle extension is not available. " +
-        "Make sure it is included in your editor configuration."
-    )
+    return false
   }
 
   return hasExtension

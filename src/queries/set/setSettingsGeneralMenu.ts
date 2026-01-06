@@ -2,13 +2,9 @@ import axios from "axios";
 import type { Menu } from "@/contexts/SettingsContext";
 
 export interface SetSettingsGeneralMenuResponse {
-	success: boolean;
-	data: {
-		general: {
-			menu: Menu;
-		};
+	general: {
+		menu: Menu;
 	};
-	message?: string;
 }
 
 /**

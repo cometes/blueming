@@ -17,12 +17,18 @@ interface CustomLayoutData {
     maxW: number;
     maxH: number;
   }>;
-  widgets: Array<{
+  desktopWidgets: Array<{
     id: string;
     type: string;
     color: string;
   }>;
-  usedColors: string[];
+  mobileWidgets: Array<{
+    id: string;
+    type: string;
+    color: string;
+  }>;
+  desktopUsedColors: string[];
+  mobileUsedColors: string[];
 }
 
 export const setCustomLayout = async (value: CustomLayoutData) => {

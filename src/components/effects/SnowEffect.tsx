@@ -10,7 +10,6 @@ const SnowEffect = () => {
 	}, []);
 
 	const particlesLoaded = useCallback(async (container: any) => {
-		console.log(container);
 	}, []);
 
 	return (

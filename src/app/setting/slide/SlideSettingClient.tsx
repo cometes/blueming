@@ -27,6 +27,7 @@ const MAX_SLIDES = 8;
 
 export default function SlideSettingClient() {
 	const settings = useSettings();
+	const refreshSettings = settings.refreshSettings;
 	const [slides, setSlides] = useState<SlideData[]>([]);
 	const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 	const [showResetDialog, setShowResetDialog] = useState(false);
@@ -109,6 +110,7 @@ export default function SlideSettingClient() {
 
 			try {
 				await setSettingsMainSlide(slides);
+				await refreshSettings?.({ broadcast: true });
 
 				// Broadcast
 				const channel = new BroadcastChannel("slideUpdated");
@@ -117,7 +119,6 @@ export default function SlideSettingClient() {
 
 				toast.success("성공적으로 슬라이드 배너를 저장했습니다.");
 			} catch (error) {
-				console.error("Save error:", error);
 				toast.error("슬라이드 배너를 저장하지 못했습니다.");
 			}
 		},
@@ -128,6 +129,7 @@ export default function SlideSettingClient() {
 	const handleReset = useCallback(async () => {
 		try {
 			await setSettingsMainSlide([]);
+			await refreshSettings?.({ broadcast: true });
 			setSlides([]);
 
 			// Broadcast
@@ -138,7 +140,6 @@ export default function SlideSettingClient() {
 			toast.success("슬라이드 배너가 초기화되었습니다.");
 			setShowResetDialog(false);
 		} catch (error) {
-			console.error("Reset error:", error);
 			toast.error("슬라이드 배너 초기화에 실패했습니다.");
 		}
 	}, []);

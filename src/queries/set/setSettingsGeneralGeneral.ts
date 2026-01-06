@@ -4,11 +4,9 @@ import type { General } from "@/contexts/SettingsContext";
 export interface SetSettingsGeneralGeneralPayload extends Partial<General> {}
 
 export interface SetSettingsGeneralGeneralResponse {
-	success: boolean;
-	data: {
+	general: {
 		general: General;
 	};
-	message?: string;
 }
 
 /**

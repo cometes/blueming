@@ -65,7 +65,7 @@ const widgetColors = [
 ];
 
 export default function CustomLayoutClient() {
-	const { main, updateMain } = useSettings();
+	const { main, updateMain, refreshSettings } = useSettings();
 	const customLayout = main?.customLayout;
 
 	const [desktopLayout, setDesktopLayout] = useState<LayoutItem[]>([]);
@@ -304,6 +304,7 @@ export default function CustomLayoutClient() {
 			};
 
 			await setCustomLayout(layoutData);
+			await refreshSettings?.({ broadcast: true });
 
 			// Update context and broadcast
 			updateMain({ customLayout: layoutData });
@@ -311,7 +312,6 @@ export default function CustomLayoutClient() {
 
 			toast.success("레이아웃이 성공적으로 저장되었습니다.");
 		} catch (error) {
-			console.error("Layout save error:", error);
 			toast.error("레이아웃 저장 중 오류가 발생했습니다.");
 		}
 	}, [
@@ -337,6 +337,7 @@ export default function CustomLayoutClient() {
 			};
 
 			await setCustomLayout(emptyLayoutData);
+			await refreshSettings?.({ broadcast: true });
 
 			// Reset state
 			setDesktopLayout([]);
@@ -354,7 +355,6 @@ export default function CustomLayoutClient() {
 			toast.success("레이아웃이 초기화되었습니다.");
 			setShowClearDialog(false);
 		} catch (error) {
-			console.error("Layout clear error:", error);
 			toast.error("레이아웃 초기화 중 오류가 발생했습니다.");
 		}
 	}, [updateMain]);

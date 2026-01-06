@@ -366,7 +366,6 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
             })
             .run()
         } catch (error) {
-          console.error("Error inserting image:", error)
         }
       }, 100)
     }
@@ -385,7 +384,6 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
             })
             .run()
         } catch (error) {
-          console.error("Error inserting image:", error)
         }
       }, 100)
     }
