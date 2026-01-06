@@ -3,12 +3,15 @@ import { dateConvert } from "@/lib/date";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import Fallback from "@/components/common/Fallback";
+import { useState } from "react";
 
 interface ItemListProps {
 	data: {
 		id: string;
 		title: string;
 		subtitle?: string;
+		slug?: string;
 		createdAt: string;
 		tags?: string[];
 		thumbnail?: string;
@@ -17,6 +20,7 @@ interface ItemListProps {
 
 export default function ItemListWithImage({ data }: ItemListProps) {
 	const { onClickMoveToPage } = useMoveToPage();
+	const [imageError, setImageError] = useState(false);
 
 	return (
 		<article
@@ -43,6 +47,11 @@ export default function ItemListWithImage({ data }: ItemListProps) {
 					{data.subtitle && (
 						<p className="text-sub-text leading-relaxed line-clamp-2 text-base">
 							{data.subtitle}
+						</p>
+					)}
+					{data.slug && (
+						<p className="text-xs text-sub-text/70 font-mono mt-1">
+							/{data.slug}
 						</p>
 					)}
 					{/* 태그 */}
@@ -78,17 +87,18 @@ export default function ItemListWithImage({ data }: ItemListProps) {
 			</div>
 			<div>
 				{/* 오른쪽 이미지 영역 */}
-				{data.thumbnail ? (
+				{data.thumbnail && !imageError ? (
 					<Image
 						src={data.thumbnail}
 						alt={data.title}
 						width={240}
 						height={100}
 						className="h-full object-cover aspect-video mask-l-from-80%"
+						onError={() => setImageError(true)}
 					/>
 				) : (
-					<div className="h-full min-w-60 object-cover aspect-video mask-l-from-80% flex items-center justify-center bg-gray-200">
-						<span className="text-gray-500">No Image</span>
+					<div className="h-full min-w-60 aspect-video mask-l-from-80%">
+						<Fallback />
 					</div>
 				)}
 			</div>

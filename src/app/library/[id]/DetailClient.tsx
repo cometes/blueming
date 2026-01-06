@@ -28,6 +28,11 @@ export default function DetailClient({ detailData }) {
 						<h2 className="Subtitle text-2xl text-sub-text mt-2.5 font-medium">
 							{detailData?.subtitle}
 						</h2>
+						{detailData?.slug && (
+							<p className="text-xs text-sub-text/70 font-mono mt-2">
+								/{detailData.slug}
+							</p>
+						)}
 						<div className="EditWrap flex justify-between items-center mt-10">
 							{detailData?.tags?.length > 0 && (
 								<div className="TagBox flex">

@@ -11,6 +11,8 @@ import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
 import { extensions } from "@/components/editor/TiptapEditor";
 import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
 import CreateModal, { CreateMetaValue } from "@/components/modal/createModal";
+import { createLibraryPost } from "@/queries/set/createLibrary";
+import { toast } from "sonner";
 
 interface SeriesItem {
 	id: string;
@@ -36,6 +38,7 @@ export default function LibararyNewClient({
 	const [title, setTitle] = React.useState("");
 	const [subtitle, setSubtitle] = React.useState("");
 	const [metaOpen, setMetaOpen] = React.useState(false);
+	const [isSubmitting, setIsSubmitting] = React.useState(false);
 	const [metaValue, setMetaValue] = React.useState<CreateMetaValue>({
 		tags: [],
 		series: "",
@@ -74,8 +77,46 @@ export default function LibararyNewClient({
 		setMetaOpen(true);
 	};
 
-	const handleConfirmSubmit = () => {
-		setMetaOpen(false);
+	const handleConfirmSubmit = async () => {
+		if (!editor) {
+			toast.error("에디터를 불러오지 못했습니다.");
+			return;
+		}
+
+		const contentJson = editor.getJSON();
+		const contentText = editor.getText().trim();
+
+		if (!title.trim() || !contentText) {
+			toast.error("제목과 내용을 입력해주세요.");
+			return;
+		}
+
+		setIsSubmitting(true);
+		try {
+			const payload = {
+				title: title.trim(),
+				subtitle: subtitle.trim() || undefined,
+				content: JSON.stringify(contentJson),
+				slug: metaValue.slug,
+				summary: metaValue.summary,
+				tags: metaValue.tags,
+				series: metaValue.series,
+				visibility: metaValue.visibility,
+				password: metaValue.password,
+				thumbnail: metaValue.thumbnail,
+			};
+
+			const response = await createLibraryPost(payload);
+			toast.success("게시글이 저장되었습니다.");
+			setMetaOpen(false);
+			onClickMoveToPage(`/library/${response.postId}`)();
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : "게시글 저장에 실패했습니다.";
+			toast.error(message);
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	return (
@@ -144,6 +185,7 @@ export default function LibararyNewClient({
 				value={metaValue}
 				onChange={setMetaValue}
 				onConfirm={handleConfirmSubmit}
+				isSubmitting={isSubmitting}
 			/>
 		</EditorContext.Provider>
 	);

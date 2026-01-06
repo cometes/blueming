@@ -8,6 +8,7 @@ interface ItemListProps {
 		id: string;
 		title: string;
 		subtitle?: string;
+		slug?: string;
 		createdAt: string;
 		tags?: string[];
 		thumbnail?: string;
@@ -40,12 +41,17 @@ export default function ItemList({ data }: ItemListProps) {
 							{data.title}
 						</h3>
 						{/* 부제목 */}
-						{data.subtitle && (
-							<p className="text-sub-text leading-relaxed line-clamp-2 text-base">
-								{data.subtitle}
-							</p>
-						)}
-					</div>
+					{data.subtitle && (
+						<p className="text-sub-text leading-relaxed line-clamp-2 text-base">
+							{data.subtitle}
+						</p>
+					)}
+					{data.slug && (
+						<p className="text-xs text-sub-text/70 font-mono mt-1">
+							/{data.slug}
+						</p>
+					)}
+				</div>
 					{/* 태그 */}
 					{data.tags?.length > 0 && (
 						<div className="flex flex-wrap gap-2 pt-1 mt-1.5">

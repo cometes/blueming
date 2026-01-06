@@ -25,6 +25,7 @@ interface LibraryItem {
 	id: string;
 	title: string;
 	subtitle?: string;
+	slug?: string;
 	createdAt: string;
 	tags?: string[];
 	thumbnail?: string;
