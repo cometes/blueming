@@ -16,14 +16,12 @@ async function getSettings() {
 		});
 
 		if (!res.ok) {
-			console.error(`API 오류: ${res.status} - ${res.statusText}`);
 			return null;
 		}
 
 		const data = await res.json();
 		return data;
-	} catch (error) {
-		console.error("설정 로드 실패:", error);
+	} catch {
 		return null;
 	}
 }

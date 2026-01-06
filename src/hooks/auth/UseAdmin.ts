@@ -34,8 +34,7 @@ export const useAdmin = () => {
 			}
 			
 			return isAdmin;
-		} catch (error) {
-			console.error("관리자 권한 확인 실패:", error);
+		} catch {
 			return false;
 		}
 	}, [user, setUser]);
@@ -55,8 +54,7 @@ export const useAdmin = () => {
 			}
 			
 			return isAdmin;
-		} catch (error) {
-			console.error("관리자 권한 새로고침 실패:", error);
+		} catch {
 			return false;
 		}
 	}, [user, setUser]);
@@ -77,11 +75,9 @@ export const useAdmin = () => {
 				if (onDenied) {
 					onDenied();
 				} else {
-					console.warn("관리자 권한이 필요한 작업입니다.");
 				}
 			}
-		} catch (error) {
-			console.error("관리자 권한 확인 중 오류:", error);
+		} catch {
 			if (onDenied) {
 				onDenied();
 			}

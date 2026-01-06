@@ -78,8 +78,6 @@ export const extensions = [
 		maxSize: MAX_FILE_SIZE,
 		limit: 3,
 		upload: handleImageUpload,
-		onError: (error) => console.error("Upload failed:", error),
-		onSuccess: (url) => console.log("Upload success:", url),
 	}),
 ];
 

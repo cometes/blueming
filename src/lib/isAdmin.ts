@@ -16,8 +16,7 @@ export const checkAdminClaims = async (): Promise<boolean> => {
 		// ID 토큰에서 Custom Claims 확인
 		const tokenResult = await getIdTokenResult(currentUser);
 		return !!tokenResult.claims.isAdmin;
-	} catch (error) {
-		console.error('관리자 권한 확인 중 오류:', error);
+	} catch {
 		return false;
 	}
 };
@@ -50,8 +49,7 @@ export const refreshAdminClaims = async (): Promise<boolean> => {
 		// 토큰 강제 새로고침하여 최신 claims 가져오기
 		const tokenResult = await getIdTokenResult(currentUser, true);
 		return !!tokenResult.claims.isAdmin;
-	} catch (error) {
-		console.error('관리자 권한 새로고침 중 오류:', error);
+	} catch {
 		return false;
 	}
 };

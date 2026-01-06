@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import {
@@ -93,7 +94,7 @@ const CreateModal = ({
 				});
 			}
 		}
-	}, [value.title, open]);
+	}, [value, open, slugManuallyEdited, onChange]);
 
 	// 모달이 열릴 때 slug 수동 편집 상태 초기화
 	useEffect(() => {

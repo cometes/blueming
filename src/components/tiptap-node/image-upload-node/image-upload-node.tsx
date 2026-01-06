@@ -365,8 +365,7 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
               }
             })
             .run()
-        } catch (error) {
-          console.error("Error inserting image:", error)
+        } catch {
         }
       }, 100)
     }
@@ -384,8 +383,7 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
               attrs: { src: url, alt: filename, title: filename, 'data-align': 'left' }
             })
             .run()
-        } catch (error) {
-          console.error("Error inserting image:", error)
+        } catch {
         }
       }, 100)
     }

@@ -24,33 +24,13 @@ interface WidgetItem {
 
 interface CustomLayout {
 	layout: LayoutItem[];
-	widgets: WidgetItem[];
-	usedColors: string[];
+	mobileLayout?: LayoutItem[];
+	desktopWidgets: WidgetItem[];
+	mobileWidgets: WidgetItem[];
+	desktopUsedColors: string[];
+	mobileUsedColors: string[];
 }
 
-// StickerBoard Types
-interface StickerComponent {
-	id: number;
-	x: number;
-	y: number;
-	width: number;
-	height: number;
-	zIndex: number;
-	imageUrl: string;
-	isVisible: boolean;
-	isLocked: boolean;
-	rotation: number;
-	opacity: number;
-	flipX: boolean;
-	flipY: boolean;
-	lockAspectRatio: boolean;
-}
-
-interface StickerBoard {
-	components: StickerComponent[];
-	content: string;
-	capture: string;
-}
 
 // Slide Types
 interface SlideItem {
@@ -90,7 +70,7 @@ interface DdayItem {
 	title: string;
 	date: string;
 	image: string;
-	target: boolean;
+	target: string;
 }
 
 // Profile Types
@@ -113,6 +93,7 @@ interface MenuItem {
 	uniqueId: string;
 	allow: string;
 	image: string;
+	iconImage?: string;
 	target: boolean;
 	name: string;
 	type: string;
@@ -134,6 +115,11 @@ interface MenuDesign {
 	backgroundColor: string;
 	bgType: string;
 	backgroundImage: string;
+	iconBarLogoImage?: string;
+	iconBarLogoType?: string;
+	iconBarBgType?: string;
+	iconBarBackgroundColor?: string;
+	iconBarBackgroundImage?: string;
 }
 
 interface Menu {
@@ -178,11 +164,17 @@ interface BackgroundDesign {
 	type: string;
 }
 
+interface EffectSettings {
+	enabled: boolean;
+	type: "없음" | "눈" | "비" | "별똥별" | "밤하늘" | "프리즘" | "반딧불이" | "비눗방울" | "빗물창문" | "영화관";
+}
+
 interface Design {
 	widget: WidgetDesign;
 	font: FontDesign;
 	card: CardDesign;
 	background: BackgroundDesign;
+	effect?: EffectSettings;
 }
 
 // General Types
@@ -216,7 +208,6 @@ interface ThemeItem {
 // Main Settings
 interface MainSettings {
 	customLayout?: CustomLayout;
-	stickerBoard?: StickerBoard;
 	slide?: SlideItem[];
 	notice?: Notice;
 	dday?: DdayItem[];
@@ -224,6 +215,13 @@ interface MainSettings {
 }
 
 // Root Settings Context
+interface GeneralSettings {
+	theme?: ThemeItem[];
+	general?: General;
+	menu?: Menu;
+	design?: Design;
+}
+
 interface SettingsContextType {
 	general?: {
 		theme: ThemeItem[];
@@ -232,6 +230,11 @@ interface SettingsContextType {
 		design: Design;
 	};
 	main?: MainSettings;
+	updateGeneral?: (general: Partial<GeneralSettings>) => void;
+	updateDesign?: (design: Design) => void;
+	updateMenu?: (menu: Menu) => void;
+	updateMain?: (main: Partial<MainSettings>) => void;
+	refreshSettings?: (options?: { broadcast?: boolean }) => Promise<void>;
 }
 
 // Context 생성
@@ -256,16 +259,16 @@ export type {
 	CustomLayout,
 	LayoutItem,
 	WidgetItem,
-	StickerBoard,
-	StickerComponent,
 	SlideItem,
 	Notice,
 	DdayItem,
 	Profile,
 	MenuItem,
+	SubMenu,
 	MenuDesign,
 	Menu,
 	Design,
 	General,
 	ThemeItem,
+	EffectSettings,
 };

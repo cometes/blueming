@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import * as React from "react"
@@ -28,6 +29,7 @@ export const YoutubeNodeView: React.FC<NodeViewProps> = ({ node, editor, selecte
 
   const [isResizing, setIsResizing] = React.useState(false)
   const [currentWidth, setCurrentWidth] = React.useState<number | null>(initialWidth)
+  const currentWidthRef = React.useRef<number | null>(initialWidth)
   const containerRef = React.useRef<HTMLDivElement>(null)
   const startXRef = React.useRef<number>(0)
   const startWidthRef = React.useRef<number>(0)
@@ -57,13 +59,14 @@ export const YoutubeNodeView: React.FC<NodeViewProps> = ({ node, editor, selecte
         : startXRef.current - moveEvent.clientX
 
       const newWidth = Math.max(200, Math.min(1000, startWidthRef.current + deltaX))
+      currentWidthRef.current = newWidth
       setCurrentWidth(newWidth)
     }
 
     const handleMouseUp = () => {
       setIsResizing(false)
-      if (currentWidth !== null && updateAttributes) {
-        updateAttributes({ width: currentWidth })
+      if (currentWidthRef.current !== null && updateAttributes) {
+        updateAttributes({ width: currentWidthRef.current })
       }
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
@@ -71,7 +74,7 @@ export const YoutubeNodeView: React.FC<NodeViewProps> = ({ node, editor, selecte
 
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
-  }, [currentWidth, updateAttributes])
+  }, [updateAttributes])
 
   const containerStyle: React.CSSProperties = React.useMemo(() => {
     if (currentWidth !== null) {
