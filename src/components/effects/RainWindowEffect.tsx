@@ -74,7 +74,6 @@ function RainWindowEffectComponent({ active = true }: RainWindowEffectProps) {
 					await raindropFxRef.current.start();
 				}
 			} catch (error) {
-				console.error("RaindropFX error:", error);
 			}
 		};
 
@@ -108,7 +107,6 @@ function RainWindowEffectComponent({ active = true }: RainWindowEffectProps) {
 					raindropFxRef.current = null;
 					initPromiseRef.current = null;
 				} catch (error) {
-					console.warn("RaindropFX destroy error:", error);
 				}
 			}
 		};

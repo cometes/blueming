@@ -5,7 +5,7 @@ import { setSettingsEffect } from "@/queries/set/setSettingsEffect";
 import type { EffectSettings } from "@/contexts/SettingsContext";
 
 export const useSettingEffect = () => {
-	const { general, updateGeneral } = useSettings();
+	const { general, updateGeneral, refreshSettings } = useSettings();
 	const designData = general?.design || {};
 	const effectData = designData?.effect;
 	const isSyncingRef = useRef(false);
@@ -40,7 +40,7 @@ export const useSettingEffect = () => {
 	}));
 
 	const [currentEffectType, setCurrentEffectType] = useState<EffectSettings["type"]>(
-		effectData?.type || "없음"
+		(effectData?.type as EffectSettings["type"]) || "없음"
 	);
 
 	// Load existing data when effectData changes
@@ -51,16 +51,16 @@ export const useSettingEffect = () => {
 
 	useEffect(() => {
 		if (effectData) {
-			if (!initialEffectRef.current) {
-				initialEffectRef.current = {
-					enabled: effectData.enabled ?? defaultEffectSetting.enabled,
-					type: effectData.type || defaultEffectSetting.type,
-				};
-			}
-
 			const nextEnabled = effectData.enabled ?? defaultEffectSetting.enabled;
 			const nextType = (effectData.type ||
 				defaultEffectSetting.type) as EffectSettings["type"];
+
+			if (!initialEffectRef.current) {
+				initialEffectRef.current = {
+					enabled: nextEnabled,
+					type: nextType,
+				};
+			}
 
 			isSyncingRef.current = true;
 
@@ -168,6 +168,7 @@ export const useSettingEffect = () => {
 					}
 				});
 			}
+			await refreshSettings?.({ broadcast: true });
 
 			// BroadcastChannel을 통해 리셋된 설정을 다른 탭/창에 알림
 			const channel = new BroadcastChannel("effectSettingsUpdated");
@@ -180,7 +181,6 @@ export const useSettingEffect = () => {
 			toast.success("이펙트 설정이 초기화되었습니다.");
 			initialEffectRef.current = defaultEffectSetting;
 		} catch (error) {
-			console.error("이펙트 설정 초기화 실패:", error);
 			toast.error("이펙트 설정을 초기화하지 못했습니다.");
 		}
 	}, [general, updateGeneral]);
@@ -199,6 +199,7 @@ export const useSettingEffect = () => {
 					}
 				});
 			}
+			await refreshSettings?.({ broadcast: true });
 
 			// BroadcastChannel을 통해 설정 변경사항을 다른 탭/창에 알림
 			const channel = new BroadcastChannel("effectSettingsUpdated");
@@ -212,7 +213,6 @@ export const useSettingEffect = () => {
 			initialEffectRef.current = effectSetting;
 			isDirtyRef.current = false;
 		} catch (error) {
-			console.error("이펙트 설정 저장 실패:", error);
 			toast.error("이펙트 설정을 저장하지 못했습니다.");
 		}
 	}, [effectSetting, general, updateGeneral]);

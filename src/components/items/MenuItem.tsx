@@ -182,7 +182,6 @@ export default function WidgetMenu() {
 				if (path) {
 					router.push(path);
 				} else {
-					console.error(`No path defined for category: ${item.category}`);
 				}
 			}
 		},

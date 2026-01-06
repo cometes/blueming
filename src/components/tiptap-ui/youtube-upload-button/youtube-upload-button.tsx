@@ -61,7 +61,6 @@ export function insertYoutubeVideo(
       })
       .run()
   } catch (error) {
-    console.error("Failed to insert YouTube video:", error)
     return false
   }
 }
@@ -85,10 +84,7 @@ export function checkYoutubeExtension(editor: Editor | null): boolean {
   )
 
   if (!hasExtension) {
-    console.warn(
-      "YouTube extension is not available. " +
-        "Make sure it is included in your editor configuration."
-    )
+    return false
   }
 
   return hasExtension

@@ -11,7 +11,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { schemaAddMenu } from "@/lib/schema";
 
 export const useSettingMenu = () => {
-	const { general, updateGeneral } = useSettings();
+	const { general, updateGeneral, refreshSettings } = useSettings();
 	const menuData = general?.menu;
 
 	const boardArr = [
@@ -203,19 +203,18 @@ export const useSettingMenu = () => {
 			};
 
 			const response = await setSettingsGeneralMenu(menuData);
-			// @ts-ignore - response structure might differ slightly but handled by provider
-			updateGeneral(response.data.general);
+			updateGeneral(response.general);
+			await refreshSettings?.({ broadcast: true });
 
 			const channel = new BroadcastChannel("menuSettingsUpdated");
 			channel.postMessage({
-				menuSettings: response.data.general,
+				menuSettings: response.general,
 				timestamp: Date.now(),
 			});
 			channel.close();
 
 			toast.success("메뉴 설정이 초기화되었습니다.");
 		} catch (error) {
-			console.error("메뉴 설정 초기화 실패:", error);
 			toast.error("메뉴 설정을 초기화하지 못했습니다.");
 		}
 	}, [reset, updateGeneral]);
@@ -236,19 +235,18 @@ export const useSettingMenu = () => {
 			};
 
 			const response = await setSettingsGeneralMenu(menuData);
-			// @ts-ignore
-			updateGeneral(response.data.general);
+			updateGeneral(response.general);
+			await refreshSettings?.({ broadcast: true });
 
 			const channel = new BroadcastChannel("menuSettingsUpdated");
 			channel.postMessage({
-				menuSettings: response.data.general,
+				menuSettings: response.general,
 				timestamp: Date.now(),
 			});
 			channel.close();
 
 			toast.success("메뉴 설정이 성공적으로 저장되었습니다.");
 		} catch (error) {
-			console.error("메뉴 설정 저장 실패:", error);
 			toast.error("메뉴 설정을 저장하지 못했습니다.");
 		}
 	}, [menuDesign, currentMenuList, updateGeneral]);

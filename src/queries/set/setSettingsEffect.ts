@@ -1,19 +1,12 @@
 import axios from "axios";
 import type { EffectSettings } from "@/contexts/SettingsContext";
-import { setSettingsGeneralDesign } from "./setSettingsGeneralDesign";
 
 export interface SetSettingsEffectPayload extends EffectSettings {}
 
 export interface SetSettingsEffectResponse {
-	success: boolean;
-	data: {
-		general: {
-			design: {
-				effect: EffectSettings;
-			};
-		};
+	general: {
+		effect: EffectSettings;
 	};
-	message?: string;
 }
 
 /**
@@ -25,12 +18,12 @@ export const setSettingsEffect = async (
 	payload: SetSettingsEffectPayload
 ): Promise<SetSettingsEffectResponse> => {
 	try {
-		// Design 설정의 effect 필드만 업데이트
-		const response = await setSettingsGeneralDesign({
-			effect: payload
-		});
+		const response = await axios.post<SetSettingsEffectResponse>(
+			"https://api-w5buphcleq-du.a.run.app/settings/general/effect",
+			payload
+		);
 
-		return response as SetSettingsEffectResponse;
+		return response.data;
 	} catch (error) {
 		if (axios.isAxiosError(error)) {
 			throw new Error(
@@ -41,4 +34,3 @@ export const setSettingsEffect = async (
 		throw error;
 	}
 };
-

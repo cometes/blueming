@@ -192,7 +192,7 @@ export const useThemes = () => {
 export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 	children,
 }) => {
-	const { general, main, updateGeneral, updateMain } = useSettings();
+	const { general, main, updateGeneral, updateMain, refreshSettings } = useSettings();
 	const [themes, setThemes] = useState<ThemeData[]>([]);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -213,7 +213,6 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 				}
 			}
 		} catch (err) {
-			console.error("테마 로드 실패:", err);
 			toast.error("저장된 테마를 불러오는 중 오류가 발생했습니다.");
 			setThemes([]);
 		} finally {
@@ -287,10 +286,10 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 			// 로컬 상태 업데이트
 			updateGeneral(updatedGeneral);
 			setThemes(updatedThemes);
+			await refreshSettings?.({ broadcast: true });
 			toast.success(`'${name}' 테마가 성공적으로 저장되었습니다.`);
 			return true;
 		} catch (err) {
-			console.error("테마 생성 실패:", err);
 			toast.error("테마 생성 중 오류가 발생했습니다.");
 			return false;
 		} finally {
@@ -329,10 +328,10 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 			// 로컬 상태 업데이트
 			updateGeneral(updatedGeneral);
 			setThemes(updatedThemes);
+			await refreshSettings?.({ broadcast: true });
 			toast.success(`'${themeToRemove.name}' 테마가 삭제되었습니다.`);
 			return true;
 		} catch (err) {
-			console.error("테마 삭제 실패:", err);
 			toast.error("테마 삭제 중 오류가 발생했습니다.");
 			return false;
 		} finally {
@@ -387,11 +386,11 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 				});
 				channel.close();
 
+				await refreshSettings?.({ broadcast: true });
 				toast.success(
 					`'${themeToActivate.name}' 테마가 적용되고 저장되었습니다.`
 				);
 			} catch (serverError) {
-				console.error("서버 저장 실패:", serverError);
 				toast.error(
 					`'${themeToActivate.name}' 테마가 적용되었지만 서버 저장에 실패했습니다. 새로고침 시 이전 설정으로 돌아갈 수 있습니다.`
 				);
@@ -399,7 +398,6 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 
 			return true;
 		} catch (err) {
-			console.error("테마 적용 실패:", err);
 			toast.error("테마 적용 중 오류가 발생했습니다.");
 			return false;
 		} finally {
@@ -424,7 +422,6 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 
 			return JSON.stringify(exportData, null, 2);
 		} catch (err) {
-			console.error("테마 내보내기 실패:", err);
 			toast.error("테마 내보내기 중 오류가 발생했습니다.");
 			return null;
 		}
@@ -480,10 +477,10 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 			// 로컬 상태 업데이트
 			updateGeneral(updatedGeneral);
 			setThemes(updatedThemes);
+			await refreshSettings?.({ broadcast: true });
 			toast.success(`'${newTheme.name}' 테마를 가져왔습니다.`);
 			return true;
 		} catch (err) {
-			console.error("테마 가져오기 실패:", err);
 			toast.error("유효하지 않은 테마 파일입니다.");
 			return false;
 		} finally {

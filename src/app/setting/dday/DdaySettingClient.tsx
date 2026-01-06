@@ -27,6 +27,7 @@ const MAX_DDAY = 8;
 
 export default function DdaySettingClient() {
 	const settings = useSettings();
+	const refreshSettings = settings.refreshSettings;
 	const [ddayList, setDdayList] = useState<DdayData[]>([]);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [showResetDialog, setShowResetDialog] = useState(false);
@@ -104,6 +105,7 @@ export default function DdaySettingClient() {
 
 			try {
 				await setSettingsMainDday(ddayList);
+				await refreshSettings?.({ broadcast: true });
 
 				const channel = new BroadcastChannel("ddayUpdated");
 				channel.postMessage({ dday: ddayList, timestamp: Date.now() });
@@ -111,7 +113,6 @@ export default function DdaySettingClient() {
 
 				toast.success("성공적으로 디데이를 저장했습니다.");
 			} catch (error) {
-				console.error("Save error:", error);
 				toast.error("디데이를 저장하지 못했습니다.");
 			}
 		},
@@ -122,6 +123,7 @@ export default function DdaySettingClient() {
 	const handleReset = useCallback(async () => {
 		try {
 			await setSettingsMainDday([]);
+			await refreshSettings?.({ broadcast: true });
 			setDdayList([]);
 
 			const channel = new BroadcastChannel("ddayUpdated");
@@ -131,7 +133,6 @@ export default function DdaySettingClient() {
 			toast.success("디데이 설정이 초기화되었습니다.");
 			setShowResetDialog(false);
 		} catch (error) {
-			console.error("Reset error:", error);
 			toast.error("디데이 초기화에 실패했습니다.");
 		}
 	}, []);

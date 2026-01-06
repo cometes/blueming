@@ -4,13 +4,9 @@ import type { Design } from "@/contexts/SettingsContext";
 export interface SetSettingsGeneralDesignPayload extends Partial<Design> {}
 
 export interface SetSettingsGeneralDesignResponse {
-	success: boolean;
-	data: {
-		general: {
-			design: Design;
-		};
+	general: {
+		design: Design;
 	};
-	message?: string;
 }
 
 /**

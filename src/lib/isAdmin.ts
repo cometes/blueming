@@ -17,7 +17,6 @@ export const checkAdminClaims = async (): Promise<boolean> => {
 		const tokenResult = await getIdTokenResult(currentUser);
 		return !!tokenResult.claims.isAdmin;
 	} catch (error) {
-		console.error('관리자 권한 확인 중 오류:', error);
 		return false;
 	}
 };
@@ -51,7 +50,6 @@ export const refreshAdminClaims = async (): Promise<boolean> => {
 		const tokenResult = await getIdTokenResult(currentUser, true);
 		return !!tokenResult.claims.isAdmin;
 	} catch (error) {
-		console.error('관리자 권한 새로고침 중 오류:', error);
 		return false;
 	}
 };

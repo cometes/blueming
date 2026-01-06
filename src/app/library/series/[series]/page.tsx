@@ -15,7 +15,6 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
 
 		return <SeriesClient seriesListData={seriesListData} />;
 	} catch (error) {
-		console.error("Failed to fetch series data:", error);
 		return <SeriesClient seriesListData={null} />;
 	}
 }

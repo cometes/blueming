@@ -7,7 +7,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { schemaSettingsGeneral } from "@/lib/schema";
 
 export const useSettingGeneral = () => {
-  const { general, updateGeneral } = useSettings();
+  const { general, updateGeneral, refreshSettings } = useSettings();
   const generalData = general?.general || {};
 
   const logoTypes = ["없음", "텍스트","이미지"];
@@ -147,19 +147,19 @@ export const useSettingGeneral = () => {
 
       // Save reset settings to server
       const response = await setSettingsGeneralGeneral(defaultGeneralSetting);
-      updateGeneral(response.data.general);
+      updateGeneral(response.general);
+      await refreshSettings?.({ broadcast: true });
 
       // BroadcastChannel을 통해 리셋된 설정을 다른 탭/창에 알림
       const channel = new BroadcastChannel("generalSettingsUpdated");
       channel.postMessage({
-        generalSettings: response.data.general,
+        generalSettings: response.general,
         timestamp: Date.now()
       });
       channel.close();
 
       toast.success("일반 설정이 초기화되었습니다.");
     } catch (error) {
-      console.error("일반 설정 초기화 실패:", error);
       toast.error("일반 설정을 초기화하지 못했습니다.");
     }
   }, [reset, updateGeneral]);
@@ -168,19 +168,19 @@ export const useSettingGeneral = () => {
   const handleSave = useCallback(async () => {
     try {
       const response = await setSettingsGeneralGeneral(generalSetting);
-      updateGeneral(response.data.general);
+      updateGeneral(response.general);
+      await refreshSettings?.({ broadcast: true });
       
       // BroadcastChannel을 통해 설정 변경사항을 다른 탭/창에 알림
       const channel = new BroadcastChannel("generalSettingsUpdated");
       channel.postMessage({
-        generalSettings: response.data.general,
+        generalSettings: response.general,
         timestamp: Date.now()
       });
       channel.close();
       
       toast.success("일반 설정이 성공적으로 저장되었습니다.");
     } catch (error) {
-      console.error("일반 설정 저장 실패:", error);
       toast.error("일반 설정을 저장하지 못했습니다.");
     }
   }, [generalSetting, updateGeneral]);

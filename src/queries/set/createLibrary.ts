@@ -75,7 +75,6 @@ export const checkSlugAvailability = async (
 		return response.data.available;
 	} catch (error) {
 		// API가 없으면 일단 true 반환
-		console.warn("Slug check API not available:", error);
 		return true;
 	}
 };

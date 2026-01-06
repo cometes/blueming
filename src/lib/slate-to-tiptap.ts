@@ -72,7 +72,6 @@ export const convertSlateToHTML = (slateNodes: SlateNode[]): string => {
 		const html = slateNodes.map(convertNode).join("");
 		return html || "<p></p>";
 	} catch (error) {
-		console.error("Slate to HTML conversion error:", error);
 		return "<p></p>";
 	}
 };

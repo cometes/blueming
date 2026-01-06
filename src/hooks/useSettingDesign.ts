@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
 
 export const useSettingDesign = () => {
-  const { general, updateDesign } = useSettings();
+  const { general, updateDesign, refreshSettings } = useSettings();
   const design = general?.design || {}; // Ensure design is not undefined
 
   const [bgThumbnail, setBgThumnail] = useState("");
@@ -162,13 +162,14 @@ export const useSettingDesign = () => {
     try {
       const response = await setSettingsGeneralDesign(changedData);
       if (updateDesign) {
-        updateDesign(response.data.general.design);
+        updateDesign(response.general.design);
       }
+      await refreshSettings?.({ broadcast: true });
 
       // BroadcastChannel을 통해 디자인 설정 변경사항을 다른 탭/창에 알림
       const channel = new BroadcastChannel("designSettingsUpdated");
       channel.postMessage({
-        designSettings: response.data.general.design,
+        designSettings: response.general.design,
         timestamp: Date.now()
       });
       channel.close();
@@ -184,13 +185,14 @@ export const useSettingDesign = () => {
       const response = await setSettingsGeneralDesign(defaultValues);
       setCurrentDesignSetting(defaultValues);
       if (updateDesign) {
-        updateDesign(response.data.general.design);
+        updateDesign(response.general.design);
       }
+      await refreshSettings?.({ broadcast: true });
 
       // BroadcastChannel을 통해 디자인 설정 초기화를 다른 탭/창에 알림
       const channel = new BroadcastChannel("designSettingsUpdated");
       channel.postMessage({
-        designSettings: response.data.general.design,
+        designSettings: response.general.design,
         timestamp: Date.now()
       });
       channel.close();

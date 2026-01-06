@@ -75,10 +75,7 @@ export function checkTextAlignExtension(editor: Editor | null): boolean {
   )
 
   if (!hasExtension) {
-    console.warn(
-      "TextAlign extension is not available. " +
-        "Make sure it is included in your editor configuration."
-    )
+    return false
   }
 
   return hasExtension

@@ -63,7 +63,6 @@ export default function ImageUploadDialog({
 				toast.error("URL이 반환되지 않았습니다.");
 			}
 		} catch (error) {
-			console.error("Image upload error:", error);
 			toast.error("이미지 업로드 중 오류가 발생했습니다.");
 		} finally {
 			setIsUploading(false);

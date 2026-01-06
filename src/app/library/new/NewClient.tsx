@@ -93,21 +93,9 @@ export default function LibararyNewClient({
 			thumbnail: metaValue.thumbnail,
 		};
 
-		console.log("📝 게시글 제출 데이터:", payload);
-		console.log("📊 상세 정보:");
-		console.log("  - 제목:", payload.title);
-		console.log("  - 부제목:", payload.subtitle || "(없음)");
-		console.log("  - 내용 길이:", payload.content.length, "자");
-		console.log("  - 커스텀 Slug:", payload.slug || "(자동 생성)");
-		console.log("  - 요약:", payload.summary || "(없음)");
-		console.log(
 			"  - 태그:",
 			payload.tags.length > 0 ? payload.tags.join(", ") : "(없음)"
 		);
-		console.log("  - 시리즈:", payload.series || "(없음)");
-		console.log("  - 공개 설정:", payload.visibility);
-		console.log("  - 비밀번호:", payload.password ? "******" : "(없음)");
-		console.log("  - 썸네일:", payload.thumbnail ? "있음" : "(없음)");
 
 		setMetaOpen(false);
 	};

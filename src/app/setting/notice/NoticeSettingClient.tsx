@@ -86,7 +86,7 @@ const calculateRatio = (width: number, height: number): Ratio => {
 };
 
 export default function NoticeSettingClient() {
-	const { main } = useSettings();
+	const { main, refreshSettings } = useSettings();
 	const canvasRef = useRef<HTMLDivElement>(null);
 
 	// Marquee Settings State
@@ -147,7 +147,6 @@ export default function NoticeSettingClient() {
 						editor?.commands.setContent(`<p>${content}</p>`);
 					}
 				} catch (error) {
-					console.error("Content parsing error:", error);
 					editor?.commands.setContent("<p></p>");
 				}
 			}
@@ -225,6 +224,7 @@ export default function NoticeSettingClient() {
 			};
 
 			await setSettingsNotice(noticeData);
+			await refreshSettings?.({ broadcast: true });
 
 			// Broadcast update
 			const channel = new BroadcastChannel("noticeUpdated");
@@ -233,7 +233,6 @@ export default function NoticeSettingClient() {
 
 			toast.success("설정이 저장되었습니다!");
 		} catch (error) {
-			console.error("Save error:", error);
 			toast.error("저장에 실패했습니다.");
 		}
 	}, [
@@ -263,6 +262,7 @@ export default function NoticeSettingClient() {
 			};
 
 			await setSettingsNotice(resetData);
+			await refreshSettings?.({ broadcast: true });
 
 			// Reset state
 			setBannerText("");
@@ -284,7 +284,6 @@ export default function NoticeSettingClient() {
 			toast.success("설정이 초기화되었습니다!");
 			setShowResetDialog(false);
 		} catch (error) {
-			console.error("Reset error:", error);
 			toast.error("초기화에 실패했습니다.");
 		}
 	}, [editor]);
