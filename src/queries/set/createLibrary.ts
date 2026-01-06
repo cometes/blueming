@@ -14,45 +14,48 @@ export interface CreateLibraryPayload {
 }
 
 export interface CreateLibraryResponse {
-	success: boolean;
-	data: {
-		id: string;
-		slug?: string;
-		title: string;
-		createdAt: string;
-	};
-	message?: string;
+	postId: string;
+	createdAt: string | null;
+	slug?: string | null;
 }
 
 /**
  * 게시글을 생성합니다.
  * @param payload 게시글 데이터
- * @returns 생성된 게시글 정보 (id, slug 포함)
+ * @returns 생성된 게시글 정보 (postId, slug 포함)
  */
 export const createLibraryPost = async (
 	payload: CreateLibraryPayload
 ): Promise<CreateLibraryResponse> => {
 	try {
-		const response = await axios.post<CreateLibraryResponse>(
-			"https://api-w5buphcleq-du.a.run.app/library/create",
-			{
-				...payload,
-				// slug가 빈 문자열이면 null로 변환
-				slug: payload.slug?.trim() || null,
-				// 비공개 게시글이 아니면 password 제거
-				password:
-					payload.visibility === "password"
-						? payload.password
-						: undefined,
+		const allow = payload.visibility;
+		const slug = payload.slug?.trim() || undefined;
+	const response = await axios.post<CreateLibraryResponse>(
+		"https://api-w5buphcleq-du.a.run.app/library/create",
+		{
+				title: payload.title,
+				subtitle: payload.subtitle,
+				content: payload.content,
+				slug,
+				summary: payload.summary,
+				tags: payload.tags,
+				series: payload.series,
+				allow,
+				password: allow === "password" ? payload.password : null,
+				thumbnail: payload.thumbnail,
 			}
 		);
 
 		return response.data;
 	} catch (error) {
 		if (axios.isAxiosError(error)) {
-			throw new Error(
+			const status = error.response?.status;
+			const apiError =
+				error.response?.data?.error ||
 				error.response?.data?.message ||
-					"게시글 생성에 실패했습니다."
+				"게시글 생성에 실패했습니다.";
+			throw new Error(
+				status ? `${status} ${apiError}` : apiError
 			);
 		}
 		throw error;
@@ -78,5 +81,3 @@ export const checkSlugAvailability = async (
 		return true;
 	}
 };
-
-

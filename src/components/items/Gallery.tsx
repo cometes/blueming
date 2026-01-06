@@ -3,9 +3,12 @@ import { dateConvert } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import Fallback from "@/components/common/Fallback";
 
 export default function ItemGallery(props) {
 	const { onClickMoveToPage } = useMoveToPage();
+	const [imageError, setImageError] = useState(false);
 
 	return (
 		<div
@@ -20,9 +23,16 @@ export default function ItemGallery(props) {
 				)}
 			>
 				<div className="GalleryTitleBox flex justify-between items-center relative z-20">
-					<p className="GalleryTitle text-lg font-medium break-keep overflow-hidden text-ellipsis text-white">
-						{props.data.title}
-					</p>
+					<div className="min-w-0">
+						<p className="GalleryTitle text-lg font-medium break-keep overflow-hidden text-ellipsis text-white">
+							{props.data.title}
+						</p>
+						{props.data.slug && (
+							<p className="text-xs text-white/70 font-mono mt-0.5">
+								/{props.data.slug}
+							</p>
+						)}
+					</div>
 					<span className="GalleryDate block ml-2 whitespace-nowrap text-gray-500 text-sm">
 						{dateConvert(props.data.createdAt)}
 					</span>
@@ -57,15 +67,16 @@ export default function ItemGallery(props) {
 				</div>
 			</div>
 			<div className="ImageBox absolute top-0 left-0 w-full h-full">
-				{props.data.thumbnail ? (
+				{props.data.thumbnail && !imageError ? (
 					<Image
 						alt="썸네일"
 						src={props.data.thumbnail}
 						layout="fill"
 						objectFit={"cover"}
+						onError={() => setImageError(true)}
 					/>
 				) : (
-					<></>
+					<Fallback />
 				)}
 			</div>
 		</div>

@@ -2,9 +2,12 @@ import { useMoveToPage } from "@/hooks/useMoveToPage";
 import { dateConvert } from "@/lib/date";
 import { convertToUnderscore } from "@/lib/replace";
 import Image from "next/image";
+import { useState } from "react";
+import Fallback from "@/components/common/Fallback";
 
 export default function ItemCard(props) {
 	const { onClickMoveToPage } = useMoveToPage();
+	const [imageError, setImageError] = useState(false);
 
 	return (
 		<div>
@@ -14,16 +17,16 @@ export default function ItemCard(props) {
 					`/library/series/${convertToUnderscore(props.data.series)}/`
 				)}
 			>
-				{props.data.thumbnail ? (
+				{props.data.thumbnail && !imageError ? (
 					<Image
 						alt="시리즈 썸네일"
 						src={props.data.lastUpdatedThumbnail}
 						layout="fill"
 						objectFit={"cover"}
+						onError={() => setImageError(true)}
 					/>
 				) : (
-					// <Fallback />
-					<></>
+					<Fallback />
 				)}
 			</div>
 			<div

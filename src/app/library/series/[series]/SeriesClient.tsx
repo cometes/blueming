@@ -29,7 +29,12 @@ interface SeriesClientProps {
 
 export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 	const [isSorted, setIsSorted] = useState(false);
+	const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 	const { onClickMoveToPage } = useMoveToPage();
+
+	const markFailed = (key: string) => {
+		setFailedImages((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
+	};
 
 	if (!seriesListData) {
 		return (
@@ -59,12 +64,13 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 			<div className="flex items-end mt-10">
 				{/* Title Image */}
 				<div className="h-40 aspect-[4.5/3] bg-card border border-card-border rounded-lg relative overflow-hidden">
-					{seriesListData.lastUpdatedThumbnail ? (
+					{seriesListData.lastUpdatedThumbnail && !failedImages.header ? (
 						<Image
 							src={seriesListData.lastUpdatedThumbnail}
 							alt={seriesListData.series}
 							fill
 							className="object-cover transition-transform duration-200 hover:scale-110"
+							onError={() => markFailed("header")}
 						/>
 					) : (
 						<Fallback />
@@ -136,12 +142,13 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 								className="h-[120px] aspect-[4.5/3] bg-card border border-card-border rounded-md cursor-pointer overflow-hidden relative"
 								onClick={onClickMoveToPage(`/library/${el.id}`)}
 							>
-								{el.thumbnail ? (
+								{el.thumbnail && !failedImages[el.id] ? (
 									<Image
 										src={el.thumbnail}
 										alt={el.title}
 										fill
 										className="object-cover transition-transform duration-200 hover:scale-110"
+										onError={() => markFailed(el.id)}
 									/>
 								) : (
 									<Fallback />

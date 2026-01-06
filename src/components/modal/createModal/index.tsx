@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { ImagePlus, X, Globe, Lock, Ban, Plus, Search } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateSlug, normalizeSlug } from "@/lib/slug";
+import { handleImageUpload } from "@/lib/tiptap-utils";
 
 type Visibility = "all" | "password" | "secret";
 
@@ -80,6 +81,7 @@ const CreateModal = ({
 	const [seriesOpen, setSeriesOpen] = useState(false);
 	const [seriesInputOpen, setSeriesInputOpen] = useState(false);
 	const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+	const [isThumbnailUploading, setIsThumbnailUploading] = useState(false);
 
 	const MAX_TAGS = 6;
 
@@ -181,20 +183,20 @@ const CreateModal = ({
 		setSeriesInput("");
 	};
 
-	const handleThumbnailChange = (event: ChangeEvent<HTMLInputElement>) => {
+	const handleThumbnailChange = async (event: ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
 		if (!file) return;
 
-		const reader = new FileReader();
-		reader.onloadend = () => {
-			if (typeof reader.result === "string") {
-				onChange({
-					...value,
-					thumbnail: reader.result,
-				});
-			}
-		};
-		reader.readAsDataURL(file);
+		setIsThumbnailUploading(true);
+		try {
+			const url = await handleImageUpload(file);
+			onChange({
+				...value,
+				thumbnail: url,
+			});
+		} finally {
+			setIsThumbnailUploading(false);
+		}
 	};
 
 	const handleSummaryChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -247,12 +249,13 @@ const CreateModal = ({
 												<label className="w-full aspect-video border border-dashed border-card text-sub-text rounded-card flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-theme-primary/60 transition-colors">
 													<ImagePlus size={40} className="text-sub-text" />
 													<span className="text-sm text-theme-primary">
-														썸네일 업로드
+														{isThumbnailUploading ? "업로드 중..." : "썸네일 업로드"}
 													</span>
 													<input
 														type="file"
 														accept="image/*"
 														onChange={handleThumbnailChange}
+														disabled={isThumbnailUploading}
 														className="hidden"
 													/>
 												</label>
