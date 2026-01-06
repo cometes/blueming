@@ -6,11 +6,28 @@ type RainWindowEffectProps = {
 	active?: boolean;
 };
 
+type RaindropFxConfig = {
+	canvas: HTMLCanvasElement;
+	background?: string;
+	backgroundBlurSteps?: number;
+	mist?: boolean;
+};
+
+type RaindropFxInstance = {
+	start?: () => Promise<void> | void;
+	stop?: () => void;
+	resize: (width: number, height: number) => void;
+	destroy?: () => void;
+	setBackground?: (url: string) => void;
+};
+
+type RaindropFxConstructor = new (config: RaindropFxConfig) => RaindropFxInstance;
+
 function RainWindowEffectComponent({ active = true }: RainWindowEffectProps) {
 	const [isMounted, setIsMounted] = useState(false);
 	const [canvasKey] = useState(() => Date.now() + Math.random());
 	const canvasRef = useRef<HTMLCanvasElement>(null);
-	const raindropFxRef = useRef<any>(null);
+	const raindropFxRef = useRef<RaindropFxInstance | null>(null);
 	const initPromiseRef = useRef<Promise<void> | null>(null);
 
 	useEffect(() => {
@@ -41,7 +58,8 @@ function RainWindowEffectComponent({ active = true }: RainWindowEffectProps) {
 				if (raindropFxRef.current) return;
 
 				const canvas = canvasRef.current;
-				const RaindropFX = (await import("raindrop-fx")).default;
+				const RaindropFX = (await import("raindrop-fx"))
+					.default as RaindropFxConstructor;
 				const rect = canvas.getBoundingClientRect();
 
 				canvas.width = rect.width;
@@ -49,7 +67,7 @@ function RainWindowEffectComponent({ active = true }: RainWindowEffectProps) {
 
 				const backgroundUrl = resolveBackgroundUrl();
 
-				const raindropConfig: any = {
+				const raindropConfig: RaindropFxConfig = {
 					canvas: canvas,
 					backgroundBlurSteps: 1,
 					mist: false,
@@ -73,7 +91,7 @@ function RainWindowEffectComponent({ active = true }: RainWindowEffectProps) {
 					raindropFxRef.current.stop?.();
 					await raindropFxRef.current.start();
 				}
-			} catch (error) {
+			} catch {
 			}
 		};
 
@@ -106,7 +124,7 @@ function RainWindowEffectComponent({ active = true }: RainWindowEffectProps) {
 					raindropFxRef.current.destroy();
 					raindropFxRef.current = null;
 					initPromiseRef.current = null;
-				} catch (error) {
+				} catch {
 				}
 			}
 		};

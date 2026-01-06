@@ -163,7 +163,7 @@ export function toggleHighlight(
     }
 
     editor.chain().setMeta("hideDragHandle", true).run()
-  } catch (error) {
+  } catch {
   }
 }
 

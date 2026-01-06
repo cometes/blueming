@@ -1,18 +1,71 @@
 import _ from "lodash";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useMemo, useState } from "react";
 import { setSettingsGeneralDesign } from "@/queries/set/setSettingsGeneralDesign";
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
 
+const defaultValues = {
+	background: {
+		type: "기본",
+		color: "rgb(255, 255, 255)",
+		image: "",
+	},
+	widget: {
+		background: "rgba(255, 255, 255, 0.8)",
+		borderColor: "rgb(222, 226, 230)",
+		borderStyle: "solid",
+		borderRadius: 6,
+		borderWidth: 1,
+		blur: 6,
+		borderImage: "",
+	},
+	card: {
+		type: "라이트",
+		background: "rgba(250, 250, 250, 0.8)",
+		borderColor: "rgb(222, 226, 230)",
+		borderActiveColor: "rgb(173,181,189)",
+		borderStyle: "solid",
+		borderRadius: 6,
+		borderWidth: 1,
+		blur: 6,
+		boxShadow: "rgba(0, 0, 0, 0.1) 0px 20px 20px -10px",
+		translateY: -5,
+	},
+	font: {
+		titleFontFamily: "Pretendard",
+		bodyFontFamily: "Pretendard",
+		mainFontColor: "rgb(33, 37, 41)",
+		subFontColor: "rgb(110, 117, 127)",
+	},
+};
+
+const mergeWithDefaults = (defaults, current) => {
+	const result = { ...defaults };
+	if (!current) return result;
+
+	Object.keys(defaults).forEach((key) => {
+		if (
+			typeof defaults[key] === "object" &&
+			defaults[key] !== null &&
+			!Array.isArray(defaults[key]) &&
+			typeof current[key] === "object" &&
+			current[key] !== null
+		) {
+			result[key] = mergeWithDefaults(defaults[key], current[key]);
+		} else if (current[key] !== undefined && current[key] !== null) {
+			result[key] = current[key];
+		}
+	});
+
+	return result;
+};
+
 export const useSettingDesign = () => {
   const { general, updateDesign, refreshSettings } = useSettings();
-  const design = general?.design || {}; // Ensure design is not undefined
+  const design = useMemo(() => general?.design || {}, [general?.design]); // Ensure design is not undefined
 
   const [bgThumbnail, setBgThumnail] = useState("");
   const [openReset, setOpenReset] = useState(false);
-  const [customWidget, setCustomWidget] = useState({});
-  const [customCard, setCustomCard] = useState({});
 
   const BGTypes = ["단색", "그라데이션", "이미지"];
   const presetTypes = ["라이트", "다크", "커스텀"];
@@ -50,63 +103,6 @@ export const useSettingDesign = () => {
     { label: "조선일보명조", value: "Chosunilbo" }
   ];
   const fontBody = [{ label: "프리텐다드", value: "Pretendard" }];
-
-  const defaultValues = {
-    background: {
-      type: "기본",
-      color: "rgb(255, 255, 255)",
-      image: ""
-    },
-    widget: {
-      background: "rgba(255, 255, 255, 0.8)",
-      borderColor: "rgb(222, 226, 230)",
-      borderStyle: "solid",
-      borderRadius: 6,
-      borderWidth: 1,
-      blur: 6,
-      borderImage: ""
-    },
-    card: {
-      type: "라이트",
-      background: "rgba(250, 250, 250, 0.8)",
-      borderColor: "rgb(222, 226, 230)",
-      borderActiveColor: "rgb(173,181,189)",
-      borderStyle: "solid",
-      borderRadius: 6,
-      borderWidth: 1,
-      blur: 6,
-      boxShadow: "rgba(0, 0, 0, 0.1) 0px 20px 20px -10px",
-      translateY: -5
-    },
-    font: {
-      titleFontFamily: "Pretendard",
-      bodyFontFamily: "Pretendard",
-      mainFontColor: "rgb(33, 37, 41)",
-      subFontColor: "rgb(110, 117, 127)"
-    }
-  };
-
-  // Helper function to merge defaults with current design (extracted from useEffect)
-  const mergeWithDefaults = (defaults, current) => {
-    const result = { ...defaults };
-    if (!current) return result;
-
-    Object.keys(defaults).forEach(key => {
-      if (
-        typeof defaults[key] === "object" &&
-        defaults[key] !== null &&
-        !Array.isArray(defaults[key]) &&
-        typeof current[key] === "object" &&
-        current[key] !== null
-      ) {
-        result[key] = mergeWithDefaults(defaults[key], current[key]);
-      } else if (current[key] !== undefined && current[key] !== null) {
-        result[key] = current[key];
-      }
-    });
-
-    return result;
-  };
 
   // Initialize with merged defaults and design immediately
   // This is the key change from the original code - we're merging on initialization
@@ -175,7 +171,7 @@ export const useSettingDesign = () => {
       channel.close();
 
       toast.success("성공적으로 설정을 저장했습니다.");
-    } catch (error) {
+    } catch {
       toast.error("설정을 저장하지 못했습니다.");
     }
   };
@@ -199,7 +195,7 @@ export const useSettingDesign = () => {
 
       toast.success("성공적으로 설정을 초기화했습니다.");
       setOpenReset(false);
-    } catch (error) {
+    } catch {
       toast.error("설정을 초기화하지 못했습니다.");
       setOpenReset(false);
     }
@@ -212,8 +208,6 @@ export const useSettingDesign = () => {
     radiusTypes,
     lightPreset,
     darkPreset,
-    customCard,
-    customWidget,
     fontTitle,
     fontBody,
     bgThumbnail,

@@ -35,7 +35,6 @@ export default function LibararyNewClient({
 	const [subOpen, setSubOpen] = React.useState(false);
 	const [title, setTitle] = React.useState("");
 	const [subtitle, setSubtitle] = React.useState("");
-	const [content, setContent] = React.useState("");
 	const [metaOpen, setMetaOpen] = React.useState(false);
 	const [metaValue, setMetaValue] = React.useState<CreateMetaValue>({
 		tags: [],
@@ -51,9 +50,6 @@ export default function LibararyNewClient({
 		extensions: extensions,
 		content: "",
 		immediatelyRender: false,
-		onUpdate: ({ editor }) => {
-			setContent(editor.getHTML());
-		},
 		editorProps: {
 			attributes: {
 				class: "prose max-w-none focus:outline-none min-h-[400px] p-4",
@@ -79,24 +75,6 @@ export default function LibararyNewClient({
 	};
 
 	const handleConfirmSubmit = () => {
-		const payload = {
-			title,
-			subtitle,
-			content,
-			slug: metaValue.slug,
-			summary: metaValue.summary,
-			tags: metaValue.tags,
-			series: metaValue.series,
-			visibility: metaValue.visibility,
-			password:
-				metaValue.visibility === "password" ? metaValue.password : undefined,
-			thumbnail: metaValue.thumbnail,
-		};
-
-			"  - 태그:",
-			payload.tags.length > 0 ? payload.tags.join(", ") : "(없음)"
-		);
-
 		setMetaOpen(false);
 	};
 

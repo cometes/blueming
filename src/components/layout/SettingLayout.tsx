@@ -33,7 +33,7 @@ export default function SettingLayout({
 	description,
 }: SettingLayoutProps) {
 	const [isAsideExpanded, setIsAsideExpanded] = useState(false);
-	const [shouldAnimate, setShouldAnimate] = useState(() => {
+	const [shouldAnimate] = useState(() => {
 		if (typeof window === "undefined") return false;
 		return !(window as Window & { __settingFadeInSeen?: boolean })
 			.__settingFadeInSeen;

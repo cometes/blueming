@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import {
@@ -22,7 +23,6 @@ import { Badge } from "@/components/ui/badge";
 import { Globe, Lock, Trash2, ImagePlus, X } from "lucide-react";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import type {
 	MenuItem as MenuItemType,
 	SubMenu,
@@ -47,7 +47,10 @@ export default function MenuEditModal({
 }: MenuEditModalProps) {
 	const { uploadFile } = useFileUpload();
 
-	const handleChange = (field: keyof MenuItemType, value: any) => {
+	const handleChange = (
+		field: keyof MenuItemType,
+		value: MenuItemType[keyof MenuItemType]
+	) => {
 		onUpdateMenu({ [field]: value });
 	};
 
@@ -86,7 +89,7 @@ export default function MenuEditModal({
 			});
 			handleChange("subMenus", updatedSubMenus);
 			toast.success("이미지가 업로드되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("이미지 업로드에 실패했습니다.");
 		}
 	};
@@ -100,7 +103,7 @@ export default function MenuEditModal({
 			const url = await uploadFile(file);
 			handleChange("image", url);
 			toast.success("이미지가 업로드되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("이미지 업로드에 실패했습니다.");
 		}
 	};
@@ -114,7 +117,7 @@ export default function MenuEditModal({
 			const url = await uploadFile(file);
 			handleChange("iconImage", url);
 			toast.success("아이콘 이미지가 업로드되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("아이콘 이미지 업로드에 실패했습니다.");
 		}
 	};
@@ -317,10 +320,11 @@ export default function MenuEditModal({
 													</Button>
 													{smImage && (
 														<div className="relative w-[150px] max-h-9 rounded-card bg-theme-primary/10 border border-card overflow-hidden group">
-															<img
-																src={smImage}
-																className="w-full h-full object-contain"
-															/>
+																<img
+																	src={smImage}
+																	alt="하위 메뉴 이미지"
+																	className="w-full h-full object-contain"
+																/>
 															<Button
 																variant="ghost"
 																size="icon"
@@ -372,10 +376,11 @@ export default function MenuEditModal({
 							</p>
 							{menu.image ? (
 								<div className="relative aspect-[22/8] w-full max-w-[280px] rounded-card border border-card overflow-hidden bg-card-bg group">
-									<img
-										src={menu.image}
-										className="w-full h-full object-contain"
-									/>
+										<img
+											src={menu.image}
+											alt="메뉴 이미지"
+											className="w-full h-full object-contain"
+										/>
 									<Button
 										variant="ghost"
 										size="icon"
@@ -417,10 +422,11 @@ export default function MenuEditModal({
 							</p>
 							{menu.iconImage ? (
 								<div className="relative aspect-square w-16 rounded-card border border-card overflow-hidden bg-card-bg group">
-									<img
-										src={menu.iconImage}
-										className="w-full h-full object-contain"
-									/>
+										<img
+											src={menu.iconImage}
+											alt="아이콘 이미지"
+											className="w-full h-full object-contain"
+										/>
 									<Button
 										variant="ghost"
 										size="icon"

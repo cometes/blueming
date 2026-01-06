@@ -7,7 +7,7 @@ interface SlateNode {
 	type?: string;
 	text?: string;
 	children?: SlateNode[];
-	[key: string]: any;
+	[key: string]: unknown;
 }
 
 export const convertSlateToHTML = (slateNodes: SlateNode[]): string => {
@@ -71,7 +71,7 @@ export const convertSlateToHTML = (slateNodes: SlateNode[]): string => {
 
 		const html = slateNodes.map(convertNode).join("");
 		return html || "<p></p>";
-	} catch (error) {
+	} catch {
 		return "<p></p>";
 	}
 };

@@ -4,9 +4,14 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { setSettingsEffect } from "@/queries/set/setSettingsEffect";
 import type { EffectSettings } from "@/contexts/SettingsContext";
 
+const defaultEffectSetting: EffectSettings = {
+	enabled: false,
+	type: "없음",
+};
+
 export const useSettingEffect = () => {
 	const { general, updateGeneral, refreshSettings } = useSettings();
-	const designData = general?.design || {};
+	const designData = general?.design;
 	const effectData = designData?.effect;
 	const isSyncingRef = useRef(false);
 	const initialEffectRef = useRef<EffectSettings | null>(null);
@@ -26,12 +31,6 @@ export const useSettingEffect = () => {
 		"빗물창문",
 		"영화관"
 	] as const;
-
-	// 이펙트 설정 기본값
-	const defaultEffectSetting: EffectSettings = {
-		enabled: false,
-		type: "없음"
-	};
 
 	// Initialize state with either existing data or defaults
 	const [effectSetting, setEffectSetting] = useState<EffectSettings>(() => ({
@@ -77,7 +76,7 @@ export const useSettingEffect = () => {
 				setCurrentEffectType(nextType);
 			}
 		}
-	}, [effectData]);
+	}, [effectData, currentEffectType]);
 
 	// Restore settings when leaving without saving
 	useEffect(() => {
@@ -101,7 +100,7 @@ export const useSettingEffect = () => {
 
 	// Update effect setting state only
 	const updateEffectSetting = useCallback(
-		(field: keyof EffectSettings, value: any) => {
+		<K extends keyof EffectSettings>(field: K, value: EffectSettings[K]) => {
 			setEffectSetting((prev) => ({
 				...prev,
 				[field]: value,
@@ -157,7 +156,7 @@ export const useSettingEffect = () => {
 			isDirtyRef.current = false;
 
 			// Save reset settings to server
-			const response = await setSettingsEffect(defaultEffectSetting);
+			await setSettingsEffect(defaultEffectSetting);
 			
 			// Update context with new design settings
 			if (general?.design) {
@@ -180,15 +179,15 @@ export const useSettingEffect = () => {
 
 			toast.success("이펙트 설정이 초기화되었습니다.");
 			initialEffectRef.current = defaultEffectSetting;
-		} catch (error) {
+		} catch {
 			toast.error("이펙트 설정을 초기화하지 못했습니다.");
 		}
-	}, [general, updateGeneral]);
+	}, [general, updateGeneral, refreshSettings]);
 
 	// Save settings
 	const handleSave = useCallback(async () => {
 		try {
-			const response = await setSettingsEffect(effectSetting);
+			await setSettingsEffect(effectSetting);
 			
 			// Update context with new design settings
 			if (general?.design) {
@@ -212,10 +211,10 @@ export const useSettingEffect = () => {
 			toast.success("이펙트 설정이 성공적으로 저장되었습니다.");
 			initialEffectRef.current = effectSetting;
 			isDirtyRef.current = false;
-		} catch (error) {
+		} catch {
 			toast.error("이펙트 설정을 저장하지 못했습니다.");
 		}
-	}, [effectSetting, general, updateGeneral]);
+	}, [effectSetting, general, updateGeneral, refreshSettings]);
 
 	return {
 		effectTypes,

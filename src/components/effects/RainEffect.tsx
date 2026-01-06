@@ -1,14 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import type { CSSProperties } from "react";
+
+type RainDrop = {
+	id: string;
+	style: CSSProperties;
+	stemStyle: CSSProperties;
+	splatStyle: CSSProperties;
+};
 
 const RainEffect = () => {
-	const [rainDrops, setRainDrops] = useState<any[]>([]);
-	const [backRainDrops, setBackRainDrops] = useState<any[]>([]);
+	const [rainDrops, setRainDrops] = useState<RainDrop[]>([]);
+	const [backRainDrops, setBackRainDrops] = useState<RainDrop[]>([]);
 
 	const generateRainDrops = () => {
-		const drops = [];
-		const backDrops = [];
+		const drops: RainDrop[] = [];
+		const backDrops: RainDrop[] = [];
 		let increment = 0;
 
 		while (increment < 100) {
@@ -202,4 +210,3 @@ const RainEffect = () => {
 };
 
 export default RainEffect;
-

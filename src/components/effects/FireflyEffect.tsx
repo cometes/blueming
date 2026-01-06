@@ -2,9 +2,24 @@
 
 import React, { useEffect, useState } from "react";
 
+type FireflyKeyframe = {
+	percentage: number;
+	translateX: number;
+	translateY: number;
+	scale: number;
+};
+
+type FireflyData = {
+	id: number;
+	rotationSpeed: number;
+	afterAnimationDuration: number;
+	afterAnimationDelay: number;
+	keyframes: FireflyKeyframe[];
+};
+
 const FireflyEffect = () => {
 	const quantity = 15;
-	const [fireflies, setFireflies] = useState<any[]>([]);
+	const [fireflies, setFireflies] = useState<FireflyData[]>([]);
 
 	useEffect(() => {
 		// Generate random values for each firefly
@@ -15,7 +30,7 @@ const FireflyEffect = () => {
 			const afterAnimationDelay = Math.floor(Math.random() * 8000) + 500;
 
 			// Generate keyframe positions
-			const keyframes = [];
+			const keyframes: FireflyKeyframe[] = [];
 			for (let step = 0; step <= steps; step++) {
 				const percentage = step * (100 / steps);
 				const translateX = Math.random() * 100 - 50;
@@ -42,10 +57,10 @@ const FireflyEffect = () => {
 	}, []);
 
 	// Generate CSS for keyframes
-	const generateKeyframes = (firefly: any) => {
+	const generateKeyframes = (firefly: FireflyData) => {
 		const keyframeString = firefly.keyframes
 			.map(
-				(kf: any) =>
+				(kf) =>
 					`${kf.percentage}% { transform: translateX(${kf.translateX}vw) translateY(${kf.translateY}vh) scale(${kf.scale}); }`
 			)
 			.join(" ");

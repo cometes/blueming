@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -10,7 +11,7 @@ import { ColorPalettePreview } from "@/components/ui/color-palette-preview";
 import RadioItem from "@/components/items/RadioItem";
 import { useModal } from "@/hooks/useModal";
 import { useSettingGeneral } from "@/hooks/useSettingGeneral";
-import { toast } from "sonner";
+import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 
 type ImageField = "favicon" | "shareImage" | "logoImage";
 
@@ -118,11 +119,11 @@ export default function GeneralSettingClient() {
 		setBgThumnail,
 	} = useSettingGeneral();
 
-	const { showModal, isModalOpen, setIsModalOpen, cancelModal } = useModal();
+	const { showModal, isModalOpen, setIsModalOpen } = useModal();
 	const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-	const [currentImageField, setCurrentImageField] = useState<ImageField | "">(
-		""
+	const [currentImageField, setCurrentImageField] = useState<ImageField | null>(
+		null
 	);
 
 	const openImageModal = (field: ImageField) => {
@@ -135,7 +136,13 @@ export default function GeneralSettingClient() {
 		showModal();
 	};
 
-	const onSubmit = (data: any) => {
+	const handleImageUploadConfirm = (url: string) => {
+		if (!currentImageField) return;
+		handleImageUpload(currentImageField, url);
+		setIsModalOpen(false);
+	};
+
+	const onSubmit = () => {
 		handleSave();
 	};
 
@@ -369,6 +376,14 @@ export default function GeneralSettingClient() {
 
 				<Button type="submit">저장하기</Button>
 			</div>
+
+			<ImageUploadDialog
+				isOpen={isModalOpen}
+				onOpenChange={setIsModalOpen}
+				thumbnail={bgThumbnail}
+				setThumbnail={setBgThumnail}
+				onUpload={handleImageUploadConfirm}
+			/>
 		</form>
 	);
 }

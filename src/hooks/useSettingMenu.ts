@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
+import type { DropResult } from "@hello-pangea/dnd";
 import { toast } from "sonner";
 import {
 	useSettings,
@@ -8,7 +9,26 @@ import {
 } from "@/contexts/SettingsContext";
 import { setSettingsGeneralMenu } from "@/queries/set/setSettingsGeneralMenu";
 import { yupResolver } from "@hookform/resolvers/yup";
+import type { AnyObjectSchema } from "yup";
 import { schemaAddMenu } from "@/lib/schema";
+
+const defaultMenuDesign: MenuDesign = {
+	align: "왼쪽",
+	type: "텍스트형",
+	fontColor: "#000000",
+	textAlign: "가운데",
+	logoType: "텍스트",
+	logoImage: "",
+	logoText: "",
+	bgType: "없음",
+	backgroundColor: "#ffffff",
+	backgroundImage: "",
+	iconBarLogoImage: "",
+	iconBarLogoType: "없음",
+	iconBarBgType: "없음",
+	iconBarBackgroundColor: "#ffffff",
+	iconBarBackgroundImage: "",
+};
 
 export const useSettingMenu = () => {
 	const { general, updateGeneral, refreshSettings } = useSettings();
@@ -32,25 +52,6 @@ export const useSettingMenu = () => {
 	>("posting");
 	const [bgThumbnail, setBgThumnail] = useState("");
 
-	// 메뉴 디자인 설정 기본값
-	const defaultMenuDesign: MenuDesign = {
-		align: "왼쪽",
-		type: "텍스트형",
-		fontColor: "#000000",
-		textAlign: "가운데",
-		logoType: "텍스트",
-		logoImage: "",
-		logoText: "",
-		bgType: "없음",
-		backgroundColor: "#ffffff",
-		backgroundImage: "",
-		iconBarLogoImage: "",
-		iconBarLogoType: "없음",
-		iconBarBgType: "없음",
-		iconBarBackgroundColor: "#ffffff",
-		iconBarBackgroundImage: "",
-	};
-
 	const [currentMenuList, setCurrentMenuList] = useState<MenuItem[]>([]);
 	const [menuDesign, setMenuDesign] = useState<MenuDesign>(defaultMenuDesign);
 
@@ -70,19 +71,23 @@ export const useSettingMenu = () => {
 	}, [menuData]);
 
 	// Form for adding/editing menu items
-	const {
-		control,
-		setValue,
-		getValues,
-		handleSubmit,
-		formState,
-		reset,
-		watch,
-	} = useForm({
-		mode: "onSubmit",
-		// @ts-ignore - dynamic resolver
-		resolver: yupResolver(schemaAddMenu[currentMenuTab]),
-	});
+	type MenuFormValues = {
+		name: string;
+		isPublic?: boolean;
+		openInNewTab?: boolean;
+		image?: string;
+		iconImage?: string;
+		category?: string;
+		url?: string;
+		subMenus?: MenuItem["subMenus"];
+	};
+
+	const resolverSchema = schemaAddMenu[currentMenuTab] as AnyObjectSchema;
+	const { setValue, getValues, handleSubmit, formState, reset } =
+		useForm<MenuFormValues>({
+			mode: "onSubmit",
+			resolver: yupResolver(resolverSchema),
+		});
 
 	// Reset form when menu tab changes
 	useEffect(() => {
@@ -127,30 +132,30 @@ export const useSettingMenu = () => {
 	);
 
 	const handleAddMenu = useCallback(
-		(data: any) => {
+		(data: MenuFormValues) => {
 			if (currentMenuList.length >= 8) {
 				toast.error("최대 8개의 메뉴만 추가할 수 있습니다.");
 				return;
 			}
 
-		const newMenuData: MenuItem = {
-			id: `${currentMenuList.length + 1}`,
-			uniqueId: crypto.randomUUID(),
-			name: data.name,
-			type: currentMenuTab,
-			isPublic: data.isPublic ?? true,
-			openInNewTab: data.openInNewTab ?? false,
-			allow: data.isPublic ? "all" : "private",
-			image: data.image || "",
-			iconImage: data.iconImage || "",
-			target: data.openInNewTab ?? false,
-			category:
-				data.category ||
-				(currentMenuTab === "folder"
-					? "폴더"
-					: currentMenuTab === "custom"
-						? "커스텀"
-						: ""),
+			const newMenuData: MenuItem = {
+				id: `${currentMenuList.length + 1}`,
+				uniqueId: crypto.randomUUID(),
+				name: data.name,
+				type: currentMenuTab,
+				isPublic: data.isPublic ?? true,
+				openInNewTab: data.openInNewTab ?? false,
+				allow: data.isPublic ? "all" : "private",
+				image: data.image || "",
+				iconImage: data.iconImage || "",
+				target: data.openInNewTab ?? false,
+				category:
+					data.category ||
+					(currentMenuTab === "folder"
+						? "폴더"
+						: currentMenuTab === "custom"
+							? "커스텀"
+							: ""),
 				url: data.url || "",
 				subMenus: data.subMenus || [],
 			};
@@ -179,7 +184,7 @@ export const useSettingMenu = () => {
 		[]
 	);
 
-	const handleDragEnd = useCallback((result: any) => {
+	const handleDragEnd = useCallback((result: DropResult) => {
 		const { destination, source } = result;
 		if (!destination || destination.index === source.index) return;
 
@@ -214,10 +219,10 @@ export const useSettingMenu = () => {
 			channel.close();
 
 			toast.success("메뉴 설정이 초기화되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("메뉴 설정을 초기화하지 못했습니다.");
 		}
-	}, [reset, updateGeneral]);
+	}, [reset, updateGeneral, refreshSettings]);
 
 	const handleSave = useCallback(async () => {
 		try {
@@ -246,10 +251,10 @@ export const useSettingMenu = () => {
 			channel.close();
 
 			toast.success("메뉴 설정이 성공적으로 저장되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("메뉴 설정을 저장하지 못했습니다.");
 		}
-	}, [menuDesign, currentMenuList, updateGeneral]);
+	}, [menuDesign, currentMenuList, updateGeneral, refreshSettings]);
 
 	return {
 		handleSubmit,

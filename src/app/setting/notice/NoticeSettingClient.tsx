@@ -146,7 +146,7 @@ export default function NoticeSettingClient() {
 						// Plain text fallback
 						editor?.commands.setContent(`<p>${content}</p>`);
 					}
-				} catch (error) {
+				} catch {
 					editor?.commands.setContent("<p></p>");
 				}
 			}
@@ -170,11 +170,11 @@ export default function NoticeSettingClient() {
 
 	// Load layout ratio
 	useEffect(() => {
-		const customLayout = main?.customLayout?.layout;
+		const customLayout = main?.customLayout?.layout as
+			| Array<{ i: string; w: number; h: number }>
+			| undefined;
 		if (customLayout) {
-			const noticeWidget = customLayout.find(
-				(el: any) => el.i === LAYOUT_ITEM_ID
-			);
+			const noticeWidget = customLayout.find((el) => el.i === LAYOUT_ITEM_ID);
 			if (noticeWidget) {
 				setRatio(calculateRatio(noticeWidget.w, noticeWidget.h));
 			}
@@ -187,7 +187,8 @@ export default function NoticeSettingClient() {
 		channel.onmessage = (e) => {
 			const layout = e.data?.layout;
 			if (layout) {
-				const noticeWidget = layout.find((el: any) => el.i === LAYOUT_ITEM_ID);
+				const typedLayout = layout as Array<{ i: string; w: number; h: number }>;
+				const noticeWidget = typedLayout.find((el) => el.i === LAYOUT_ITEM_ID);
 				if (noticeWidget) {
 					setRatio(calculateRatio(noticeWidget.w, noticeWidget.h));
 				}
@@ -232,7 +233,7 @@ export default function NoticeSettingClient() {
 			channel.close();
 
 			toast.success("설정이 저장되었습니다!");
-		} catch (error) {
+		} catch {
 			toast.error("저장에 실패했습니다.");
 		}
 	}, [
@@ -243,6 +244,7 @@ export default function NoticeSettingClient() {
 		textColor,
 		backgroundColor,
 		editor,
+		refreshSettings,
 	]);
 
 	// Reset handler
@@ -283,10 +285,10 @@ export default function NoticeSettingClient() {
 
 			toast.success("설정이 초기화되었습니다!");
 			setShowResetDialog(false);
-		} catch (error) {
+		} catch {
 			toast.error("초기화에 실패했습니다.");
 		}
-	}, [editor]);
+	}, [editor, refreshSettings]);
 
 	return (
 		<form

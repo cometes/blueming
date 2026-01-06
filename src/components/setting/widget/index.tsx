@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { Trash2 } from "lucide-react";
@@ -30,7 +31,7 @@ interface CardSettings extends WidgetSettings {
 interface WidgetSettingProps {
 	widget: WidgetSettings;
 	card: CardSettings;
-	updateDesignSetting: (path: string, value: any) => void;
+	updateDesignSetting: (path: string, value: string | number) => void;
 }
 
 const PRESET_TYPES = {

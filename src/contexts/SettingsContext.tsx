@@ -70,7 +70,7 @@ interface DdayItem {
 	title: string;
 	date: string;
 	image: string;
-	target: boolean;
+	target: string;
 }
 
 // Profile Types

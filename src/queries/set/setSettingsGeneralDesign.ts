@@ -1,7 +1,7 @@
 import axios from "axios";
 import type { Design } from "@/contexts/SettingsContext";
 
-export interface SetSettingsGeneralDesignPayload extends Partial<Design> {}
+export type SetSettingsGeneralDesignPayload = Partial<Design>;
 
 export interface SetSettingsGeneralDesignResponse {
 	general: {

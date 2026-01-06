@@ -34,7 +34,7 @@ export const useAdmin = () => {
 			}
 			
 			return isAdmin;
-		} catch (error) {
+		} catch {
 			return false;
 		}
 	}, [user, setUser]);
@@ -54,7 +54,7 @@ export const useAdmin = () => {
 			}
 			
 			return isAdmin;
-		} catch (error) {
+		} catch {
 			return false;
 		}
 	}, [user, setUser]);
@@ -77,7 +77,7 @@ export const useAdmin = () => {
 				} else {
 				}
 			}
-		} catch (error) {
+		} catch {
 			if (onDenied) {
 				onDenied();
 			}

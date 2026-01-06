@@ -14,7 +14,6 @@ interface DraggableWidgetProps {
 	layout: LayoutItem[];
 	containerRef: React.RefObject<HTMLDivElement>;
 	onPositionChange: (id: string, position: GridPosition) => void;
-	onRemove: (id: string) => void;
 	columns?: number;
 	rows?: number;
 }
@@ -27,7 +26,6 @@ export const DraggableWidget = ({
 	layout,
 	containerRef,
 	onPositionChange,
-	onRemove,
 	columns = 12,
 	rows = 12,
 }: DraggableWidgetProps) => {
@@ -53,7 +51,7 @@ export const DraggableWidget = ({
 	}, [gridPosition, cellSize, gridToPixel]);
 
 	const handleDragStop = useCallback(
-		(e: any, data: DraggableData) => {
+		(_event: MouseEvent | TouchEvent, data: DraggableData) => {
 			const newPixelPos: PixelPosition = {
 				x: data.x,
 				y: data.y,
@@ -86,10 +84,10 @@ export const DraggableWidget = ({
 
 	const handleResizeStop = useCallback(
 		(
-			e: MouseEvent | TouchEvent,
-			dir: any,
+			_event: MouseEvent | TouchEvent,
+			_direction: string,
 			ref: HTMLElement,
-			delta: ResizableDelta,
+			_delta: ResizableDelta,
 			position: Position
 		) => {
 			const newPixelPos: PixelPosition = {

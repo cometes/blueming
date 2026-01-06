@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -168,14 +169,14 @@ export default function MenuSettingClient() {
 		}
 	};
 
-	const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0];
+	const handleLogoUpload = async (input: HTMLInputElement) => {
+		const file = input.files?.[0];
 		if (!file) return;
 		try {
 			const url = await uploadFile(file);
 			updateMenuSetting("logo.image", url);
 			toast.success("로고 이미지가 업로드되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("로고 이미지 업로드에 실패했습니다.");
 		}
 	};
@@ -184,20 +185,18 @@ export default function MenuSettingClient() {
 		const input = document.createElement("input");
 		input.type = "file";
 		input.accept = "image/*";
-		input.onchange = (e: any) => handleLogoUpload(e);
+		input.onchange = () => handleLogoUpload(input);
 		input.click();
 	};
 
-	const handleBackgroundUpload = async (
-		e: React.ChangeEvent<HTMLInputElement>
-	) => {
-		const file = e.target.files?.[0];
+	const handleBackgroundUpload = async (input: HTMLInputElement) => {
+		const file = input.files?.[0];
 		if (!file) return;
 		try {
 			const url = await uploadFile(file);
 			updateMenuSetting("background.image", url);
 			toast.success("배경 이미지가 업로드되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("배경 이미지 업로드에 실패했습니다.");
 		}
 	};
@@ -206,20 +205,18 @@ export default function MenuSettingClient() {
 		const input = document.createElement("input");
 		input.type = "file";
 		input.accept = "image/*";
-		input.onchange = (e: any) => handleBackgroundUpload(e);
+		input.onchange = () => handleBackgroundUpload(input);
 		input.click();
 	};
 
-	const handleIconBarLogoUpload = async (
-		e: React.ChangeEvent<HTMLInputElement>
-	) => {
-		const file = e.target.files?.[0];
+	const handleIconBarLogoUpload = async (input: HTMLInputElement) => {
+		const file = input.files?.[0];
 		if (!file) return;
 		try {
 			const url = await uploadFile(file);
 			updateMenuSetting("iconbar.logo.image", url);
 			toast.success("아이콘바 로고가 업로드되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("아이콘바 로고 업로드에 실패했습니다.");
 		}
 	};
@@ -228,20 +225,18 @@ export default function MenuSettingClient() {
 		const input = document.createElement("input");
 		input.type = "file";
 		input.accept = "image/*";
-		input.onchange = (e: any) => handleIconBarLogoUpload(e);
+		input.onchange = () => handleIconBarLogoUpload(input);
 		input.click();
 	};
 
-	const handleIconBarBackgroundUpload = async (
-		e: React.ChangeEvent<HTMLInputElement>
-	) => {
-		const file = e.target.files?.[0];
+	const handleIconBarBackgroundUpload = async (input: HTMLInputElement) => {
+		const file = input.files?.[0];
 		if (!file) return;
 		try {
 			const url = await uploadFile(file);
 			updateMenuSetting("iconbar.background.image", url);
 			toast.success("아이콘바 배경 이미지가 업로드되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("아이콘바 배경 이미지 업로드에 실패했습니다.");
 		}
 	};
@@ -250,7 +245,7 @@ export default function MenuSettingClient() {
 		const input = document.createElement("input");
 		input.type = "file";
 		input.accept = "image/*";
-		input.onchange = (e: any) => handleIconBarBackgroundUpload(e);
+		input.onchange = () => handleIconBarBackgroundUpload(input);
 		input.click();
 	};
 

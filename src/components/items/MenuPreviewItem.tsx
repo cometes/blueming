@@ -5,7 +5,7 @@ import { Draggable } from "@hello-pangea/dnd";
 import { GripVertical, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { MenuItem as MenuItemType, SubMenu, MenuDesign } from "@/contexts/SettingsContext";
+import type { MenuItem as MenuItemType, MenuDesign } from "@/contexts/SettingsContext";
 import MenuEditModal from "@/components/modal/MenuEditModal";
 
 interface MenuPreviewItemProps {

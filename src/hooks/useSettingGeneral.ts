@@ -1,29 +1,33 @@
 import { useForm } from "react-hook-form";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
+import type { General } from "@/contexts/SettingsContext";
 import { setSettingsGeneralGeneral } from "@/queries/set/setSettingsGeneralGeneral";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { schemaSettingsGeneral } from "@/lib/schema";
 
+const logoTypes = ["없음", "텍스트", "이미지"];
+
+// 홈페이지 설정 기본값
+const defaultGeneralSetting = {
+	title: "",
+	desc: "",
+	favicon: "",
+	shareImage: "",
+	primaryColor: "#000000",
+	secondaryColor: "#666666",
+	logoType: "없음",
+	logoImage: "",
+	logoText: "",
+};
+
 export const useSettingGeneral = () => {
   const { general, updateGeneral, refreshSettings } = useSettings();
-  const generalData = general?.general || {};
-
-  const logoTypes = ["없음", "텍스트","이미지"];
-
-  // 홈페이지 설정 기본값
-  const defaultGeneralSetting = {
-    title: "",
-    desc: "",
-    favicon: "",
-    shareImage: "",
-    primaryColor: "#000000",
-    secondaryColor: "#666666",
-    logoType: "없음",
-    logoImage: "",
-    logoText: ""
-  };
+  const generalData = useMemo<Partial<General>>(
+    () => general?.general || {},
+    [general?.general]
+  );
 
   // Initialize state only once with either existing data or defaults
   const [generalSetting, setGeneralSetting] = useState(() => ({
@@ -159,10 +163,10 @@ export const useSettingGeneral = () => {
       channel.close();
 
       toast.success("일반 설정이 초기화되었습니다.");
-    } catch (error) {
+    } catch {
       toast.error("일반 설정을 초기화하지 못했습니다.");
     }
-  }, [reset, updateGeneral]);
+  }, [reset, updateGeneral, refreshSettings]);
 
   // Save settings
   const handleSave = useCallback(async () => {
@@ -180,10 +184,10 @@ export const useSettingGeneral = () => {
       channel.close();
       
       toast.success("일반 설정이 성공적으로 저장되었습니다.");
-    } catch (error) {
+    } catch {
       toast.error("일반 설정을 저장하지 못했습니다.");
     }
-  }, [generalSetting, updateGeneral]);
+  }, [generalSetting, updateGeneral, refreshSettings]);
 
   return {
     handleSubmit,
