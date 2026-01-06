@@ -93,6 +93,7 @@ export default function CustomLayoutClient() {
 	const [layoutMode, setLayoutMode] = useState<"desktop" | "mobile">(
 		"desktop"
 	);
+	const [isSyncing, setIsSyncing] = useState(true);
 
 	const containerRef = useRef<HTMLDivElement>(null);
 	const layoutChannelRef = useRef<BroadcastChannel | null>(null);
@@ -137,14 +138,15 @@ export default function CustomLayoutClient() {
 			mobileUsedColors,
 		]
 	);
-	const isDirty = useMemo(
-		() => JSON.stringify(currentLayout) !== JSON.stringify(baselineLayout),
-		[currentLayout, baselineLayout]
-	);
+	const isDirty = useMemo(() => {
+		if (isSyncing) return false;
+		return JSON.stringify(currentLayout) !== JSON.stringify(baselineLayout);
+	}, [currentLayout, baselineLayout, isSyncing]);
 	useSettingStatus("mainLayout", isDirty ? "dirty" : "saved");
 
 	// Load saved layout from settings
 	useEffect(() => {
+		setIsSyncing(true);
 		if (customLayout) {
 			const legacyWidgets =
 				"widgets" in customLayout
@@ -162,6 +164,7 @@ export default function CustomLayoutClient() {
 			setDesktopUsedColors(customLayout.desktopUsedColors || legacyUsedColors || []);
 			setMobileUsedColors(customLayout.mobileUsedColors || []);
 		}
+		setIsSyncing(false);
 	}, [customLayout]);
 
 	// Setup broadcast channel for live updates

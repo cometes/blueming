@@ -6,6 +6,8 @@ export type SettingStatus = "saved" | "dirty";
 
 interface SettingStatusContextValue {
 	statusBySection: Record<string, SettingStatus>;
+	overallStatus: SettingStatus;
+	dirtyCount: number;
 	setStatus: (sectionId: string, status: SettingStatus) => void;
 }
 
@@ -29,12 +31,23 @@ export function SettingStatusProvider({
 		});
 	};
 
+	const { overallStatus, dirtyCount } = useMemo(() => {
+		const statuses = Object.values(statusBySection);
+		const dirtyCount = statuses.filter((status) => status === "dirty").length;
+		return {
+			overallStatus: dirtyCount > 0 ? "dirty" : "saved",
+			dirtyCount,
+		};
+	}, [statusBySection]);
+
 	const value = useMemo(
 		() => ({
 			statusBySection,
+			overallStatus,
+			dirtyCount,
 			setStatus,
 		}),
-		[statusBySection]
+		[statusBySection, overallStatus, dirtyCount]
 	);
 
 	return (

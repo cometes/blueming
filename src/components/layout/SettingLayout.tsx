@@ -35,7 +35,7 @@ export default function SettingLayout({
 	description,
 }: SettingLayoutProps) {
 	const [isAsideExpanded, setIsAsideExpanded] = useState(false);
-	const { statusBySection } = useSettingStatusContext();
+	const { overallStatus, dirtyCount } = useSettingStatusContext();
 	const [shouldAnimate] = useState(() => {
 		if (typeof window === "undefined") return false;
 		return !(window as Window & { __settingFadeInSeen?: boolean })
@@ -54,7 +54,7 @@ export default function SettingLayout({
 		setIsAsideExpanded(!isAsideExpanded);
 	};
 
-	const currentStatus = statusBySection[activeSection] || "saved";
+	const currentStatus = overallStatus;
 
 	return (
 		<div
@@ -211,7 +211,9 @@ export default function SettingLayout({
 											: "border-emerald-400 text-emerald-500 bg-emerald-500/10"
 									)}
 								>
-									{currentStatus === "dirty" ? "저장 필요" : "저장됨"}
+									{currentStatus === "dirty"
+										? `저장 필요${dirtyCount > 0 ? ` · ${dirtyCount}` : ""}`
+										: "저장됨"}
 								</Badge>
 							</div>
 							<p className="text-sub-text text-sm mt-2">{description}</p>

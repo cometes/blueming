@@ -33,17 +33,21 @@ export default function DdaySettingClient() {
 	const [ddayList, setDdayList] = useState<DdayData[]>([]);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [showResetDialog, setShowResetDialog] = useState(false);
+	const [isSyncing, setIsSyncing] = useState(true);
 	const isDirty = useMemo(() => {
+		if (isSyncing) return false;
 		const baseline = settings.main?.dday || [];
 		return JSON.stringify(ddayList) !== JSON.stringify(baseline);
-	}, [ddayList, settings.main?.dday]);
+	}, [ddayList, settings.main?.dday, isSyncing]);
 	useSettingStatus("dday", isDirty ? "dirty" : "saved");
 
 	// Load from settings
 	useEffect(() => {
+		setIsSyncing(true);
 		if (settings.main?.dday) {
 			setDdayList(settings.main.dday);
 		}
+		setIsSyncing(false);
 	}, [settings.main?.dday]);
 
 	// Add dday

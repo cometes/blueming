@@ -24,7 +24,6 @@ import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { setSettingsNotice } from "@/queries/set/setSettingsNotice";
-import { convertSlateToHTML, isSlateFormat } from "@/lib/slate-to-tiptap";
 
 const CANVAS_RATIO_BASE = 12;
 const LAYOUT_ITEM_ID = "공지";
@@ -42,6 +41,11 @@ const GRADIENT_SETTINGS = {
 } as const;
 
 const MARQUEE_TYPES = ["투명", "컬러"] as const;
+const LEGACY_MARQUEE_TYPE_MAP: Record<string, (typeof MARQUEE_TYPES)[number]> =
+	{
+		transparent: "투명",
+		color: "컬러",
+	};
 
 interface Ratio {
 	w: number;
@@ -86,6 +90,11 @@ const calculateRatio = (width: number, height: number): Ratio => {
 	}
 };
 
+const normalizeMarqueeType = (value: unknown) => {
+	if (typeof value !== "string") return "투명";
+	return LEGACY_MARQUEE_TYPE_MAP[value] ?? value;
+};
+
 export default function NoticeSettingClient() {
 	const { main, refreshSettings, updateMain } = useSettings();
 	const canvasRef = useRef<HTMLDivElement>(null);
@@ -107,11 +116,14 @@ export default function NoticeSettingClient() {
 	// Editor State
 	const [ratio, setRatio] = useState<Ratio>({ w: 0, h: 0 });
 	const [showResetDialog, setShowResetDialog] = useState(false);
+	const [isSyncing, setIsSyncing] = useState(true);
+	const [editorContent, setEditorContent] = useState("<p></p>");
 
 	// Tiptap Editor
 	const editor = useEditor({
 		extensions,
 		content: "<p></p>",
+		immediatelyRender: false,
 		editorProps: {
 			attributes: {
 				class: "prose prose-sm max-w-none focus:outline-none h-full p-4",
@@ -121,6 +133,7 @@ export default function NoticeSettingClient() {
 
 	// Load initial data from settings
 	useEffect(() => {
+		setIsSyncing(true);
 		if (main?.notice) {
 			const noticeData = main.notice;
 
@@ -129,32 +142,27 @@ export default function NoticeSettingClient() {
 			}
 
 			if (noticeData.noticeContent) {
-				try {
-					const content =
-						typeof noticeData.noticeContent === "string"
-							? noticeData.noticeContent
-							: JSON.stringify(noticeData.noticeContent);
-
-					// Check if it's Slate format and convert to HTML
-					if (isSlateFormat(content)) {
-						const slateNodes = JSON.parse(content);
-						const html = convertSlateToHTML(slateNodes);
-						editor?.commands.setContent(html);
-					} else if (content.startsWith("<")) {
-						// Already HTML format
-						editor?.commands.setContent(content);
-					} else {
-						// Plain text fallback
-						editor?.commands.setContent(`<p>${content}</p>`);
-					}
-				} catch {
+				const content =
+					typeof noticeData.noticeContent === "string"
+						? noticeData.noticeContent
+						: "";
+				if (content.trim()) {
+					const nextContent = content.startsWith("<")
+						? content
+						: `<p>${content}</p>`;
+					editor?.commands.setContent(nextContent);
+					setEditorContent(nextContent);
+				} else {
 					editor?.commands.setContent("<p></p>");
+					setEditorContent("<p></p>");
 				}
+			} else {
+				setEditorContent(editor?.getHTML() || "<p></p>");
 			}
 
 			if (noticeData.marqueeSettings) {
 				const marqueeSettings = noticeData.marqueeSettings;
-				setCurrentType(marqueeSettings.type || "투명");
+				setCurrentType(normalizeMarqueeType(marqueeSettings.type));
 				setGradientColor(
 					marqueeSettings.gradientColor || DEFAULT_COLORS.GRADIENT
 				);
@@ -167,32 +175,52 @@ export default function NoticeSettingClient() {
 				);
 			}
 		}
+		setIsSyncing(false);
 	}, [main?.notice, editor]);
 
-	const isDirty = useMemo(() => {
-		const currentContent = editor?.getHTML() || "<p></p>";
-		const baseline = main?.notice;
+	useEffect(() => {
+		if (!editor) return;
+		const updateContent = () => {
+			setEditorContent(editor.getHTML());
+		};
+		updateContent();
+		editor.on("blur", updateContent);
+		return () => {
+			editor.off("blur", updateContent);
+		};
+	}, [editor]);
 
-		if (!baseline) {
-			return (
-				bannerText !== "" ||
-				currentContent !== "<p></p>" ||
-				currentType !== "투명" ||
-				gradientColor !== DEFAULT_COLORS.GRADIENT ||
-				gradientWidth !== GRADIENT_SETTINGS.DEFAULT ||
-				textColor !== DEFAULT_COLORS.TEXT ||
-				backgroundColor !== DEFAULT_COLORS.BACKGROUND
-			);
-		}
+	const isDirty = useMemo(() => {
+		if (isSyncing) return false;
+		const normalizeContent = (html?: string) => (html || "<p></p>").trim();
+		const baseline = main?.notice;
+		const baselineMarquee = baseline?.marqueeSettings;
+
+		const baselineBannerText = baseline?.bannerText || "";
+		const baselineContent =
+			typeof baseline?.noticeContent === "string" &&
+			baseline.noticeContent.trim()
+				? baseline.noticeContent.trim()
+				: "<p></p>";
+		const baselineType = normalizeMarqueeType(baselineMarquee?.type);
+		const baselineGradientColor =
+			baselineMarquee?.gradientColor || DEFAULT_COLORS.GRADIENT;
+		const baselineGradientWidth =
+			baselineMarquee?.gradientWidth || GRADIENT_SETTINGS.DEFAULT;
+		const baselineTextColor = baselineMarquee?.textColor || DEFAULT_COLORS.TEXT;
+		const baselineBackgroundColor =
+			baselineMarquee?.backgroundColor || DEFAULT_COLORS.BACKGROUND;
+
+		const currentContent = normalizeContent(editorContent);
 
 		return (
-			bannerText !== baseline.bannerText ||
-			currentContent !== baseline.noticeContent ||
-			currentType !== baseline.marqueeSettings?.type ||
-			gradientColor !== baseline.marqueeSettings?.gradientColor ||
-			gradientWidth !== baseline.marqueeSettings?.gradientWidth ||
-			textColor !== baseline.marqueeSettings?.textColor ||
-			backgroundColor !== baseline.marqueeSettings?.backgroundColor
+			bannerText !== baselineBannerText ||
+			currentContent !== baselineContent ||
+			currentType !== baselineType ||
+			gradientColor !== baselineGradientColor ||
+			gradientWidth !== baselineGradientWidth ||
+			textColor !== baselineTextColor ||
+			backgroundColor !== baselineBackgroundColor
 		);
 	}, [
 		bannerText,
@@ -203,6 +231,8 @@ export default function NoticeSettingClient() {
 		textColor,
 		backgroundColor,
 		main?.notice,
+		isSyncing,
+		editorContent,
 	]);
 
 	useSettingStatus("notice", isDirty ? "dirty" : "saved");
