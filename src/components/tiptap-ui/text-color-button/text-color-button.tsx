@@ -45,10 +45,7 @@ export function checkColorExtension(editor: Editor | null): boolean {
 	);
 
 	if (!hasExtension) {
-		console.warn(
-			"Color extension is not available. " +
-				"Make sure it is included in your editor configuration."
-		);
+		return false;
 	}
 
 	return hasExtension;

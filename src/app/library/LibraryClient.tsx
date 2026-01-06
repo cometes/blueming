@@ -3,15 +3,7 @@
 import { useEffect, useState } from "react";
 import ItemCard from "@/components/items/Card";
 import ItemGallery from "@/components/items/Gallery";
-import {
-	Lock,
-	Plus,
-	Rows3,
-	Search,
-	Settings,
-	TableProperties,
-	User,
-} from "lucide-react";
+import { Plus, Search, Settings } from "lucide-react";
 import AdminOnly from "@/components/common/AdminOnly";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -26,14 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useMoveToPage } from "@/hooks/useMoveToPage";
 import ItemListWithImage from "@/components/items/ListWithImage";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
+import ItemList from "@/components/items/List";
+import LibrarySettingsDialog from "@/components/modal/LibrarySettingsDialog";
 
 interface LibraryItem {
 	id: string;
@@ -58,11 +44,33 @@ export default function LibraryClient({
 	const [segmentedValue, setSegmentedValue] = useState("row");
 	const { onClickMoveToPage } = useMoveToPage();
 
+	// 페이지 설정 상태
+	const [layoutType, setLayoutType] = useState<"list" | "listWithImage">(
+		"listWithImage"
+	);
+	const [postsPerPage, setPostsPerPage] = useState(10);
+	const [postsPerRow, setPostsPerRow] = useState(3);
+	const [writePermission, setWritePermission] = useState<"admin" | "member">(
+		"admin"
+	);
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+	// Dialog 임시 상태 (저장 전까지 사용)
+	const [tempLayoutType, setTempLayoutType] = useState(layoutType);
+	const [tempPostsPerPage, setTempPostsPerPage] = useState(postsPerPage);
+	const [tempPostsPerRow, setTempPostsPerRow] = useState(postsPerRow);
+	const [tempWritePermission, setTempWritePermission] =
+		useState(writePermission);
+
 	// 로컬 스토리지에서 상태 불러오기
 	useEffect(() => {
 		const savedIsSeriesOn = localStorage.getItem("isSeriesOn");
 		const savedIsCardOn = localStorage.getItem("isCardOn");
 		const savedSegmentedValue = localStorage.getItem("segmentedValue");
+		const savedLayoutType = localStorage.getItem("layoutType");
+		const savedPostsPerPage = localStorage.getItem("postsPerPage");
+		const savedPostsPerRow = localStorage.getItem("postsPerRow");
+		const savedWritePermission = localStorage.getItem("writePermission");
 
 		if (savedIsSeriesOn !== null) {
 			setIsSeriesOn(savedIsSeriesOn === "true");
@@ -75,6 +83,27 @@ export default function LibraryClient({
 		} else if (savedIsCardOn === "true") {
 			setSegmentedValue("gallery");
 		}
+
+		if (savedLayoutType !== null) {
+			const type = savedLayoutType as "list" | "listWithImage";
+			setLayoutType(type);
+			setTempLayoutType(type);
+		}
+		if (savedPostsPerPage !== null) {
+			const count = parseInt(savedPostsPerPage);
+			setPostsPerPage(count);
+			setTempPostsPerPage(count);
+		}
+		if (savedPostsPerRow !== null) {
+			const count = parseInt(savedPostsPerRow);
+			setPostsPerRow(count);
+			setTempPostsPerRow(count);
+		}
+		if (savedWritePermission !== null) {
+			const permission = savedWritePermission as "admin" | "member";
+			setWritePermission(permission);
+			setTempWritePermission(permission);
+		}
 	}, []);
 
 	// 상태 변경 시 로컬 스토리지에 저장
@@ -82,7 +111,38 @@ export default function LibraryClient({
 		localStorage.setItem("isSeriesOn", isSeriesOn.toString());
 		localStorage.setItem("isCardOn", isCardOn.toString());
 		localStorage.setItem("segmentedValue", segmentedValue);
-	}, [isSeriesOn, isCardOn, segmentedValue]);
+		localStorage.setItem("layoutType", layoutType);
+		localStorage.setItem("postsPerPage", postsPerPage.toString());
+		localStorage.setItem("postsPerRow", postsPerRow.toString());
+		localStorage.setItem("writePermission", writePermission);
+	}, [
+		isSeriesOn,
+		isCardOn,
+		segmentedValue,
+		layoutType,
+		postsPerPage,
+		postsPerRow,
+		writePermission,
+	]);
+
+	// Dialog가 열릴 때 현재 설정값으로 임시 상태 초기화
+	useEffect(() => {
+		if (isDialogOpen) {
+			setTempLayoutType(layoutType);
+			setTempPostsPerPage(postsPerPage);
+			setTempPostsPerRow(postsPerRow);
+			setTempWritePermission(writePermission);
+		}
+	}, [isDialogOpen, layoutType, postsPerPage, postsPerRow, writePermission]);
+
+	// 설정 저장 핸들러
+	const handleSaveSettings = () => {
+		setLayoutType(tempLayoutType);
+		setPostsPerPage(tempPostsPerPage);
+		setPostsPerRow(tempPostsPerRow);
+		setWritePermission(tempWritePermission);
+		setIsDialogOpen(false);
+	};
 
 	return (
 		<>
@@ -130,75 +190,44 @@ export default function LibraryClient({
 							endIcon={Search}
 						/>
 					</div>
-					<Dialog>
-						<DialogTrigger asChild>
-							<Button className="bg-card border-card text-main-text rounded-full w-10 h-10">
-								<Settings />
-							</Button>
-						</DialogTrigger>
-						<DialogContent
-							showCloseButton={false}
-							className="bg-card border-card rounded-card backdrop-blur-card p-0"
-						>
-							<DialogHeader className="gap-0">
-								<DialogTitle className="border-b border-card-border px-5 py-4 text-main-text flex items-center justify-between">
-									<p> 페이지 설정</p>
-									<Button>저장하기</Button>
-								</DialogTitle>
-								<DialogDescription className=" px-5 py-4 text-main-text">
-									<div className="flex flex-col gap-4">
-										<div>
-											<p>페이지 레이아웃</p>
-											<div className="flex gap-2 mt-2">
-												<Button>
-													<Rows3 /> 리스트형
-												</Button>
-												<Button>
-													<TableProperties /> 리스트 이미지형
-												</Button>
-											</div>
-										</div>
-										<div>
-											<p>페이지 당 게시글 수</p>
-											<Input
-												type="number"
-												defaultValue={10}
-												className="w-20 mt-2 bg-card border-card rounded-card text-main-text"
-											/>
-										</div>
-										<div>
-											<p>한 줄 당 게시글 수</p>
-											<Input
-												type="number"
-												defaultValue={3}
-												className="w-20 mt-2 bg-card border-card rounded-card text-main-text"
-											/>
-										</div>
-										<div>
-											<p>게시글 작성 권한</p>
-											<div className="flex gap-2 mt-2">
-												<Button>
-													<Lock /> 관리자
-												</Button>
-												<Button>
-													<User /> 회원
-												</Button>
-											</div>
-										</div>
-									</div>
-								</DialogDescription>
-							</DialogHeader>
-						</DialogContent>
-					</Dialog>
+					<AdminOnly>
+						<LibrarySettingsDialog
+							isOpen={isDialogOpen}
+							onOpenChange={setIsDialogOpen}
+							tempLayoutType={tempLayoutType}
+							setTempLayoutType={setTempLayoutType}
+							tempPostsPerPage={tempPostsPerPage}
+							setTempPostsPerPage={setTempPostsPerPage}
+							tempPostsPerRow={tempPostsPerRow}
+							setTempPostsPerRow={setTempPostsPerRow}
+							tempWritePermission={tempWritePermission}
+							setTempWritePermission={setTempWritePermission}
+							onSave={handleSaveSettings}
+							trigger={
+								<Button className="bg-card border-card text-main-text rounded-full w-10 h-10">
+									<Settings />
+								</Button>
+							}
+						/>
+					</AdminOnly>
 
-				<AdminOnly>
+					{writePermission === "admin" ? (
+						<AdminOnly>
+							<Button
+								onClick={onClickMoveToPage("/library/new/")}
+								className="bg-theme-primary hover:bg-theme-primary/90"
+							>
+								<Plus size={14} />새 글쓰기
+							</Button>
+						</AdminOnly>
+					) : (
 						<Button
 							onClick={onClickMoveToPage("/library/new/")}
 							className="bg-theme-primary hover:bg-theme-primary/90"
 						>
 							<Plus size={14} />새 글쓰기
 						</Button>
-					</AdminOnly>
+					)}
 				</div>
 				<div className="TabWrap w-fit mx-auto mt-7">
 					<div className="TabBox flex justify-center">
@@ -233,8 +262,13 @@ export default function LibraryClient({
 					/>
 				</div>
 				{isSeriesOn && (
-					<div className="grid gap-2.5 grid-cols-3 mt-10">
-						{seriesData?.map((el) => (
+					<div
+						className={cn("grid gap-2.5 mt-10", `grid-cols-${postsPerRow}`)}
+						style={{
+							gridTemplateColumns: `repeat(${postsPerRow}, minmax(0, 1fr))`,
+						}}
+					>
+						{seriesData?.slice(0, postsPerPage).map((el) => (
 							<ItemCard data={el} key={el.id} />
 						))}
 					</div>
@@ -243,21 +277,34 @@ export default function LibraryClient({
 					<div
 						className={cn(
 							"grid mt-10",
-							isCardOn ? "gap-2.5 grid-cols-3" : "gap-4 grid-cols-1"
+							isCardOn
+								? `gap-2.5 grid-cols-${postsPerRow}`
+								: "gap-4 grid-cols-1"
 						)}
+						style={
+							isCardOn
+								? { gridTemplateColumns: `repeat(${postsPerRow}, minmax(0, 1fr))` }
+								: undefined
+						}
 					>
 						{isCardOn && (
 							<>
-								{listData.map((el) => (
+								{listData.slice(0, postsPerPage).map((el) => (
 									<ItemGallery data={el} key={el.id} />
 								))}
 							</>
 						)}
-						{!isCardOn && (
+						{!isCardOn && layoutType === "listWithImage" && (
 							<>
-								{listData.map((el) => (
-									// <ItemList data={el} key={el.id} />
+								{listData.slice(0, postsPerPage).map((el) => (
 									<ItemListWithImage data={el} key={el.id} />
+								))}
+							</>
+						)}
+						{!isCardOn && layoutType === "list" && (
+							<>
+								{listData.slice(0, postsPerPage).map((el) => (
+									<ItemList data={el} key={el.id} />
 								))}
 							</>
 						)}

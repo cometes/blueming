@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
+import { Toaster } from "sonner";
 import { SettingsProvider } from "./SettingsProvider";
 import { ThemeProvider } from "./ThemeProvider";
+import { ThemesProvider } from "@/contexts/ThemesContext";
 import { useAuth } from "@/hooks/auth/UseAuth";
 import ThemeLoader from "@/components/ThemeLoader";
 
@@ -28,16 +30,20 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 	return <>{children}</>;
 }
 
-export default function Providers({ children, initialSettings }: ProvidersProps) {
+export default function Providers({
+	children,
+	initialSettings,
+}: ProvidersProps) {
 	return (
 		<SettingsProvider initialSettings={initialSettings}>
-			<ThemeProvider>
-				<AuthInitializer>
-					<ThemeLoader>
-						{children}
-					</ThemeLoader>
-				</AuthInitializer>
-			</ThemeProvider>
+			<ThemesProvider>
+				<ThemeProvider>
+					<AuthInitializer>
+						<ThemeLoader>{children}</ThemeLoader>
+					</AuthInitializer>
+					<Toaster position="top-center" richColors />
+				</ThemeProvider>
+			</ThemesProvider>
 		</SettingsProvider>
 	);
 }

@@ -60,8 +60,7 @@ export function insertYoutubeVideo(
         height: height || 480,
       })
       .run()
-  } catch (error) {
-    console.error("Failed to insert YouTube video:", error)
+  } catch {
     return false
   }
 }
@@ -85,10 +84,7 @@ export function checkYoutubeExtension(editor: Editor | null): boolean {
   )
 
   if (!hasExtension) {
-    console.warn(
-      "YouTube extension is not available. " +
-        "Make sure it is included in your editor configuration."
-    )
+    return false
   }
 
   return hasExtension
@@ -176,7 +172,8 @@ export const YoutubeUploadButton = React.forwardRef<
       onClick,
       children,
       ...buttonProps
-    }
+    },
+    ref
   ) => {
     const editor = useTiptapEditor(providedEditor)
     const { isActive, isDisabled } = useYoutubeUploadButton(editor, disabled)
@@ -185,6 +182,19 @@ export const YoutubeUploadButton = React.forwardRef<
     const [error, setError] = React.useState("")
     const popupRef = React.useRef<HTMLDivElement>(null)
     const buttonRef = React.useRef<HTMLButtonElement>(null)
+
+    // Merge refs
+    const mergedRef = React.useCallback(
+      (node: HTMLButtonElement | null) => {
+        buttonRef.current = node
+        if (typeof ref === "function") {
+          ref(node)
+        } else if (ref) {
+          ref.current = node
+        }
+      },
+      [ref]
+    )
 
     // 팝업 위치 계산
     const [popupPosition, setPopupPosition] = React.useState<{
@@ -282,7 +292,7 @@ export const YoutubeUploadButton = React.forwardRef<
     return (
       <div className="relative">
         <Button
-          ref={buttonRef}
+          ref={mergedRef}
           type="button"
           className={className.trim()}
           disabled={isDisabled}

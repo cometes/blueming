@@ -11,7 +11,7 @@ export default function ThemeLoader({ children }: { children: React.ReactNode })
       const primaryColor = getComputedStyle(document.documentElement)
         .getPropertyValue('--primary-color')
         .trim();
-      
+
       // 기본값이 아닌 실제 API 데이터가 적용되었는지 확인
       if (primaryColor && primaryColor !== '#007bff') {
         setIsThemeLoaded(true);
@@ -28,7 +28,7 @@ export default function ThemeLoader({ children }: { children: React.ReactNode })
   // 테마가 로드되지 않았으면 기본 스타일로 표시
   if (!isThemeLoaded) {
     return (
-      <div style={{ 
+      <div style={{
         opacity: 0,
         transition: 'opacity 0.3s ease',
         minHeight: '100vh',
@@ -42,7 +42,7 @@ export default function ThemeLoader({ children }: { children: React.ReactNode })
 
   // 테마가 로드되면 부드럽게 표시
   return (
-    <div style={{ 
+    <div style={{
       opacity: 1,
       transition: 'opacity 0.3s ease'
     }}>
