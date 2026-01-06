@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import type { DropResult } from "@hello-pangea/dnd";
 import { toast } from "sonner";
 import {
@@ -54,6 +54,23 @@ export const useSettingMenu = () => {
 
 	const [currentMenuList, setCurrentMenuList] = useState<MenuItem[]>([]);
 	const [menuDesign, setMenuDesign] = useState<MenuDesign>(defaultMenuDesign);
+	const baselineMenuDesign = useMemo(
+		() => ({
+			...defaultMenuDesign,
+			...(menuData?.design || {}),
+		}),
+		[menuData?.design]
+	);
+	const baselineMenuList = useMemo(
+		() => menuData?.menus || [],
+		[menuData?.menus]
+	);
+	const isDirty = useMemo(
+		() =>
+			JSON.stringify(menuDesign) !== JSON.stringify(baselineMenuDesign) ||
+			JSON.stringify(currentMenuList) !== JSON.stringify(baselineMenuList),
+		[menuDesign, baselineMenuDesign, currentMenuList, baselineMenuList]
+	);
 
 	// Load initial data
 	useEffect(() => {
@@ -281,5 +298,6 @@ export const useSettingMenu = () => {
 		handleSave,
 		bgThumbnail,
 		setBgThumnail,
+		isDirty,
 	};
 };

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useAdmin } from "@/hooks/auth/UseAdmin";
 import { cn } from "@/lib/utils";
-import { Button } from "../ui/button";
+import MenuAuthButton from "@/components/common/MenuAuthButton";
 import Image from "next/image";
 
 // =============================================================================
@@ -438,7 +438,7 @@ export default function WidgetMenu() {
 
 					{/* Login Button */}
 					<div className="flex justify-center">
-						<Button>로그인</Button>
+						<MenuAuthButton />
 					</div>
 				</nav>
 			</aside>
@@ -555,9 +555,7 @@ export default function WidgetMenu() {
 					</div>
 
 					<div className="flex justify-center">
-						<Button size="sm" className="opacity-80">
-							로그인
-						</Button>
+						<MenuAuthButton variant="iconbar" className="opacity-80" />
 					</div>
 				</nav>
 			</aside>

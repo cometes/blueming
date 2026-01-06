@@ -12,6 +12,7 @@ import RadioItem from "@/components/items/RadioItem";
 import { useModal } from "@/hooks/useModal";
 import { useSettingGeneral } from "@/hooks/useSettingGeneral";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
+import { useSettingStatus } from "@/hooks/useSettingStatus";
 
 type ImageField = "favicon" | "shareImage" | "logoImage";
 
@@ -117,6 +118,7 @@ export default function GeneralSettingClient() {
 		handleSave,
 		bgThumbnail,
 		setBgThumnail,
+		isDirty,
 	} = useSettingGeneral();
 
 	const { showModal, isModalOpen, setIsModalOpen } = useModal();
@@ -125,6 +127,7 @@ export default function GeneralSettingClient() {
 	const [currentImageField, setCurrentImageField] = useState<ImageField | null>(
 		null
 	);
+	useSettingStatus("general", isDirty ? "dirty" : "saved");
 
 	const openImageModal = (field: ImageField) => {
 		setCurrentImageField(field);

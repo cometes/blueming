@@ -1,0 +1,53 @@
+"use client";
+
+import { createContext, useContext, useMemo, useState } from "react";
+
+export type SettingStatus = "saved" | "dirty";
+
+interface SettingStatusContextValue {
+	statusBySection: Record<string, SettingStatus>;
+	setStatus: (sectionId: string, status: SettingStatus) => void;
+}
+
+const SettingStatusContext = createContext<SettingStatusContextValue | null>(
+	null
+);
+
+export function SettingStatusProvider({
+	children,
+}: {
+	children: React.ReactNode;
+}) {
+	const [statusBySection, setStatusBySection] = useState<
+		Record<string, SettingStatus>
+	>({});
+
+	const setStatus = (sectionId: string, status: SettingStatus) => {
+		setStatusBySection((prev) => {
+			if (prev[sectionId] === status) return prev;
+			return { ...prev, [sectionId]: status };
+		});
+	};
+
+	const value = useMemo(
+		() => ({
+			statusBySection,
+			setStatus,
+		}),
+		[statusBySection]
+	);
+
+	return (
+		<SettingStatusContext.Provider value={value}>
+			{children}
+		</SettingStatusContext.Provider>
+	);
+}
+
+export function useSettingStatusContext() {
+	const context = useContext(SettingStatusContext);
+	if (!context) {
+		throw new Error("useSettingStatusContext must be used within provider");
+	}
+	return context;
+}

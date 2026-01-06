@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +26,7 @@ import { useCollisionDetection, LayoutItem } from "@/components/setting/customLa
 import { GridPosition } from "@/components/setting/customLayout/useGridSnap";
 import { setCustomLayout } from "@/queries/set/setCustomLayout";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useSettingStatus } from "@/hooks/useSettingStatus";
 
 interface Widget {
 	id: string;
@@ -107,6 +108,40 @@ export default function CustomLayoutClient() {
 	const activeWidgets = activeLayout
 		.map((item) => activeWidgetList.find((widget) => widget.id === item.i))
 		.filter((widget): widget is Widget => Boolean(widget));
+	const baselineLayout = useMemo(
+		() => ({
+			layout: customLayout?.layout ?? [],
+			mobileLayout: customLayout?.mobileLayout ?? [],
+			desktopWidgets: customLayout?.desktopWidgets ?? [],
+			mobileWidgets: customLayout?.mobileWidgets ?? [],
+			desktopUsedColors: customLayout?.desktopUsedColors ?? [],
+			mobileUsedColors: customLayout?.mobileUsedColors ?? [],
+		}),
+		[customLayout]
+	);
+	const currentLayout = useMemo(
+		() => ({
+			layout: desktopLayout,
+			mobileLayout,
+			desktopWidgets,
+			mobileWidgets,
+			desktopUsedColors,
+			mobileUsedColors,
+		}),
+		[
+			desktopLayout,
+			mobileLayout,
+			desktopWidgets,
+			mobileWidgets,
+			desktopUsedColors,
+			mobileUsedColors,
+		]
+	);
+	const isDirty = useMemo(
+		() => JSON.stringify(currentLayout) !== JSON.stringify(baselineLayout),
+		[currentLayout, baselineLayout]
+	);
+	useSettingStatus("mainLayout", isDirty ? "dirty" : "saved");
 
 	// Load saved layout from settings
 	useEffect(() => {

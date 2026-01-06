@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import { ColorPicker } from "@/components/ui/color-picker";
 import RadioItem from "@/components/items/RadioItem";
 import { useSettingMenu } from "@/hooks/useSettingMenu";
+import { useSettingStatus } from "@/hooks/useSettingStatus";
 import MenuPreviewItem from "@/components/items/MenuPreviewItem";
 import MenuAddModal from "@/components/modal/MenuAddModal";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
@@ -126,11 +127,13 @@ export default function MenuSettingClient() {
 		handleUpdateMenu,
 		handleDeleteMenu,
 		handleDragEnd,
+		isDirty,
 	} = useSettingMenu();
 
 	const { uploadFile } = useFileUpload();
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 	const [showResetConfirm, setShowResetConfirm] = useState(false);
+	useSettingStatus("menu", isDirty ? "dirty" : "saved");
 	const [openFolders, setOpenFolders] = useState<{ [key: string]: boolean }>(
 		{}
 	);

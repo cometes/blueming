@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { DragDropContext, Droppable, type DropResult } from "@hello-pangea/dnd";
 import { Plus } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useSettingStatus } from "@/hooks/useSettingStatus";
 import DdayItem from "@/components/items/DdayItem";
 import DdayAddDialog from "@/components/modal/DdayAddDialog";
 import {
@@ -31,6 +32,11 @@ export default function DdaySettingClient() {
 	const [ddayList, setDdayList] = useState<DdayData[]>([]);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [showResetDialog, setShowResetDialog] = useState(false);
+	const isDirty = useMemo(() => {
+		const baseline = settings.main?.dday || [];
+		return JSON.stringify(ddayList) !== JSON.stringify(baseline);
+	}, [ddayList, settings.main?.dday]);
+	useSettingStatus("dday", isDirty ? "dirty" : "saved");
 
 	// Load from settings
 	useEffect(() => {

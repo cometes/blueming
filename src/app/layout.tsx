@@ -11,8 +11,7 @@ export const metadata: Metadata = {
 async function getSettings() {
 	try {
 		const res = await fetch("https://api-w5buphcleq-du.a.run.app/settings", {
-			cache: "force-cache",
-			next: { revalidate: 3600 },
+			cache: "no-store",
 		});
 
 		if (!res.ok) {

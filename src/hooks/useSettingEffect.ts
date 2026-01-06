@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
 import { setSettingsEffect } from "@/queries/set/setSettingsEffect";
@@ -40,6 +40,20 @@ export const useSettingEffect = () => {
 
 	const [currentEffectType, setCurrentEffectType] = useState<EffectSettings["type"]>(
 		(effectData?.type as EffectSettings["type"]) || "없음"
+	);
+	const baselineEffect = useMemo(
+		() => ({
+			enabled: effectData?.enabled ?? defaultEffectSetting.enabled,
+			type:
+				(effectData?.type as EffectSettings["type"]) || defaultEffectSetting.type,
+		}),
+		[effectData]
+	);
+	const isDirty = useMemo(
+		() =>
+			effectSetting.enabled !== baselineEffect.enabled ||
+			effectSetting.type !== baselineEffect.type,
+		[effectSetting, baselineEffect]
 	);
 
 	// Load existing data when effectData changes
@@ -224,6 +238,7 @@ export const useSettingEffect = () => {
 		setEffectSetting,
 		updateEffectSetting,
 		handleReset,
-		handleSave
+		handleSave,
+		isDirty,
 	};
 };

@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import AdminRoute from "@/components/common/AdminRoute";
 import SettingLayout from "@/components/layout/SettingLayout";
+import { SettingStatusProvider } from "@/contexts/SettingStatusContext";
 
 const GeneralSettingClient = dynamic(() => import("./general/GeneralSettingClient"));
 const DesignSettingClient = dynamic(() => import("./design/DesignSettingClient"));
@@ -176,15 +177,17 @@ export default function SettingClient({ initialSection }: SettingClientProps) {
 
 	return (
 		<AdminRoute>
-			<SettingLayout
-				sidebarGroups={sidebarGroups}
-				activeSection={activeSection}
-				onSectionChange={handleSectionChange}
-				title={currentSection?.title || ""}
-				description={currentSection?.desc || ""}
-			>
-				{currentSection ? <currentSection.Component /> : null}
-			</SettingLayout>
+			<SettingStatusProvider>
+				<SettingLayout
+					sidebarGroups={sidebarGroups}
+					activeSection={activeSection}
+					onSectionChange={handleSectionChange}
+					title={currentSection?.title || ""}
+					description={currentSection?.desc || ""}
+				>
+					{currentSection ? <currentSection.Component /> : null}
+				</SettingLayout>
+			</SettingStatusProvider>
 		</AdminRoute>
 	);
 }

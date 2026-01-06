@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import LoginButton from "../common/LoginButton";
 import WidgetMenu from "../widgets/WidgetMenu";
 import BackgroundEffect from "../effects/BackgroundEffect";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -42,7 +41,9 @@ export default function Layout({ children }: LayoutProps) {
 	});
 
 	// 헤더를 숨길지 결정하는 함수
-	const shouldHideHeader = hideHeaderPages.includes(pathname);
+	const shouldHideHeader =
+		hideHeaderPages.includes(pathname) ||
+		(pathname.startsWith("/library/") && pathname.endsWith("/edit"));
 
 	const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 	const [lastScrollY, setLastScrollY] = useState(0);
@@ -76,7 +77,6 @@ export default function Layout({ children }: LayoutProps) {
 		return (
 			<>
 				<BackgroundEffect />
-				<LoginButton />
 				{children}
 			</>
 		);
@@ -85,7 +85,6 @@ export default function Layout({ children }: LayoutProps) {
 	// 일반 페이지의 경우 기본 레이아웃 구조 적용
 	return (
 		<>
-			<LoginButton />
 			{!shouldHideHeader && (
 				<header
 					className={cn(

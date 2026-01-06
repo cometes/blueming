@@ -109,6 +109,14 @@ export const useSettingDesign = () => {
   const [currentDesignSetting, setCurrentDesignSetting] = useState(() =>
     mergeWithDefaults(defaultValues, design)
   );
+  const baselineDesign = useMemo(
+    () => mergeWithDefaults(defaultValues, design),
+    [design]
+  );
+  const isDirty = useMemo(
+    () => !_.isEqual(currentDesignSetting, baselineDesign),
+    [currentDesignSetting, baselineDesign]
+  );
 
   // Still update when design changes, but it should already be properly initialized
   useEffect(() => {
@@ -218,6 +226,7 @@ export const useSettingDesign = () => {
     card: currentDesignSetting.card,
     font: currentDesignSetting.font,
     widget: currentDesignSetting.widget,
+    isDirty,
     onClickSubmit,
     openReset,
     setOpenReset,

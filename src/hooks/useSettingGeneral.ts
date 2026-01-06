@@ -39,6 +39,38 @@ export const useSettingGeneral = () => {
     generalData?.logoType || "없음"
   );
   const [bgThumbnail, setBgThumnail] = useState("");
+  const normalizedCurrent = useMemo(
+    () => ({
+      title: generalSetting.title || "",
+      desc: generalSetting.desc || "",
+      favicon: generalSetting.favicon || "",
+      shareImage: generalSetting.shareImage || "",
+      primaryColor: generalSetting.primaryColor || "",
+      secondaryColor: generalSetting.secondaryColor || "",
+      logoType: generalSetting.logoType || "없음",
+      logoImage: generalSetting.logoImage || "",
+      logoText: generalSetting.logoText || ""
+    }),
+    [generalSetting]
+  );
+  const normalizedInitial = useMemo(
+    () => ({
+      title: generalData.title || "",
+      desc: generalData.desc || "",
+      favicon: generalData.favicon || "",
+      shareImage: generalData.shareImage || "",
+      primaryColor: generalData.primaryColor || "",
+      secondaryColor: generalData.secondaryColor || "",
+      logoType: generalData.logoType || "없음",
+      logoImage: generalData.logoImage || "",
+      logoText: generalData.logoText || ""
+    }),
+    [generalData]
+  );
+  const isDirty = useMemo(
+    () => JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedInitial),
+    [normalizedCurrent, normalizedInitial]
+  );
 
   // Form setup
   const {
@@ -208,5 +240,6 @@ export const useSettingGeneral = () => {
     handleSave,
     bgThumbnail,
     setBgThumnail,
+    isDirty,
   };
 };

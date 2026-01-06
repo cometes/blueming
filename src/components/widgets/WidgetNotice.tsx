@@ -12,11 +12,9 @@ function useContentDimensions(containerRef: React.RefObject<HTMLDivElement>) {
 
 		const calculate = () => {
 			const { width, height } = el.getBoundingClientRect();
-			// 총 오프셋 = 보더 양쪽 + 패딩 양쪽
-			const totalOffset = 28; // 14px padding on each side
 			setDims({
-				width: Math.max(0, width - totalOffset),
-				height: Math.max(0, height - totalOffset),
+				width: Math.max(0, width),
+				height: Math.max(0, height),
 			});
 		};
 
@@ -53,7 +51,8 @@ const LayoutPreservingViewer = React.memo<{
 			zoom: scale,
 			width: `${editorWidth}px`,
 			height: `${editorHeight}px`,
-			padding: "14px", // 에디터 내부 패딩 (총 28px의 절반)
+			padding: "16px",
+			boxSizing: "border-box",
 		});
 	}, [editorWidth, editorHeight, viewerWidth, viewerHeight]);
 
