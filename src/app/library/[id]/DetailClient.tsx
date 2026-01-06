@@ -8,11 +8,32 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useAdmin } from "@/hooks/auth/UseAdmin";
+import { deleteLibraryPost } from "@/queries/set/deleteLibrary";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function DetailClient({ detailData }) {
 	const { onClickMoveToPage } = useMoveToPage();
+	const router = useRouter();
+	const { isAdmin } = useAdmin();
 
 	const contentHtml = renderRichText(detailData?.content);
+
+	const handleDelete = async () => {
+		if (!detailData?.id) return;
+		const confirmed = window.confirm("이 게시글을 삭제할까요?");
+		if (!confirmed) return;
+
+		try {
+			await deleteLibraryPost(detailData.id);
+			toast.success("게시글이 삭제되었습니다.");
+			router.push("/library");
+			router.refresh();
+		} catch {
+			toast.error("게시글 삭제에 실패했습니다.");
+		}
+	};
 
 	return (
 		<div className="Wrapper min-h-100vh">
@@ -61,12 +82,24 @@ export default function DetailClient({ detailData }) {
 								<span className="CreatedAt text-sub-text">
 									{dateConvert(detailData?.createdAt)}
 								</span>
-								<span className="EditText text-sub-text cursor-pointer">
-									수정
-								</span>
-								<span className="EditText text-sub-text cursor-pointer">
-									삭제
-								</span>
+								{isAdmin && (
+									<>
+										<span
+											className="EditText text-sub-text cursor-pointer"
+											onClick={onClickMoveToPage(
+												`/library/${detailData?.id}/edit`
+											)}
+										>
+											수정
+										</span>
+										<span
+											className="EditText text-sub-text cursor-pointer"
+											onClick={handleDelete}
+										>
+											삭제
+										</span>
+									</>
+								)}
 							</div>
 						</div>
 					</div>

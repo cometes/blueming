@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { useEditor, EditorContent } from "@tiptap/react";
 import { ImagePlus, Trash2 } from "lucide-react";
@@ -20,6 +20,7 @@ import { extensions } from "@/components/editor/TiptapEditor";
 import SimpleTiptapToolbar from "@/components/tiptap/SimpleTiptapToolbar";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useSettingStatus } from "@/hooks/useSettingStatus";
 import {
 	setSettingsProfile,
 	ProfileData,
@@ -174,6 +175,31 @@ export default function ProfileSettingClient() {
 			}
 		}
 	}, [settings.main?.profile, editor]);
+
+	const isDirty = useMemo(() => {
+		const baseline = settings.main?.profile;
+		const intro = editor?.getHTML() || "<p></p>";
+
+		if (!baseline) {
+			return (
+				profileData.nickname !== "" ||
+				profileData.etc !== "" ||
+				profileData.headerImage !== "" ||
+				profileData.profileImage !== "" ||
+				intro !== "<p></p>"
+			);
+		}
+
+		return (
+			profileData.nickname !== baseline.nickname ||
+			profileData.etc !== baseline.etc ||
+			profileData.headerImage !== baseline.headerImage ||
+			profileData.profileImage !== baseline.profileImage ||
+			intro !== baseline.introduction
+		);
+	}, [profileData, editor, settings.main?.profile]);
+
+	useSettingStatus("profile", isDirty ? "dirty" : "saved");
 
 	const handleInputChange = useCallback(
 		(field: keyof ProfileData, value: string) => {

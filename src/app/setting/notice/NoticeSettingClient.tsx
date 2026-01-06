@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import { useEditor } from "@tiptap/react";
 import { EditorContent } from "@tiptap/react";
@@ -22,6 +22,7 @@ import {
 import { extensions } from "@/components/editor/TiptapEditor";
 import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { setSettingsNotice } from "@/queries/set/setSettingsNotice";
 import { convertSlateToHTML, isSlateFormat } from "@/lib/slate-to-tiptap";
 
@@ -167,6 +168,44 @@ export default function NoticeSettingClient() {
 			}
 		}
 	}, [main?.notice, editor]);
+
+	const isDirty = useMemo(() => {
+		const currentContent = editor?.getHTML() || "<p></p>";
+		const baseline = main?.notice;
+
+		if (!baseline) {
+			return (
+				bannerText !== "" ||
+				currentContent !== "<p></p>" ||
+				currentType !== "투명" ||
+				gradientColor !== DEFAULT_COLORS.GRADIENT ||
+				gradientWidth !== GRADIENT_SETTINGS.DEFAULT ||
+				textColor !== DEFAULT_COLORS.TEXT ||
+				backgroundColor !== DEFAULT_COLORS.BACKGROUND
+			);
+		}
+
+		return (
+			bannerText !== baseline.bannerText ||
+			currentContent !== baseline.noticeContent ||
+			currentType !== baseline.marqueeSettings?.type ||
+			gradientColor !== baseline.marqueeSettings?.gradientColor ||
+			gradientWidth !== baseline.marqueeSettings?.gradientWidth ||
+			textColor !== baseline.marqueeSettings?.textColor ||
+			backgroundColor !== baseline.marqueeSettings?.backgroundColor
+		);
+	}, [
+		bannerText,
+		editor,
+		currentType,
+		gradientColor,
+		gradientWidth,
+		textColor,
+		backgroundColor,
+		main?.notice,
+	]);
+
+	useSettingStatus("notice", isDirty ? "dirty" : "saved");
 
 	// Load layout ratio
 	useEffect(() => {

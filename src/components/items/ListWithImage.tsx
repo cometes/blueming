@@ -26,7 +26,7 @@ export default function ItemListWithImage({ data }: ItemListProps) {
 		<article
 			className={cn(
 				"group relative bg-card border-card rounded-card backdrop-blur-card",
-				"flex items-center justify-between gap-6 cursor-pointer",
+				"flex items-stretch justify-between gap-6 cursor-pointer",
 				"transition-all duration-300 ease-out overflow-hidden"
 			)}
 			onClick={onClickMoveToPage(`/library/${data.id}`)}
@@ -85,7 +85,7 @@ export default function ItemListWithImage({ data }: ItemListProps) {
 					{dateConvert(data.createdAt)}
 				</time>
 			</div>
-			<div>
+			<div className="h-full">
 				{/* 오른쪽 이미지 영역 */}
 				{data.thumbnail && !imageError ? (
 					<Image
@@ -93,11 +93,11 @@ export default function ItemListWithImage({ data }: ItemListProps) {
 						alt={data.title}
 						width={240}
 						height={100}
-						className="h-full object-cover aspect-video mask-l-from-80%"
+						className="h-full w-full object-cover mask-l-from-80%"
 						onError={() => setImageError(true)}
 					/>
 				) : (
-					<div className="h-full min-w-60 aspect-video mask-l-from-80%">
+					<div className="h-full min-w-60 mask-l-from-80%">
 						<Fallback />
 					</div>
 				)}

@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect, ReactNode } from "react";
 import { Menu, ChevronLeft } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { useSettingStatusContext } from "@/contexts/SettingStatusContext";
 
 interface SettingSidebarItem {
 	id: string;
@@ -33,6 +35,7 @@ export default function SettingLayout({
 	description,
 }: SettingLayoutProps) {
 	const [isAsideExpanded, setIsAsideExpanded] = useState(false);
+	const { statusBySection } = useSettingStatusContext();
 	const [shouldAnimate] = useState(() => {
 		if (typeof window === "undefined") return false;
 		return !(window as Window & { __settingFadeInSeen?: boolean })
@@ -50,6 +53,8 @@ export default function SettingLayout({
 	const toggleAside = () => {
 		setIsAsideExpanded(!isAsideExpanded);
 	};
+
+	const currentStatus = statusBySection[activeSection] || "saved";
 
 	return (
 		<div
@@ -195,7 +200,20 @@ export default function SettingLayout({
 					>
 						{/* Header */}
 						<div className="px-5 py-3 border-b border-card-bg flex-none">
-							<p className="text-2xl font-bold text-main-text">{title}</p>
+							<div className="flex items-center gap-3">
+								<p className="text-2xl font-bold text-main-text">{title}</p>
+								<Badge
+									variant="outline"
+									className={cn(
+										"text-[11px] px-2 py-0.5",
+										currentStatus === "dirty"
+											? "border-amber-400 text-amber-500 bg-amber-500/10"
+											: "border-emerald-400 text-emerald-500 bg-emerald-500/10"
+									)}
+								>
+									{currentStatus === "dirty" ? "저장 필요" : "저장됨"}
+								</Badge>
+							</div>
 							<p className="text-sub-text text-sm mt-2">{description}</p>
 						</div>
 

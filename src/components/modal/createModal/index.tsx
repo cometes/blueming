@@ -87,7 +87,7 @@ const CreateModal = ({
 
 	// 제목이 변경될 때 slug 자동 생성 (수동으로 편집하지 않은 경우에만)
 	useEffect(() => {
-		if (value.title && !slugManuallyEdited && open) {
+		if (value.title && !value.slug && !slugManuallyEdited && open) {
 			const autoSlug = generateSlug(value.title);
 			if (autoSlug !== value.slug) {
 				onChange({

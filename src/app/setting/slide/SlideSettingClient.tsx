@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { DragDropContext, Droppable, type DropResult } from "@hello-pangea/dnd";
 import { Plus } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useSettingStatus } from "@/hooks/useSettingStatus";
 import SlideItem from "@/components/items/SlideItem";
 import SlideAddDialog from "@/components/modal/SlideAddDialog";
 import {
@@ -31,6 +32,11 @@ export default function SlideSettingClient() {
 	const [slides, setSlides] = useState<SlideData[]>([]);
 	const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 	const [showResetDialog, setShowResetDialog] = useState(false);
+	const isDirty = useMemo(() => {
+		const baseline = settings.main?.slide || [];
+		return JSON.stringify(slides) !== JSON.stringify(baseline);
+	}, [slides, settings.main?.slide]);
+	useSettingStatus("slide", isDirty ? "dirty" : "saved");
 
 	// Load from settings
 	useEffect(() => {

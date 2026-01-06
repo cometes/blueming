@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import RadioItem from "@/components/items/RadioItem";
 import { useSettingEffect } from "@/hooks/useSettingEffect";
+import { useSettingStatus } from "@/hooks/useSettingStatus";
 
 export default function EffectSettingClient() {
 	const {
@@ -15,9 +16,11 @@ export default function EffectSettingClient() {
 		updateEffectSetting,
 		handleReset,
 		handleSave,
+		isDirty,
 	} = useSettingEffect();
 
 	const [showResetConfirm, setShowResetConfirm] = useState(false);
+	useSettingStatus("effect", isDirty ? "dirty" : "saved");
 
 	const confirmReset = () => {
 		handleReset();

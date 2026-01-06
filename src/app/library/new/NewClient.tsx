@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useMoveToPage } from "@/hooks/useMoveToPage";
+import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,10 @@ import { extensions } from "@/components/editor/TiptapEditor";
 import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
 import CreateModal, { CreateMetaValue } from "@/components/modal/createModal";
 import { createLibraryPost } from "@/queries/set/createLibrary";
+import { updateLibraryPost } from "@/queries/set/updateLibrary";
 import { toast } from "sonner";
+import { useAdmin } from "@/hooks/auth/UseAdmin";
+import { useAuthStore } from "@/store/auth/store";
 
 interface SeriesItem {
 	id: string;
@@ -27,13 +31,32 @@ interface TagItem {
 interface LibraryNewClientProps {
 	seriesData: SeriesItem[];
 	tagsData: TagItem[];
+	initialData?: {
+		id: string;
+		title: string;
+		subtitle?: string;
+		content: string;
+		slug?: string | null;
+		summary?: string;
+		tags?: string[];
+		series?: string;
+		allow?: "all" | "password" | "secret";
+		password?: string | null;
+		thumbnail?: string;
+	};
+	mode?: "create" | "edit";
 }
 
 export default function LibararyNewClient({
 	seriesData = [],
 	tagsData = [],
+	initialData,
+	mode = "create",
 }: LibraryNewClientProps) {
 	const { onClickMoveToPage } = useMoveToPage();
+	const router = useRouter();
+	const { isAdmin } = useAdmin();
+	const isAuthLoading = useAuthStore((state) => state.isLoading);
 	const [subOpen, setSubOpen] = React.useState(false);
 	const [title, setTitle] = React.useState("");
 	const [subtitle, setSubtitle] = React.useState("");
@@ -49,9 +72,18 @@ export default function LibararyNewClient({
 		thumbnail: "",
 	});
 
+	const initialContent = React.useMemo(() => {
+		if (!initialData?.content) return "";
+		try {
+			return JSON.parse(initialData.content);
+		} catch {
+			return "";
+		}
+	}, [initialData?.content]);
+
 	const editor = useEditor({
 		extensions: extensions,
-		content: "",
+		content: initialContent,
 		immediatelyRender: false,
 		editorProps: {
 			attributes: {
@@ -59,6 +91,35 @@ export default function LibararyNewClient({
 			},
 		},
 	});
+
+	React.useEffect(() => {
+		if (mode !== "edit" || isAuthLoading) return;
+		if (!isAdmin) {
+			toast.error("권한이 없습니다.");
+			router.push("/library");
+			router.refresh();
+		}
+	}, [mode, isAdmin, isAuthLoading, router]);
+
+	if (mode === "edit" && !isAuthLoading && !isAdmin) {
+		return null;
+	}
+
+	React.useEffect(() => {
+		if (!initialData) return;
+
+		setTitle(initialData.title || "");
+		setSubtitle(initialData.subtitle || "");
+		setMetaValue({
+			tags: initialData.tags ?? [],
+			series: initialData.series ?? "",
+			slug: initialData.slug ?? "",
+			summary: initialData.summary ?? "",
+			visibility: initialData.allow ?? "all",
+			password: initialData.allow === "password" ? initialData.password ?? "" : "",
+			thumbnail: initialData.thumbnail ?? "",
+		});
+	}, [initialData]);
 
 	const handleOpenMeta = () => {
 		const plainText = editor?.getText().trim() ?? "";
@@ -106,10 +167,24 @@ export default function LibararyNewClient({
 				thumbnail: metaValue.thumbnail,
 			};
 
+			if (mode === "edit") {
+				if (!initialData?.id) {
+					toast.error("수정할 게시글을 찾지 못했습니다.");
+					return;
+				}
+				await updateLibraryPost(initialData.id, payload);
+				toast.success("게시글이 수정되었습니다.");
+				setMetaOpen(false);
+				router.push(`/library/${initialData.id}`);
+				router.refresh();
+				return;
+			}
+
 			const response = await createLibraryPost(payload);
 			toast.success("게시글이 저장되었습니다.");
 			setMetaOpen(false);
-			onClickMoveToPage(`/library/${response.postId}`)();
+			router.push(`/library/${response.postId}`);
+			router.refresh();
 		} catch (error) {
 			const message =
 				error instanceof Error ? error.message : "게시글 저장에 실패했습니다.";
@@ -128,7 +203,9 @@ export default function LibararyNewClient({
 						<Button onClick={onClickMoveToPage("/library/")}>뒤로가기</Button>
 						{/* Tiptap Toolbar */}
 						<TiptapToolbar editor={editor} />
-						<Button onClick={handleOpenMeta}>글쓰기</Button>
+						<Button onClick={handleOpenMeta}>
+							{mode === "edit" ? "수정하기" : "글쓰기"}
+						</Button>
 					</div>
 				</header>
 				{/* Body */}
