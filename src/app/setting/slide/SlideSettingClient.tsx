@@ -33,17 +33,21 @@ export default function SlideSettingClient() {
 	const [slides, setSlides] = useState<SlideData[]>([]);
 	const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 	const [showResetDialog, setShowResetDialog] = useState(false);
+	const [isSyncing, setIsSyncing] = useState(true);
 	const isDirty = useMemo(() => {
+		if (isSyncing) return false;
 		const baseline = settings.main?.slide || [];
 		return JSON.stringify(slides) !== JSON.stringify(baseline);
-	}, [slides, settings.main?.slide]);
+	}, [slides, settings.main?.slide, isSyncing]);
 	useSettingStatus("slide", isDirty ? "dirty" : "saved");
 
 	// Load from settings
 	useEffect(() => {
+		setIsSyncing(true);
 		if (settings.main?.slide) {
 			setSlides(settings.main.slide);
 		}
+		setIsSyncing(false);
 	}, [settings.main?.slide]);
 
 	// Add slide

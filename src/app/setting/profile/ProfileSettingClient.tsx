@@ -124,6 +124,8 @@ export default function ProfileSettingClient() {
 		""
 	);
 	const [thumbnail, setThumbnail] = useState("");
+	const [isSyncing, setIsSyncing] = useState(true);
+	const [editorContent, setEditorContent] = useState("<p></p>");
 
 	// Initialize Tiptap editor
 	const editor = useEditor({
@@ -135,6 +137,7 @@ export default function ProfileSettingClient() {
 			}) || extensions.find((ext) => ext.name === "placeholder"),
 		].filter(Boolean),
 		content: "<p></p>",
+		immediatelyRender: false,
 		editorProps: {
 			attributes: {
 				class: "tiptap ProseMirror focus:outline-none min-h-[88px]",
@@ -144,6 +147,7 @@ export default function ProfileSettingClient() {
 
 	// Load profile data from settings
 	useEffect(() => {
+		setIsSyncing(true);
 		if (settings.main?.profile) {
 			const profile = settings.main.profile;
 
@@ -173,13 +177,29 @@ export default function ProfileSettingClient() {
 			// Set editor content
 			if (editor && introductionHTML) {
 				editor.commands.setContent(introductionHTML);
+				setEditorContent(introductionHTML);
 			}
 		}
+		setIsSyncing(false);
 	}, [settings.main?.profile, editor]);
 
+	useEffect(() => {
+		if (!editor) return;
+		const updateContent = () => {
+			setEditorContent(editor.getHTML());
+		};
+		updateContent();
+		editor.on("blur", updateContent);
+		return () => {
+			editor.off("blur", updateContent);
+		};
+	}, [editor]);
+
 	const isDirty = useMemo(() => {
+		if (isSyncing) return false;
+		const normalizeContent = (html?: string) => (html || "<p></p>").trim();
 		const baseline = settings.main?.profile;
-		const intro = editor?.getHTML() || "<p></p>";
+		const intro = editorContent || "<p></p>";
 
 		if (!baseline) {
 			return (
@@ -191,14 +211,30 @@ export default function ProfileSettingClient() {
 			);
 		}
 
+		let baselineIntro = "<p></p>";
+		if (baseline?.introduction) {
+			if (isSlateFormat(baseline.introduction)) {
+				try {
+					const parsed = JSON.parse(baseline.introduction);
+					if (Array.isArray(parsed)) {
+						baselineIntro = convertSlateToHTML(parsed);
+					}
+				} catch {
+					baselineIntro = baseline.introduction;
+				}
+			} else {
+				baselineIntro = baseline.introduction;
+			}
+		}
+
 		return (
-			profileData.nickname !== baseline.nickname ||
-			profileData.etc !== baseline.etc ||
-			profileData.headerImage !== baseline.headerImage ||
-			profileData.profileImage !== baseline.profileImage ||
-			intro !== baseline.introduction
+			profileData.nickname !== (baseline.nickname || "") ||
+			profileData.etc !== (baseline.etc || "") ||
+			profileData.headerImage !== (baseline.headerImage || "") ||
+			profileData.profileImage !== (baseline.profileImage || "") ||
+			normalizeContent(intro) !== normalizeContent(baselineIntro)
 		);
-	}, [profileData, editor, settings.main?.profile]);
+	}, [profileData, editorContent, settings.main?.profile, isSyncing]);
 
 	useSettingStatus("profile", isDirty ? "dirty" : "saved");
 

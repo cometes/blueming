@@ -39,6 +39,7 @@ export const useSettingMenu = () => {
 		{ label: "아카이브", value: "아카이브" },
 		{ label: "갤러리", value: "갤러리" },
 		{ label: "스레드", value: "스레드" },
+		{ label: "방명록", value: "방명록" },
 		{ label: "설정", value: "설정" },
 	];
 
@@ -54,6 +55,7 @@ export const useSettingMenu = () => {
 
 	const [currentMenuList, setCurrentMenuList] = useState<MenuItem[]>([]);
 	const [menuDesign, setMenuDesign] = useState<MenuDesign>(defaultMenuDesign);
+	const [isSyncing, setIsSyncing] = useState(true);
 	const baselineMenuDesign = useMemo(
 		() => ({
 			...defaultMenuDesign,
@@ -66,14 +68,25 @@ export const useSettingMenu = () => {
 		[menuData?.menus]
 	);
 	const isDirty = useMemo(
-		() =>
-			JSON.stringify(menuDesign) !== JSON.stringify(baselineMenuDesign) ||
-			JSON.stringify(currentMenuList) !== JSON.stringify(baselineMenuList),
-		[menuDesign, baselineMenuDesign, currentMenuList, baselineMenuList]
+		() => {
+			if (isSyncing) return false;
+			return (
+				JSON.stringify(menuDesign) !== JSON.stringify(baselineMenuDesign) ||
+				JSON.stringify(currentMenuList) !== JSON.stringify(baselineMenuList)
+			);
+		},
+		[
+			menuDesign,
+			baselineMenuDesign,
+			currentMenuList,
+			baselineMenuList,
+			isSyncing,
+		]
 	);
 
 	// Load initial data
 	useEffect(() => {
+		setIsSyncing(true);
 		if (menuData) {
 			if (menuData.menus && Array.isArray(menuData.menus)) {
 				setCurrentMenuList(menuData.menus);
@@ -85,6 +98,7 @@ export const useSettingMenu = () => {
 				});
 			}
 		}
+		setIsSyncing(false);
 	}, [menuData]);
 
 	// Form for adding/editing menu items
