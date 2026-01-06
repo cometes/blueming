@@ -387,9 +387,9 @@ export default function CustomLayoutClient() {
 			updateMain({ customLayout: layoutData });
 			layoutChannelRef.current?.postMessage(layoutData);
 
-			toast.success("레이아웃이 성공적으로 저장되었습니다.");
+			toast.success("저장되었습니다.");
 		} catch {
-			toast.error("레이아웃 저장 중 오류가 발생했습니다.");
+			toast.error("저장에 실패했습니다.");
 		}
 	}, [
 		desktopLayout,
@@ -584,7 +584,9 @@ export default function CustomLayoutClient() {
 				>
 					초기화하기
 				</Button>
-				<Button onClick={handleSaveLayout}>저장하기</Button>
+				<Button onClick={handleSaveLayout} disabled={!isDirty}>
+					저장하기
+				</Button>
 			</div>
 
 			<Dialog open={showClearDialog} onOpenChange={setShowClearDialog}>

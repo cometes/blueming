@@ -29,6 +29,7 @@ const MAX_DDAY = 8;
 export default function DdaySettingClient() {
 	const settings = useSettings();
 	const refreshSettings = settings.refreshSettings;
+	const updateMain = settings.updateMain;
 	const [ddayList, setDdayList] = useState<DdayData[]>([]);
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [showResetDialog, setShowResetDialog] = useState(false);
@@ -111,24 +112,26 @@ export default function DdaySettingClient() {
 
 			try {
 				await setSettingsMainDday(ddayList);
+				updateMain?.({ dday: ddayList });
 				await refreshSettings?.({ broadcast: true });
 
 				const channel = new BroadcastChannel("ddayUpdated");
 				channel.postMessage({ dday: ddayList, timestamp: Date.now() });
 				channel.close();
 
-				toast.success("성공적으로 디데이를 저장했습니다.");
+				toast.success("저장되었습니다.");
 			} catch {
-				toast.error("디데이를 저장하지 못했습니다.");
+				toast.error("저장에 실패했습니다.");
 			}
 		},
-		[ddayList, refreshSettings]
+		[ddayList, refreshSettings, updateMain]
 	);
 
 	// Reset
 	const handleReset = useCallback(async () => {
 		try {
 			await setSettingsMainDday([]);
+			updateMain?.({ dday: [] });
 			await refreshSettings?.({ broadcast: true });
 			setDdayList([]);
 
@@ -141,7 +144,7 @@ export default function DdaySettingClient() {
 		} catch {
 			toast.error("디데이 초기화에 실패했습니다.");
 		}
-	}, [refreshSettings]);
+	}, [refreshSettings, updateMain]);
 
 	return (
 		<>
@@ -208,7 +211,9 @@ export default function DdaySettingClient() {
 					>
 						초기화하기
 					</Button>
-					<Button type="submit">저장하기</Button>
+					<Button type="submit" disabled={!isDirty}>
+						저장하기
+					</Button>
 				</div>
 			</form>
 

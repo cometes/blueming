@@ -13,6 +13,7 @@ interface ProvidersProps {
 	initialSettings: {
 		general?: Record<string, unknown>;
 		main?: Record<string, unknown>;
+		library?: Record<string, unknown>;
 	} | null;
 }
 

@@ -7,6 +7,7 @@ import { SettingsContext } from "@/contexts/SettingsContext";
 export function SettingsProvider({ children, initialSettings }) {
 	const [general, setGeneral] = useState(initialSettings?.general || {});
 	const [main, setMain] = useState(initialSettings?.main || {});
+	const [library, setLibrary] = useState(initialSettings?.library || {});
 	const [loading] = useState(!initialSettings);
 	const channelRef = useRef<BroadcastChannel | null>(null);
 	const clientIdRef = useRef(
@@ -29,6 +30,13 @@ export function SettingsProvider({ children, initialSettings }) {
 		}));
 	};
 
+	const updateLibrary = (newSettings) => {
+		setLibrary((prev) => ({
+			...prev,
+			...newSettings,
+		}));
+	};
+
 	const refreshSettings = useCallback(
 		async (options?: { broadcast?: boolean }) => {
 			try {
@@ -46,6 +54,7 @@ export function SettingsProvider({ children, initialSettings }) {
 				const data = await res.json();
 				setGeneral(data?.general || {});
 				setMain(data?.main || {});
+				setLibrary(data?.library || {});
 
 				if (options?.broadcast && channelRef.current) {
 					channelRef.current.postMessage({
@@ -54,8 +63,8 @@ export function SettingsProvider({ children, initialSettings }) {
 					});
 				}
 			} catch {
-			}
-		},
+		}
+	},
 		[]
 	);
 
@@ -78,12 +87,14 @@ export function SettingsProvider({ children, initialSettings }) {
 		() => ({
 			general,
 			main,
+			library,
 			updateGeneral,
 			updateMain,
+			updateLibrary,
 			refreshSettings,
 			loading,
 		}),
-		[general, main, loading, refreshSettings]
+		[general, main, library, loading, refreshSettings]
 	);
 
 	return (
