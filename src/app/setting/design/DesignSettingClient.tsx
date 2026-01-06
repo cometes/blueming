@@ -343,7 +343,9 @@ export default function DesignSettingClient() {
 					</Button>
 				)}
 
-				<Button type="submit">저장하기</Button>
+				<Button type="submit" disabled={!isDirty}>
+					저장하기
+				</Button>
 			</div>
 		</form>
 	);

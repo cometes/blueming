@@ -235,9 +235,9 @@ export const useSettingMenu = () => {
 			});
 			channel.close();
 
-			toast.success("메뉴 설정이 초기화되었습니다.");
+			toast.success("초기화되었습니다.");
 		} catch {
-			toast.error("메뉴 설정을 초기화하지 못했습니다.");
+			toast.error("초기화에 실패했습니다.");
 		}
 	}, [reset, updateGeneral, refreshSettings]);
 
@@ -267,9 +267,9 @@ export const useSettingMenu = () => {
 			});
 			channel.close();
 
-			toast.success("메뉴 설정이 성공적으로 저장되었습니다.");
+			toast.success("저장되었습니다.");
 		} catch {
-			toast.error("메뉴 설정을 저장하지 못했습니다.");
+			toast.error("저장에 실패했습니다.");
 		}
 	}, [menuDesign, currentMenuList, updateGeneral, refreshSettings]);
 

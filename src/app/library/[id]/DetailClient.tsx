@@ -27,11 +27,11 @@ export default function DetailClient({ detailData }) {
 
 		try {
 			await deleteLibraryPost(detailData.id);
-			toast.success("게시글이 삭제되었습니다.");
+			toast.success("삭제되었습니다.");
 			router.push("/library");
 			router.refresh();
 		} catch {
-			toast.error("게시글 삭제에 실패했습니다.");
+			toast.error("삭제에 실패했습니다.");
 		}
 	};
 

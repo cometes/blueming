@@ -191,10 +191,10 @@ export const useSettingEffect = () => {
 			});
 			channel.close();
 
-			toast.success("이펙트 설정이 초기화되었습니다.");
+			toast.success("초기화되었습니다.");
 			initialEffectRef.current = defaultEffectSetting;
 		} catch {
-			toast.error("이펙트 설정을 초기화하지 못했습니다.");
+			toast.error("초기화에 실패했습니다.");
 		}
 	}, [general, updateGeneral, refreshSettings]);
 
@@ -222,11 +222,11 @@ export const useSettingEffect = () => {
 			});
 			channel.close();
 
-			toast.success("이펙트 설정이 성공적으로 저장되었습니다.");
+			toast.success("저장되었습니다.");
 			initialEffectRef.current = effectSetting;
 			isDirtyRef.current = false;
 		} catch {
-			toast.error("이펙트 설정을 저장하지 못했습니다.");
+			toast.error("저장에 실패했습니다.");
 		}
 	}, [effectSetting, general, updateGeneral, refreshSettings]);
 

@@ -87,7 +87,7 @@ const calculateRatio = (width: number, height: number): Ratio => {
 };
 
 export default function NoticeSettingClient() {
-	const { main, refreshSettings } = useSettings();
+	const { main, refreshSettings, updateMain } = useSettings();
 	const canvasRef = useRef<HTMLDivElement>(null);
 
 	// Marquee Settings State
@@ -264,6 +264,7 @@ export default function NoticeSettingClient() {
 			};
 
 			await setSettingsNotice(noticeData);
+			updateMain?.({ notice: noticeData });
 			await refreshSettings?.({ broadcast: true });
 
 			// Broadcast update
@@ -271,7 +272,7 @@ export default function NoticeSettingClient() {
 			channel.postMessage({ content: noticeContent, editorDimensions });
 			channel.close();
 
-			toast.success("설정이 저장되었습니다!");
+			toast.success("저장되었습니다.");
 		} catch {
 			toast.error("저장에 실패했습니다.");
 		}
@@ -284,6 +285,7 @@ export default function NoticeSettingClient() {
 		backgroundColor,
 		editor,
 		refreshSettings,
+		updateMain,
 	]);
 
 	// Reset handler
@@ -303,6 +305,7 @@ export default function NoticeSettingClient() {
 			};
 
 			await setSettingsNotice(resetData);
+			updateMain?.({ notice: resetData });
 			await refreshSettings?.({ broadcast: true });
 
 			// Reset state
@@ -327,7 +330,7 @@ export default function NoticeSettingClient() {
 		} catch {
 			toast.error("초기화에 실패했습니다.");
 		}
-	}, [editor, refreshSettings]);
+	}, [editor, refreshSettings, updateMain]);
 
 	return (
 		<form
@@ -510,7 +513,9 @@ export default function NoticeSettingClient() {
 				>
 					초기화하기
 				</Button>
-				<Button type="submit">저장하기</Button>
+				<Button type="submit" disabled={!isDirty}>
+					저장하기
+				</Button>
 			</div>
 
 			{/* Reset Confirmation Dialog */}

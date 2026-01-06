@@ -6,11 +6,17 @@ import LibraryClient from "./LibraryClient";
 
 export default async function LibararyListPage() {
 	try {
-		const { data: listData } = await fetchLibraryList();
+		const { data: listResponse } = await fetchLibraryList();
 		const { data: seriesData } = await fetchLibrarySeries();
 
-		return <LibraryClient listData={listData} seriesData={seriesData} />;
+		return (
+			<LibraryClient
+				listData={listResponse?.items ?? []}
+				listTotal={listResponse?.total ?? 0}
+				seriesData={seriesData}
+			/>
+		);
 	} catch {
-		return <LibraryClient listData={[]} seriesData={[]} />;
+		return <LibraryClient listData={[]} listTotal={0} seriesData={[]} />;
 	}
 }

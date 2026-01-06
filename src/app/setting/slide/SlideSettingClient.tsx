@@ -29,6 +29,7 @@ const MAX_SLIDES = 8;
 export default function SlideSettingClient() {
 	const settings = useSettings();
 	const refreshSettings = settings.refreshSettings;
+	const updateMain = settings.updateMain;
 	const [slides, setSlides] = useState<SlideData[]>([]);
 	const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 	const [showResetDialog, setShowResetDialog] = useState(false);
@@ -116,6 +117,7 @@ export default function SlideSettingClient() {
 
 			try {
 				await setSettingsMainSlide(slides);
+				updateMain?.({ slide: slides });
 				await refreshSettings?.({ broadcast: true });
 
 				// Broadcast
@@ -123,18 +125,19 @@ export default function SlideSettingClient() {
 				channel.postMessage({ slide: slides, timestamp: Date.now() });
 				channel.close();
 
-				toast.success("성공적으로 슬라이드 배너를 저장했습니다.");
+				toast.success("저장되었습니다.");
 			} catch {
-				toast.error("슬라이드 배너를 저장하지 못했습니다.");
+				toast.error("저장에 실패했습니다.");
 			}
 		},
-		[slides, refreshSettings]
+		[slides, refreshSettings, updateMain]
 	);
 
 	// Reset
 	const handleReset = useCallback(async () => {
 		try {
 			await setSettingsMainSlide([]);
+			updateMain?.({ slide: [] });
 			await refreshSettings?.({ broadcast: true });
 			setSlides([]);
 
@@ -148,7 +151,7 @@ export default function SlideSettingClient() {
 		} catch {
 			toast.error("슬라이드 배너 초기화에 실패했습니다.");
 		}
-	}, [refreshSettings]);
+	}, [refreshSettings, updateMain]);
 
 	return (
 		<>
@@ -220,7 +223,9 @@ export default function SlideSettingClient() {
 					>
 						초기화하기
 					</Button>
-					<Button type="submit">저장하기</Button>
+					<Button type="submit" disabled={!isDirty}>
+						저장하기
+					</Button>
 				</div>
 			</form>
 

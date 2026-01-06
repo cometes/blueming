@@ -214,6 +214,13 @@ interface MainSettings {
 	profile?: Profile;
 }
 
+interface LibrarySettings {
+	layoutType: "list" | "listWithImage";
+	postsPerPage: number;
+	postsPerRow: number;
+	writePermission: "admin" | "member";
+}
+
 // Root Settings Context
 interface GeneralSettings {
 	theme?: ThemeItem[];
@@ -230,10 +237,12 @@ interface SettingsContextType {
 		design: Design;
 	};
 	main?: MainSettings;
+	library?: LibrarySettings;
 	updateGeneral?: (general: Partial<GeneralSettings>) => void;
 	updateDesign?: (design: Design) => void;
 	updateMenu?: (menu: Menu) => void;
 	updateMain?: (main: Partial<MainSettings>) => void;
+	updateLibrary?: (library: Partial<LibrarySettings>) => void;
 	refreshSettings?: (options?: { broadcast?: boolean }) => Promise<void>;
 }
 
@@ -256,6 +265,7 @@ export const useSettings = (): SettingsContextType => {
 export type {
 	SettingsContextType,
 	MainSettings,
+	LibrarySettings,
 	CustomLayout,
 	LayoutItem,
 	WidgetItem,

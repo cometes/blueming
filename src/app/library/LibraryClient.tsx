@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ItemCard from "@/components/items/Card";
 import ItemGallery from "@/components/items/Gallery";
-import { Plus, Search, Settings } from "lucide-react";
+import { Plus, Search, Settings, X, ArrowUpDown } from "lucide-react";
 import AdminOnly from "@/components/common/AdminOnly";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,10 @@ import { useMoveToPage } from "@/hooks/useMoveToPage";
 import ItemListWithImage from "@/components/items/ListWithImage";
 import ItemList from "@/components/items/List";
 import LibrarySettingsDialog from "@/components/modal/LibrarySettingsDialog";
+import { setSettingsLibrary } from "@/queries/set/setSettingsLibrary";
+import { useSettings } from "@/contexts/SettingsContext";
+import { toast } from "sonner";
+import { fetchLibraryList, fetchLibraryTags } from "@/queries/fetch/fetchLibrary";
 
 interface LibraryItem {
 	id: string;
@@ -33,26 +37,70 @@ interface LibraryItem {
 
 interface LibraryClientProps {
 	listData: LibraryItem[];
+	listTotal: number;
 	seriesData: LibraryItem[];
 }
 
 export default function LibraryClient({
 	listData,
+	listTotal,
 	seriesData,
 }: LibraryClientProps) {
+	const { library, updateLibrary, refreshSettings } = useSettings();
 	const [isSeriesOn, setIsSeriesOn] = useState(false);
 	const [isCardOn, setIsCardOn] = useState(false);
 	const [segmentedValue, setSegmentedValue] = useState("row");
 	const { onClickMoveToPage } = useMoveToPage();
+	const [searchQuery, setSearchQuery] = useState("");
+	const [appliedQuery, setAppliedQuery] = useState("");
+	const [activeTag, setActiveTag] = useState<string>("전체");
+	const [sortOrder, setSortOrder] = useState<"latest" | "oldest" | "title">(
+		"latest"
+	);
+	const [listPage, setListPage] = useState(1);
+	const [seriesPage, setSeriesPage] = useState(1);
+	const [listItems, setListItems] = useState<LibraryItem[]>(listData);
+	const [listTotalCount, setListTotalCount] = useState(listTotal);
+	const [tagOptions, setTagOptions] = useState<string[]>([]);
+	const [isListReady, setIsListReady] = useState(true);
+	const setActivePage = (page: number) => {
+		if (isSeriesOn) {
+			setSeriesPage(page);
+		} else {
+			setListPage(page);
+		}
+	};
+
+	const defaultLibrarySettings = useMemo(
+		() => ({
+			layoutType: "listWithImage" as const,
+			postsPerPage: 10,
+			postsPerRow: 3,
+			writePermission: "admin" as const,
+		}),
+		[]
+	);
+
+	const resolvedLibrarySettings = useMemo(
+		() => ({
+			...defaultLibrarySettings,
+			...(library || {}),
+		}),
+		[defaultLibrarySettings, library]
+	);
 
 	// 페이지 설정 상태
 	const [layoutType, setLayoutType] = useState<"list" | "listWithImage">(
-		"listWithImage"
+		resolvedLibrarySettings.layoutType
 	);
-	const [postsPerPage, setPostsPerPage] = useState(10);
-	const [postsPerRow, setPostsPerRow] = useState(3);
+	const [postsPerPage, setPostsPerPage] = useState(
+		resolvedLibrarySettings.postsPerPage
+	);
+	const [postsPerRow, setPostsPerRow] = useState(
+		resolvedLibrarySettings.postsPerRow
+	);
 	const [writePermission, setWritePermission] = useState<"admin" | "member">(
-		"admin"
+		resolvedLibrarySettings.writePermission
 	);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -68,10 +116,6 @@ export default function LibraryClient({
 		const savedIsSeriesOn = localStorage.getItem("isSeriesOn");
 		const savedIsCardOn = localStorage.getItem("isCardOn");
 		const savedSegmentedValue = localStorage.getItem("segmentedValue");
-		const savedLayoutType = localStorage.getItem("layoutType");
-		const savedPostsPerPage = localStorage.getItem("postsPerPage");
-		const savedPostsPerRow = localStorage.getItem("postsPerRow");
-		const savedWritePermission = localStorage.getItem("writePermission");
 
 		if (savedIsSeriesOn !== null) {
 			setIsSeriesOn(savedIsSeriesOn === "true");
@@ -84,27 +128,6 @@ export default function LibraryClient({
 		} else if (savedIsCardOn === "true") {
 			setSegmentedValue("gallery");
 		}
-
-		if (savedLayoutType !== null) {
-			const type = savedLayoutType as "list" | "listWithImage";
-			setLayoutType(type);
-			setTempLayoutType(type);
-		}
-		if (savedPostsPerPage !== null) {
-			const count = parseInt(savedPostsPerPage);
-			setPostsPerPage(count);
-			setTempPostsPerPage(count);
-		}
-		if (savedPostsPerRow !== null) {
-			const count = parseInt(savedPostsPerRow);
-			setPostsPerRow(count);
-			setTempPostsPerRow(count);
-		}
-		if (savedWritePermission !== null) {
-			const permission = savedWritePermission as "admin" | "member";
-			setWritePermission(permission);
-			setTempWritePermission(permission);
-		}
 	}, []);
 
 	// 상태 변경 시 로컬 스토리지에 저장
@@ -112,19 +135,18 @@ export default function LibraryClient({
 		localStorage.setItem("isSeriesOn", isSeriesOn.toString());
 		localStorage.setItem("isCardOn", isCardOn.toString());
 		localStorage.setItem("segmentedValue", segmentedValue);
-		localStorage.setItem("layoutType", layoutType);
-		localStorage.setItem("postsPerPage", postsPerPage.toString());
-		localStorage.setItem("postsPerRow", postsPerRow.toString());
-		localStorage.setItem("writePermission", writePermission);
 	}, [
 		isSeriesOn,
 		isCardOn,
 		segmentedValue,
-		layoutType,
-		postsPerPage,
-		postsPerRow,
-		writePermission,
 	]);
+
+	useEffect(() => {
+		setLayoutType(resolvedLibrarySettings.layoutType);
+		setPostsPerPage(resolvedLibrarySettings.postsPerPage);
+		setPostsPerRow(resolvedLibrarySettings.postsPerRow);
+		setWritePermission(resolvedLibrarySettings.writePermission);
+	}, [resolvedLibrarySettings]);
 
 	// Dialog가 열릴 때 현재 설정값으로 임시 상태 초기화
 	useEffect(() => {
@@ -137,13 +159,146 @@ export default function LibraryClient({
 	}, [isDialogOpen, layoutType, postsPerPage, postsPerRow, writePermission]);
 
 	// 설정 저장 핸들러
-	const handleSaveSettings = () => {
-		setLayoutType(tempLayoutType);
-		setPostsPerPage(tempPostsPerPage);
-		setPostsPerRow(tempPostsPerRow);
-		setWritePermission(tempWritePermission);
-		setIsDialogOpen(false);
+	const handleSaveSettings = async () => {
+		try {
+			const payload = {
+				layoutType: tempLayoutType,
+				postsPerPage: tempPostsPerPage,
+				postsPerRow: tempPostsPerRow,
+				writePermission: tempWritePermission,
+			};
+			const response = await setSettingsLibrary(payload);
+			setLayoutType(response.library.layoutType);
+			setPostsPerPage(response.library.postsPerPage);
+			setPostsPerRow(response.library.postsPerRow);
+			setWritePermission(response.library.writePermission);
+			updateLibrary?.(response.library);
+			await refreshSettings?.({ broadcast: true });
+			setIsDialogOpen(false);
+			toast.success("저장되었습니다.");
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : "저장에 실패했습니다.";
+			toast.error(message);
+		}
 	};
+
+	useEffect(() => {
+		setListItems(listData);
+		setListTotalCount(listTotal);
+		setIsListReady(true);
+	}, [listData, listTotal]);
+
+	useEffect(() => {
+		const loadTags = async () => {
+			try {
+				const { data } = await fetchLibraryTags();
+				if (Array.isArray(data)) {
+					setTagOptions(data);
+				}
+			} catch {
+				setTagOptions([]);
+			}
+		};
+		loadTags();
+	}, []);
+
+	const filteredSeriesData = useMemo(() => {
+		const sorted = [...seriesData].sort((a, b) => {
+			if (sortOrder === "title") {
+				return a.title.localeCompare(b.title);
+			}
+			const aTime = new Date(a.createdAt).getTime();
+			const bTime = new Date(b.createdAt).getTime();
+			return sortOrder === "latest" ? bTime - aTime : aTime - bTime;
+		});
+		return sorted;
+	}, [seriesData, sortOrder]);
+
+	const totalItems = isSeriesOn ? filteredSeriesData.length : listTotalCount;
+	const totalPages = Math.max(1, Math.ceil(totalItems / postsPerPage));
+	const activePage = isSeriesOn ? seriesPage : listPage;
+	const currentPageSafe = Math.min(activePage, totalPages);
+	const startIndex = (currentPageSafe - 1) * postsPerPage;
+	const pagedListData = listItems;
+	const pagedSeriesData = filteredSeriesData.slice(
+		startIndex,
+		startIndex + postsPerPage
+	);
+
+useEffect(() => {
+	setListPage(1);
+}, [sortOrder, appliedQuery, activeTag, postsPerPage]);
+
+useEffect(() => {
+	setSeriesPage(1);
+}, [sortOrder, postsPerPage]);
+
+	useEffect(() => {
+		if (isSeriesOn) {
+			return;
+		}
+
+		const fetchPage = async () => {
+			setIsListReady(false);
+			try {
+				const { data } = await fetchLibraryList({
+					page: listPage,
+					limit: postsPerPage,
+					sort: sortOrder,
+					tag: activeTag === "전체" ? undefined : activeTag,
+					query: appliedQuery || undefined,
+				});
+				setListItems(Array.isArray(data?.items) ? data.items : []);
+				setListTotalCount(typeof data?.total === "number" ? data.total : 0);
+
+				const nextTotalPages = Math.max(
+					1,
+					Math.ceil((data?.total || 0) / postsPerPage)
+				);
+				if (listPage > nextTotalPages) {
+					setListPage(nextTotalPages);
+				}
+			} catch {
+				setListItems([]);
+				setListTotalCount(0);
+			} finally {
+				setIsListReady(true);
+			}
+		};
+
+		fetchPage();
+	}, [isSeriesOn, listPage, postsPerPage, sortOrder, activeTag, appliedQuery]);
+
+	useEffect(() => {
+		if (isSeriesOn) {
+			return;
+		}
+
+		if (currentPageSafe >= totalPages) {
+			return;
+		}
+
+		const nextPage = currentPageSafe + 1;
+		fetchLibraryList(
+			{
+				page: nextPage,
+				limit: postsPerPage,
+				sort: sortOrder,
+				tag: activeTag === "전체" ? undefined : activeTag,
+				query: appliedQuery || undefined,
+			},
+			{ useCache: true, staleTimeMs: 60_000 }
+		);
+	}, [
+		isSeriesOn,
+		currentPageSafe,
+		totalPages,
+		postsPerPage,
+		sortOrder,
+		activeTag,
+		appliedQuery,
+	]);
 
 	return (
 		<>
@@ -188,7 +343,27 @@ export default function LibraryClient({
 					<div className="flex items-center w-fit h-full">
 						<Input
 							className="border-card bg-card backdrop-blur-card rounded-card text-main-text"
-							endIcon={Search}
+							endIcon={searchQuery ? X : Search}
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							placeholder="제목, 태그로 검색"
+							onKeyDown={(e) => {
+								if (e.key === "Enter") {
+									e.preventDefault();
+									setAppliedQuery(searchQuery);
+								}
+							}}
+							onEndIconClick={
+								searchQuery
+									? () => {
+											setSearchQuery("");
+											setAppliedQuery("");
+											setActiveTag("전체");
+											setListPage(1);
+									  }
+									: undefined
+							}
+							endIconAriaLabel="검색어 지우기"
 						/>
 					</div>
 					<AdminOnly>
@@ -211,7 +386,6 @@ export default function LibraryClient({
 							}
 						/>
 					</AdminOnly>
-
 					{writePermission === "admin" ? (
 						<AdminOnly>
 							<Button
@@ -269,64 +443,156 @@ export default function LibraryClient({
 							gridTemplateColumns: `repeat(${postsPerRow}, minmax(0, 1fr))`,
 						}}
 					>
-						{seriesData?.slice(0, postsPerPage).map((el) => (
+						{pagedSeriesData.map((el) => (
 							<ItemCard data={el} key={el.id} />
 						))}
 					</div>
 				)}
 				{!isSeriesOn && (
-					<div
-						className={cn(
-							"grid mt-10",
-							isCardOn
-								? `gap-2.5 grid-cols-${postsPerRow}`
-								: "gap-4 grid-cols-1"
-						)}
-						style={
-							isCardOn
-								? { gridTemplateColumns: `repeat(${postsPerRow}, minmax(0, 1fr))` }
-								: undefined
-						}
-					>
-						{isCardOn && (
-							<>
-								{listData.slice(0, postsPerPage).map((el) => (
-									<ItemGallery data={el} key={el.id} />
-								))}
-							</>
-						)}
-						{!isCardOn && layoutType === "listWithImage" && (
-							<>
-								{listData.slice(0, postsPerPage).map((el) => (
-									<ItemListWithImage data={el} key={el.id} />
-								))}
-							</>
-						)}
-						{!isCardOn && layoutType === "list" && (
-							<>
-								{listData.slice(0, postsPerPage).map((el) => (
-									<ItemList data={el} key={el.id} />
-								))}
-							</>
-						)}
-					</div>
+					<>
+						<div className="mt-3 flex items-center justify-between">
+							<span className="text-sm text-sub-text">
+								총 {listTotalCount}개
+							</span>
+							<button
+								type="button"
+								onClick={() =>
+									setSortOrder((prev) =>
+										prev === "latest"
+											? "oldest"
+											: prev === "oldest"
+												? "title"
+												: "latest"
+									)
+								}
+								className="text-theme-primary font-medium inline-flex items-center gap-1 hover:opacity-70 transition-opacity cursor-pointer"
+							>
+								<ArrowUpDown size={14} className="text-theme-primary" />
+								{sortOrder === "latest"
+									? "최신순"
+									: sortOrder === "oldest"
+										? "오래된순"
+										: "제목순"}
+							</button>
+						</div>
+						<div className="mt-3 flex flex-col min-h-[520px]">
+							<div
+								className={cn(
+									"grid transition-opacity duration-300 ease-out",
+									isListReady ? "opacity-100" : "opacity-0",
+									isCardOn
+										? `gap-2.5 grid-cols-${postsPerRow}`
+										: "gap-4 grid-cols-1"
+								)}
+								style={
+									isCardOn
+										? {
+												gridTemplateColumns: `repeat(${postsPerRow}, minmax(0, 1fr))`,
+										  }
+										: undefined
+								}
+							>
+								{isCardOn && (
+									<>
+										{pagedListData.map((el) => (
+											<ItemGallery data={el} key={el.id} />
+										))}
+									</>
+								)}
+								{!isCardOn && layoutType === "listWithImage" && (
+									<>
+										{pagedListData.map((el) => (
+											<ItemListWithImage data={el} key={el.id} />
+										))}
+									</>
+								)}
+								{!isCardOn && layoutType === "list" && (
+									<>
+										{pagedListData.map((el) => (
+											<ItemList data={el} key={el.id} />
+										))}
+									</>
+								)}
+							</div>
+							{tagOptions.length > 0 && (
+								<div className="flex flex-wrap gap-2 mt-6 justify-center">
+									<button
+										type="button"
+										className={cn(
+											"px-3 py-1 text-xs font-medium rounded-full border",
+											activeTag === "전체"
+												? "bg-theme-primary/10 text-theme-primary border-theme-primary/20"
+												: "bg-card border-card text-sub-text hover:border-theme-primary/40"
+										)}
+										onClick={() => setActiveTag("전체")}
+									>
+										전체
+									</button>
+									{tagOptions.map((tag) => (
+										<button
+											key={tag}
+											type="button"
+											className={cn(
+												"px-3 py-1 text-xs font-medium rounded-full border",
+												activeTag === tag
+													? "bg-theme-primary/10 text-theme-primary border-theme-primary/20"
+													: "bg-card border-card text-sub-text hover:border-theme-primary/40"
+											)}
+											onClick={() => setActiveTag(tag)}
+										>
+											{tag}
+										</button>
+									))}
+								</div>
+							)}
+							{totalPages > 1 && (
+								<div className="flex justify-center mt-auto pt-7">
+									<Pagination>
+										<PaginationContent>
+											<PaginationItem>
+												<PaginationPrevious
+													href="#"
+													onClick={(e) => {
+														e.preventDefault();
+														setActivePage(Math.max(1, currentPageSafe - 1));
+													}}
+												/>
+											</PaginationItem>
+											{Array.from({ length: totalPages }).map((_, index) => {
+												const page = index + 1;
+												return (
+													<PaginationItem key={page}>
+														<PaginationLink
+															href="#"
+															isActive={page === currentPageSafe}
+															onClick={(e) => {
+																e.preventDefault();
+																setActivePage(page);
+															}}
+														>
+															{page}
+														</PaginationLink>
+													</PaginationItem>
+												);
+											})}
+											<PaginationItem>
+												<PaginationNext
+													href="#"
+													onClick={(e) => {
+														e.preventDefault();
+														setActivePage(
+															Math.min(totalPages, currentPageSafe + 1)
+														);
+													}}
+												/>
+											</PaginationItem>
+										</PaginationContent>
+									</Pagination>
+								</div>
+							)}
+						</div>
+					</>
 				)}
-				<div className="flex justify-center mt-7">
-					<Pagination>
-						<PaginationContent>
-							<PaginationItem>
-								<PaginationPrevious href="#" />
-							</PaginationItem>
-							<PaginationItem>
-								<PaginationLink href="#">1</PaginationLink>
-							</PaginationItem>
-							<PaginationItem>{/* <PaginationEllipsis /> */}</PaginationItem>
-							<PaginationItem>
-								<PaginationNext href="#" />
-							</PaginationItem>
-						</PaginationContent>
-					</Pagination>
-				</div>
 			</div>
 		</>
 	);

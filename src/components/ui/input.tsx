@@ -29,10 +29,15 @@ export interface InputProps
 	extends React.InputHTMLAttributes<HTMLInputElement> {
 	startIcon?: LucideIcon;
 	endIcon?: LucideIcon;
+	onEndIconClick?: () => void;
+	endIconAriaLabel?: string;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-	({ className, type, startIcon, endIcon, ...props }, ref) => {
+	(
+		{ className, type, startIcon, endIcon, onEndIconClick, endIconAriaLabel, ...props },
+		ref
+	) => {
 		const StartIcon = startIcon;
 		const EndIcon = endIcon;
 
@@ -59,8 +64,19 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 					}}
 				/>
 				{EndIcon && (
-					<div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-						<EndIcon className="" size={18} />
+					<div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center">
+						{onEndIconClick ? (
+							<button
+								type="button"
+								onClick={onEndIconClick}
+								aria-label={endIconAriaLabel || "Clear"}
+								className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+							>
+								<EndIcon size={18} />
+							</button>
+						) : (
+							<EndIcon size={18} />
+						)}
 					</div>
 				)}
 			</div>
