@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { DragDropContext, Droppable } from "@hello-pangea/dnd";
+import { DragDropContext, Droppable, type DropResult } from "@hello-pangea/dnd";
 import { Plus } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
@@ -82,7 +82,7 @@ export default function DdaySettingClient() {
 	}, []);
 
 	// Drag end
-	const handleDragEnd = useCallback((result: any) => {
+	const handleDragEnd = useCallback((result: DropResult) => {
 		const { destination, source } = result;
 		if (!destination || destination.index === source.index) return;
 
@@ -112,11 +112,11 @@ export default function DdaySettingClient() {
 				channel.close();
 
 				toast.success("성공적으로 디데이를 저장했습니다.");
-			} catch (error) {
+			} catch {
 				toast.error("디데이를 저장하지 못했습니다.");
 			}
 		},
-		[ddayList]
+		[ddayList, refreshSettings]
 	);
 
 	// Reset
@@ -132,10 +132,10 @@ export default function DdaySettingClient() {
 
 			toast.success("디데이 설정이 초기화되었습니다.");
 			setShowResetDialog(false);
-		} catch (error) {
+		} catch {
 			toast.error("디데이 초기화에 실패했습니다.");
 		}
-	}, []);
+	}, [refreshSettings]);
 
 	return (
 		<>

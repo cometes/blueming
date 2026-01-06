@@ -8,163 +8,12 @@ import {
 	useCallback,
 } from "react";
 import { useSettings } from "@/contexts/SettingsContext";
+import type { ThemeItem } from "@/contexts/SettingsContext";
 import { toast } from "sonner";
 import { setSettingsImport } from "@/queries/set/setSettingsImport";
-import {
-	setSettingsTheme,
-	getSettingsTheme,
-	deleteSettingsTheme,
-} from "@/queries/set/setSettingsTheme";
+import { setSettingsTheme, getSettingsTheme } from "@/queries/set/setSettingsTheme";
 
-// Theme Data Interface (forward declaration)
-interface ThemeData {
-	id: string;
-	name: string;
-	createdAt: string;
-	general: any; // 순환 참조 방지를 위해 any 사용
-	main: any;
-	exportedAt: string;
-	version: string;
-}
-
-// Complete General Settings Interface
-interface GeneralSettings {
-	menu: {
-		menus: Array<{
-			id: string;
-			uniqueId: string;
-			allow: "all" | string;
-			image: string;
-			iconImage?: string;
-			target: boolean;
-			name: string;
-			category: string;
-			url?: string;
-			subMenus?: string[];
-		}>;
-		design: {
-			fontColor: string;
-			backgroundColor: string;
-			backgroundImage: string;
-			align: "왼쪽" | "오른쪽";
-			bgType: "없음" | "단색" | "이미지";
-			textAlign: "왼쪽" | "가운데" | "오른쪽";
-			type: "텍스트형" | "이미지형";
-			logoType?: "텍스트" | "이미지" | "없음";
-			logoImage?: string;
-			logoText?: string;
-			iconBarLogoImage?: string;
-			iconBarLogoType?: "없음" | "이미지";
-			iconBarBgType?: "없음" | "단색" | "이미지";
-			iconBarBackgroundColor?: string;
-			iconBarBackgroundImage?: string;
-		};
-	};
-	design: {
-		widget: {
-			background: string;
-			borderImage: string;
-			blur: number;
-			borderRadius: number;
-			borderColor: string;
-			borderWidth: number;
-			borderStyle: "solid" | "double" | "dotted" | "dashed";
-		};
-		font: {
-			bodyFontFamily: "Pretendard" | "Chosunilbo";
-			titleFontFamily: "Pretendard" | "Chosunilbo";
-			subFontColor: string;
-			mainFontColor: string;
-		};
-		card: {
-			boxShadow: string;
-			borderRadius: number;
-			translateY: number;
-			borderWidth: number;
-			borderStyle: "solid" | "double" | "dotted" | "dashed";
-			blur: number;
-			borderActiveColor: string;
-			borderColor: string;
-			background: string;
-			type: "라이트" | "다크" | "커스텀";
-		};
-		background: {
-			image: string;
-			color: string;
-			type: "기본" | "단색" | "그라데이션" | "이미지";
-		};
-	};
-	general: {
-		desc: string;
-		logoImage: string;
-		favicon: string;
-		shareImage: string;
-		secondaryColor: string;
-		primaryColor: string;
-		logoType: "없음" | "이미지";
-		title: string;
-	};
-	theme?: ThemeData[];
-}
-
-// Complete Main Settings Interface
-interface MainSettings {
-	customLayout: {
-		layout: Array<{
-			w: number;
-			h: number;
-			x: number;
-			y: number;
-			i: string;
-			maxW: number;
-			maxH: number;
-			moved: boolean;
-			static: boolean;
-		}>;
-		mobileLayout?: Array<{
-			w: number;
-			h: number;
-			x: number;
-			y: number;
-			i: string;
-			maxW: number;
-			maxH: number;
-			moved: boolean;
-			static: boolean;
-		}>;
-		desktopWidgets: Array<{
-			id: string;
-			type:
-				| "로고"
-				| "슬라이드 배너"
-				| "띠 배너"
-				| "공지"
-				| "디데이";
-			color: string;
-		}>;
-		mobileWidgets: Array<{
-			id: string;
-			type:
-				| "로고"
-				| "슬라이드 배너"
-				| "띠 배너"
-				| "공지"
-				| "디데이";
-			color: string;
-		}>;
-		desktopUsedColors: string[];
-		mobileUsedColors: string[];
-	};
-	slide: {
-		slides: Array<{
-			id: string;
-			uniqueId: string;
-			url: string;
-			image: string;
-			target: boolean;
-		}>;
-	};
-}
+type ThemeData = ThemeItem;
 
 interface ThemesContextType {
 	themes: ThemeData[];
@@ -212,7 +61,7 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 					setThemes([]);
 				}
 			}
-		} catch (err) {
+		} catch {
 			toast.error("저장된 테마를 불러오는 중 오류가 발생했습니다.");
 			setThemes([]);
 		} finally {
@@ -225,7 +74,7 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 		loadThemes();
 	}, [loadThemes]);
 
-	const createTheme = async (name: string): Promise<boolean> => {
+	const createTheme = useCallback(async (name: string): Promise<boolean> => {
 		try {
 			// 입력 유효성 검사
 			if (!name || name.trim().length === 0) {
@@ -254,7 +103,8 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 
 			// 깊은 복사로 현재 설정 저장 (theme 속성 제외하여 circular reference 방지)
 			const currentTime = new Date().toISOString();
-			const { theme, ...generalWithoutTheme } = general;
+			const generalWithoutTheme = { ...general };
+			delete generalWithoutTheme.theme;
 			const newTheme: ThemeData = {
 				id: Date.now().toString(),
 				name: name.trim(),
@@ -289,15 +139,15 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 			await refreshSettings?.({ broadcast: true });
 			toast.success(`'${name}' 테마가 성공적으로 저장되었습니다.`);
 			return true;
-		} catch (err) {
+		} catch {
 			toast.error("테마 생성 중 오류가 발생했습니다.");
 			return false;
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, [themes, general, main, updateGeneral, refreshSettings]);
 
-	const removeTheme = async (id: string): Promise<boolean> => {
+	const removeTheme = useCallback(async (id: string): Promise<boolean> => {
 		try {
 			const themeToRemove = themes.find((t) => t.id === id);
 			if (!themeToRemove) {
@@ -331,15 +181,15 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 			await refreshSettings?.({ broadcast: true });
 			toast.success(`'${themeToRemove.name}' 테마가 삭제되었습니다.`);
 			return true;
-		} catch (err) {
+		} catch {
 			toast.error("테마 삭제 중 오류가 발생했습니다.");
 			return false;
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, [themes, general, main, updateGeneral, refreshSettings]);
 
-	const activateTheme = async (id: string): Promise<boolean> => {
+	const activateTheme = useCallback(async (id: string): Promise<boolean> => {
 		try {
 			const themeToActivate = themes.find((t) => t.id === id);
 			if (!themeToActivate) {
@@ -390,23 +240,23 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 				toast.success(
 					`'${themeToActivate.name}' 테마가 적용되고 저장되었습니다.`
 				);
-			} catch (serverError) {
+			} catch {
 				toast.error(
 					`'${themeToActivate.name}' 테마가 적용되었지만 서버 저장에 실패했습니다. 새로고침 시 이전 설정으로 돌아갈 수 있습니다.`
 				);
 			}
 
 			return true;
-		} catch (err) {
+		} catch {
 			toast.error("테마 적용 중 오류가 발생했습니다.");
 			return false;
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, [themes, updateGeneral, updateMain, refreshSettings]);
 
 	// 테마 내보내기 기능
-	const exportTheme = (id: string): string | null => {
+	const exportTheme = useCallback((id: string): string | null => {
 		try {
 			const themeToExport = themes.find((t) => t.id === id);
 			if (!themeToExport) {
@@ -421,14 +271,14 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 			};
 
 			return JSON.stringify(exportData, null, 2);
-		} catch (err) {
+		} catch {
 			toast.error("테마 내보내기 중 오류가 발생했습니다.");
 			return null;
 		}
-	};
+	}, [themes]);
 
 	// 테마 가져오기 기능
-	const importTheme = async (themeJson: string): Promise<boolean> => {
+	const importTheme = useCallback(async (themeJson: string): Promise<boolean> => {
 		try {
 			const importedTheme = JSON.parse(themeJson);
 
@@ -480,13 +330,13 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 			await refreshSettings?.({ broadcast: true });
 			toast.success(`'${newTheme.name}' 테마를 가져왔습니다.`);
 			return true;
-		} catch (err) {
+		} catch {
 			toast.error("유효하지 않은 테마 파일입니다.");
 			return false;
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, [themes, general, main, updateGeneral, refreshSettings]);
 
 	const value = useMemo(
 		() => ({

@@ -1,6 +1,9 @@
 "use client";
 
 import React from "react";
+import type { CSSProperties } from "react";
+
+type PrismStyle = CSSProperties & Record<string, string | number>;
 
 const PrismEffect = () => {
 	// Generate 30 prism elements with random properties
@@ -26,7 +29,7 @@ const PrismEffect = () => {
 				animationDirection: i % 2 === 0 ? "alternate-reverse" : "alternate",
 			};
 
-			elements.push(<div key={i} style={style as any} />);
+			elements.push(<div key={i} style={style as PrismStyle} />);
 		}
 		return elements;
 	};
@@ -153,4 +156,3 @@ const PrismEffect = () => {
 };
 
 export default PrismEffect;
-

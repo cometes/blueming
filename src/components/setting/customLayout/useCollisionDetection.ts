@@ -64,7 +64,7 @@ export const useCollisionDetection = ({
 		});
 
 		return occupied;
-	}, [columns, rows]);
+	}, []);
 
 	// Find an available position for a widget of given size
 	const findAvailablePosition = useCallback(
@@ -97,7 +97,7 @@ export const useCollisionDetection = ({
 			position.x + position.w <= columns &&
 			position.y + position.h <= rows
 		);
-	}, []);
+	}, [columns, rows]);
 
 	// Get a valid position (within bounds and no collision)
 	const getValidPosition = useCallback(

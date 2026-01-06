@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -30,10 +31,23 @@ interface SubMenu {
 	image: string;
 }
 
+type MenuTab = "posting" | "folder" | "custom";
+
+type MenuFormData = {
+	name: string;
+	category: string;
+	url: string;
+	isPublic: boolean;
+	openInNewTab: boolean;
+	subMenus: (string | SubMenu)[];
+	image: string;
+	iconImage: string;
+};
+
 interface MenuAddModalProps {
 	isModalOpen: boolean;
 	setIsModalOpen: (open: boolean) => void;
-	onAddMenu: (data: any) => void;
+	onAddMenu: (data: MenuFormData & { type: MenuTab }) => void;
 	boardArr: { label: string; value: string }[];
 	cancelModal: () => void;
 }
@@ -46,10 +60,8 @@ export default function MenuAddModal({
 	cancelModal,
 }: MenuAddModalProps) {
 	const { uploadFile } = useFileUpload();
-	const [activeTab, setActiveTab] = useState<"posting" | "folder" | "custom">(
-		"posting"
-	);
-	const [formData, setFormData] = useState({
+	const [activeTab, setActiveTab] = useState<MenuTab>("posting");
+	const [formData, setFormData] = useState<MenuFormData>({
 		name: "",
 		category: "",
 		url: "",
@@ -103,7 +115,7 @@ export default function MenuAddModal({
 			const url = await uploadFile(file);
 			setFormData({ ...formData, image: url });
 			toast.success("이미지가 업로드되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("이미지 업로드에 실패했습니다.");
 		}
 	};
@@ -117,7 +129,7 @@ export default function MenuAddModal({
 			const url = await uploadFile(file);
 			setFormData({ ...formData, iconImage: url });
 			toast.success("아이콘 이미지가 업로드되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("아이콘 이미지 업로드에 실패했습니다.");
 		}
 	};
@@ -134,7 +146,7 @@ export default function MenuAddModal({
 			});
 			setFormData({ ...formData, subMenus: updatedSubMenus });
 			toast.success("이미지가 업로드되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("이미지 업로드에 실패했습니다.");
 		}
 	};
@@ -160,7 +172,7 @@ export default function MenuAddModal({
 				</DialogHeader>
 				<Tabs
 					value={activeTab}
-					onValueChange={(v: any) => setActiveTab(v)}
+					onValueChange={(value) => setActiveTab(value as MenuTab)}
 					className="w-full"
 				>
 					<TabsList className="grid w-full grid-cols-3 mb-4 bg-card-bg border border-card rounded-card">
@@ -305,6 +317,7 @@ export default function MenuAddModal({
 															<div className="relative w-[150px] max-h-9 rounded-card bg-theme-primary/10 border border-card overflow-hidden group">
 																<img
 																	src={smImage}
+																	alt="하위 메뉴 이미지"
 																	className="w-full h-full object-contain"
 																/>
 																<Button
@@ -400,6 +413,7 @@ export default function MenuAddModal({
 									<div className="relative aspect-[22/8] w-full max-w-[280px] rounded-card border border-card overflow-hidden bg-card-bg group">
 										<img
 											src={formData.image}
+											alt="메뉴 이미지"
 											className="w-full h-full object-contain"
 										/>
 										<Button
@@ -445,6 +459,7 @@ export default function MenuAddModal({
 									<div className="relative aspect-square w-16 rounded-card border border-card overflow-hidden bg-card-bg group">
 										<img
 											src={formData.iconImage}
+											alt="아이콘 이미지"
 											className="w-full h-full object-contain"
 										/>
 										<Button

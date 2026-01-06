@@ -6,7 +6,6 @@ import { Circle } from "lucide-react";
 interface RadioItemProps {
 	onClickRadio: () => void;
 	checked: boolean;
-	defaultChecked?: boolean;
 	content: string;
 	className?: string;
 }
@@ -14,7 +13,6 @@ interface RadioItemProps {
 export default function RadioItem({
 	onClickRadio,
 	checked,
-	defaultChecked,
 	content,
 	className,
 }: RadioItemProps) {

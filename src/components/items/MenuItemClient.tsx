@@ -1,15 +1,9 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect } from "react";
+
 import { Draggable } from "@hello-pangea/dnd";
-import {
-	ChevronDown,
-	ImagePlus,
-	Trash2,
-	X,
-	GripVertical,
-	Plus,
-} from "lucide-react";
+import { ImagePlus, Trash2, X, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,7 +17,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import type { MenuItem, SubMenu } from "@/contexts/SettingsContext";
 
 interface MenuItemProps {
@@ -41,10 +34,9 @@ export default function MenuItem({
 	onUpdateMenu,
 	handleDeleteMenu,
 }: MenuItemProps) {
-	const [imageActive, setImageActive] = useState(false);
-	const { uploadFile, state: uploadState } = useFileUpload();
+	const { uploadFile } = useFileUpload();
 
-	const handleChange = (field: keyof MenuItem, value: any) => {
+	const handleChange = (field: keyof MenuItem, value: MenuItem[keyof MenuItem]) => {
 		onUpdateMenu({ [field]: value });
 	};
 
@@ -85,7 +77,7 @@ export default function MenuItem({
 			});
 			handleChange("subMenus", updatedSubMenus);
 			toast.success("이미지가 업로드되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("이미지 업로드에 실패했습니다.");
 		}
 	};
@@ -111,7 +103,7 @@ export default function MenuItem({
 			const url = await uploadFile(file);
 			handleChange("image", url);
 			toast.success("이미지가 업로드되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("이미지 업로드에 실패했습니다.");
 		}
 	};
@@ -125,7 +117,7 @@ export default function MenuItem({
 			const url = await uploadFile(file);
 			handleChange("iconImage", url);
 			toast.success("아이콘 이미지가 업로드되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("아이콘 이미지 업로드에 실패했습니다.");
 		}
 	};
@@ -275,6 +267,7 @@ export default function MenuItem({
 															<div className="relative w-full h-16 rounded border overflow-hidden">
 																<img
 																	src={smImage}
+																	alt="하위 메뉴 이미지"
 																	className="w-full h-full object-cover"
 																/>
 																<button
@@ -366,6 +359,7 @@ export default function MenuItem({
 									<div className="relative aspect-[22/8] w-full rounded-card border overflow-hidden bg-muted/10">
 										<img
 											src={menu.image}
+											alt="메뉴 이미지"
 											className="w-full h-full object-contain"
 										/>
 										<Button
@@ -404,6 +398,7 @@ export default function MenuItem({
 									<div className="relative aspect-square w-20 rounded-card border overflow-hidden bg-muted/10">
 										<img
 											src={menu.iconImage}
+											alt="아이콘 이미지"
 											className="w-full h-full object-contain"
 										/>
 										<Button

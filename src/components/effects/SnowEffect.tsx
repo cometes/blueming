@@ -3,13 +3,11 @@
 import { useCallback } from "react";
 import Particles from "react-tsparticles";
 import { loadSlim } from "tsparticles-slim";
+import type { Engine } from "tsparticles-engine";
 
 const SnowEffect = () => {
-	const particlesInit = useCallback(async (engine: any) => {
+	const particlesInit = useCallback(async (engine: Engine) => {
 		await loadSlim(engine);
-	}, []);
-
-	const particlesLoaded = useCallback(async (container: any) => {
 	}, []);
 
 	return (
@@ -28,7 +26,6 @@ const SnowEffect = () => {
 			<Particles
 				id="snow-particles"
 				init={particlesInit}
-				loaded={particlesLoaded}
 				options={{
 					background: {
 						color: {
@@ -141,4 +138,3 @@ const SnowEffect = () => {
 };
 
 export default SnowEffect;
-

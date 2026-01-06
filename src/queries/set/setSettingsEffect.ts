@@ -1,7 +1,7 @@
 import axios from "axios";
 import type { EffectSettings } from "@/contexts/SettingsContext";
 
-export interface SetSettingsEffectPayload extends EffectSettings {}
+export type SetSettingsEffectPayload = EffectSettings;
 
 export interface SetSettingsEffectResponse {
 	general: {

@@ -46,7 +46,7 @@ export function SettingsProvider({ children, initialSettings }) {
 					channel.postMessage({ timestamp: Date.now() });
 					channel.close();
 				}
-			} catch (error) {
+			} catch {
 			}
 		},
 		[]

@@ -60,7 +60,7 @@ export function insertYoutubeVideo(
         height: height || 480,
       })
       .run()
-  } catch (error) {
+  } catch {
     return false
   }
 }

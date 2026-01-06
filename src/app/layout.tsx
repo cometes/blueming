@@ -21,7 +21,7 @@ async function getSettings() {
 
 		const data = await res.json();
 		return data;
-	} catch (error) {
+	} catch {
 		return null;
 	}
 }

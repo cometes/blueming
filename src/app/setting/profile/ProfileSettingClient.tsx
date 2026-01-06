@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -149,7 +150,10 @@ export default function ProfileSettingClient() {
 			// Handle Slate format conversion
 			if (profile.introduction) {
 				if (isSlateFormat(profile.introduction)) {
-					introductionHTML = convertSlateToHTML(profile.introduction);
+					const parsed = JSON.parse(profile.introduction);
+					if (Array.isArray(parsed)) {
+						introductionHTML = convertSlateToHTML(parsed);
+					}
 				} else {
 					// Already HTML or plain text
 					introductionHTML = profile.introduction;
@@ -202,12 +206,12 @@ export default function ProfileSettingClient() {
 				channel.close();
 
 				toast.success("이미지가 업로드되었습니다.");
-			} catch (error) {
+			} catch {
 				setProfileData(profileData);
 				toast.error("이미지 업로드 저장에 실패했습니다.");
 			}
 		},
-		[currentImageField, profileData]
+		[currentImageField, profileData, refreshSettings]
 	);
 
 	const handleClearImage = useCallback(
@@ -229,12 +233,12 @@ export default function ProfileSettingClient() {
 				channel.close();
 
 				toast.success("이미지가 삭제되었습니다.");
-			} catch (error) {
+			} catch {
 				setProfileData(profileData);
 				toast.error("이미지 삭제 저장에 실패했습니다.");
 			}
 		},
-		[profileData]
+		[profileData, refreshSettings]
 	);
 
 	const handleSave = useCallback(async () => {
@@ -256,10 +260,10 @@ export default function ProfileSettingClient() {
 			channel.close();
 
 			toast.success("프로필이 저장되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("프로필 저장에 실패했습니다.");
 		}
-	}, [profileData, editor]);
+	}, [profileData, editor, refreshSettings]);
 
 	const handleReset = useCallback(async () => {
 		try {
@@ -284,10 +288,10 @@ export default function ProfileSettingClient() {
 
 			toast.success("프로필이 초기화되었습니다.");
 			setShowResetDialog(false);
-		} catch (error) {
+		} catch {
 			toast.error("프로필 초기화에 실패했습니다.");
 		}
-	}, [editor]);
+	}, [editor, refreshSettings]);
 
 	const openImageDialog = (field: ImageField) => {
 		setCurrentImageField(field);

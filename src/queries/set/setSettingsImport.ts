@@ -1,15 +1,15 @@
 import axios from "axios";
 
 export interface SetSettingsImportPayload {
-	general: any;
-	main: any;
+	general: unknown;
+	main: unknown;
 }
 
 export interface SetSettingsImportResponse {
 	success: boolean;
 	data: {
-		general: any;
-		main: any;
+		general: unknown;
+		main: unknown;
 	};
 	message?: string;
 }

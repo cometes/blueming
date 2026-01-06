@@ -133,7 +133,7 @@ export default function ThemeSettingClient() {
 		try {
 			const text = await file.text();
 			await importTheme(text);
-		} catch (err) {
+		} catch {
 		}
 
 		// Reset input

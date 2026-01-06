@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -43,6 +44,8 @@ interface MenuDesign {
 	logoType?: string;
 	logoImage?: string;
 	fontColor?: string;
+	iconBarLogoType?: string;
+	iconBarBgType?: string;
 	iconBarLogoImage?: string;
 	iconBarBackgroundColor?: string;
 	iconBarBackgroundImage?: string;

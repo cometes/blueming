@@ -14,7 +14,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
 		const { data: seriesListData } = await fetchLibrarySeriesList(series);
 
 		return <SeriesClient seriesListData={seriesListData} />;
-	} catch (error) {
+	} catch {
 		return <SeriesClient seriesListData={null} />;
 	}
 }

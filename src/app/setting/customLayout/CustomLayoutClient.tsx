@@ -33,9 +33,19 @@ interface Widget {
 	color: string;
 }
 
+interface LayoutPayloadItem {
+	i: string;
+	x: number;
+	y: number;
+	w: number;
+	h: number;
+	maxW: number;
+	maxH: number;
+}
+
 interface CustomLayoutData {
-	layout: LayoutItem[];
-	mobileLayout?: LayoutItem[];
+	layout: LayoutPayloadItem[];
+	mobileLayout?: LayoutPayloadItem[];
 	desktopWidgets: Widget[];
 	mobileWidgets: Widget[];
 	desktopUsedColors: string[];
@@ -64,6 +74,9 @@ const widgetColors = [
 	"#EDF0FF",
 ];
 
+const DESKTOP_GRID = { columns: 12, rows: 12 };
+const MOBILE_GRID = { columns: 8, rows: 12 };
+
 export default function CustomLayoutClient() {
 	const { main, updateMain, refreshSettings } = useSettings();
 	const customLayout = main?.customLayout;
@@ -83,8 +96,8 @@ export default function CustomLayoutClient() {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const layoutChannelRef = useRef<BroadcastChannel | null>(null);
 
-	const desktopGrid = { columns: 12, rows: 12 };
-	const mobileGrid = { columns: 8, rows: 12 };
+	const desktopGrid = DESKTOP_GRID;
+	const mobileGrid = MOBILE_GRID;
 	const desktopCollision = useCollisionDetection(desktopGrid);
 	const mobileCollision = useCollisionDetection(mobileGrid);
 	const isDesktopMode = layoutMode === "desktop";
@@ -98,8 +111,14 @@ export default function CustomLayoutClient() {
 	// Load saved layout from settings
 	useEffect(() => {
 		if (customLayout) {
-			const legacyWidgets = (customLayout as any).widgets;
-			const legacyUsedColors = (customLayout as any).usedColors;
+			const legacyWidgets =
+				"widgets" in customLayout
+					? (customLayout as { widgets?: Widget[] }).widgets
+					: undefined;
+			const legacyUsedColors =
+				"usedColors" in customLayout
+					? (customLayout as { usedColors?: string[] }).usedColors
+					: undefined;
 
 			setDesktopLayout(customLayout.layout || []);
 			setMobileLayout(customLayout.mobileLayout || []);
@@ -294,9 +313,32 @@ export default function CustomLayoutClient() {
 	// Save layout
 	const handleSaveLayout = useCallback(async () => {
 		try {
+			const normalizeLayout = (
+				layout: LayoutItem[],
+				columns: number,
+				rows: number
+			): LayoutPayloadItem[] =>
+				layout.map((item) => ({
+					i: item.i,
+					x: item.x,
+					y: item.y,
+					w: item.w,
+					h: item.h,
+					maxW: item.maxW ?? columns,
+					maxH: item.maxH ?? rows,
+				}));
+
 			const layoutData: CustomLayoutData = {
-				layout: desktopLayout,
-				mobileLayout,
+				layout: normalizeLayout(
+					desktopLayout,
+					desktopGrid.columns,
+					desktopGrid.rows
+				),
+				mobileLayout: normalizeLayout(
+					mobileLayout,
+					mobileGrid.columns,
+					mobileGrid.rows
+				),
 				desktopWidgets,
 				mobileWidgets,
 				desktopUsedColors,
@@ -311,7 +353,7 @@ export default function CustomLayoutClient() {
 			layoutChannelRef.current?.postMessage(layoutData);
 
 			toast.success("레이아웃이 성공적으로 저장되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("레이아웃 저장 중 오류가 발생했습니다.");
 		}
 	}, [
@@ -321,7 +363,10 @@ export default function CustomLayoutClient() {
 		mobileWidgets,
 		desktopUsedColors,
 		mobileUsedColors,
+		desktopGrid,
+		mobileGrid,
 		updateMain,
+		refreshSettings,
 	]);
 
 	// Clear layout
@@ -354,10 +399,10 @@ export default function CustomLayoutClient() {
 
 			toast.success("레이아웃이 초기화되었습니다.");
 			setShowClearDialog(false);
-		} catch (error) {
+		} catch {
 			toast.error("레이아웃 초기화 중 오류가 발생했습니다.");
 		}
-	}, [updateMain]);
+	}, [updateMain, refreshSettings]);
 
 	return (
 		<div className="space-y-8">
@@ -478,7 +523,6 @@ export default function CustomLayoutClient() {
 											layout={activeLayout}
 											containerRef={containerRef}
 											onPositionChange={handlePositionChange}
-											onRemove={handleRemoveWidget}
 											columns={
 												isDesktopMode
 													? desktopGrid.columns

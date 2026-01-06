@@ -1,6 +1,9 @@
 "use client";
 
 import React from "react";
+import type { CSSProperties } from "react";
+
+type ShootingStarStyle = CSSProperties & Record<string, string | number>;
 
 const MeteorEffect = () => {
 	// 5개의 별똥별 생성
@@ -80,14 +83,15 @@ const MeteorEffect = () => {
 			{shootingStars.map((star) => (
 				<div
 					key={star.id}
-					style={{
-						...styles.shootingStar,
-						top: star.top,
-						animationDelay: star.delay,
-						// @ts-ignore
-						"--tail-width": star.tailWidth, // 각 별의 꼬리 길이
-						"--shooting-transform": star.shootingTransform, // 각 별의 이동 거리
-					}}
+					style={
+						{
+							...styles.shootingStar,
+							top: star.top,
+							animationDelay: star.delay,
+							"--tail-width": star.tailWidth,
+							"--shooting-transform": star.shootingTransform,
+						} as ShootingStarStyle
+					}
 				/>
 			))}
 		</div>
@@ -95,4 +99,3 @@ const MeteorEffect = () => {
 };
 
 export default MeteorEffect;
-

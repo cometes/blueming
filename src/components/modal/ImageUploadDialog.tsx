@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -62,7 +63,7 @@ export default function ImageUploadDialog({
 			} else {
 				toast.error("URL이 반환되지 않았습니다.");
 			}
-		} catch (error) {
+		} catch {
 			toast.error("이미지 업로드 중 오류가 발생했습니다.");
 		} finally {
 			setIsUploading(false);

@@ -41,7 +41,7 @@ export const useAuth = () => {
 						withCredentials: true,
 					}
 				);
-			} catch (backendError) {
+			} catch {
 				// 백엔드 실패해도 Firebase 인증은 유지
 			}
 
@@ -50,7 +50,7 @@ export const useAuth = () => {
 			setAuthData({ isLoading: false });
 
 			return { success: true, message: "로그인 성공!" };
-		} catch (error) {
+		} catch {
 			// Firebase 세션 정리
 			await signOut(auth);
 			clearAuth();
@@ -69,7 +69,7 @@ export const useAuth = () => {
 			await signOut(auth);
 
 			return { success: true, message: "로그아웃되었습니다." };
-		} catch (error) {
+		} catch {
 			return { success: false, message: "로그아웃 중 오류가 발생했습니다." };
 		}
 	}, []);
@@ -85,7 +85,7 @@ export const useAuth = () => {
 					try {
 						// Custom Claims에서 관리자 권한 확인
 						isAdmin = await checkAdminClaims();
-					} catch (claimsError) {
+					} catch {
 						// Claims 확인에 실패해도 로그인은 유지
 					}
 
@@ -110,7 +110,7 @@ export const useAuth = () => {
 						isLoading: false,
 					});
 				}
-			} catch (error) {
+			} catch {
 				clearAuth();
 			}
 		});

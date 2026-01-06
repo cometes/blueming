@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -43,7 +44,7 @@ export default function DdayItem({
 			const url = await uploadFile(file);
 			onUpdate({ image: url });
 			toast.success("이미지가 업로드되었습니다.");
-		} catch (error) {
+		} catch {
 			toast.error("이미지 업로드에 실패했습니다.");
 		}
 	};

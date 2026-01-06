@@ -365,7 +365,7 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
               }
             })
             .run()
-        } catch (error) {
+        } catch {
         }
       }, 100)
     }
@@ -383,7 +383,7 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
               attrs: { src: url, alt: filename, title: filename, 'data-align': 'left' }
             })
             .run()
-        } catch (error) {
+        } catch {
         }
       }, 100)
     }
