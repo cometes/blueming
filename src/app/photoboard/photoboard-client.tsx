@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
 	Bookmark,
 	Heart,
@@ -61,6 +62,7 @@ const formatRelative = (iso: string) => {
 
 const shouldTruncate = (caption: string) => caption.length > 120;
 const getInitial = (value: string) => value.trim().charAt(0).toUpperCase();
+const isRemoteImage = (src: string) => src.startsWith("http");
 export default function PhotoBoardClient() {
 	const [liked, setLiked] = useState<Record<string, boolean>>({});
 	const [reposted, setReposted] = useState<Record<string, boolean>>({});
@@ -122,11 +124,21 @@ export default function PhotoBoardClient() {
 								<div className="flex items-center gap-3">
 									<div className="w-9 h-9 rounded-full overflow-hidden border border-card bg-card-bg flex items-center justify-center">
 										{post.author.avatarUrl ? (
-											<img
-												src={post.author.avatarUrl}
-												alt={post.author.name}
-												className="w-full h-full object-cover"
-											/>
+											isRemoteImage(post.author.avatarUrl) ? (
+												<Image
+													src={post.author.avatarUrl}
+													alt={post.author.name}
+													width={36}
+													height={36}
+													className="w-full h-full object-cover"
+												/>
+											) : (
+												<img
+													src={post.author.avatarUrl}
+													alt={post.author.name}
+													className="w-full h-full object-cover"
+												/>
+											)
 										) : (
 											<span className="text-xs font-semibold text-sub-text">
 												{getInitial(post.author.name)}
@@ -169,12 +181,24 @@ export default function PhotoBoardClient() {
 							</div>
 
 							<div className="w-full bg-card-bg">
-								<img
-									src={post.imageUrl}
-									alt={post.caption}
-									className="w-full h-full object-cover"
-									loading="lazy"
-								/>
+								{isRemoteImage(post.imageUrl) ? (
+									<Image
+										src={post.imageUrl}
+										alt={post.caption}
+										width={1200}
+										height={800}
+										className="w-full h-auto object-cover"
+										sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+									/>
+								) : (
+									<img
+										src={post.imageUrl}
+										alt={post.caption}
+										className="w-full h-full object-cover"
+										loading="lazy"
+										decoding="async"
+									/>
+								)}
 							</div>
 
 							<div className="px-4 py-3 space-y-3">

@@ -6,7 +6,6 @@ import { SettingsProvider } from "./SettingsProvider";
 import { ThemeProvider } from "./ThemeProvider";
 import { ThemesProvider } from "@/contexts/ThemesContext";
 import { useAuth } from "@/hooks/auth/UseAuth";
-import ThemeLoader from "@/components/ThemeLoader";
 
 interface ProvidersProps {
 	children: React.ReactNode;
@@ -38,12 +37,12 @@ export default function Providers({
 	return (
 		<SettingsProvider initialSettings={initialSettings}>
 			<ThemesProvider>
-				<ThemeProvider>
-					<AuthInitializer>
-						<ThemeLoader>{children}</ThemeLoader>
-					</AuthInitializer>
-					<Toaster position="top-center" richColors />
-				</ThemeProvider>
+					<ThemeProvider>
+						<AuthInitializer>
+							{children}
+						</AuthInitializer>
+						<Toaster position="top-center" richColors />
+					</ThemeProvider>
 			</ThemesProvider>
 		</SettingsProvider>
 	);

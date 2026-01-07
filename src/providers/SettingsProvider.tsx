@@ -43,7 +43,7 @@ export function SettingsProvider({ children, initialSettings }) {
 				const res = await fetch(
 					"https://api-w5buphcleq-du.a.run.app/settings",
 					{
-						cache: "no-store",
+						cache: "force-cache",
 					}
 				);
 

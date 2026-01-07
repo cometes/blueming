@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getAuthHeader } from "@/queries/getAuthHeader";
 import type { CreateLibraryPayload } from "@/queries/set/createLibrary";
 
 export interface UpdateLibraryResponse {
@@ -12,6 +13,7 @@ export const updateLibraryPost = async (
 ): Promise<UpdateLibraryResponse> => {
 	const allow = payload.visibility;
 	const slug = payload.slug?.trim() || undefined;
+	const headers = await getAuthHeader();
 	const response = await axios.put<UpdateLibraryResponse>(
 		`https://api-w5buphcleq-du.a.run.app/library/update/${postId}`,
 		{
@@ -19,15 +21,16 @@ export const updateLibraryPost = async (
 			subtitle: payload.subtitle,
 			content: payload.content,
 			slug,
-		summary: payload.summary,
-		tags: payload.tags,
-		series: payload.series,
-		allow,
-		password: allow === "password" ? payload.password : null,
-		thumbnail: payload.thumbnail,
-		pinned: payload.pinned ?? false,
-	}
-);
+			summary: payload.summary,
+			tags: payload.tags,
+			series: payload.series,
+			allow,
+			password: allow === "password" ? payload.password : null,
+			thumbnail: payload.thumbnail,
+			pinned: payload.pinned ?? false,
+		},
+		{ headers }
+	);
 
 	return response.data;
 };

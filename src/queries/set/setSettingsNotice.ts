@@ -1,3 +1,5 @@
+import { getAuthHeader } from "@/queries/getAuthHeader";
+
 interface MarqueeSettings {
 	type: string;
 	gradientColor: string;
@@ -19,12 +21,14 @@ export interface NoticeData {
 }
 
 export const setSettingsNotice = async (noticeData: NoticeData) => {
+	const authHeader = await getAuthHeader();
 	const result = await fetch(
 		"https://api-w5buphcleq-du.a.run.app/settings/main/notice",
 		{
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
+				...authHeader,
 			},
 			body: JSON.stringify({ value: noticeData }),
 		}

@@ -19,19 +19,24 @@ interface AdminRouteProps {
 export default function AdminRoute({
 	children,
 	redirectTo = "/",
-}: AdminRouteProps) {
-	const { isAdmin, isAuthenticated } = useAdmin();
+	}: AdminRouteProps) {
+	const { isAdmin, isAuthenticated, isLoading, refreshAdminStatus } = useAdmin();
 	const router = useRouter();
 
 	useEffect(() => {
-		// 인증되지 않았거나 관리자가 아니면 리다이렉트
-		if (isAuthenticated && !isAdmin) {
+		if (!isAuthenticated) return;
+		refreshAdminStatus();
+	}, [isAuthenticated, refreshAdminStatus]);
+
+	useEffect(() => {
+		if (isLoading) return;
+		if (!isAuthenticated || !isAdmin) {
 			router.push(redirectTo);
 		}
-	}, [isAdmin, isAuthenticated, router, redirectTo]);
+	}, [isAdmin, isAuthenticated, isLoading, router, redirectTo]);
 
 	// 관리자가 아닌 경우 아무것도 렌더링하지 않음
-	if (!isAdmin) {
+	if (isLoading || !isAdmin) {
 		return null;
 	}
 

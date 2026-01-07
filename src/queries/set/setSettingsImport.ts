@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getAuthHeader } from "@/queries/getAuthHeader";
 
 export interface SetSettingsImportPayload {
 	general: unknown;
@@ -24,9 +25,11 @@ export const setSettingsImport = async (
 	payload: SetSettingsImportPayload
 ): Promise<SetSettingsImportResponse> => {
 	try {
+		const headers = await getAuthHeader();
 		const response = await axios.post<SetSettingsImportResponse>(
 			"https://api-w5buphcleq-du.a.run.app/settings/import",
-			payload
+			payload,
+			{ headers }
 		);
 
 		return response.data;
