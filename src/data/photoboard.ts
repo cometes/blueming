@@ -11,6 +11,7 @@ export type PhotoBoardPost = {
 	imageUrl: string;
 	caption: string;
 	likeCount: number;
+	tags?: string[];
 };
 
 export const photoBoardPosts: PhotoBoardPost[] = [

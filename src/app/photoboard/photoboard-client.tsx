@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
 	Bookmark,
 	Heart,
 	MessageCircle,
 	MoreHorizontal,
+	Plus,
 	Repeat2,
 	Share2,
 } from "lucide-react";
@@ -23,6 +24,8 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/tiptap-ui-primitive/tooltip/tooltip";
+import { Button } from "@/components/ui/button";
+import PhotoboardCreateModal from "@/components/modal/PhotoboardCreateModal";
 
 const formatAbsoluteDate = (iso: string) => {
 	const date = new Date(iso);
@@ -57,14 +60,14 @@ const formatRelative = (iso: string) => {
 };
 
 const shouldTruncate = (caption: string) => caption.length > 120;
-
+const getInitial = (value: string) => value.trim().charAt(0).toUpperCase();
 export default function PhotoBoardClient() {
 	const [liked, setLiked] = useState<Record<string, boolean>>({});
 	const [reposted, setReposted] = useState<Record<string, boolean>>({});
 	const [bookmarked, setBookmarked] = useState<Record<string, boolean>>({});
 	const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-
-	const posts = useMemo(() => photoBoardPosts, []);
+	const [posts, setPosts] = useState<PhotoBoardPost[]>(() => photoBoardPosts);
+	const [composerOpen, setComposerOpen] = useState(false);
 
 	const handleShare = async (post: PhotoBoardPost) => {
 		const link = `${window.location.origin}/photoboard#${post.id}`;
@@ -78,14 +81,24 @@ export default function PhotoBoardClient() {
 
 	return (
 		<div className="w-full max-w-[1200px] mx-auto px-6 pt-16 pb-20">
-			<header className="mb-10">
-				<p className="text-sm text-sub-text">포토보드</p>
-				<h1 className="text-3xl font-bold text-main-text mt-2">
-					포토보드
-				</h1>
-				<p className="text-sm text-sub-text mt-2">
-					이미지와 짧은 기록을 한눈에 모아보는 공간이에요.
-				</p>
+			<header className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+				<div>
+					<p className="text-sm text-sub-text">포토보드</p>
+					<h1 className="text-3xl font-bold text-main-text mt-2">
+						포토보드
+					</h1>
+					<p className="text-sm text-sub-text mt-2">
+						이미지와 짧은 기록을 한눈에 모아보는 공간이에요.
+					</p>
+				</div>
+				<Button
+					type="button"
+					onClick={() => setComposerOpen(true)}
+					className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
+				>
+					<Plus size={16} />
+					+ 새 글쓰기
+				</Button>
 			</header>
 
 			<div className="columns-1 sm:columns-2 lg:columns-3 gap-2">
@@ -107,12 +120,18 @@ export default function PhotoBoardClient() {
 						>
 							<div className="flex items-center justify-between px-4 py-3">
 								<div className="flex items-center gap-3">
-									<div className="w-9 h-9 rounded-full overflow-hidden border border-card">
-										<img
-											src={post.author.avatarUrl}
-											alt={post.author.name}
-											className="w-full h-full object-cover"
-										/>
+									<div className="w-9 h-9 rounded-full overflow-hidden border border-card bg-card-bg flex items-center justify-center">
+										{post.author.avatarUrl ? (
+											<img
+												src={post.author.avatarUrl}
+												alt={post.author.name}
+												className="w-full h-full object-cover"
+											/>
+										) : (
+											<span className="text-xs font-semibold text-sub-text">
+												{getInitial(post.author.name)}
+											</span>
+										)}
 									</div>
 									<div className="flex flex-col">
 										<span className="text-sm font-semibold text-main-text">
@@ -255,12 +274,33 @@ export default function PhotoBoardClient() {
 											{isExpanded ? "접기" : "더보기"}
 										</button>
 									)}
+									{post.tags?.length ? (
+										<div className="flex flex-wrap gap-2 pt-3">
+											{post.tags.map((tag) => (
+												<span
+													key={`${post.id}-${tag}`}
+													className="text-xs text-theme-primary bg-theme-primary/10 px-2 py-1 rounded-full"
+												>
+													#{tag}
+												</span>
+											))}
+										</div>
+									) : null}
 								</div>
 							</div>
 						</article>
 					);
 				})}
 			</div>
+
+			<PhotoboardCreateModal
+				isOpen={composerOpen}
+				onOpenChange={setComposerOpen}
+				onCreate={(newPost) => {
+					setPosts((prev) => [newPost, ...prev]);
+					toast.success("새 게시물이 추가되었습니다.");
+				}}
+			/>
 		</div>
 	);
 }
