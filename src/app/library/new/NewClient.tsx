@@ -43,6 +43,7 @@ interface LibraryNewClientProps {
 		allow?: "all" | "password" | "secret";
 		password?: string | null;
 		thumbnail?: string;
+		pinned?: boolean;
 	};
 	mode?: "create" | "edit";
 }
@@ -70,6 +71,7 @@ export default function LibararyNewClient({
 		visibility: "all",
 		password: "",
 		thumbnail: "",
+		pinned: false,
 	});
 
 	const initialContent = React.useMemo(() => {
@@ -118,6 +120,7 @@ export default function LibararyNewClient({
 			visibility: initialData.allow ?? "all",
 			password: initialData.allow === "password" ? initialData.password ?? "" : "",
 			thumbnail: initialData.thumbnail ?? "",
+			pinned: initialData.pinned ?? false,
 		});
 	}, [initialData]);
 
@@ -165,6 +168,7 @@ export default function LibararyNewClient({
 				visibility: metaValue.visibility,
 				password: metaValue.password,
 				thumbnail: metaValue.thumbnail,
+				pinned: metaValue.pinned,
 			};
 
 			if (mode === "edit") {

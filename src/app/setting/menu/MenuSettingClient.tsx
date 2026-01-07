@@ -161,6 +161,8 @@ export default function MenuSettingClient() {
 				return <ImageIcon size={16} className="text-sub-text" />;
 			case "스레드":
 				return <MessageCircle size={16} className="text-sub-text" />;
+			case "포토보드":
+				return <ImageIcon size={16} className="text-sub-text" />;
 			case "설정":
 				return <Settings size={16} className="text-sub-text" />;
 			case "폴더":

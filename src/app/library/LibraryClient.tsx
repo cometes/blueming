@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import ItemCard from "@/components/items/Card";
 import ItemGallery from "@/components/items/Gallery";
-import { Plus, Search, Settings, X, ArrowUpDown } from "lucide-react";
+import { Plus, Search, Settings, X, ArrowUpDown, Pin } from "lucide-react";
 import AdminOnly from "@/components/common/AdminOnly";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ import { setSettingsLibrary } from "@/queries/set/setSettingsLibrary";
 import { useSettings } from "@/contexts/SettingsContext";
 import { toast } from "sonner";
 import { fetchLibraryList, fetchLibraryTags } from "@/queries/fetch/fetchLibrary";
+import { dateConvert } from "@/lib/date";
+import { setLibraryPin } from "@/queries/set/setLibraryPin";
 
 interface LibraryItem {
 	id: string;
@@ -33,16 +35,19 @@ interface LibraryItem {
 	createdAt: string;
 	tags?: string[];
 	thumbnail?: string;
+	pinned?: boolean;
 }
 
 interface LibraryClientProps {
 	listData: LibraryItem[];
+	pinnedData: LibraryItem[];
 	listTotal: number;
 	seriesData: LibraryItem[];
 }
 
 export default function LibraryClient({
 	listData,
+	pinnedData,
 	listTotal,
 	seriesData,
 }: LibraryClientProps) {
@@ -60,6 +65,7 @@ export default function LibraryClient({
 	const [listPage, setListPage] = useState(1);
 	const [seriesPage, setSeriesPage] = useState(1);
 	const [listItems, setListItems] = useState<LibraryItem[]>(listData);
+	const [pinnedItems, setPinnedItems] = useState<LibraryItem[]>(pinnedData);
 	const [listTotalCount, setListTotalCount] = useState(listTotal);
 	const [tagOptions, setTagOptions] = useState<string[]>([]);
 	const [isListReady, setIsListReady] = useState(true);
@@ -185,9 +191,10 @@ export default function LibraryClient({
 
 	useEffect(() => {
 		setListItems(listData);
+		setPinnedItems(pinnedData);
 		setListTotalCount(listTotal);
 		setIsListReady(true);
-	}, [listData, listTotal]);
+	}, [listData, listTotal, pinnedData]);
 
 	useEffect(() => {
 		const loadTags = async () => {
@@ -206,7 +213,7 @@ export default function LibraryClient({
 	const filteredSeriesData = useMemo(() => {
 		const sorted = [...seriesData].sort((a, b) => {
 			if (sortOrder === "title") {
-				return a.title.localeCompare(b.title);
+				return (a.title || "").localeCompare(b.title || "");
 			}
 			const aTime = new Date(a.createdAt).getTime();
 			const bTime = new Date(b.createdAt).getTime();
@@ -215,7 +222,9 @@ export default function LibraryClient({
 		return sorted;
 	}, [seriesData, sortOrder]);
 
-	const totalItems = isSeriesOn ? filteredSeriesData.length : listTotalCount;
+	const totalItems = isSeriesOn
+		? filteredSeriesData.length
+		: listTotalCount + pinnedItems.length;
 	const totalPages = Math.max(1, Math.ceil(totalItems / postsPerPage));
 	const activePage = isSeriesOn ? seriesPage : listPage;
 	const currentPageSafe = Math.min(activePage, totalPages);
@@ -225,6 +234,27 @@ export default function LibraryClient({
 		startIndex,
 		startIndex + postsPerPage
 	);
+
+	const handleTogglePin = async (id: string, nextPinned: boolean) => {
+		try {
+			await setLibraryPin(id, nextPinned);
+			if (!isSeriesOn) {
+				const { data } = await fetchLibraryList({
+					page: listPage,
+					limit: postsPerPage,
+					sort: sortOrder,
+					tag: activeTag === "전체" ? undefined : activeTag,
+					query: appliedQuery || undefined,
+				});
+				setListItems(Array.isArray(data?.items) ? data.items : []);
+				setPinnedItems(Array.isArray(data?.pinnedItems) ? data.pinnedItems : []);
+				setListTotalCount(typeof data?.total === "number" ? data.total : 0);
+			}
+			toast.success(nextPinned ? "상단에 고정되었습니다." : "고정이 해제되었습니다.");
+		} catch {
+			toast.error("고정 상태 변경에 실패했습니다.");
+		}
+	};
 
 useEffect(() => {
 	setListPage(1);
@@ -250,6 +280,9 @@ useEffect(() => {
 					query: appliedQuery || undefined,
 				});
 				setListItems(Array.isArray(data?.items) ? data.items : []);
+				setPinnedItems(
+					Array.isArray(data?.pinnedItems) ? data.pinnedItems : []
+				);
 				setListTotalCount(typeof data?.total === "number" ? data.total : 0);
 
 				const nextTotalPages = Math.max(
@@ -452,7 +485,7 @@ useEffect(() => {
 					<>
 						<div className="mt-3 flex items-center justify-between">
 							<span className="text-sm text-sub-text">
-								총 {listTotalCount}개
+								총 {listTotalCount + pinnedItems.length}개
 							</span>
 							<button
 								type="button"
@@ -476,6 +509,33 @@ useEffect(() => {
 							</button>
 						</div>
 						<div className="mt-3 flex flex-col min-h-[520px]">
+							{pinnedItems.length > 0 && (
+								<div className="rounded-card border-card bg-card mb-4">
+									<div className="px-4 py-3 border-b border-card-bg text-sm font-medium text-main-text">
+										공지
+									</div>
+									<div className="divide-y divide-card-bg">
+										{pinnedItems.map((item) => (
+											<button
+												key={item.id}
+												type="button"
+												onClick={onClickMoveToPage(`/library/${item.id}`)}
+												className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-card-bg/50 transition-colors"
+											>
+												<div className="flex items-center gap-2 min-w-0">
+													<Pin size={14} className="text-theme-primary" />
+													<span className="text-sm text-main-text truncate">
+														{item.title}
+													</span>
+												</div>
+												<span className="text-xs text-sub-text shrink-0">
+													{dateConvert(item.createdAt)}
+												</span>
+											</button>
+										))}
+									</div>
+								</div>
+							)}
 							<div
 								className={cn(
 									"grid transition-opacity duration-300 ease-out",
@@ -495,21 +555,33 @@ useEffect(() => {
 								{isCardOn && (
 									<>
 										{pagedListData.map((el) => (
-											<ItemGallery data={el} key={el.id} />
+											<ItemGallery
+												data={el}
+												key={el.id}
+												onTogglePin={handleTogglePin}
+											/>
 										))}
 									</>
 								)}
 								{!isCardOn && layoutType === "listWithImage" && (
 									<>
 										{pagedListData.map((el) => (
-											<ItemListWithImage data={el} key={el.id} />
+											<ItemListWithImage
+												data={el}
+												key={el.id}
+												onTogglePin={handleTogglePin}
+											/>
 										))}
 									</>
 								)}
 								{!isCardOn && layoutType === "list" && (
 									<>
 										{pagedListData.map((el) => (
-											<ItemList data={el} key={el.id} />
+											<ItemList
+												data={el}
+												key={el.id}
+												onTogglePin={handleTogglePin}
+											/>
 										))}
 									</>
 								)}

@@ -11,6 +11,7 @@ export interface CreateLibraryPayload {
 	visibility: "all" | "password" | "secret";
 	password?: string;
 	thumbnail?: string;
+	pinned?: boolean;
 }
 
 export interface CreateLibraryResponse {
@@ -37,14 +38,15 @@ export const createLibraryPost = async (
 				subtitle: payload.subtitle,
 				content: payload.content,
 				slug,
-				summary: payload.summary,
-				tags: payload.tags,
-				series: payload.series,
-				allow,
-				password: allow === "password" ? payload.password : null,
-				thumbnail: payload.thumbnail,
-			}
-		);
+			summary: payload.summary,
+			tags: payload.tags,
+			series: payload.series,
+			allow,
+			password: allow === "password" ? payload.password : null,
+			thumbnail: payload.thumbnail,
+			pinned: payload.pinned ?? false,
+		}
+	);
 
 		return response.data;
 	} catch (error) {

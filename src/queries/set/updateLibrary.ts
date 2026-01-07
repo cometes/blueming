@@ -19,14 +19,15 @@ export const updateLibraryPost = async (
 			subtitle: payload.subtitle,
 			content: payload.content,
 			slug,
-			summary: payload.summary,
-			tags: payload.tags,
-			series: payload.series,
-			allow,
-			password: allow === "password" ? payload.password : null,
-			thumbnail: payload.thumbnail,
-		}
-	);
+		summary: payload.summary,
+		tags: payload.tags,
+		series: payload.series,
+		allow,
+		password: allow === "password" ? payload.password : null,
+		thumbnail: payload.thumbnail,
+		pinned: payload.pinned ?? false,
+	}
+);
 
 	return response.data;
 };
