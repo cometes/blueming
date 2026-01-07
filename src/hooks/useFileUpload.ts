@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { getAuthHeader } from "@/queries/getAuthHeader";
 
 export interface FileUploadOptions {
   maxSize?: number; // 바이트 단위, 기본값: 10MB
@@ -82,8 +83,10 @@ export const useFileUpload = (options?: FileUploadOptions): UseFileUploadReturn 
       });
       formData.append("file", processedFile);
 
+      const authHeader = await getAuthHeader();
       const response = await fetch(config.endpoint, {
         method: "POST",
+        headers: authHeader,
         body: formData,
       });
 

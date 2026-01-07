@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getAuthHeader } from "@/queries/getAuthHeader";
 import type { LibrarySettings } from "@/contexts/SettingsContext";
 
 export type SetSettingsLibraryPayload = Partial<LibrarySettings>;
@@ -11,9 +12,11 @@ export const setSettingsLibrary = async (
 	payload: SetSettingsLibraryPayload
 ): Promise<SetSettingsLibraryResponse> => {
 	try {
+		const headers = await getAuthHeader();
 		const response = await axios.post<SetSettingsLibraryResponse>(
 			"https://api-w5buphcleq-du.a.run.app/settings/library",
-			payload
+			payload,
+			{ headers }
 		);
 
 		return response.data;

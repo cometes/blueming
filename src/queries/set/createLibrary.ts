@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getAuthHeader } from "@/queries/getAuthHeader";
 
 export interface CreateLibraryPayload {
 	title: string;
@@ -31,22 +32,24 @@ export const createLibraryPost = async (
 	try {
 		const allow = payload.visibility;
 		const slug = payload.slug?.trim() || undefined;
-	const response = await axios.post<CreateLibraryResponse>(
-		"https://api-w5buphcleq-du.a.run.app/library/create",
-		{
+		const headers = await getAuthHeader();
+		const response = await axios.post<CreateLibraryResponse>(
+			"https://api-w5buphcleq-du.a.run.app/library/create",
+			{
 				title: payload.title,
 				subtitle: payload.subtitle,
 				content: payload.content,
 				slug,
-			summary: payload.summary,
-			tags: payload.tags,
-			series: payload.series,
-			allow,
-			password: allow === "password" ? payload.password : null,
-			thumbnail: payload.thumbnail,
-			pinned: payload.pinned ?? false,
-		}
-	);
+				summary: payload.summary,
+				tags: payload.tags,
+				series: payload.series,
+				allow,
+				password: allow === "password" ? payload.password : null,
+				thumbnail: payload.thumbnail,
+				pinned: payload.pinned ?? false,
+			},
+			{ headers }
+		);
 
 		return response.data;
 	} catch (error) {
@@ -56,9 +59,7 @@ export const createLibraryPost = async (
 				error.response?.data?.error ||
 				error.response?.data?.message ||
 				"게시글 생성에 실패했습니다.";
-			throw new Error(
-				status ? `${status} ${apiError}` : apiError
-			);
+			throw new Error(status ? `${status} ${apiError}` : apiError);
 		}
 		throw error;
 	}

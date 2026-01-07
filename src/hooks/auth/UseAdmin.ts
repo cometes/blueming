@@ -6,7 +6,7 @@ import { useCallback } from "react";
  * 관리자 권한 관련 유틸리티 훅
  */
 export const useAdmin = () => {
-	const { isAuthenticated, user, setUser } = useAuthStore();
+	const { isAuthenticated, user, isLoading, setUser } = useAuthStore();
 
 	/**
 	 * 현재 사용자가 관리자인지 확인 (저장된 상태 기반)
@@ -92,5 +92,6 @@ export const useAdmin = () => {
 		requireAdmin,
 		user,
 		isAuthenticated,
+		isLoading,
 	};
 };
