@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Fallback from "@/components/common/Fallback";
 import { useState } from "react";
+import AdminOnly from "@/components/common/AdminOnly";
+import { Pin } from "lucide-react";
 
 interface ItemListProps {
 	data: {
@@ -15,10 +17,15 @@ interface ItemListProps {
 		createdAt: string;
 		tags?: string[];
 		thumbnail?: string;
+		pinned?: boolean;
 	};
+	onTogglePin?: (id: string, nextPinned: boolean) => void;
 }
 
-export default function ItemListWithImage({ data }: ItemListProps) {
+export default function ItemListWithImage({
+	data,
+	onTogglePin,
+}: ItemListProps) {
 	const { onClickMoveToPage } = useMoveToPage();
 	const [imageError, setImageError] = useState(false);
 
@@ -35,14 +42,24 @@ export default function ItemListWithImage({ data }: ItemListProps) {
 			<div className="flex flex-col min-w-0 px-6 py-5 h-full justify-between">
 				{/* 제목과 부제목과 태그 */}
 				<div>
-					<h3
-						className={cn(
-							"text-lg font-semibold text-main-text leading-tight",
-							"line-clamp-2 group-hover:text-theme-primary transition-colors duration-200"
+					<div className="flex items-center gap-2">
+						{data.pinned && (
+							<Badge
+								variant="secondary"
+								className="px-2 text-[10px] rounded-full bg-theme-primary/10 text-theme-primary border-theme-primary/20"
+							>
+								고정
+							</Badge>
 						)}
-					>
-						{data.title}
-					</h3>
+						<h3
+							className={cn(
+								"text-lg font-semibold text-main-text leading-tight",
+								"line-clamp-2 group-hover:text-theme-primary transition-colors duration-200"
+							)}
+						>
+							{data.title}
+						</h3>
+					</div>
 					{/* 부제목 */}
 					{data.subtitle && (
 						<p className="text-sub-text leading-relaxed line-clamp-2 text-base">
@@ -85,6 +102,26 @@ export default function ItemListWithImage({ data }: ItemListProps) {
 					{dateConvert(data.createdAt)}
 				</time>
 			</div>
+			<AdminOnly>
+				{onTogglePin && (
+					<button
+						type="button"
+						onClick={(event) => {
+							event.stopPropagation();
+							onTogglePin(data.id, !data.pinned);
+						}}
+						className={cn(
+							"absolute top-3 right-3 w-8 h-8 rounded-full border border-card flex items-center justify-center",
+							data.pinned
+								? "bg-theme-primary/15 text-theme-primary"
+								: "bg-card text-sub-text hover:text-theme-primary"
+						)}
+						aria-label="고정 토글"
+					>
+						<Pin size={14} />
+					</button>
+				)}
+			</AdminOnly>
 			<div className="h-full">
 				{/* 오른쪽 이미지 영역 */}
 				{data.thumbnail && !imageError ? (

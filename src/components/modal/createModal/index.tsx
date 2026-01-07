@@ -27,6 +27,7 @@ export interface CreateMetaValue {
 	password?: string;
 	thumbnail?: string;
 	title?: string;
+	pinned?: boolean;
 }
 
 interface OptionItem {
@@ -261,22 +262,36 @@ const CreateModal = ({
 												</label>
 											)}
 										</div>
-										<div>
-											<h4 className="text-xl font-semibold text-main-text overflow-ellipsis whitespace-nowrap overflow-hidden">
-												{value.title || "제목을 입력해주세요"}
-											</h4>
-											<textarea
+											<div>
+												<h4 className="text-xl font-semibold text-main-text overflow-ellipsis whitespace-nowrap overflow-hidden">
+													{value.title || "제목을 입력해주세요"}
+												</h4>
+												<textarea
 												value={value.summary ?? ""}
 												onChange={handleSummaryChange}
 												className="resize-none w-full border border-card rounded-card outline-none bg-card text-main-text placeholder:text-sub-text text-sm h-28 p-3 mt-2"
 												placeholder="포스트를 짧게 소개해주세요."
 											/>
-											<div className="text-right mt-1 text-xs text-sub-text">
-												{value.summary?.length ?? 0}/150
+												<div className="text-right mt-1 text-xs text-sub-text">
+													{value.summary?.length ?? 0}/150
+												</div>
 											</div>
-										</div>
-									</section>
-								</div>
+											<label className="inline-flex items-center gap-2 text-sm text-sub-text">
+												<input
+													type="checkbox"
+													checked={value.pinned === true}
+													onChange={(event) =>
+														onChange({
+															...value,
+															pinned: event.target.checked,
+														})
+													}
+													className="accent-theme-primary"
+												/>
+												공지로 설정
+											</label>
+										</section>
+									</div>
 
 								{/* 구분선 */}
 								<div className="w-px bg-card-border"></div>

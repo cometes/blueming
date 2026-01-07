@@ -72,6 +72,7 @@ export default function WidgetMenu() {
 			아카이브: "/archive",
 			갤러리: "/gallery",
 			스레드: "/thread",
+			포토보드: "/photoboard",
 			방명록: "/guestbook",
 			설정: "/setting",
 		}),

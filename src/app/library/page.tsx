@@ -12,11 +12,14 @@ export default async function LibararyListPage() {
 		return (
 			<LibraryClient
 				listData={listResponse?.items ?? []}
+				pinnedData={listResponse?.pinnedItems ?? []}
 				listTotal={listResponse?.total ?? 0}
 				seriesData={seriesData}
 			/>
 		);
 	} catch {
-		return <LibraryClient listData={[]} listTotal={0} seriesData={[]} />;
+		return (
+			<LibraryClient listData={[]} pinnedData={[]} listTotal={0} seriesData={[]} />
+		);
 	}
 }
