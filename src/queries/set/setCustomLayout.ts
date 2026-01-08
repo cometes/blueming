@@ -50,8 +50,10 @@ export const setCustomLayout = async (value: CustomLayoutData) => {
 
   const data = await result.json();
 
+  await revalidateSettingsCache();
   return {
     data
   };
 };
 import { getAuthHeader } from "@/queries/getAuthHeader";
+import { revalidateSettingsCache } from "@/queries/revalidateSettings";

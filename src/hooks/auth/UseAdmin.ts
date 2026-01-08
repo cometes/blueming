@@ -6,7 +6,7 @@ import { useCallback } from "react";
  * 관리자 권한 관련 유틸리티 훅
  */
 export const useAdmin = () => {
-	const { isAuthenticated, user, isLoading, setUser } = useAuthStore();
+	const { isAuthenticated, user, isLoading } = useAuthStore();
 
 	/**
 	 * 현재 사용자가 관리자인지 확인 (저장된 상태 기반)
@@ -26,9 +26,10 @@ export const useAdmin = () => {
 			const isAdmin = await checkAdminClaims();
 			
 			// 현재 사용자 정보와 차이가 있다면 업데이트
-			if (user && user.isAdmin !== isAdmin) {
+			const { user: currentUser, setUser } = useAuthStore.getState();
+			if (currentUser && currentUser.isAdmin !== isAdmin) {
 				setUser({
-					...user,
+					...currentUser,
 					isAdmin,
 				});
 			}
@@ -37,7 +38,7 @@ export const useAdmin = () => {
 		} catch {
 			return false;
 		}
-	}, [user, setUser]);
+	}, []);
 
 	/**
 	 * 관리자 권한 새로고침 (토큰 강제 갱신)
@@ -46,9 +47,10 @@ export const useAdmin = () => {
 		try {
 			const isAdmin = await refreshAdminClaims();
 			
-			if (user) {
+			const { user: currentUser, setUser } = useAuthStore.getState();
+			if (currentUser && currentUser.isAdmin !== isAdmin) {
 				setUser({
-					...user,
+					...currentUser,
 					isAdmin,
 				});
 			}
@@ -57,7 +59,7 @@ export const useAdmin = () => {
 		} catch {
 			return false;
 		}
-	}, [user, setUser]);
+	}, []);
 
 	/**
 	 * 관리자 권한이 필요한 액션을 실행하기 전에 권한을 확인

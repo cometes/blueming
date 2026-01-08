@@ -78,6 +78,7 @@ export default function WidgetMenu() {
 	const router = useRouter();
 	const { isAdmin } = useAdmin();
 	const [openFolders, setOpenFolders] = useState<OpenFolders>({});
+	const menuItemCount = menuData.menus?.length ?? 0;
 
 	// -------------------------------------------------------------------------
 	// CONSTANTS
@@ -161,6 +162,15 @@ export default function WidgetMenu() {
 		() => getTextAlignClass(design?.textAlign || ""),
 		[design?.textAlign, getTextAlignClass]
 	);
+
+	const menuListMinHeight = useMemo(() => {
+		if (!menuItemCount) return undefined;
+		const itemHeight = 40;
+		const itemGap = 10;
+		return (
+			menuItemCount * itemHeight + Math.max(menuItemCount - 1, 0) * itemGap
+		);
+	}, [menuItemCount]);
 
 	const asideBackgroundStyle = useMemo(
 		() =>
@@ -422,7 +432,7 @@ export default function WidgetMenu() {
 		<>
 			<aside
 				className={cn(
-					"menu-desktop max-w-[200px] h-dvh flex flex-col items-center justify-center shrink-0 sticky top-0",
+					"menu-desktop min-w-[200px] h-dvh flex flex-col items-center justify-center shrink-0 sticky top-0",
 					design?.bgType === "없음" && "bg-transparent",
 					"bg-center"
 				)}
@@ -433,7 +443,14 @@ export default function WidgetMenu() {
 					{renderLogo()}
 
 					{/* Menu Items */}
-					<ul className="flex flex-col gap-2.5 list-none mt-2">
+					<ul
+						className="flex flex-col gap-2.5 list-none mt-2"
+						style={{
+							minHeight: menuListMinHeight
+								? `${menuListMinHeight}px`
+								: undefined,
+						}}
+					>
 						{filteredMenuItems.map(renderMenuItem)}
 					</ul>
 
@@ -451,12 +468,12 @@ export default function WidgetMenu() {
 				className="menu-iconbar w-[88px] h-dvh flex flex-col items-center shrink-0 sticky top-0 overflow-visible"
 				style={iconBarStyle}
 			>
-				<nav className="w-full h-full flex flex-col items-center py-6 overflow-visible">
+				<nav className="w-full h-full flex flex-col items-center py-6 overflow-visible gap-4 justify-center">
 					<div className="w-full flex items-center justify-center mb-6">
 						{renderIconBarLogo()}
 					</div>
 
-					<ul className="flex flex-col items-center gap-3 flex-1">
+					<ul className="flex flex-col items-center gap-3">
 						{filteredMenuItems.map((item) => (
 							<li key={item.uniqueId} className="relative">
 								<div className="relative group">
@@ -505,7 +522,9 @@ export default function WidgetMenu() {
 															type="button"
 															onClick={() => {
 																const path =
-																	BOARD_ROUTES[name as keyof typeof BOARD_ROUTES];
+																	BOARD_ROUTES[
+																		name as keyof typeof BOARD_ROUTES
+																	];
 																if (path) {
 																	router.push(path);
 																}
@@ -527,7 +546,7 @@ export default function WidgetMenu() {
 						))}
 					</ul>
 
-					<div className="flex flex-col items-center gap-3 mb-6">
+					<div className="flex flex-col items-center gap-3">
 						<button
 							type="button"
 							className="w-10 h-10 rounded-full bg-card-bg/60 border border-card flex items-center justify-center opacity-80"
@@ -556,9 +575,6 @@ export default function WidgetMenu() {
 								))}
 							</div>
 						</button>
-					</div>
-
-					<div className="flex justify-center">
 						<MenuAuthButton variant="iconbar" className="opacity-80" />
 					</div>
 				</nav>

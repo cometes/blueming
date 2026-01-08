@@ -1,4 +1,5 @@
 import { getAuthHeader } from "@/queries/getAuthHeader";
+import { revalidateSettingsCache } from "@/queries/revalidateSettings";
 
 export interface DdayData {
 	id: string;
@@ -24,5 +25,6 @@ export const setSettingsMainDday = async (ddayList: DdayData[]) => {
 	);
 
 	const data = await result.json();
+	await revalidateSettingsCache();
 	return { data };
 };

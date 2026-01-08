@@ -1,4 +1,5 @@
 import { getAuthHeader } from "@/queries/getAuthHeader";
+import { revalidateSettingsCache } from "@/queries/revalidateSettings";
 
 export interface ProfileData {
 	headerImage: string;
@@ -24,6 +25,7 @@ export const setSettingsProfile = async (profileData: ProfileData) => {
 
 	const data = await result.json();
 
+	await revalidateSettingsCache();
 	return {
 		data,
 	};

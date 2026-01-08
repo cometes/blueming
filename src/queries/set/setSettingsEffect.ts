@@ -1,6 +1,7 @@
 import axios from "axios";
 import { getAuthHeader } from "@/queries/getAuthHeader";
 import type { EffectSettings } from "@/contexts/SettingsContext";
+import { revalidateSettingsCache } from "@/queries/revalidateSettings";
 
 export type SetSettingsEffectPayload = EffectSettings;
 
@@ -26,6 +27,7 @@ export const setSettingsEffect = async (
 			{ headers }
 		);
 
+		await revalidateSettingsCache();
 		return response.data;
 	} catch (error) {
 		if (axios.isAxiosError(error)) {

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getAuthHeader } from "@/queries/getAuthHeader";
+import { revalidateSettingsCache } from "@/queries/revalidateSettings";
 
 export interface SetSettingsImportPayload {
 	general: unknown;
@@ -32,6 +33,7 @@ export const setSettingsImport = async (
 			{ headers }
 		);
 
+		await revalidateSettingsCache();
 		return response.data;
 	} catch (error) {
 		if (axios.isAxiosError(error)) {
