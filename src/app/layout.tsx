@@ -47,6 +47,19 @@ type ThemeSettings = {
 	};
 };
 
+type AppSettings = ThemeSettings & {
+	general?: ThemeSettings["general"] & {
+		menu?: {
+			design?: {
+				backgroundImage?: string;
+				iconBarBackgroundImage?: string;
+				logoImage?: string;
+				iconBarLogoImage?: string;
+			};
+		};
+	};
+};
+
 const buildThemeStyle = (settings: ThemeSettings | null) => {
 	const general = settings?.general?.general;
 	const design = settings?.general?.design;
@@ -82,10 +95,32 @@ const buildThemeStyle = (settings: ThemeSettings | null) => {
 	return `:root{${variables.join(";")}}`;
 };
 
-async function getSettings() {
+const getPreloadImageUrls = (settings: AppSettings | null) => {
+	if (!settings) return [];
+
+	const backgroundImage =
+		settings.general?.design?.background?.type === "이미지" ?
+			settings.general?.design?.background?.image :
+			undefined;
+	const menuDesign = settings.general?.menu?.design;
+
+	const urls = [
+		backgroundImage,
+		menuDesign?.backgroundImage,
+		menuDesign?.iconBarBackgroundImage,
+		menuDesign?.logoImage,
+		menuDesign?.iconBarLogoImage,
+	];
+
+	return Array.from(
+		new Set(urls.filter((url): url is string => !!url))
+	);
+};
+
+async function getSettings(): Promise<AppSettings | null> {
 	try {
 		const res = await fetch("https://api-w5buphcleq-du.a.run.app/settings", {
-			next: { revalidate: SETTINGS_REVALIDATE_SECONDS },
+			next: { revalidate: SETTINGS_REVALIDATE_SECONDS, tags: ["settings"] },
 		});
 
 		if (!res.ok) {
@@ -106,6 +141,7 @@ export default async function RootLayout({
 }>) {
 	const settings = await getSettings();
 	const themeStyle = buildThemeStyle(settings);
+	const preloadImages = getPreloadImageUrls(settings);
 	return (
 		<html lang="en">
 			<head>
@@ -114,6 +150,9 @@ export default async function RootLayout({
 					rel="stylesheet"
 					href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
 				/>
+				{preloadImages.map((url) => (
+					<link key={url} rel="preload" as="image" href={url} />
+				))}
 				{themeStyle ? <style>{themeStyle}</style> : null}
 			</head>
 			<body>

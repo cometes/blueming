@@ -6,7 +6,7 @@ export default function WidgetMarquee() {
 	const noticeData = main?.notice;
 
 	return (
-		<div className="relative w-full h-full overflow-hidden bg-clip-padding py-2.5">
+		<div className="relative w-full h-full overflow-hidden bg-clip-padding ">
 			<div
 				className="w-full h-full flex items-center"
 				style={{

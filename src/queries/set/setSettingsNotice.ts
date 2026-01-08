@@ -1,4 +1,5 @@
 import { getAuthHeader } from "@/queries/getAuthHeader";
+import { revalidateSettingsCache } from "@/queries/revalidateSettings";
 
 interface MarqueeSettings {
 	type: string;
@@ -36,6 +37,7 @@ export const setSettingsNotice = async (noticeData: NoticeData) => {
 
 	const data = await result.json();
 
+	await revalidateSettingsCache();
 	return {
 		data,
 	};

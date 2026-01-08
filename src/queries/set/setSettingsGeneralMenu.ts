@@ -1,6 +1,7 @@
 import axios from "axios";
 import { getAuthHeader } from "@/queries/getAuthHeader";
 import type { Menu } from "@/contexts/SettingsContext";
+import { revalidateSettingsCache } from "@/queries/revalidateSettings";
 
 export interface SetSettingsGeneralMenuResponse {
 	general: {
@@ -24,6 +25,7 @@ export const setSettingsGeneralMenu = async (
 			{ headers }
 		);
 
+		await revalidateSettingsCache();
 		return response.data;
 	} catch (error) {
 		if (axios.isAxiosError(error)) {

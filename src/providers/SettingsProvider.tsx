@@ -38,14 +38,19 @@ export function SettingsProvider({ children, initialSettings }) {
 	};
 
 	const refreshSettings = useCallback(
-		async (options?: { broadcast?: boolean }) => {
+		async (options?: { broadcast?: boolean; noCache?: boolean }) => {
 			try {
-				const res = await fetch(
-					"https://api-w5buphcleq-du.a.run.app/settings",
-					{
-						cache: "force-cache",
-					}
+				const noCache = options?.noCache !== false;
+				const url = new URL(
+					"https://api-w5buphcleq-du.a.run.app/settings"
 				);
+				if (noCache) {
+					url.searchParams.set("ts", Date.now().toString());
+				}
+				const res = await fetch(url.toString(), {
+					cache: noCache ? "no-store" : "force-cache",
+					headers: noCache ? { "Cache-Control": "no-cache" } : undefined,
+				});
 
 				if (!res.ok) {
 					return;

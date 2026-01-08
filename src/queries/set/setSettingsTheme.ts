@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getAuthHeader } from "@/queries/getAuthHeader";
+import { revalidateSettingsCache } from "@/queries/revalidateSettings";
 
 export const setSettingsTheme = async (value: unknown) => {
   const authHeader = await getAuthHeader();
@@ -16,6 +17,7 @@ export const setSettingsTheme = async (value: unknown) => {
 
   const data = result.data;
 
+  await revalidateSettingsCache();
   return {
     data
   };
@@ -52,6 +54,7 @@ export const deleteSettingsTheme = async (themeId: string) => {
 
   const data = result.data;
 
+  await revalidateSettingsCache();
   return {
     data
   };

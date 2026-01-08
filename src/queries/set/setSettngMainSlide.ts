@@ -1,4 +1,5 @@
 import { getAuthHeader } from "@/queries/getAuthHeader";
+import { revalidateSettingsCache } from "@/queries/revalidateSettings";
 
 export interface SlideData {
 	id: string;
@@ -23,5 +24,6 @@ export const setSettingsMainSlide = async (slides: SlideData[]) => {
 	);
 
 	const data = await result.json();
+	await revalidateSettingsCache();
 	return { data };
 };
