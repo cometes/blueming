@@ -352,6 +352,11 @@ body {
 		writing-mode: vertical-rl;
 		text-orientation: mixed;
 	}
+
+	.background-effect-layer,
+	.background-effect-layer * {
+		pointer-events: none;
+	}
 }
 
 @layer utilities {

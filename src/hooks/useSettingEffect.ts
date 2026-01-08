@@ -49,10 +49,11 @@ export const useSettingEffect = () => {
 		}),
 		[effectData]
 	);
+	const baseline = initialEffectRef.current ?? baselineEffect;
 	const isDirty = useMemo(
 		() =>
-			effectSetting.enabled !== baselineEffect.enabled ||
-			effectSetting.type !== baselineEffect.type,
+			effectSetting.enabled !== baseline.enabled ||
+			effectSetting.type !== baseline.type,
 		[effectSetting, baselineEffect]
 	);
 
@@ -86,11 +87,9 @@ export const useSettingEffect = () => {
 					  }
 			);
 
-			if (nextType !== currentEffectType) {
-				setCurrentEffectType(nextType);
-			}
+			setCurrentEffectType((prev) => (prev === nextType ? prev : nextType));
 		}
-	}, [effectData, currentEffectType]);
+	}, [effectData]);
 
 	// Restore settings when leaving without saving
 	useEffect(() => {
