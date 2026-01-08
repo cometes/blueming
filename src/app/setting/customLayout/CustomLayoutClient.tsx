@@ -205,8 +205,8 @@ export default function CustomLayoutClient() {
 		}
 
 		// Check if widget already exists in current layout
-		const isWidgetInActiveLayout = activeLayout.some(
-			(item) => item.i === selectedWidget
+		const isWidgetInActiveLayout = activeWidgets.some(
+			(widget) => widget.id === selectedWidget
 		);
 
 		if (isWidgetInActiveLayout) {
@@ -272,6 +272,7 @@ export default function CustomLayoutClient() {
 	}, [
 		selectedWidget,
 		activeLayout,
+		activeWidgets,
 		activeWidgetList,
 		isDesktopMode,
 		desktopCollision,

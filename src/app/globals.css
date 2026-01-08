@@ -289,6 +289,16 @@ body {
 	}
 }
 
+@keyframes marqueeVertical {
+	0% {
+		transform: translate3d(0, 0, 0);
+	}
+	100% {
+		transform: translate3d(0, -50%, 0);
+	}
+}
+
+
 @layer components {
 	.widget-wrapper {
 		@apply w-full h-full relative overflow-hidden bg-clip-padding;
@@ -314,6 +324,34 @@ body {
 			border-color: var(--card-border-active);
 		}
 	}
+
+	.marquee-vertical-track {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		height: 200%;
+		animation: marqueeVertical 12s linear infinite;
+		will-change: transform;
+		backface-visibility: hidden;
+	}
+
+	.marquee-vertical-segment {
+		height: 50%;
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.marquee-vertical-item {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		white-space: nowrap;
+		writing-mode: vertical-rl;
+		text-orientation: mixed;
+	}
 }
 
 @layer utilities {
@@ -338,6 +376,10 @@ body {
 	}
 	.border-card-width {
 		border-width: var(--size-card-border);
+	}
+	.marquee-vertical-text {
+		writing-mode: vertical-rl;
+		text-orientation: mixed;
 	}
 
 	/* Background utilities */
@@ -533,4 +575,34 @@ body {
 /* ScrollArea thumb 색상을 위젯 보더 색으로 */
 [data-radix-scroll-area-thumb] {
 	background-color: var(--widget-border-color) !important;
+}
+
+@theme inline {
+	--animate-marquee: marquee var(--duration) infinite linear;
+	--animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
+  @keyframes marquee {
+  from {
+    transform: translateX(0);
+		}
+  to {
+    transform: translateX(calc(-100% - var(--gap)));
+		}
+	}
+  @keyframes marquee-vertical {
+  from {
+    transform: translateY(0);
+		}
+  to {
+    transform: translateY(calc(-100% - var(--gap)));
+		}
+	}
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+	}
+  body {
+    @apply bg-background text-foreground;
+	}
 }
