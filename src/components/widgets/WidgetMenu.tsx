@@ -465,7 +465,7 @@ export default function WidgetMenu() {
 			</aside>
 
 			<aside
-				className="menu-iconbar w-[88px] h-dvh flex flex-col items-center shrink-0 sticky top-0 overflow-visible"
+				className="menu-iconbar h-dvh flex flex-col items-center shrink-0 sticky top-0 overflow-visible"
 				style={iconBarStyle}
 			>
 				<nav className="w-full h-full flex flex-col items-center py-6 overflow-visible gap-4 justify-center">

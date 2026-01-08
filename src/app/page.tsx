@@ -5,6 +5,7 @@ import WidgetDday from "@/components/widgets/WidgetDday";
 import WidgetMarquee from "@/components/widgets/WidgetMarquee";
 import WidgetNotice from "@/components/widgets/WidgetNotice";
 import WidgetSlide from "@/components/widgets/WidgetSlide";
+import WidgetLatestPosts from "@/components/widgets/WidgetLatestPosts";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useCallback } from "react";
 import { useMobile } from "@/hooks/use-mobile";
@@ -40,6 +41,8 @@ export default function Home() {
 				return <WidgetMarquee />;
 			case "디데이":
 				return <WidgetDday />;
+			case "최신글":
+				return <WidgetLatestPosts />;
 			// Add other widgets here as needed
 			default:
 				return (
@@ -60,9 +63,10 @@ export default function Home() {
 	return (
 		<main className="w-full h-full flex flex-col justify-center items-center p-7">
 			<section
-				className={`w-full aspect-[5/4] grid grid-rows-12 gap-2.5 overflow-hidden ${
+				className={`w-full grid grid-rows-12 gap-2.5 overflow-hidden ${
 					isMobile ? "grid-cols-8" : "grid-cols-12"
 				}`}
+				style={{ aspectRatio: isMobile ? "2 / 3" : "5 / 4" }}
 			>
 				{activeLayout.map((item) => (
 					<div
