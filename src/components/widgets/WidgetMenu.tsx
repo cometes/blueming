@@ -335,6 +335,10 @@ export default function WidgetMenu() {
 								)}
 								style={getItemBackgroundStyle(subMenuImage)}
 								onClick={() => {
+									setOpenFolders((prev) => ({
+										...prev,
+										[item.uniqueId]: false,
+									}));
 									router.push(BOARD_ROUTES[subMenuName]);
 								}}
 							>
@@ -526,6 +530,10 @@ export default function WidgetMenu() {
 																		name as keyof typeof BOARD_ROUTES
 																	];
 																if (path) {
+																	setOpenFolders((prev) => ({
+																		...prev,
+																		[item.uniqueId]: false,
+																	}));
 																	router.push(path);
 																}
 															}}
@@ -542,9 +550,9 @@ export default function WidgetMenu() {
 										})}
 									</ul>
 								) : null}
-							</li>
-						))}
-					</ul>
+						</li>
+					))}
+			</ul>
 
 					<div className="flex flex-col items-center gap-3">
 						<button
