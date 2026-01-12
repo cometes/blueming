@@ -2,6 +2,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import type { StickerBoardSettings } from "@/types/stickerBoard";
 
 // Layout Types
 interface LayoutItem {
@@ -212,6 +213,7 @@ interface MainSettings {
 	notice?: Notice;
 	dday?: DdayItem[];
 	profile?: Profile;
+	stickerBoard?: StickerBoardSettings;
 }
 
 interface LibrarySettings {
@@ -281,4 +283,5 @@ export type {
 	General,
 	ThemeItem,
 	EffectSettings,
+	StickerBoardSettings,
 };
