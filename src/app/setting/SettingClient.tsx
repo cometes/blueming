@@ -18,6 +18,9 @@ const ProfileSettingClient = dynamic(() => import("./profile/ProfileSettingClien
 const SlideSettingClient = dynamic(() => import("./slide/SlideSettingClient"));
 const DdaySettingClient = dynamic(() => import("./dday/DdaySettingClient"));
 const EffectSettingClient = dynamic(() => import("./effect/EffectSettingClient"));
+const StickerBoardSettingClient = dynamic(
+	() => import("./stickerBoard/StickerBoardSettingClient")
+);
 
 type SettingSection = {
 	id: string;
@@ -117,6 +120,13 @@ export default function SettingClient({ initialSection }: SettingClientProps) {
 						title: "디데이 설정",
 						desc: "디데이 기능을 설정할 수 있습니다.",
 						Component: DdaySettingClient,
+					},
+					{
+						id: "stickerBoard",
+						label: "스티커보드 설정",
+						title: "스티커보드 설정",
+						desc: "메인 페이지 스티커보드를 설정할 수 있습니다.",
+						Component: StickerBoardSettingClient,
 					},
 				],
 			},

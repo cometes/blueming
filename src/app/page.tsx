@@ -6,6 +6,7 @@ import WidgetMarquee from "@/components/widgets/WidgetMarquee";
 import WidgetNotice from "@/components/widgets/WidgetNotice";
 import WidgetSlide from "@/components/widgets/WidgetSlide";
 import WidgetLatestPosts from "@/components/widgets/WidgetLatestPosts";
+import WidgetStickerBoard from "@/components/widgets/WidgetStickerBoard";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useCallback } from "react";
 import { useMobile } from "@/hooks/use-mobile";
@@ -43,6 +44,8 @@ export default function Home() {
 				return <WidgetDday />;
 			case "최신글":
 				return <WidgetLatestPosts />;
+			case "스티커보드":
+				return <WidgetStickerBoard />;
 			// Add other widgets here as needed
 			default:
 				return (

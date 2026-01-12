@@ -17,6 +17,7 @@ export default function Layout({ children }: LayoutProps) {
 	const { general } = useSettings();
 
 	const isMainPage = pathname === "/";
+	const isStickerBoardEditPage = pathname === "/setting/stickerBoard/edit";
 
 	// 기본 레이아웃 구조를 사용하지 않을 페이지들 (메인 페이지 포함)
 	const customLayoutPages = [""];
@@ -107,8 +108,12 @@ export default function Layout({ children }: LayoutProps) {
 
 			<div
 				className={cn(
-					"w-full mx-auto px-5",
-					isMainPage ? "max-w-7xl h-dvh" : "max-w-5xl h-auto"
+					"w-full mx-auto",
+					isStickerBoardEditPage
+						? "max-w-none px-0 h-auto"
+						: isMainPage
+							? "max-w-7xl px-5 h-dvh"
+							: "max-w-5xl px-5 h-auto"
 				)}
 			>
 				<div className="w-full h-full flex items-start justify-center gap-6 relative z-10">
