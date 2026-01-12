@@ -63,7 +63,7 @@ const isGroupSticker = (
 
 type PctSticker = Extract<StickerBoardComponent, { xPct: number }>;
 
-const isPctSticker = (component: any): component is PctSticker =>
+const isPctSticker = (component: StickerBoardComponent): component is PctSticker =>
 	typeof (component as { xPct?: unknown }).xPct === "number";
 
 export default function StickerBoardEditPage() {
@@ -967,10 +967,10 @@ export default function StickerBoardEditPage() {
 			id: newId,
 			zIndex: maxZ + 1,
 			...normalizeStickerSize({
-				xPct: (target as any).xPct + offset,
-				yPct: (target as any).yPct + offset,
-				widthPct: (target as any).widthPct,
-				heightPct: (target as any).heightPct,
+				xPct: (target as PctSticker).xPct + offset,
+				yPct: (target as PctSticker).yPct + offset,
+				widthPct: (target as PctSticker).widthPct,
+				heightPct: (target as PctSticker).heightPct,
 			}),
 		};
 
@@ -1348,10 +1348,10 @@ export default function StickerBoardEditPage() {
 					id: newId,
 					zIndex: maxZ + 1,
 					...normalizeStickerSize({
-						xPct: (clip as any).xPct + offset,
-						yPct: (clip as any).yPct + offset,
-						widthPct: (clip as any).widthPct,
-						heightPct: (clip as any).heightPct,
+						xPct: (clip as PctSticker).xPct + offset,
+						yPct: (clip as PctSticker).yPct + offset,
+						widthPct: (clip as PctSticker).widthPct,
+						heightPct: (clip as PctSticker).heightPct,
 					}),
 				};
 
@@ -1548,8 +1548,8 @@ export default function StickerBoardEditPage() {
 						groupTransform.startMaxLocalX - groupTransform.startMinLocalX;
 					const startH =
 						groupTransform.startMaxLocalY - groupTransform.startMinLocalY;
-					let newW = Math.max(MIN_SIZE_PCT, maxLx - minLx);
-					let newH = Math.max(MIN_SIZE_PCT, maxLy - minLy);
+					const newW = Math.max(MIN_SIZE_PCT, maxLx - minLx);
+					const newH = Math.max(MIN_SIZE_PCT, maxLy - minLy);
 
 					// keep anchor corner fixed in local space
 					const sx = newW / Math.max(0.0001, startW);
@@ -1696,7 +1696,7 @@ export default function StickerBoardEditPage() {
 							transform.startHeightPct /
 							Math.max(0.0001, transform.startWidthPct);
 						const byWidth = widthPct * aspect;
-						const byHeight = heightPct;
+						// const byHeight = heightPct;
 
 						// Use the dimension that changed more as the driver.
 						const widthDelta = Math.abs(widthPct - transform.startWidthPct);
@@ -2024,11 +2024,11 @@ export default function StickerBoardEditPage() {
 													const isSelected = selectedId === layer.id;
 													const isVisible = layer.isVisible !== false;
 													const isLocked = layer.isLocked === true;
-													const isGroup = isGroupSticker(layer as any);
+													const isGroup = isGroupSticker(layer as StickerBoardGroupComponent);
 													const label = isGroup
-														? (layer as any).name
-															? String((layer as any).name)
-															: `그룹 (${(layer as any).children?.length ?? 0})`
+														? (layer as StickerBoardGroupComponent).name
+															? String((layer as StickerBoardGroupComponent).name)
+															: `그룹 (${(layer as StickerBoardGroupComponent).children?.length ?? 0})`
 														: layer.type === "text"
 														? layer.text?.trim()
 															? layer.text.trim().slice(0, 20)
@@ -2109,14 +2109,14 @@ export default function StickerBoardEditPage() {
 																		{isGroup &&
 																			expandedGroupIds.has(layer.id) && (
 																				<div className="mt-1 space-y-1 pl-4">
-																					{((layer as any).children ?? [])
+																					{((layer as StickerBoardGroupComponent).children ?? [])
 																						.slice()
 																						.sort(
-																							(a: any, b: any) =>
+																							(a: StickerBoardComponent, b: StickerBoardComponent) =>
 																								(b.zIndex ?? 0) -
 																								(a.zIndex ?? 0)
 																						)
-																						.map((child: any) => {
+																						.map((child: StickerBoardComponent) => {
 																							const childLabel =
 																								child.type === "text"
 																									? child.text?.trim()
@@ -2363,7 +2363,7 @@ export default function StickerBoardEditPage() {
 																height: `${component.heightPct}%`,
 																opacity,
 																mixBlendMode:
-																	(component.blendMode as any) ?? "normal",
+																	(component.blendMode as React.CSSProperties["mixBlendMode"]) ?? "normal",
 																zIndex: component.zIndex,
 																transform,
 																touchAction: "none",
@@ -2442,7 +2442,7 @@ export default function StickerBoardEditPage() {
 																					heightPct: found.heightPct,
 																				};
 																			})
-																			.filter(Boolean) as any,
+																			.filter((item): item is NonNullable<typeof item> => item !== null),
 																	};
 																	return;
 																}
@@ -2854,7 +2854,7 @@ export default function StickerBoardEditPage() {
 																						height: `${child.heightPct}%`,
 																						opacity,
 																						mixBlendMode:
-																							(child.blendMode as any) ??
+																							(child.blendMode as React.CSSProperties["mixBlendMode"]) ??
 																							"normal",
 																						zIndex: child.zIndex,
 																						transform,
@@ -3311,7 +3311,7 @@ export default function StickerBoardEditPage() {
 												onValueChange={(value) => {
 													updateComponent(selectedComponent.id, (prev) => ({
 														...prev,
-														blendMode: value as any,
+														blendMode: value as typeof prev.blendMode,
 													}));
 												}}
 												disabled={selectedComponent.isLocked === true}
@@ -3628,7 +3628,7 @@ export default function StickerBoardEditPage() {
 															...prev,
 															style: {
 																...(prev.style ?? {}),
-																textAlign: value as any,
+																textAlign: value as typeof prev.style.textAlign,
 															},
 														};
 														if (next.autoSize !== false) requestAutoSize(next);

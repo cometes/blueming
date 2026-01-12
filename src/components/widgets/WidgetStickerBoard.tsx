@@ -55,10 +55,10 @@ const renderSticker = (component: StickerBoardComponent) => {
 					zIndex: component.zIndex,
 					transform,
 					transformOrigin: "center",
-					mixBlendMode: (component.blendMode as any) ?? "normal",
+					mixBlendMode: (component.blendMode as React.CSSProperties["mixBlendMode"]) ?? "normal",
 				}}
 			>
-				{children.map((child) => renderSticker(child as any))}
+				{children.map((child) => renderSticker(child as StickerBoardComponent))}
 			</div>
 		);
 	}
@@ -73,7 +73,7 @@ const renderSticker = (component: StickerBoardComponent) => {
 				width: `${component.widthPct}%`,
 				height: `${component.heightPct}%`,
 				opacity,
-				mixBlendMode: (component.blendMode as any) ?? "normal",
+				mixBlendMode: (component.blendMode as React.CSSProperties["mixBlendMode"]) ?? "normal",
 				zIndex: component.zIndex,
 				transform,
 			}}

@@ -103,10 +103,6 @@ export default function LibararyNewClient({
 		}
 	}, [mode, isAdmin, isAuthLoading, router]);
 
-	if (mode === "edit" && !isAuthLoading && !isAdmin) {
-		return null;
-	}
-
 	React.useEffect(() => {
 		if (!initialData) return;
 
@@ -123,6 +119,10 @@ export default function LibararyNewClient({
 			pinned: initialData.pinned ?? false,
 		});
 	}, [initialData]);
+
+	if (mode === "edit" && !isAuthLoading && !isAdmin) {
+		return null;
+	}
 
 	const handleOpenMeta = () => {
 		const plainText = editor?.getText().trim() ?? "";
