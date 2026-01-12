@@ -6,6 +6,7 @@ import { fitToGrid12 } from "@/lib/stickerboard";
 import { setSettingsMainStickerBoard } from "@/queries/set/setSettingsMainStickerBoard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
 	Select,
 	SelectContent,
@@ -32,8 +33,11 @@ import {
 	AlignStartHorizontal,
 	AlignCenterHorizontal,
 	AlignEndHorizontal,
+	Star,
+	Upload,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { toast } from "sonner";
 import type {
 	StickerBoardComponent,
 	StickerBoardImageComponent,
@@ -41,7 +45,17 @@ import type {
 	StickerBoardLeafComponent,
 	StickerBoardTextComponent,
 	StickerBoardSettings,
+	StickerAsset,
+	StickerAssetTab,
 } from "@/types/stickerBoard";
+import { STICKER_ASSET_DND_MIME } from "@/types/stickerBoard";
+import {
+	createStickerAssetFromFile,
+	deleteStickerAsset,
+	listStickerAssets,
+	markStickerAssetUsed,
+	setStickerAssetFavorite,
+} from "@/queries/stickerAssets";
 
 const LAYOUT_ITEM_ID = "스티커보드";
 const GRID_BASE = 12;
@@ -91,6 +105,10 @@ export default function StickerBoardEditPage() {
 	const [historyFuture, setHistoryFuture] = useState<StickerBoardComponent[][]>(
 		[]
 	);
+	const [assetTab, setAssetTab] = useState<StickerAssetTab>("all");
+	const [assets, setAssets] = useState<StickerAsset[]>([]);
+	const [assetsLoading, setAssetsLoading] = useState(false);
+	const [assetsError, setAssetsError] = useState<string | null>(null);
 	const clipboardRef = useRef<StickerBoardComponent | null>(null);
 	const selectedIdRef = useRef<number | null>(null);
 	const selectedIdsRef = useRef<Set<number>>(new Set());
@@ -576,6 +594,21 @@ export default function StickerBoardEditPage() {
 	const DEFAULT_TEXT_PADDING = { x: 4, y: 4 };
 	const DEFAULT_TEXT_MAX_WIDTH_PX = 280;
 
+	const refreshAssets = async (tab: StickerAssetTab = assetTab) => {
+		setAssetsLoading(true);
+		setAssetsError(null);
+		try {
+			const list = await listStickerAssets(tab);
+			setAssets(list.filter((a) => a.url));
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : "에셋을 불러오지 못했습니다.";
+			setAssets([]);
+			setAssetsError(msg);
+		} finally {
+			setAssetsLoading(false);
+		}
+	};
+
 	const measureTextStickerPx = (opts: {
 		text: string;
 		fontSizePx: number;
@@ -795,55 +828,84 @@ export default function StickerBoardEditPage() {
 	};
 
 	const addImageSticker = async (url: string) => {
+		await addImageStickerAt({ url, centerXPct: 50, centerYPct: 50 });
+	};
+
+	const addImageStickerAt = async (opts: {
+		url: string;
+		centerXPct?: number;
+		centerYPct?: number;
+		assetId?: string;
+		assetWidth?: number;
+		assetHeight?: number;
+		historyBase?: StickerBoardComponent[] | null;
+	}) => {
 		const id = Date.now();
 
 		// Default size in percent; will be adjusted by image aspect ratio.
 		let widthPct = 30;
 		let heightPct = 30;
 
-		// Try to load image to match the sticker box to the real image aspect ratio.
-		try {
-			const img = new Image();
-			img.crossOrigin = "anonymous";
-			img.src = url;
-			try {
-				await img.decode();
-			} catch {
-				await new Promise<void>((resolve, reject) => {
-					img.onload = () => resolve();
-					img.onerror = () => reject(new Error("failed to load image"));
-				});
-			}
-			if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-				const aspect = img.naturalHeight / img.naturalWidth; // h / w
-				heightPct = widthPct * aspect;
+		const applyAspect = (w?: number, h?: number) => {
+			if (!w || !h) return;
+			if (w <= 0 || h <= 0) return;
+			const aspect = h / w; // h / w
+			heightPct = widthPct * aspect;
 
-				// Keep within reasonable bounds (avoid huge stickers by default)
-				const maxSizePct = 60;
-				if (heightPct > maxSizePct) {
-					const scale = maxSizePct / heightPct;
-					heightPct *= scale;
-					widthPct *= scale;
-				}
-				if (widthPct > maxSizePct) {
-					const scale = maxSizePct / widthPct;
-					widthPct *= scale;
-					heightPct *= scale;
-				}
+			// Keep within reasonable bounds (avoid huge stickers by default)
+			const maxSizePct = 60;
+			if (heightPct > maxSizePct) {
+				const scale = maxSizePct / heightPct;
+				heightPct *= scale;
+				widthPct *= scale;
 			}
-		} catch {
-			// Fallback to square sticker if we can't read image dimensions.
+			if (widthPct > maxSizePct) {
+				const scale = maxSizePct / widthPct;
+				widthPct *= scale;
+				heightPct *= scale;
+			}
+		};
+
+		if (opts.assetWidth && opts.assetHeight) {
+			applyAspect(opts.assetWidth, opts.assetHeight);
+		} else {
+			// Try to load image to match the sticker box to the real image aspect ratio.
+			try {
+				const img = new Image();
+				img.crossOrigin = "anonymous";
+				img.src = opts.url;
+				try {
+					await img.decode();
+				} catch {
+					await new Promise<void>((resolve, reject) => {
+						img.onload = () => resolve();
+						img.onerror = () => reject(new Error("failed to load image"));
+					});
+				}
+				applyAspect(img.naturalWidth, img.naturalHeight);
+			} catch {
+				// Fallback to square sticker if we can't read image dimensions.
+			}
 		}
+
+		const centerX = opts.centerXPct ?? 50;
+		const centerY = opts.centerYPct ?? 50;
+		const pos = clampStickerToEditorBounds({
+			xPct: centerX - widthPct / 2,
+			yPct: centerY - heightPct / 2,
+			widthPct,
+			heightPct,
+		});
 
 		const newSticker: StickerBoardComponent = {
 			id,
 			zIndex: getNextZIndex,
-			xPct: 50 - widthPct / 2,
-			yPct: 50 - heightPct / 2,
-			widthPct,
-			heightPct,
+			xPct: pos.xPct,
+			yPct: pos.yPct,
+			widthPct: pos.widthPct,
+			heightPct: pos.heightPct,
 			type: "image",
-			imageUrl: url,
+			imageUrl: opts.url,
 			imageFit: "contain",
 			isVisible: true,
 			isLocked: false,
@@ -853,8 +915,22 @@ export default function StickerBoardEditPage() {
 			flipY: false,
 			lockAspectRatio: true,
 		};
+
 		setComponentsDraft((prev) => [...prev, newSticker]);
 		setSelectedId(id);
+
+		if (opts.historyBase) commitHistoryBase(opts.historyBase);
+
+		if (opts.assetId) {
+			setAssets((prev) =>
+				prev.map((a) =>
+					a.id === opts.assetId ? { ...a, lastUsedAtMs: Date.now() } : a
+				)
+			);
+			void markStickerAssetUsed(opts.assetId).then(() => {
+				if (assetTab === "recent") void refreshAssets("recent");
+			});
+		}
 	};
 
 	useEffect(() => {
@@ -869,6 +945,12 @@ export default function StickerBoardEditPage() {
 
 		setRatio(fitToGrid12(stickerWidget.w, stickerWidget.h));
 	}, [main?.customLayout?.layout]);
+
+	// Load assets for asset panel
+	useEffect(() => {
+		void refreshAssets(assetTab);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [assetTab]);
 
 	// Load percent-based stickers from the single `components` field
 	useEffect(() => {
@@ -2316,6 +2398,48 @@ export default function StickerBoardEditPage() {
 											})(),
 										}}
 										ref={canvasRef}
+										onDragOver={(e) => {
+											e.preventDefault();
+											e.dataTransfer.dropEffect = "copy";
+										}}
+										onDrop={(e) => {
+											e.preventDefault();
+											e.stopPropagation();
+											const raw = e.dataTransfer.getData(
+												STICKER_ASSET_DND_MIME
+											);
+											if (!raw) return;
+											let payload: {
+												assetId?: string;
+												url?: string;
+												width?: number;
+												height?: number;
+											} | null = null;
+											try {
+												payload = JSON.parse(raw);
+											} catch {
+												payload = null;
+											}
+											if (!payload?.url) return;
+											const canvas = canvasRef.current;
+											if (!canvas) return;
+											const rect = canvas.getBoundingClientRect();
+											if (rect.width <= 0 || rect.height <= 0) return;
+											const centerXPct =
+												((e.clientX - rect.left) / rect.width) * 100;
+											const centerYPct =
+												((e.clientY - rect.top) / rect.height) * 100;
+											const base = cloneDraft(presentRef.current);
+											void addImageStickerAt({
+												url: payload.url,
+												centerXPct,
+												centerYPct,
+												assetId: payload.assetId,
+												assetWidth: payload.width,
+												assetHeight: payload.height,
+												historyBase: base,
+											});
+										}}
 									>
 										{/* marquee selection box */}
 										{marquee && (
@@ -3245,6 +3369,207 @@ export default function StickerBoardEditPage() {
 						<p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
 							선택한 스티커 속성 편집(텍스트/스타일/회전/투명도 등)
 						</p>
+
+						{/* Asset Panel */}
+						<div className="mt-4 rounded-card border border-card bg-card-bg p-3">
+							<div className="flex items-center justify-between gap-2">
+								<div className="text-xs font-semibold text-main-text">
+									이미지 에셋
+								</div>
+								<label className="inline-flex items-center gap-2 rounded-md border border-card bg-background/40 px-2 py-1 text-xs text-gray-700 hover:bg-background/60 cursor-pointer">
+									<Upload className="h-3.5 w-3.5" />
+									업로드
+									<input
+										type="file"
+										accept="image/*"
+										className="hidden"
+										onChange={async (e) => {
+											const file = e.target.files?.[0];
+											e.target.value = "";
+											if (!file) return;
+											try {
+												setAssetsError(null);
+												setAssetsLoading(true);
+												await createStickerAssetFromFile(file);
+												await refreshAssets(assetTab);
+											} catch (err) {
+												const msg =
+													err instanceof Error
+														? err.message
+														: "업로드에 실패했습니다.";
+												toast.error(msg);
+												setAssetsError(msg);
+											} finally {
+												setAssetsLoading(false);
+											}
+										}}
+									/>
+								</label>
+							</div>
+
+							<div className="mt-3">
+								<Tabs
+									value={assetTab}
+									onValueChange={(v) => setAssetTab(v as StickerAssetTab)}
+								>
+									<TabsList className="w-full">
+										<TabsTrigger value="all" className="flex-1 text-xs">
+											전체
+										</TabsTrigger>
+										<TabsTrigger
+											value="favorites"
+											className="flex-1 text-xs"
+										>
+											즐겨찾기
+										</TabsTrigger>
+										<TabsTrigger value="recent" className="flex-1 text-xs">
+											최근
+										</TabsTrigger>
+									</TabsList>
+
+									{(["all", "favorites", "recent"] as StickerAssetTab[]).map(
+										(tab) => (
+											<TabsContent key={tab} value={tab} className="mt-3">
+												{assetsLoading ? (
+													<div className="py-6 text-center text-xs text-gray-400">
+														불러오는 중...
+													</div>
+												) : assetsError ? (
+													<div className="py-3 text-xs text-red-500">
+														{assetsError}
+													</div>
+												) : assets.length === 0 ? (
+													<div className="py-6 text-center text-xs text-gray-400">
+														에셋이 없습니다.
+													</div>
+												) : (
+													<div className="grid grid-cols-3 gap-2">
+														{assets.map((asset) => {
+															const isFav = asset.favorite === true;
+															return (
+																<div
+																	key={asset.id}
+																	className="relative group rounded-md border border-card bg-background/30 overflow-hidden"
+																>
+																	<button
+																		type="button"
+																		className="block w-full aspect-square"
+																		draggable
+																		onDragStart={(e) => {
+																			e.dataTransfer.effectAllowed = "copy";
+																			e.dataTransfer.setData(
+																				STICKER_ASSET_DND_MIME,
+																				JSON.stringify({
+																					assetId: asset.id,
+																					url: asset.url,
+																					width: asset.width,
+																					height: asset.height,
+																				})
+																			);
+																			e.dataTransfer.setData(
+																				"text/uri-list",
+																				asset.url
+																			);
+																		}}
+																		onClick={() => {
+																			const base = cloneDraft(presentRef.current);
+																			void addImageStickerAt({
+																				url: asset.url,
+																				centerXPct: 50,
+																				centerYPct: 50,
+																				assetId: asset.id,
+																				assetWidth: asset.width,
+																				assetHeight: asset.height,
+																				historyBase: base,
+																			});
+																		}}
+																		title="클릭: 가운데 추가 / 드래그: 캔버스에 드롭"
+																	>
+																		{/* eslint-disable-next-line @next/next/no-img-element */}
+																		<img
+																			src={asset.url}
+																			alt={asset.name ?? "asset"}
+																			className="h-full w-full object-cover"
+																		/>
+																	</button>
+
+																	<button
+																		type="button"
+																		className="absolute top-1 left-1 inline-flex h-7 w-7 items-center justify-center rounded bg-black/40 text-white opacity-0 group-hover:opacity-100 transition"
+																		onClick={async (e) => {
+																			e.stopPropagation();
+																			try {
+																				setAssets((prev) =>
+																					prev.map((a) =>
+																						a.id === asset.id
+																							? { ...a, favorite: !isFav }
+																							: a
+																					)
+																				);
+																				await setStickerAssetFavorite(
+																					asset.id,
+																					!isFav
+																				);
+																				if (assetTab === "favorites")
+																					await refreshAssets("favorites");
+																			} catch (err) {
+																				const msg =
+																					err instanceof Error
+																						? err.message
+																						: "즐겨찾기 변경 실패";
+																				toast.error(msg);
+																				void refreshAssets(assetTab);
+																			}
+																		}}
+																		aria-label="즐겨찾기"
+																		title="즐겨찾기"
+																	>
+																		<Star
+																			className="h-4 w-4"
+																			fill={isFav ? "currentColor" : "none"}
+																		/>
+																	</button>
+
+																	<button
+																		type="button"
+																		className="absolute top-1 right-1 inline-flex h-7 w-7 items-center justify-center rounded bg-black/40 text-white opacity-0 group-hover:opacity-100 transition"
+																		onClick={async (e) => {
+																			e.stopPropagation();
+																			try {
+																				setAssets((prev) =>
+																					prev.filter((a) => a.id !== asset.id)
+																				);
+																				await deleteStickerAsset({
+																					id: asset.id,
+																					storagePath: asset.storagePath,
+																				});
+																				await refreshAssets(assetTab);
+																			} catch (err) {
+																				const msg =
+																					err instanceof Error
+																						? err.message
+																						: "삭제 실패";
+																				toast.error(msg);
+																				void refreshAssets(assetTab);
+																			}
+																		}}
+																		aria-label="삭제"
+																		title="삭제"
+																	>
+																		<Trash2 className="h-4 w-4" />
+																	</button>
+																</div>
+															);
+														})}
+													</div>
+												)}
+											</TabsContent>
+										)
+									)}
+								</Tabs>
+							</div>
+						</div>
+
 						<div className="mt-4 space-y-2">
 							<Button
 								type="button"
