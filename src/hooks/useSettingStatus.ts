@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useContext } from "react";
 import {
 	SettingStatus,
-	useSettingStatusContext,
+	SettingStatusContext,
 } from "@/contexts/SettingStatusContext";
 
 export function useSettingStatus(sectionId: string, status: SettingStatus) {
-	const { setStatus } = useSettingStatusContext();
+	const context = useContext(SettingStatusContext);
 
 	useEffect(() => {
-		if (!sectionId) return;
-		setStatus(sectionId, status);
-	}, [sectionId, status, setStatus]);
+		if (!sectionId || !context) return;
+		context.setStatus(sectionId, status);
+	}, [sectionId, status, context]);
 }

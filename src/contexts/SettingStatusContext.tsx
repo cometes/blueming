@@ -11,7 +11,7 @@ interface SettingStatusContextValue {
 	setStatus: (sectionId: string, status: SettingStatus) => void;
 }
 
-const SettingStatusContext = createContext<SettingStatusContextValue | null>(
+export const SettingStatusContext = createContext<SettingStatusContextValue | null>(
 	null
 );
 
@@ -31,7 +31,7 @@ export function SettingStatusProvider({
 		});
 	};
 
-	const { overallStatus, dirtyCount } = useMemo(() => {
+	const { overallStatus, dirtyCount } = useMemo<{ overallStatus: SettingStatus; dirtyCount: number }>(() => {
 		const statuses = Object.values(statusBySection);
 		const dirtyCount = statuses.filter((status) => status === "dirty").length;
 		return {

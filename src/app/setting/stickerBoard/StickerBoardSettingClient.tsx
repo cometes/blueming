@@ -40,14 +40,6 @@ const isImageSticker = (
 	imageUrl: string;
 } => typeof (component as { imageUrl?: unknown }).imageUrl === "string";
 
-const isPctSticker = (
-	component: StickerBoardComponent
-): component is StickerBoardComponent & {
-	xPct: number;
-	yPct: number;
-	widthPct: number;
-	heightPct: number;
-} => true;
 
 const renderSticker = (component: StickerBoardComponent) => {
 	if (component.isVisible === false) return null;
@@ -73,13 +65,13 @@ const renderSticker = (component: StickerBoardComponent) => {
 					width: `${component.widthPct}%`,
 					height: `${component.heightPct}%`,
 					opacity,
-					mixBlendMode: (component.blendMode as any) ?? "normal",
+					mixBlendMode: (component.blendMode as React.CSSProperties["mixBlendMode"]) ?? "normal",
 					zIndex: component.zIndex,
 					transform,
 					transformOrigin: "center",
 				}}
 			>
-				{children.map((child) => renderSticker(child as any))}
+				{children.map((child) => renderSticker(child as StickerBoardComponent))}
 			</div>
 		);
 	}
@@ -94,7 +86,7 @@ const renderSticker = (component: StickerBoardComponent) => {
 				width: `${component.widthPct}%`,
 				height: `${component.heightPct}%`,
 				opacity,
-				mixBlendMode: (component.blendMode as any) ?? "normal",
+				mixBlendMode: (component.blendMode as React.CSSProperties["mixBlendMode"]) ?? "normal",
 				zIndex: component.zIndex,
 				transform,
 			}}
@@ -185,9 +177,6 @@ export default function StickerBoardSettingClient() {
 	const pctVisible = components.filter((c) => c.isVisible !== false);
 	const visibleCount = pctVisible.length;
 	const totalCount = components.length;
-
-	const canvasWidth = (ratio.w / CANVAS_RATIO_BASE) * 100;
-	const canvasHeight = (ratio.h / CANVAS_RATIO_BASE) * 100;
 
 	return (
 		<section className="space-y-6">

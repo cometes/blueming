@@ -58,6 +58,7 @@ interface MarqueeSettings {
 	gradientWidth: number;
 	textColor: string;
 	backgroundColor: string;
+	marqueeType: string;
 }
 
 interface EditorDimensions {
@@ -275,6 +276,7 @@ export default function NoticeSettingClient() {
 				gradientWidth,
 				textColor,
 				backgroundColor,
+			marqueeType: currentType,
 			};
 
 			const editorDimensions = canvasRef.current
@@ -330,6 +332,7 @@ export default function NoticeSettingClient() {
 					gradientWidth: GRADIENT_SETTINGS.DEFAULT,
 					textColor: DEFAULT_COLORS.TEXT,
 					backgroundColor: DEFAULT_COLORS.BACKGROUND,
+				marqueeType: "투명",
 				},
 				editorDimensions: { width: 0, height: 0 },
 			};

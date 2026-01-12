@@ -2,14 +2,15 @@ import { fetchLibraryDetail, fetchLibrarySeries, fetchLibraryTags } from "@/quer
 import LibararyNewClient from "../../new/NewClient";
 
 interface EditPageProps {
-	params: { id: string };
+	params: Promise<{ id: string }>;
 }
 
 export default async function LibraryEditPage({ params }: EditPageProps) {
+	const { id } = await params;
 	try {
 		const [{ data: detailData }, { data: tagsData }, { data: seriesData }] =
 			await Promise.all([
-				fetchLibraryDetail(params.id),
+				fetchLibraryDetail(id),
 				fetchLibraryTags(),
 				fetchLibrarySeries(),
 			]);
