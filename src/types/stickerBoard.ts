@@ -7,6 +7,27 @@ export interface StickerBoardTextStyle {
 	textAlign?: "left" | "center" | "right";
 }
 
+/** Drag payload MIME for StickerBoard image asset -> canvas drop */
+export const STICKER_ASSET_DND_MIME = "application/x-sticker-asset";
+
+export type StickerAssetTab = "all" | "favorites" | "recent";
+
+export interface StickerAsset {
+	id: string;
+	url: string;
+	/** original filename or user-defined label */
+	name?: string;
+	width?: number;
+	height?: number;
+	favorite?: boolean;
+	/** Storage object path (used for deletion) */
+	storagePath?: string;
+	/** epoch ms (converted from Firestore Timestamp) */
+	createdAtMs?: number;
+	/** epoch ms (converted from Firestore Timestamp) */
+	lastUsedAtMs?: number;
+}
+
 export interface StickerBoardComponentBase {
 	id: number;
 	zIndex: number;
