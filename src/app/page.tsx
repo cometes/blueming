@@ -7,11 +7,19 @@ import WidgetNotice from "@/components/widgets/WidgetNotice";
 import WidgetSlide from "@/components/widgets/WidgetSlide";
 import WidgetLatestPosts from "@/components/widgets/WidgetLatestPosts";
 import WidgetStickerBoard from "@/components/widgets/WidgetStickerBoard";
+import WidgetImage from "@/components/widgets/WidgetImage";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useCallback } from "react";
 import { useMobile } from "@/hooks/use-mobile";
 
 type WidgetType = string;
+
+const IMAGE_WIDGET_IDS = [
+	"이미지 위젯 1",
+	"이미지 위젯 2",
+	"이미지 위젯 3",
+	"이미지 위젯 4",
+];
 
 export default function Home() {
 	const { main } = useSettings();
@@ -31,6 +39,11 @@ export default function Home() {
 	const activeLayout = layout.filter((item) => activeWidgetIds.has(item.i));
 
 	const renderWidget = useCallback((widgetType: WidgetType) => {
+		const imageWidgetIndex = IMAGE_WIDGET_IDS.indexOf(widgetType);
+		if (imageWidgetIndex !== -1) {
+			return <WidgetImage slotIndex={imageWidgetIndex} />;
+		}
+
 		switch (widgetType) {
 			case "슬라이드 배너":
 				return <WidgetSlide />;

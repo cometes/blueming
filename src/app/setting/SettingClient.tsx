@@ -21,6 +21,9 @@ const EffectSettingClient = dynamic(() => import("./effect/EffectSettingClient")
 const StickerBoardSettingClient = dynamic(
 	() => import("./stickerBoard/StickerBoardSettingClient")
 );
+const ImageWidgetSettingClient = dynamic(
+	() => import("./imageWidget/ImageWidgetSettingClient")
+);
 
 type SettingSection = {
 	id: string;
@@ -127,6 +130,13 @@ export default function SettingClient({ initialSection }: SettingClientProps) {
 						title: "스티커보드 설정",
 						desc: "메인 페이지 스티커보드를 설정할 수 있습니다.",
 						Component: StickerBoardSettingClient,
+					},
+					{
+						id: "imageWidget",
+						label: "이미지 위젯 설정",
+						title: "이미지 위젯 설정",
+						desc: "메인 페이지 이미지 위젯을 설정할 수 있습니다.",
+						Component: ImageWidgetSettingClient,
 					},
 				],
 			},
