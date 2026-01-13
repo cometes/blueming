@@ -8,6 +8,7 @@ import WidgetSlide from "@/components/widgets/WidgetSlide";
 import WidgetLatestPosts from "@/components/widgets/WidgetLatestPosts";
 import WidgetStickerBoard from "@/components/widgets/WidgetStickerBoard";
 import WidgetImage from "@/components/widgets/WidgetImage";
+import WidgetWeatherClock from "@/components/widgets/WidgetWeatherClock";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useCallback } from "react";
 import { useMobile } from "@/hooks/use-mobile";
@@ -55,12 +56,14 @@ export default function Home() {
 				return <WidgetMarquee />;
 			case "디데이":
 				return <WidgetDday />;
-			case "최신글":
-				return <WidgetLatestPosts />;
-			case "스티커보드":
-				return <WidgetStickerBoard />;
-			// Add other widgets here as needed
-			default:
+		case "최신글":
+			return <WidgetLatestPosts />;
+		case "스티커보드":
+			return <WidgetStickerBoard />;
+		case "날씨&시계":
+			return <WidgetWeatherClock />;
+		// Add other widgets here as needed
+		default:
 				return (
 					<div className="p-4 bg-gray-100 rounded-lg text-center w-full h-full">
 						<span className="text-gray-600">{widgetType}</span>
