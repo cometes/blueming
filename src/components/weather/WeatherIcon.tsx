@@ -15,8 +15,7 @@ interface WeatherIconProps {
 
 export default function WeatherIcon({ condition, className }: WeatherIconProps) {
 	return (
-		<div className={cn("weather-icon-container", className)}>
-			<div className={`icon ${condition}`}>
+		<div className={cn("icon", condition, className)}>
 				{condition === "sunny" && (
 					<div className="sun">
 						<div className="rays" />
@@ -66,7 +65,6 @@ export default function WeatherIcon({ condition, className }: WeatherIconProps) 
 						<div className="rain" />
 					</>
 				)}
-			</div>
 		</div>
 	);
 }
