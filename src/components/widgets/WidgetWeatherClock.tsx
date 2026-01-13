@@ -78,7 +78,9 @@ export default function WidgetWeatherClock() {
 		if (!currentTime) return "";
 		const month = currentTime.getMonth() + 1;
 		const day = currentTime.getDate();
-		const weekday = ["일", "월", "화", "수", "목", "금", "토"][currentTime.getDay()];
+		const weekday = ["일", "월", "화", "수", "목", "금", "토"][
+			currentTime.getDay()
+		];
 		return `${month}월 ${day}일 ${weekday}요일`;
 	}, [currentTime]);
 
@@ -92,7 +94,9 @@ export default function WidgetWeatherClock() {
 	if (!enabled) {
 		return (
 			<div className="widget-wrapper flex items-center justify-center">
-				<div className="text-sm text-sub-text">날씨&시계 위젯이 비활성화되어 있어요</div>
+				<div className="text-sm text-sub-text">
+					날씨&시계 위젯이 비활성화되어 있어요
+				</div>
 			</div>
 		);
 	}
@@ -108,28 +112,44 @@ export default function WidgetWeatherClock() {
 	if (error || !weather) {
 		return (
 			<div className="widget-wrapper flex items-center justify-center">
-				<div className="text-sm text-sub-text">{error || "날씨 정보를 불러올 수 없습니다"}</div>
+				<div className="text-sm text-sub-text">
+					{error || "날씨 정보를 불러올 수 없습니다"}
+				</div>
 			</div>
 		);
 	}
 
 	return (
-		<div className="widget-wrapper weather-widget">
-			<div className="weather-widget-shell">
-				<div className="weather-widget-card">
-					<div className="weather-widget-temp">{weather.temperature}°</div>
-					<div className="weather-widget-icon">
-						<WeatherIcon condition={weather.condition} />
+		<div
+			className="widget-wrapper weather-widget"
+			style={{ "--weather-icon-size": "0.5em" } as React.CSSProperties}
+		>
+			<div className="weather-widget-shell p-3 pt-0 h-full">
+				<div className="weather-widget-card h-full flex flex-col justify-between">
+					<div className="flex justify-between items-center">
+						<div className="weather-widget-temp ">
+							<p className="text-3xl">{weather.temperature}°</p>
+							<div className="weather-widget-city flex items-center">
+								<MapPin className="weather-widget-pin w-3.5" />
+								<span className="text-sm">{weather.city}</span>
+							</div>
+						</div>
+						<div className="weather-widget-icon">
+							<WeatherIcon condition={weather.condition} />
+						</div>
 					</div>
-					<div className="weather-widget-city">
-						<MapPin className="weather-widget-pin" />
-						<span>{weather.city}</span>
+
+					<div className="flex items-end justify-between">
+						{weather.description ? (
+							<div className="weather-widget-desc text-sm break-keep">{weather.description}</div>
+						) : null}
+						<div className="flex flex-col items-end">
+							<div className="weather-widget-date text-sm">{formattedDate}</div>
+							<div className="weather-widget-time text-4xl font-semibold">
+								{formattedTime}
+							</div>
+						</div>
 					</div>
-					<div className="weather-widget-date">{formattedDate}</div>
-					<div className="weather-widget-time">{formattedTime}</div>
-					{weather.description ? (
-						<div className="weather-widget-desc">{weather.description}</div>
-					) : null}
 				</div>
 			</div>
 		</div>
