@@ -83,6 +83,11 @@ interface Profile {
 	headerImage: string;
 }
 
+interface ImageWidgetSettings {
+	images: string[];
+	fits?: Array<"cover" | "contain">;
+}
+
 // Menu Types
 interface SubMenu {
 	name: string;
@@ -214,6 +219,7 @@ interface MainSettings {
 	dday?: DdayItem[];
 	profile?: Profile;
 	stickerBoard?: StickerBoardSettings;
+	imageWidget?: ImageWidgetSettings;
 }
 
 interface LibrarySettings {
@@ -275,6 +281,7 @@ export type {
 	Notice,
 	DdayItem,
 	Profile,
+	ImageWidgetSettings,
 	MenuItem,
 	SubMenu,
 	MenuDesign,

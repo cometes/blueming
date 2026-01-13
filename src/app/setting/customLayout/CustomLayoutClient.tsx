@@ -61,6 +61,10 @@ const widgetOptions = [
 	{ label: "디데이", value: "디데이" },
 	{ label: "최신글", value: "최신글" },
 	{ label: "뮤직플레이어", value: "뮤직플레이어" },
+	{ label: "이미지 위젯 1", value: "이미지 위젯 1" },
+	{ label: "이미지 위젯 2", value: "이미지 위젯 2" },
+	{ label: "이미지 위젯 3", value: "이미지 위젯 3" },
+	{ label: "이미지 위젯 4", value: "이미지 위젯 4" },
 ];
 
 const widgetColors = [
@@ -77,6 +81,13 @@ const widgetColors = [
 
 const DESKTOP_GRID = { columns: 12, rows: 12 };
 const MOBILE_GRID = { columns: 8, rows: 12 };
+const IMAGE_WIDGET_IDS = [
+	"이미지 위젯 1",
+	"이미지 위젯 2",
+	"이미지 위젯 3",
+	"이미지 위젯 4",
+];
+const MAX_IMAGE_WIDGETS = IMAGE_WIDGET_IDS.length;
 
 export default function CustomLayoutClient() {
 	const { main, updateMain, refreshSettings } = useSettings();
@@ -214,9 +225,15 @@ export default function CustomLayoutClient() {
 			return;
 		}
 
-		if (activeLayout.length >= 9) {
-			toast.warning("최대 9개의 위젯만 추가할 수 있습니다.");
-			return;
+		const isImageWidget = IMAGE_WIDGET_IDS.includes(selectedWidget);
+		if (isImageWidget) {
+			const imageWidgetCount = activeWidgets.filter((widget) =>
+				IMAGE_WIDGET_IDS.includes(widget.id)
+			).length;
+			if (imageWidgetCount >= MAX_IMAGE_WIDGETS) {
+				toast.warning("이미지 위젯은 최대 4개까지 추가할 수 있습니다.");
+				return;
+			}
 		}
 
 		const currentCollision = isDesktopMode ? desktopCollision : mobileCollision;
