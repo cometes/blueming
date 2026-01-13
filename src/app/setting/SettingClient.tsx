@@ -24,6 +24,9 @@ const StickerBoardSettingClient = dynamic(
 const ImageWidgetSettingClient = dynamic(
 	() => import("./imageWidget/ImageWidgetSettingClient")
 );
+const WeatherClockSettingClient = dynamic(
+	() => import("./weatherClock/WeatherClockSettingClient")
+);
 
 type SettingSection = {
 	id: string;
@@ -131,18 +134,25 @@ export default function SettingClient({ initialSection }: SettingClientProps) {
 						desc: "메인 페이지 스티커보드를 설정할 수 있습니다.",
 						Component: StickerBoardSettingClient,
 					},
-					{
-						id: "imageWidget",
-						label: "이미지 위젯 설정",
-						title: "이미지 위젯 설정",
-						desc: "메인 페이지 이미지 위젯을 설정할 수 있습니다.",
-						Component: ImageWidgetSettingClient,
-					},
-				],
-			},
-		],
-		[]
-	);
+				{
+					id: "imageWidget",
+					label: "이미지 위젯 설정",
+					title: "이미지 위젯 설정",
+					desc: "메인 페이지 이미지 위젯을 설정할 수 있습니다.",
+					Component: ImageWidgetSettingClient,
+				},
+				{
+					id: "weatherClock",
+					label: "날씨&시계 설정",
+					title: "날씨&시계 설정",
+					desc: "메인 페이지 날씨&시계 위젯을 설정할 수 있습니다.",
+					Component: WeatherClockSettingClient,
+				},
+			],
+		},
+	],
+	[]
+);
 
 	const allSections = useMemo(
 		() => settingGroups.flatMap((group) => group.items),

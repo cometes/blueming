@@ -88,6 +88,11 @@ interface ImageWidgetSettings {
 	fits?: Array<"cover" | "contain">;
 }
 
+interface WeatherClockSettings {
+	enabled: boolean;
+	city: string;
+}
+
 // Menu Types
 interface SubMenu {
 	name: string;
@@ -220,6 +225,7 @@ interface MainSettings {
 	profile?: Profile;
 	stickerBoard?: StickerBoardSettings;
 	imageWidget?: ImageWidgetSettings;
+	weatherClock?: WeatherClockSettings;
 }
 
 interface LibrarySettings {
@@ -282,6 +288,7 @@ export type {
 	DdayItem,
 	Profile,
 	ImageWidgetSettings,
+	WeatherClockSettings,
 	MenuItem,
 	SubMenu,
 	MenuDesign,
