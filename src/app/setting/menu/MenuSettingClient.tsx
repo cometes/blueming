@@ -159,7 +159,7 @@ export default function MenuSettingClient() {
 				return <Archive size={16} className="text-sub-text" />;
 			case "갤러리":
 				return <ImageIcon size={16} className="text-sub-text" />;
-			case "스레드":
+			case "메모":
 				return <MessageCircle size={16} className="text-sub-text" />;
 			case "포토보드":
 				return <ImageIcon size={16} className="text-sub-text" />;
