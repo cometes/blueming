@@ -89,7 +89,7 @@ export default function WidgetMenu() {
 			라이브러리: "/library",
 			아카이브: "/archive",
 			갤러리: "/gallery",
-			스레드: "/thread",
+			메모: "/memo",
 			포토보드: "/photoboard",
 			방명록: "/guestbook",
 			설정: "/setting",
@@ -287,7 +287,7 @@ export default function WidgetMenu() {
 				return <Archive size={16} className="text-sub-text" />;
 			case "갤러리":
 				return <ImageIcon size={16} className="text-sub-text" />;
-			case "스레드":
+			case "메모":
 				return <MessageCircle size={16} className="text-sub-text" />;
 			case "방명록":
 				return <MessageCircle size={16} className="text-sub-text" />;
