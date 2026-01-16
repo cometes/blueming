@@ -1,4 +1,4 @@
-import axios from "axios";
+import { apiClient, getApiErrorMessage } from "@/queries/apiClient";
 import { getAuthHeader } from "@/queries/getAuthHeader";
 import type { LibrarySettings } from "@/contexts/SettingsContext";
 import { revalidateSettingsCache } from "@/queries/revalidateSettings";
@@ -14,8 +14,8 @@ export const setSettingsLibrary = async (
 ): Promise<SetSettingsLibraryResponse> => {
 	try {
 		const headers = await getAuthHeader();
-		const response = await axios.post<SetSettingsLibraryResponse>(
-			"https://api-w5buphcleq-du.a.run.app/settings/library",
+		const response = await apiClient.post<SetSettingsLibraryResponse>(
+			"/settings/library",
 			payload,
 			{ headers }
 		);
@@ -23,12 +23,8 @@ export const setSettingsLibrary = async (
 		await revalidateSettingsCache();
 		return response.data;
 	} catch (error) {
-		if (axios.isAxiosError(error)) {
-			throw new Error(
-				error.response?.data?.message ||
-					"라이브러리 설정 업데이트에 실패했습니다."
-			);
-		}
-		throw error;
+		throw new Error(
+			getApiErrorMessage(error, "라이브러리 설정 업데이트에 실패했습니다.")
+		);
 	}
 };

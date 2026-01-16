@@ -274,7 +274,7 @@ export const Toolbar = React.forwardRef<HTMLDivElement, ToolbarProps>(
       <div
         ref={mergeRefs([toolbarRef, ref])}
         role="toolbar"
-        aria-label="toolbar"
+        aria-label="툴바"
         data-variant={variant}
         className={`tiptap-toolbar ${className || ""}`}
         {...props}

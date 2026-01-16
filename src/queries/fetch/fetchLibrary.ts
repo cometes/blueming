@@ -1,4 +1,4 @@
-import axios from "axios";
+import { apiClient } from "@/queries/apiClient";
 
 interface FetchLibraryListParams {
 	page?: number;
@@ -14,6 +14,7 @@ interface FetchLibraryListOptions {
 }
 
 const listCache = new Map<string, { data: unknown; timestamp: number }>();
+const sharedCache = new Map<string, { data: unknown; timestamp: number }>();
 const defaultStaleTimeMs = 30_000;
 
 const buildListCacheKey = (params: FetchLibraryListParams) => {
@@ -28,26 +29,23 @@ export const fetchLibraryList = async (
 	params: FetchLibraryListParams = {},
 	options: FetchLibraryListOptions = {}
 ) => {
-	const searchParams = new URLSearchParams();
+	const requestParams: Record<string, string | number> = {};
 	if (params.page) {
-		searchParams.set("page", params.page.toString());
+		requestParams.page = params.page;
 	}
 	if (params.limit) {
-		searchParams.set("limit", params.limit.toString());
+		requestParams.limit = params.limit;
 	}
 	if (params.sort) {
-		searchParams.set("sort", params.sort);
+		requestParams.sort = params.sort;
 	}
 	if (params.tag) {
-		searchParams.set("tag", params.tag);
+		requestParams.tag = params.tag;
 	}
 	if (params.query) {
-		searchParams.set("q", params.query);
+		requestParams.q = params.query;
+		requestParams.query = params.query;
 	}
-
-	const url = searchParams.toString()
-		? `https://api-w5buphcleq-du.a.run.app/library/list?${searchParams.toString()}`
-		: "https://api-w5buphcleq-du.a.run.app/library/list";
 
 	const useCache = options.useCache !== false && typeof window !== "undefined";
 	const staleTimeMs = options.staleTimeMs ?? defaultStaleTimeMs;
@@ -62,7 +60,9 @@ export const fetchLibraryList = async (
 		}
 	}
 
-	const result = await axios.get(url);
+	const result = await apiClient.get("/library/list", {
+		params: requestParams,
+	});
 
 	const data = result.data;
 	if (useCache) {
@@ -75,47 +75,88 @@ export const fetchLibraryList = async (
 };
 
 export const fetchLibrarySeries = async () => {
-	const result = await axios.get(
-		"https://api-w5buphcleq-du.a.run.app/library/series"
-	);
+	const cacheKey = "library:series";
+	const useCache = typeof window !== "undefined";
+	const cached = useCache ? sharedCache.get(cacheKey) : undefined;
+	if (cached && Date.now() - cached.timestamp < defaultStaleTimeMs) {
+		return { data: cached.data };
+	}
+
+	const result = await apiClient.get("/library/series");
 
 	const data = result.data;
+	if (useCache) {
+		sharedCache.set(cacheKey, { data, timestamp: Date.now() });
+	}
 
 	return {
 		data,
 	};
 };
 
-export async function fetchLibraryDetail(id: string | string[]) {
-	const request = await axios.get(
-		`https://api-w5buphcleq-du.a.run.app/library/detail/${id}`
-	);
+export async function fetchLibraryDetail(
+	id: string | string[],
+	options: FetchLibraryListOptions = {}
+) {
+	const cacheKey = `library:detail:${id}`;
+	const useCache = options.useCache !== false && typeof window !== "undefined";
+	const staleTimeMs = options.staleTimeMs ?? defaultStaleTimeMs;
+	const cached = useCache ? sharedCache.get(cacheKey) : undefined;
+	if (cached && Date.now() - cached.timestamp < staleTimeMs) {
+		return { data: cached.data };
+	}
+
+	const request = await apiClient.get(`/library/detail/${id}`);
 
 	const data = request.data;
+	if (useCache) {
+		sharedCache.set(cacheKey, { data, timestamp: Date.now() });
+	}
 
 	return {
 		data,
 	};
 }
 
-export const fetchLibrarySeriesList = async (series: string | string[]) => {
-	const result = await axios.get(
-		`https://api-w5buphcleq-du.a.run.app/library/series/${series}`
-	);
+export const fetchLibrarySeriesList = async (
+	series: string | string[],
+	options: FetchLibraryListOptions = {}
+) => {
+	const cacheKey = `library:series:${series}`;
+	const useCache = options.useCache !== false && typeof window !== "undefined";
+	const staleTimeMs = options.staleTimeMs ?? defaultStaleTimeMs;
+	const cached = useCache ? sharedCache.get(cacheKey) : undefined;
+	if (cached && Date.now() - cached.timestamp < staleTimeMs) {
+		return { data: cached.data };
+	}
+
+	const result = await apiClient.get(`/library/series/${series}`);
 
 	const data = result.data;
+	if (useCache) {
+		sharedCache.set(cacheKey, { data, timestamp: Date.now() });
+	}
 
 	return {
 		data,
 	};
 };
 
-export const fetchLibraryTags = async () => {
-	const result = await axios.get(
-		"https://api-w5buphcleq-du.a.run.app/library/tags"
-	);
+export const fetchLibraryTags = async (options: FetchLibraryListOptions = {}) => {
+	const cacheKey = "library:tags";
+	const useCache = options.useCache !== false && typeof window !== "undefined";
+	const staleTimeMs = options.staleTimeMs ?? defaultStaleTimeMs;
+	const cached = useCache ? sharedCache.get(cacheKey) : undefined;
+	if (cached && Date.now() - cached.timestamp < staleTimeMs) {
+		return { data: cached.data };
+	}
+
+	const result = await apiClient.get("/library/tags");
 
 	const data = result.data;
+	if (useCache) {
+		sharedCache.set(cacheKey, { data, timestamp: Date.now() });
+	}
 
 	return {
 		data,

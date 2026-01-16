@@ -1,4 +1,4 @@
-import { fetchLibrarySeriesList } from "@/queries/fetch/fetchLibrary";
+import { fetchLibrarySeriesListServer } from "@/queries/fetch/fetchLibraryServer";
 import SeriesClient from "./SeriesClient";
 
 interface SeriesPageProps {
@@ -11,7 +11,7 @@ export default async function SeriesPage({ params }: SeriesPageProps) {
 	const { series } = await params;
 
 	try {
-		const { data: seriesListData } = await fetchLibrarySeriesList(series);
+		const { data: seriesListData } = await fetchLibrarySeriesListServer(series);
 
 		return <SeriesClient seriesListData={seriesListData} />;
 	} catch {

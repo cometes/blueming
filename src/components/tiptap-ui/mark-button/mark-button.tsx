@@ -127,7 +127,17 @@ export function shouldShowMarkButton(params: {
 }
 
 export function getFormattedMarkName(type: Mark): string {
-  return type.charAt(0).toUpperCase() + type.slice(1)
+  const labels: Record<Mark, string> = {
+    bold: "굵게",
+    italic: "기울임",
+    strike: "취소선",
+    code: "인라인 코드",
+    underline: "밑줄",
+    superscript: "위 첨자",
+    subscript: "아래 첨자",
+  }
+
+  return labels[type]
 }
 
 export function useMarkState(
@@ -213,7 +223,7 @@ export const MarkButton = React.forwardRef<HTMLButtonElement, MarkButtonProps>(
         data-disabled={isDisabled}
         role="button"
         tabIndex={-1}
-        aria-label={type}
+        aria-label={formattedName}
         aria-pressed={isActive}
         tooltip={formattedName}
         shortcutKeys={shortcutKey}

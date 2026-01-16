@@ -248,7 +248,7 @@ export function FontSizeInput({
         disabled={isDisabled}
         placeholder={currentFontSize === "mixed" ? "" : "16"}
         className="w-12 px-1 py-1 text-sm text-center border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-        aria-label="Font size"
+        aria-label="글자 크기"
         title="폰트 크기 (12-56px)"
       />
       <span className="text-xs text-gray-500">px</span>

@@ -114,7 +114,8 @@ export default function LibararyNewClient({
 			slug: initialData.slug ?? "",
 			summary: initialData.summary ?? "",
 			visibility: initialData.allow ?? "all",
-			password: initialData.allow === "password" ? initialData.password ?? "" : "",
+			password:
+				initialData.allow === "password" ? initialData.password ?? "" : "",
 			thumbnail: initialData.thumbnail ?? "",
 			pinned: initialData.pinned ?? false,
 		});
@@ -215,37 +216,49 @@ export default function LibararyNewClient({
 				{/* Body */}
 				<div className="Container pt-[150px] pb-[100px] px-[60px] bg-card backdrop-blur-card w-[900px] min-h-dvh border-card flex flex-col m-auto">
 					<div className="TitleWrap relative">
-						<Input
+						<input
+							type="text"
 							placeholder="제목을 입력해주세요."
 							value={title}
 							onChange={(e) => setTitle(e.target.value)}
-							className="text-5xl border-0 text-main-text bg-background-none placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 p-0"
+							className="text-4xl border-none border-transparent text-main-text bg-background-none placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 focus-visible:border-transparent p-0"
 						/>
+					</div>
+					<div className="flex items-center mt-5">
 						<span
 							className={cn(
-								"SubTitleIconBox flex items-center justify-center absolute w-6 h-6 -left-10 bg-gray-300 border border-gray-400 text-gray-400 rounded-[3px] transition-all duration-300 ease cursor-pointer",
-								subOpen ? "-bottom-[56px]" : "-bottom-6"
+								"SubTitleIconBox flex items-center justify-center  w-6 h-6  bg-gray-300 border border-gray-400 text-gray-400 rounded-[3px] cursor-pointer"
 							)}
+							style={{ transition: "all 300ms ease" }}
 							onClick={() => {
 								setSubOpen((prev) => !prev);
 							}}
 						>
 							{subOpen ? <X size={16} /> : <Plus size={16} />}
 						</span>
+						<div
+							className={cn("SubTitleWrap relative overflow-hidden")}
+							style={{
+								maxWidth: subOpen ? "520px" : "0px",
+								marginLeft: subOpen ? "12px" : "0px",
+								opacity: subOpen ? 1 : 0,
+								pointerEvents: subOpen ? "auto" : "none",
+								transition:
+									"max-width 300ms ease, margin-left 300ms ease, opacity 300ms ease",
+							}}
+						>
+							<input
+								type="text"
+								placeholder="소제목을 입력해주세요."
+								value={subtitle}
+								onChange={(e) => setSubtitle(e.target.value)}
+								onFocus={() => setSubOpen(true)}
+								className="text-lg border-0 text-sub-text bg-background-none placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 pl-3"
+								style={{ transition: "all 300ms ease" }}
+							/>
+						</div>
 					</div>
-					<div
-						className={cn(
-							"SubTitleWrap relative transition-all duration-500 ease overflow-hidden",
-							subOpen ? "max-h-20 mt-6 opacity-100" : "max-h-0 mt-0 opacity-0"
-						)}
-					>
-						<Input
-							placeholder="소제목을 입력해주세요."
-							value={subtitle}
-							onChange={(e) => setSubtitle(e.target.value)}
-							className="text-lg border-0 text-sub-text bg-background-none placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 transition-all duration-300 ease p-0"
-						/>
-					</div>
+
 					<Separator className="mt-7" />
 					<div className="EditorBox pt-12 relative flex flex-col grow min-h-[400px]">
 						{/* Editor Content */}

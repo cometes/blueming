@@ -178,9 +178,9 @@ export function FontFamilyDropdownMenu({
           data-disabled={isDisabled}
           role="button"
           tabIndex={-1}
-          aria-label="Font family"
+          aria-label="글꼴"
           aria-pressed={isActive}
-          tooltip="Font family"
+          tooltip="글꼴"
           {...props}
         >
           <FontFamilyIcon className="tiptap-button-icon" />
@@ -201,7 +201,7 @@ export function FontFamilyDropdownMenu({
                 onClick={handleClearFont}
                 className="w-full justify-start"
               >
-                Default
+                기본
               </Button>
             </DropdownMenuItem>
           )}
