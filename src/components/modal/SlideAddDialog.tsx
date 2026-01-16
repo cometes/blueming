@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { ImagePlus, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { getAuthHeader } from "@/queries/getAuthHeader";
 import {
 	Dialog,
 	DialogContent,
@@ -53,10 +54,12 @@ export default function SlideAddDialog({
 			const formData = new FormData();
 			formData.append("image", file);
 
+			const authHeader = await getAuthHeader();
 			const response = await fetch(
 				"https://api-w5buphcleq-du.a.run.app/images/uploadImage",
 				{
 					method: "POST",
+					headers: authHeader,
 					body: formData,
 				}
 			);

@@ -118,9 +118,9 @@ export function TextAlignDropdownMenu({
           data-disabled={isDisabled}
           role="button"
           tabIndex={-1}
-          aria-label="Text alignment"
+          aria-label="텍스트 정렬"
           aria-pressed={isAnyAlignActive}
-          tooltip="Text alignment"
+          tooltip="텍스트 정렬"
           {...props}
         >
           {getActiveIcon()}

@@ -196,8 +196,8 @@ export function ListDropdownMenu({
 					data-active-state={isAnyActive ? "on" : "off"}
 					role="button"
 					tabIndex={-1}
-					aria-label="List options"
-					tooltip="List"
+					aria-label="목록 옵션"
+					tooltip="목록"
 					{...props}
 				>
 					{getActiveIcon()}

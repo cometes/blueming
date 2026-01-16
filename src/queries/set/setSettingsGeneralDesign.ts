@@ -1,5 +1,7 @@
 import axios from "axios";
+import { getAuthHeader } from "@/queries/getAuthHeader";
 import type { Design } from "@/contexts/SettingsContext";
+import { revalidateSettingsCache } from "@/queries/revalidateSettings";
 
 export type SetSettingsGeneralDesignPayload = Partial<Design>;
 
@@ -18,11 +20,14 @@ export const setSettingsGeneralDesign = async (
 	payload: SetSettingsGeneralDesignPayload
 ): Promise<SetSettingsGeneralDesignResponse> => {
 	try {
+		const headers = await getAuthHeader();
 		const response = await axios.post<SetSettingsGeneralDesignResponse>(
 			"https://api-w5buphcleq-du.a.run.app/settings/general/design",
-			payload
+			payload,
+			{ headers }
 		);
 
+		await revalidateSettingsCache();
 		return response.data;
 	} catch (error) {
 		if (axios.isAxiosError(error)) {

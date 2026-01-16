@@ -170,8 +170,8 @@ export const LinkButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
 				data-style="ghost"
 				role="button"
 				tabIndex={-1}
-				aria-label="Link"
-				tooltip="Link"
+				aria-label="링크"
+				tooltip="링크"
 				ref={ref}
 				{...props}
 			>
@@ -222,7 +222,7 @@ const LinkMain: React.FC<LinkMainProps> = ({
 		<>
 			<input
 				type="url"
-				placeholder="Paste a link..."
+				placeholder="링크를 붙여넣으세요..."
 				value={url}
 				onChange={(e) => setUrl(e.target.value)}
 				onKeyDown={handleKeyDown}
@@ -232,13 +232,14 @@ const LinkMain: React.FC<LinkMainProps> = ({
 				autoCorrect="off"
 				autoCapitalize="off"
 				className="tiptap-input tiptap-input-clamp"
+				style={{ fontSize: "0.875rem" }}
 			/>
 
 			<div className="tiptap-button-group" data-orientation="horizontal">
 				<Button
 					type="button"
 					onClick={setLink}
-					title="Apply link"
+					title="링크 적용"
 					disabled={!url && !isActive}
 					data-style="ghost"
 				>
@@ -252,7 +253,7 @@ const LinkMain: React.FC<LinkMainProps> = ({
 				<Button
 					type="button"
 					onClick={handleOpenLink}
-					title="Open in new window"
+					title="새 창에서 열기"
 					disabled={!url && !isActive}
 					data-style="ghost"
 				>
@@ -262,7 +263,7 @@ const LinkMain: React.FC<LinkMainProps> = ({
 				<Button
 					type="button"
 					onClick={removeLink}
-					title="Remove link"
+					title="링크 제거"
 					disabled={!url && !isActive}
 					data-style="ghost"
 				>

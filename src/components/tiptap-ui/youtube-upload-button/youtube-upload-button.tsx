@@ -1,378 +1,362 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { type Editor } from "@tiptap/react"
-import type { Node as PMNode } from "@tiptap/pm/model"
+import * as React from "react";
+import { type Editor } from "@tiptap/react";
+import type { Node as PMNode } from "@tiptap/pm/model";
 
 // --- Hooks ---
-import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
+import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
 
 // --- Icons ---
-import { YoutubeIcon } from "@/components/tiptap-icons/youtube-icon"
+import { YoutubeIcon } from "@/components/tiptap-icons/youtube-icon";
+import { CornerDownLeftIcon } from "@/components/tiptap-icons/corner-down-left-icon";
 
 // --- UI Primitives ---
-import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
-import { Button } from "@/components/tiptap-ui-primitive/button"
+import type { ButtonProps } from "@/components/tiptap-ui-primitive/button";
+import { Button } from "@/components/tiptap-ui-primitive/button";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/tiptap-ui-primitive/popover";
 
-export interface YoutubeUploadButtonProps extends ButtonProps {
-  editor?: Editor | null
-  text?: string
+export interface YoutubeHandlerProps {
+	editor: Editor | null;
+	onSetYoutube?: () => void;
 }
 
-export function isYoutubeActive(editor: Editor | null): boolean {
-  if (!editor) return false
-  return editor.isActive("youtube")
-}
-
-export function insertYoutubeVideo(
-  editor: Editor | null,
-  src: string,
-  width?: number,
-  height?: number
-): boolean {
-  if (!editor) return false
-
-  try {
-    // If an image or youtube is selected, move cursor to the end of selection before inserting
-    const { to } = editor.state.selection
-    const selectedNode = ('node' in editor.state.selection ? editor.state.selection.node : null) as PMNode | null
-
-    if (selectedNode && (selectedNode.type.name === 'image' || selectedNode.type.name === 'youtube')) {
-      // Move cursor after the selected node
-      return editor
-        .chain()
-        .focus()
-        .setTextSelection(to)
-        .setYoutubeVideo({
-          src,
-          width: width || 640,
-          height: height || 480,
-        })
-        .run()
-    }
-
-    return editor
-      .chain()
-      .focus()
-      .setYoutubeVideo({
-        src,
-        width: width || 640,
-        height: height || 480,
-      })
-      .run()
-  } catch {
-    return false
-  }
-}
-
-export function canInsertYoutube(editor: Editor | null): boolean {
-  if (!editor) return false
-
-  try {
-    // YouTube 익스텐션이 있으면 삽입 가능
-    return checkYoutubeExtension(editor) && editor.can().chain().focus().run()
-  } catch {
-    return false
-  }
+export interface YoutubeMainProps {
+	url: string;
+	setUrl: (url: string) => void;
+	setYoutube: () => void;
+	isActive: boolean;
+	onStartEditing?: () => void;
+	onStopEditing?: () => void;
 }
 
 export function checkYoutubeExtension(editor: Editor | null): boolean {
-  if (!editor) return false
+	if (!editor) return false;
 
-  const hasExtension = editor.extensionManager.extensions.some(
-    (extension) => extension.name === "youtube"
-  )
+	const hasExtension = editor.extensionManager.extensions.some(
+		(extension) => extension.name === "youtube"
+	);
 
-  if (!hasExtension) {
-    return false
-  }
-
-  return hasExtension
+	return hasExtension;
 }
 
 export function extractYoutubeVideoId(url: string): string | null {
-  // YouTube URL 패턴들을 처리
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-    /^([a-zA-Z0-9_-]{11})$/ // 직접 비디오 ID인 경우
-  ]
+	// YouTube URL 패턴들을 처리
+	const patterns = [
+		/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+		/^([a-zA-Z0-9_-]{11})$/, // 직접 비디오 ID인 경우
+	];
 
-  for (const pattern of patterns) {
-    const match = url.match(pattern)
-    if (match) {
-      return match[1]
-    }
-  }
+	for (const pattern of patterns) {
+		const match = url.match(pattern);
+		if (match) {
+			return match[1];
+		}
+	}
 
-  return null
+	return null;
 }
 
 export function formatYoutubeUrl(input: string): string | null {
-  const videoId = extractYoutubeVideoId(input)
-  if (!videoId) return null
-  
-  return `https://www.youtube.com/watch?v=${videoId}`
+	const videoId = extractYoutubeVideoId(input);
+	if (!videoId) return null;
+
+	return `https://www.youtube.com/watch?v=${videoId}`;
 }
 
-export function useYoutubeUploadButton(
-  editor: Editor | null,
-  disabled: boolean = false
-) {
-  const youtubeAvailable = React.useMemo(
-    () => checkYoutubeExtension(editor),
-    [editor]
-  )
+export function insertYoutubeVideo(
+	editor: Editor | null,
+	src: string,
+	width?: number,
+	height?: number
+): boolean {
+	if (!editor) return false;
 
-  const canInsert = React.useMemo(
-    () => canInsertYoutube(editor),
-    [editor]
-  )
+	try {
+		const baseChain = editor
+			.chain()
+			.focus()
+			.command(({ state, tr }) => {
+				const { $from } = state.selection;
+				const parent = $from.parent;
 
-  const isActive = isYoutubeActive(editor)
-  const isDisabled = !youtubeAvailable || !canInsert || disabled
+				if (parent.type.name === "paragraph" && parent.content.size === 0) {
+					tr.delete($from.before(), $from.after());
+				}
 
-  const handleInsertYoutube = React.useCallback(() => {
-    if (isDisabled || !editor) {
-      return false
-    }
+				return true;
+			});
 
-    const url = prompt("YouTube 비디오 URL을 입력하세요:")
+		// If an image or youtube is selected, move cursor to the end of selection before inserting
+		const { to } = editor.state.selection;
+		const selectedNode = (
+			"node" in editor.state.selection ? editor.state.selection.node : null
+		) as PMNode | null;
 
-    if (!url) return false
+		if (
+			selectedNode &&
+			(selectedNode.type.name === "image" ||
+				selectedNode.type.name === "youtube")
+		) {
+			// Move cursor after the selected node
+			return baseChain
+				.setTextSelection(to)
+				.setYoutubeVideo({
+					src,
+					width: width || 640,
+					height: height || 480,
+				})
+				.run();
+		}
 
-    const formattedUrl = formatYoutubeUrl(url)
-
-    if (!formattedUrl) {
-      alert("올바른 YouTube URL을 입력해주세요.")
-      return false
-    }
-
-    const result = insertYoutubeVideo(editor, formattedUrl)
-    return result
-  }, [editor, isDisabled])
-
-  return {
-    youtubeAvailable,
-    canInsert,
-    isActive,
-    isDisabled,
-    handleInsertYoutube,
-  }
+		return baseChain
+			.setYoutubeVideo({
+				src,
+				width: width || 640,
+				height: height || 480,
+			})
+			.run();
+	} catch {
+		return false;
+	}
 }
 
-export const YoutubeUploadButton = React.forwardRef<
-  HTMLButtonElement,
-  YoutubeUploadButtonProps
->(
-  (
-    {
-      editor: providedEditor,
-      className = "",
-      disabled,
-      onClick,
-      children,
-      ...buttonProps
-    },
-    ref
-  ) => {
-    const editor = useTiptapEditor(providedEditor)
-    const { isActive, isDisabled } = useYoutubeUploadButton(editor, disabled)
-    const [isOpen, setIsOpen] = React.useState(false)
-    const [youtubeUrl, setYoutubeUrl] = React.useState("")
-    const [error, setError] = React.useState("")
-    const popupRef = React.useRef<HTMLDivElement>(null)
-    const buttonRef = React.useRef<HTMLButtonElement>(null)
+export const useYoutubeHandler = (props: YoutubeHandlerProps) => {
+	const { editor, onSetYoutube } = props;
+	const [url, setUrl] = React.useState<string>("");
+	const isEditingRef = React.useRef<boolean>(false);
 
-    // Merge refs
-    const mergedRef = React.useCallback(
-      (node: HTMLButtonElement | null) => {
-        buttonRef.current = node
-        if (typeof ref === "function") {
-          ref(node)
-        } else if (ref) {
-          ref.current = node
-        }
-      },
-      [ref]
-    )
+	const handleSetUrl = React.useCallback((newUrl: string) => {
+		isEditingRef.current = true;
+		setUrl(newUrl);
+	}, []);
 
-    // 팝업 위치 계산
-    const [popupPosition, setPopupPosition] = React.useState<{
-      top: number
-      left: number
-    } | null>(null)
+	const handleStartEditing = React.useCallback(() => {
+		isEditingRef.current = true;
+	}, []);
 
-    React.useEffect(() => {
-      if (isOpen && buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect()
-        setPopupPosition({
-          top: rect.bottom + 4,
-          left: rect.left,
-        })
-      }
-    }, [isOpen])
+	const handleStopEditing = React.useCallback(() => {
+		isEditingRef.current = false;
+	}, []);
 
-    // 외부 클릭 시 팝업 닫기
-    React.useEffect(() => {
-      if (!isOpen) return
+	const setYoutube = React.useCallback(() => {
+		if (!url || !editor) return;
 
-      const handleClickOutside = (event: MouseEvent) => {
-        if (
-          popupRef.current &&
-          !popupRef.current.contains(event.target as Node) &&
-          buttonRef.current &&
-          !buttonRef.current.contains(event.target as Node)
-        ) {
-          setIsOpen(false)
-          setYoutubeUrl("")
-          setError("")
-        }
-      }
+		const formattedUrl = formatYoutubeUrl(url.trim());
 
-      document.addEventListener("mousedown", handleClickOutside)
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside)
-      }
-    }, [isOpen])
+		if (!formattedUrl) {
+			return;
+		}
 
-    const handleButtonClick = React.useCallback(
-      (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault()
-        e.stopPropagation()
+		const result = insertYoutubeVideo(editor, formattedUrl);
 
-        if (!isDisabled) {
-          setIsOpen(!isOpen)
-          setError("")
-        }
+		if (result) {
+			isEditingRef.current = false;
+			setUrl("");
+			onSetYoutube?.();
+		}
+	}, [editor, onSetYoutube, url]);
 
-        onClick?.(e)
-      },
-      [onClick, isDisabled, isOpen]
-    )
+	return {
+		url: url || "",
+		setUrl: handleSetUrl,
+		setYoutube,
+		isActive: editor?.isActive("youtube") || false,
+		onStartEditing: handleStartEditing,
+		onStopEditing: handleStopEditing,
+	};
+};
 
-    const handleInsert = React.useCallback(() => {
-      if (!editor || !youtubeUrl.trim()) return
+export const YoutubeButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
+	({ className, children, ...props }, ref) => {
+		return (
+			<Button
+				type="button"
+				className={className}
+				data-style="ghost"
+				role="button"
+				tabIndex={-1}
+				aria-label="유튜브 동영상 추가"
+				tooltip="유튜브 동영상 추가"
+				ref={ref}
+				{...props}
+			>
+				{children || <YoutubeIcon className="tiptap-button-icon" />}
+			</Button>
+		);
+	}
+);
 
-      const formattedUrl = formatYoutubeUrl(youtubeUrl.trim())
+const YoutubeMain: React.FC<YoutubeMainProps> = ({
+	url,
+	setUrl,
+	setYoutube,
+	onStartEditing,
+	onStopEditing,
+}) => {
+	const [error, setError] = React.useState("");
 
-      if (!formattedUrl) {
-        setError("올바른 YouTube URL을 입력해주세요.")
-        return
-      }
+	const handleKeyDown = (event: React.KeyboardEvent) => {
+		if (event.key === "Enter") {
+			event.preventDefault();
+			const formattedUrl = formatYoutubeUrl(url.trim());
+			if (!formattedUrl) {
+				setError("올바른 유튜브 URL을 입력해주세요.");
+				return;
+			}
+			setError("");
+			setYoutube();
+		} else if (event.key === "Escape") {
+			setError("");
+		}
+	};
 
-      const result = insertYoutubeVideo(editor, formattedUrl)
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setUrl(e.target.value);
+		setError("");
+	};
 
-      if (result) {
-        setIsOpen(false)
-        setYoutubeUrl("")
-        setError("")
-      } else {
-        setError("YouTube 비디오를 삽입하지 못했습니다.")
-      }
-    }, [editor, youtubeUrl])
+	return (
+		<>
+			<input
+				type="text"
+				placeholder="유튜브 영상 URL을 입력하세요..."
+				value={url}
+				onChange={handleChange}
+				onKeyDown={handleKeyDown}
+				onFocus={onStartEditing}
+				onBlur={onStopEditing}
+				autoComplete="off"
+				autoCorrect="off"
+				autoCapitalize="off"
+				className="tiptap-input tiptap-input-clamp"
+				style={{ fontSize: "0.875rem" }}
+			/>
+			{error && <div className="text-xs text-red-500 mt-1">{error}</div>}
 
-    const handleKeyDown = React.useCallback(
-      (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Enter") {
-          e.preventDefault()
-          handleInsert()
-        } else if (e.key === "Escape") {
-          setIsOpen(false)
-          setYoutubeUrl("")
-          setError("")
-        }
-      },
-      [handleInsert]
-    )
+			<div className="tiptap-button-group" data-orientation="horizontal">
+				<Button
+					type="button"
+					onClick={setYoutube}
+					title="유튜브 영상 삽입"
+					disabled={!url}
+					data-style="ghost"
+				>
+					<CornerDownLeftIcon className="tiptap-button-icon" />
+				</Button>
+			</div>
+		</>
+	);
+};
 
-    if (!editor || !editor.isEditable) {
-      return null
-    }
+export interface YoutubeUploadButtonProps extends Omit<ButtonProps, "type"> {
+	/**
+	 * The TipTap editor instance.
+	 */
+	editor?: Editor | null;
+	/**
+	 * Whether to hide the youtube upload button.
+	 * @default false
+	 */
+	hideWhenUnavailable?: boolean;
+	/**
+	 * Callback for when the popover opens or closes.
+	 */
+	onOpenChange?: (isOpen: boolean) => void;
+}
 
-    return (
-      <div className="relative">
-        <Button
-          ref={mergedRef}
-          type="button"
-          className={className.trim()}
-          disabled={isDisabled}
-          data-style="ghost"
-          data-active-state={isActive ? "on" : "off"}
-          data-disabled={isDisabled}
-          role="button"
-          tabIndex={-1}
-          aria-label="Add YouTube video"
-          aria-pressed={isActive}
-          tooltip="Add YouTube video"
-          onClick={handleButtonClick}
-          {...buttonProps}
-        >
-          {children || (
-            <>
-              <YoutubeIcon className="tiptap-button-icon" />
-              {/* {text && <span className="tiptap-button-text">{text}</span>} */}
-            </>
-          )}
-        </Button>
+export function YoutubeUploadButton({
+	editor: providedEditor,
+	hideWhenUnavailable = false,
+	onOpenChange,
+	...props
+}: YoutubeUploadButtonProps) {
+	const editor = useTiptapEditor(providedEditor);
 
-        {isOpen && popupPosition && (
-          <div
-            ref={popupRef}
-            className="fixed p-3 bg-white border border-gray-300 rounded-lg shadow-xl z-[9999] min-w-[320px]"
-            style={{
-              top: `${popupPosition.top}px`,
-              left: `${popupPosition.left}px`,
-              boxShadow: '0 10px 25px rgba(0,0,0,0.3)'
-            }}
-          >
-            <div className="space-y-2">
-              <div className="text-xs text-gray-600 mb-2">YouTube 비디오 URL</div>
+	const [isOpen, setIsOpen] = React.useState(false);
 
-              <input
-                type="text"
-                value={youtubeUrl}
-                onChange={(e) => {
-                  setYoutubeUrl(e.target.value)
-                  setError("")
-                }}
-                onKeyDown={handleKeyDown}
-                placeholder="https://www.youtube.com/watch?v=..."
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                autoFocus
-              />
+	const onSetYoutube = () => {
+		setIsOpen(false);
+	};
 
-              {error && (
-                <div className="text-xs text-red-500">{error}</div>
-              )}
+	const youtubeHandler = useYoutubeHandler({
+		editor: editor,
+		onSetYoutube,
+	});
 
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={handleInsert}
-                  className="flex-1 px-3 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  삽입
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOpen(false)
-                    setYoutubeUrl("")
-                    setError("")
-                  }}
-                  className="flex-1 px-3 py-2 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
-                >
-                  취소
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    )
-  }
-)
+	const isDisabled = React.useMemo(() => {
+		if (!editor) return true;
+		return !editor
+			.can()
+			.setYoutubeVideo({ src: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" });
+	}, [editor]);
 
-YoutubeUploadButton.displayName = "YoutubeUploadButton"
+	const canSetYoutube = React.useMemo(() => {
+		if (!editor) return false;
+		try {
+			return editor
+				.can()
+				.setYoutubeVideo({
+					src: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+				});
+		} catch {
+			return false;
+		}
+	}, [editor]);
 
-export default YoutubeUploadButton
+	const youtubeAvailable = React.useMemo(
+		() => checkYoutubeExtension(editor),
+		[editor]
+	);
+
+	const isActive = editor?.isActive("youtube") ?? false;
+
+	const handleOnOpenChange = React.useCallback(
+		(nextIsOpen: boolean) => {
+			setIsOpen(nextIsOpen);
+			onOpenChange?.(nextIsOpen);
+		},
+		[onOpenChange]
+	);
+
+	const show = React.useMemo(() => {
+		if (!youtubeAvailable || !editor) {
+			return false;
+		}
+
+		if (hideWhenUnavailable && !canSetYoutube) {
+			return false;
+		}
+
+		return true;
+	}, [youtubeAvailable, hideWhenUnavailable, editor, canSetYoutube]);
+
+	if (!show || !editor || !editor.isEditable) {
+		return null;
+	}
+
+	return (
+		<Popover open={isOpen} onOpenChange={handleOnOpenChange}>
+			<PopoverTrigger asChild>
+				<YoutubeButton
+					disabled={isDisabled}
+					data-active-state={isActive ? "on" : "off"}
+					data-disabled={isDisabled}
+					{...props}
+				/>
+			</PopoverTrigger>
+
+			<PopoverContent>
+				<YoutubeMain {...youtubeHandler} />
+			</PopoverContent>
+		</Popover>
+	);
+}
+
+YoutubeButton.displayName = "YoutubeButton";
+
+export default YoutubeUploadButton;

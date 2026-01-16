@@ -1,59 +1,125 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import ItemCard from "@/components/items/Card";
-import ItemGallery from "@/components/items/Gallery";
-import { Plus, Search, Settings } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Plus, Search, Settings, X } from "lucide-react";
 import AdminOnly from "@/components/common/AdminOnly";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-	Pagination,
-	PaginationContent,
-	PaginationItem,
-	PaginationLink,
-	PaginationNext,
-	PaginationPrevious,
-} from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
 import { useMoveToPage } from "@/hooks/useMoveToPage";
-import ItemListWithImage from "@/components/items/ListWithImage";
-import ItemList from "@/components/items/List";
 import LibrarySettingsDialog from "@/components/modal/LibrarySettingsDialog";
+import { setSettingsLibrary } from "@/queries/set/setSettingsLibrary";
+import { useSettings } from "@/contexts/SettingsContext";
+import { toast } from "sonner";
+import { useLibraryFilters } from "@/hooks/library/useLibraryFilters";
+import { useLibraryListData } from "@/hooks/library/useLibraryListData";
+import LibraryListView from "./LibraryListView";
+import LibrarySeriesView from "./LibrarySeriesView";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface LibraryItem {
 	id: string;
 	title: string;
 	subtitle?: string;
+	author?: string;
+	slug?: string;
 	createdAt: string;
 	tags?: string[];
 	thumbnail?: string;
+	pinned?: boolean;
+	allow?: "all" | "password" | "secret";
 }
 
 interface LibraryClientProps {
 	listData: LibraryItem[];
+	pinnedData: LibraryItem[];
+	listTotal: number;
 	seriesData: LibraryItem[];
+	tagData?: string[];
 }
 
 export default function LibraryClient({
 	listData,
+	pinnedData,
+	listTotal,
 	seriesData,
+	tagData,
 }: LibraryClientProps) {
+	const { library, updateLibrary, refreshSettings } = useSettings();
 	const [isSeriesOn, setIsSeriesOn] = useState(false);
 	const [isCardOn, setIsCardOn] = useState(false);
-	const [segmentedValue, setSegmentedValue] = useState("row");
 	const { onClickMoveToPage } = useMoveToPage();
+	const router = useRouter();
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const [isCardPrefsLoaded, setIsCardPrefsLoaded] = useState(false);
+	const isSyncingFromQuery = useRef(false);
+
+	const defaultLibrarySettings = useMemo(
+		() => ({
+			layoutType: "listWithImage" as const,
+			postsPerPage: 10,
+			postsPerRow: 3,
+			writePermission: "admin" as const,
+		}),
+		[]
+	);
+
+	const resolvedLibrarySettings = useMemo(
+		() => ({
+			...defaultLibrarySettings,
+			...(library || {}),
+		}),
+		[defaultLibrarySettings, library]
+	);
 
 	// 페이지 설정 상태
 	const [layoutType, setLayoutType] = useState<"list" | "listWithImage">(
-		"listWithImage"
+		resolvedLibrarySettings.layoutType
 	);
-	const [postsPerPage, setPostsPerPage] = useState(10);
-	const [postsPerRow, setPostsPerRow] = useState(3);
+	const [postsPerPage, setPostsPerPage] = useState(
+		resolvedLibrarySettings.postsPerPage
+	);
+	const [postsPerRow, setPostsPerRow] = useState(
+		resolvedLibrarySettings.postsPerRow
+	);
 	const [writePermission, setWritePermission] = useState<"admin" | "member">(
-		"admin"
+		resolvedLibrarySettings.writePermission
 	);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const {
+		searchQuery,
+		setSearchQuery,
+		appliedQuery,
+		setAppliedQuery,
+		activeTag,
+		setActiveTag,
+		sortOrder,
+		setSortOrder,
+		listPage,
+		seriesPage,
+		setListPage,
+		setActivePage,
+	} = useLibraryFilters({ isSeriesOn, postsPerPage });
+	const {
+		listItems,
+		pinnedItems,
+		listTotalCount,
+		tagOptions,
+		isListReady,
+	} = useLibraryListData({
+		initialList: listData,
+		initialPinned: pinnedData,
+		initialTotal: listTotal,
+		initialTags: tagData,
+		isSeriesOn,
+		listPage,
+		postsPerPage,
+		sortOrder,
+		activeTag,
+		appliedQuery,
+		setListPage,
+	});
 
 	// Dialog 임시 상태 (저장 전까지 사용)
 	const [tempLayoutType, setTempLayoutType] = useState(layoutType);
@@ -62,68 +128,85 @@ export default function LibraryClient({
 	const [tempWritePermission, setTempWritePermission] =
 		useState(writePermission);
 
-	// 로컬 스토리지에서 상태 불러오기
-	useEffect(() => {
-		const savedIsSeriesOn = localStorage.getItem("isSeriesOn");
-		const savedIsCardOn = localStorage.getItem("isCardOn");
-		const savedSegmentedValue = localStorage.getItem("segmentedValue");
-		const savedLayoutType = localStorage.getItem("layoutType");
-		const savedPostsPerPage = localStorage.getItem("postsPerPage");
-		const savedPostsPerRow = localStorage.getItem("postsPerRow");
-		const savedWritePermission = localStorage.getItem("writePermission");
-
-		if (savedIsSeriesOn !== null) {
-			setIsSeriesOn(savedIsSeriesOn === "true");
+	const updateTabParam = (nextIsSeriesOn: boolean) => {
+		const params = new URLSearchParams(searchParams.toString());
+		if (nextIsSeriesOn) {
+			params.set("tab", "series");
+		} else {
+			params.delete("tab");
 		}
+		const query = params.toString();
+		router.replace(query ? `${pathname}?${query}` : pathname, {
+			scroll: false,
+		});
+	};
+
+	const updatePageParam = (nextPage: number) => {
+		const params = new URLSearchParams(searchParams.toString());
+		if (nextPage > 1) {
+			params.set("page", String(nextPage));
+		} else {
+			params.delete("page");
+		}
+		const query = params.toString();
+		router.replace(query ? `${pathname}?${query}` : pathname, {
+			scroll: false,
+		});
+	};
+
+	// URL 쿼리에서 탭 상태 복원
+	useEffect(() => {
+		const tab = searchParams.get("tab");
+		setIsSeriesOn(tab === "series");
+	}, [searchParams]);
+
+	// 로컬 스토리지에서 카드 뷰 상태 불러오기
+	useEffect(() => {
+		const savedIsCardOn = localStorage.getItem("isCardOn");
+
 		if (savedIsCardOn !== null) {
 			setIsCardOn(savedIsCardOn === "true");
 		}
-		if (savedSegmentedValue !== null) {
-			setSegmentedValue(savedSegmentedValue);
-		} else if (savedIsCardOn === "true") {
-			setSegmentedValue("gallery");
-		}
-
-		if (savedLayoutType !== null) {
-			const type = savedLayoutType as "list" | "listWithImage";
-			setLayoutType(type);
-			setTempLayoutType(type);
-		}
-		if (savedPostsPerPage !== null) {
-			const count = parseInt(savedPostsPerPage);
-			setPostsPerPage(count);
-			setTempPostsPerPage(count);
-		}
-		if (savedPostsPerRow !== null) {
-			const count = parseInt(savedPostsPerRow);
-			setPostsPerRow(count);
-			setTempPostsPerRow(count);
-		}
-		if (savedWritePermission !== null) {
-			const permission = savedWritePermission as "admin" | "member";
-			setWritePermission(permission);
-			setTempWritePermission(permission);
-		}
+		setIsCardPrefsLoaded(true);
 	}, []);
 
-	// 상태 변경 시 로컬 스토리지에 저장
+	// 카드 뷰 상태 변경 시 로컬 스토리지에 저장
 	useEffect(() => {
-		localStorage.setItem("isSeriesOn", isSeriesOn.toString());
+		if (!isCardPrefsLoaded) {
+			return;
+		}
 		localStorage.setItem("isCardOn", isCardOn.toString());
-		localStorage.setItem("segmentedValue", segmentedValue);
-		localStorage.setItem("layoutType", layoutType);
-		localStorage.setItem("postsPerPage", postsPerPage.toString());
-		localStorage.setItem("postsPerRow", postsPerRow.toString());
-		localStorage.setItem("writePermission", writePermission);
-	}, [
-		isSeriesOn,
-		isCardOn,
-		segmentedValue,
-		layoutType,
-		postsPerPage,
-		postsPerRow,
-		writePermission,
-	]);
+	}, [isCardOn, isCardPrefsLoaded]);
+
+	useEffect(() => {
+		setLayoutType(resolvedLibrarySettings.layoutType);
+		setPostsPerPage(resolvedLibrarySettings.postsPerPage);
+		setPostsPerRow(resolvedLibrarySettings.postsPerRow);
+		setWritePermission(resolvedLibrarySettings.writePermission);
+	}, [resolvedLibrarySettings]);
+
+	useEffect(() => {
+		if (isSeriesOn) return;
+		const pageParam = searchParams.get("page");
+		const parsedPage = pageParam ? Number(pageParam) : 1;
+		if (Number.isFinite(parsedPage) && parsedPage > 0 && parsedPage !== listPage) {
+			isSyncingFromQuery.current = true;
+			setListPage(parsedPage);
+		}
+	}, [isSeriesOn, searchParams, setListPage]);
+
+	useEffect(() => {
+		if (isSeriesOn) return;
+		if (isSyncingFromQuery.current) {
+			isSyncingFromQuery.current = false;
+			return;
+		}
+		const pageParam = searchParams.get("page");
+		const parsedPage = pageParam ? Number(pageParam) : 1;
+		if (parsedPage !== listPage) {
+			updatePageParam(listPage);
+		}
+	}, [isSeriesOn, listPage, pathname, router, searchParams]);
 
 	// Dialog가 열릴 때 현재 설정값으로 임시 상태 초기화
 	useEffect(() => {
@@ -136,13 +219,73 @@ export default function LibraryClient({
 	}, [isDialogOpen, layoutType, postsPerPage, postsPerRow, writePermission]);
 
 	// 설정 저장 핸들러
-	const handleSaveSettings = () => {
-		setLayoutType(tempLayoutType);
-		setPostsPerPage(tempPostsPerPage);
-		setPostsPerRow(tempPostsPerRow);
-		setWritePermission(tempWritePermission);
-		setIsDialogOpen(false);
+	const handleSaveSettings = async () => {
+		try {
+			const payload = {
+				layoutType: tempLayoutType,
+				postsPerPage: tempPostsPerPage,
+				postsPerRow: tempPostsPerRow,
+				writePermission: tempWritePermission,
+			};
+			const response = await setSettingsLibrary(payload);
+			setLayoutType(response.library.layoutType);
+			setPostsPerPage(response.library.postsPerPage);
+			setPostsPerRow(response.library.postsPerRow);
+			setWritePermission(response.library.writePermission);
+			updateLibrary?.(response.library);
+			await refreshSettings?.({ broadcast: true });
+			setIsDialogOpen(false);
+			toast.success("저장되었습니다.");
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : "저장에 실패했습니다.";
+			toast.error(message);
+		}
 	};
+
+
+
+	const filteredSeriesData = useMemo(() => {
+		const sorted = [...seriesData].sort((a, b) => {
+			if (sortOrder === "title") {
+				return (a.title || "").localeCompare(b.title || "");
+			}
+			const aTime = new Date(a.createdAt).getTime();
+			const bTime = new Date(b.createdAt).getTime();
+			return sortOrder === "latest" ? bTime - aTime : aTime - bTime;
+		});
+		return sorted;
+	}, [seriesData, sortOrder]);
+
+	const { totalPages, currentPageSafe, pagedSeriesData } = useMemo(() => {
+		const totalItems = isSeriesOn
+			? filteredSeriesData.length
+			: listTotalCount;
+		const nextTotalPages = Math.max(1, Math.ceil(totalItems / postsPerPage));
+		const activePage = isSeriesOn ? seriesPage : listPage;
+		const nextCurrentPage = Math.min(activePage, nextTotalPages);
+		const startIndex = (nextCurrentPage - 1) * postsPerPage;
+		return {
+			totalPages: nextTotalPages,
+			currentPageSafe: nextCurrentPage,
+			pagedSeriesData: filteredSeriesData.slice(
+				startIndex,
+				startIndex + postsPerPage
+			),
+		};
+	}, [
+		filteredSeriesData,
+		isSeriesOn,
+		listPage,
+		seriesPage,
+		listTotalCount,
+		pinnedItems.length,
+		postsPerPage,
+	]);
+
+	const detailQuery = useMemo(() => {
+		return currentPageSafe > 1 ? `?page=${currentPageSafe}` : "";
+	}, [currentPageSafe]);
 
 	return (
 		<>
@@ -165,6 +308,7 @@ export default function LibraryClient({
 							onClick={() => {
 								setIsCardOn(false);
 								setIsSeriesOn(false);
+								updateTabParam(false);
 							}}
 						>
 							<span className="w-full h-[3px] rounded-[1px] bg-[#dee2e6]" />
@@ -176,6 +320,7 @@ export default function LibraryClient({
 							onClick={() => {
 								setIsCardOn(true);
 								setIsSeriesOn(false);
+								updateTabParam(false);
 							}}
 						>
 							<span className="w-full h-full rounded-[1px] bg-[#dee2e6]" />
@@ -187,7 +332,27 @@ export default function LibraryClient({
 					<div className="flex items-center w-fit h-full">
 						<Input
 							className="border-card bg-card backdrop-blur-card rounded-card text-main-text"
-							endIcon={Search}
+							endIcon={searchQuery ? X : Search}
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
+							placeholder="제목, 태그로 검색"
+							onKeyDown={(e) => {
+								if (e.key === "Enter") {
+									e.preventDefault();
+									setAppliedQuery(searchQuery.trim());
+								}
+							}}
+							onEndIconClick={
+								searchQuery
+									? () => {
+											setSearchQuery("");
+											setAppliedQuery("");
+											setActiveTag("전체");
+											setListPage(1);
+									  }
+									: undefined
+							}
+							endIconAriaLabel="검색어 지우기"
 						/>
 					</div>
 					<AdminOnly>
@@ -204,13 +369,12 @@ export default function LibraryClient({
 							setTempWritePermission={setTempWritePermission}
 							onSave={handleSaveSettings}
 							trigger={
-								<Button className="bg-card border-card text-main-text rounded-full w-10 h-10">
+								<Button className="bg-card border-card text-main-text rounded-full w-10 h-10 hover:border-transparent">
 									<Settings />
 								</Button>
 							}
 						/>
 					</AdminOnly>
-
 					{writePermission === "admin" ? (
 						<AdminOnly>
 							<Button
@@ -238,6 +402,7 @@ export default function LibraryClient({
 							)}
 							onClick={() => {
 								setIsSeriesOn(false);
+								updateTabParam(false);
 							}}
 						>
 							글
@@ -249,6 +414,7 @@ export default function LibraryClient({
 							)}
 							onClick={() => {
 								setIsSeriesOn(true);
+								updateTabParam(true);
 							}}
 						>
 							시리즈
@@ -261,71 +427,32 @@ export default function LibraryClient({
 						)}
 					/>
 				</div>
-				{isSeriesOn && (
-					<div
-						className={cn("grid gap-2.5 mt-10", `grid-cols-${postsPerRow}`)}
-						style={{
-							gridTemplateColumns: `repeat(${postsPerRow}, minmax(0, 1fr))`,
-						}}
-					>
-						{seriesData?.slice(0, postsPerPage).map((el) => (
-							<ItemCard data={el} key={el.id} />
-						))}
-					</div>
+				{isSeriesOn ? (
+					<LibrarySeriesView
+						postsPerRow={postsPerRow}
+						seriesItems={pagedSeriesData}
+					/>
+				) : (
+					<LibraryListView
+						listItems={listItems}
+						pinnedItems={pinnedItems}
+						listTotalCount={listTotalCount}
+						isListReady={isListReady}
+						isCardOn={isCardOn}
+						layoutType={layoutType}
+						postsPerRow={postsPerRow}
+						tagOptions={tagOptions}
+						activeTag={activeTag}
+						setActiveTag={setActiveTag}
+						sortOrder={sortOrder}
+						setSortOrder={setSortOrder}
+						onClickMoveToPage={onClickMoveToPage}
+						detailQuery={detailQuery}
+						totalPages={totalPages}
+						currentPageSafe={currentPageSafe}
+						setActivePage={setActivePage}
+					/>
 				)}
-				{!isSeriesOn && (
-					<div
-						className={cn(
-							"grid mt-10",
-							isCardOn
-								? `gap-2.5 grid-cols-${postsPerRow}`
-								: "gap-4 grid-cols-1"
-						)}
-						style={
-							isCardOn
-								? { gridTemplateColumns: `repeat(${postsPerRow}, minmax(0, 1fr))` }
-								: undefined
-						}
-					>
-						{isCardOn && (
-							<>
-								{listData.slice(0, postsPerPage).map((el) => (
-									<ItemGallery data={el} key={el.id} />
-								))}
-							</>
-						)}
-						{!isCardOn && layoutType === "listWithImage" && (
-							<>
-								{listData.slice(0, postsPerPage).map((el) => (
-									<ItemListWithImage data={el} key={el.id} />
-								))}
-							</>
-						)}
-						{!isCardOn && layoutType === "list" && (
-							<>
-								{listData.slice(0, postsPerPage).map((el) => (
-									<ItemList data={el} key={el.id} />
-								))}
-							</>
-						)}
-					</div>
-				)}
-				<div className="flex justify-center mt-7">
-					<Pagination>
-						<PaginationContent>
-							<PaginationItem>
-								<PaginationPrevious href="#" />
-							</PaginationItem>
-							<PaginationItem>
-								<PaginationLink href="#">1</PaginationLink>
-							</PaginationItem>
-							<PaginationItem>{/* <PaginationEllipsis /> */}</PaginationItem>
-							<PaginationItem>
-								<PaginationNext href="#" />
-							</PaginationItem>
-						</PaginationContent>
-					</Pagination>
-				</div>
 			</div>
 		</>
 	);

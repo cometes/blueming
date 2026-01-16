@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useThemes } from "@/contexts/ThemesContext";
 import { dateConvert } from "@/lib/date";
+import { useSettingStatus } from "@/hooks/useSettingStatus";
 
 const INPUT_HEIGHT = "h-9";
 
@@ -77,6 +78,7 @@ export default function ThemeSettingClient() {
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
 		null
 	);
+	useSettingStatus("theme", name.trim().length > 0 ? "dirty" : "saved");
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const handleSave = async () => {

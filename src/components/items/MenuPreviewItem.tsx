@@ -77,6 +77,7 @@ export default function MenuPreviewItem({
 					{/* Settings Icon - Right absolute, visible on hover */}
 					<div className="absolute right-0 top-0 h-10 w-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
 						<Button
+							type="button"
 							variant="ghost"
 							size="icon"
 							onClick={(e) => {

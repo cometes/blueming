@@ -5,15 +5,16 @@
     display: block;
   }
 
-  > img:not([data-type="emoji"] img) {
+  &:not(.readonly) > img:not([data-type="emoji"] img) {
     // margin: 2rem 0;
     outline: 0.125rem solid transparent;
+    border: 1px solid var(--tt-image-node-border, var(--card-border-color));
     border-radius: var(--tt-radius-xs, 0.25rem);
   }
 
   &.ProseMirror-focused
     img:not([data-type="emoji"] img).ProseMirror-selectednode {
-    outline-color: var(--tt-brand-color-500);
+    outline-color: var(--tt-selected-node-outline, var(--color-theme-primary));
   }
 
   // Image wrapper styles
@@ -38,6 +39,7 @@
 
       img {
         outline: 0.125rem solid transparent;
+        border: 1px solid var(--tt-image-node-border, var(--card-border-color));
         border-radius: var(--tt-radius-xs, 0.25rem);
         max-width: 100%;
         height: auto;
@@ -65,7 +67,7 @@
           transform: translateY(-50%);
           width: 4px;
           height: 40px;
-          background-color: var(--tt-brand-color-500);
+          background-color: var(--tt-selected-node-outline, var(--color-theme-primary));
           border-radius: 2px;
         }
 
@@ -96,7 +98,17 @@
   }
 
   &.ProseMirror-focused .image-wrapper .image-box.ProseMirror-selectednode img {
-    outline-color: var(--tt-brand-color-500);
+    outline-color: var(--tt-selected-node-outline, var(--color-theme-primary));
+  }
+
+  &.readonly {
+    > img:not([data-type="emoji"] img) {
+      border: none;
+    }
+
+    .image-wrapper .image-box img {
+      border: none;
+    }
   }
 
   // Thread image handling

@@ -1,5 +1,6 @@
 import { useSettings } from "@/contexts/SettingsContext";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface DdayItem {
 	id: string;
@@ -39,46 +40,42 @@ export default function WidgetDday() {
 	};
 
 	return (
-		<>
-			<style jsx>{`
-				.dday-item::before {
-					background-image: var(--before-bg);
-				}
-			`}</style>
-			<div className="widget-wrapper">
-				<div
-					className="w-full h-full grid gap-3 "
-					style={{ gridTemplateRows: "repeat(auto-fit, minmax(80px, 1fr))" }}
-				>
-					{ddayData.map((dday: DdayItem) => (
-						<div
-							className={cn(
-								"dday-item relative px-4 py-5 flex flex-col justify-between w-full h-full overflow-hidden",
-								"before:absolute before:top-0 before:left-0 before:content-[''] before:w-full before:h-full before:z-10 before:bg-no-repeat before:bg-cover before:bg-center",
-								"after:absolute after:top-0 after:left-0 after:content-[''] after:w-full after:h-full after:bg-[rgba(127,127,127,0.4)] after:mix-blend-multiply after:opacity-50 after:z-20"
-							)}
-							key={dday.id}
-							style={
-								{
-									"--before-bg": `url(${dday.image})`,
-								} as React.CSSProperties & { "--before-bg": string }
-							}
-						>
-							<p className="relative z-30 text-lg text-gray-100 [text-shadow:0_3px_8px_rgba(90,90,90,0.4)]">
-								{dday.title}
+		<div className="widget-wrapper">
+			<div
+				className="w-full h-full grid gap-3 "
+				style={{ gridTemplateRows: "repeat(auto-fit, minmax(80px, 1fr))" }}
+			>
+				{ddayData.map((dday: DdayItem) => (
+					<div
+						className={cn(
+							"dday-item relative px-4 py-5 flex flex-col justify-between w-full h-full overflow-hidden"
+						)}
+						key={dday.id}
+					>
+						{dday.image && (
+							<Image
+								alt={`${dday.title} 배경`}
+								src={dday.image}
+								fill
+								className="absolute inset-0 object-cover object-center z-10"
+								sizes="(max-width: 768px) 100vw, 33vw"
+							/>
+						)}
+						<div className="absolute inset-0 bg-[rgba(127,127,127,0.4)] mix-blend-multiply opacity-50 z-20" />
+						<p className="relative z-30 text-lg text-gray-100 [text-shadow:0_3px_8px_rgba(90,90,90,0.4)]">
+							{dday.title}
+						</p>
+						<div className="relative z-30 flex flex-col items-end">
+							<p className="relative z-30 text-2xl text-white [text-shadow:0_3px_8px_rgba(90,90,90,0.4)]">
+								{calculateDday(dday.date)}
 							</p>
-							<div className="relative z-30 flex flex-col items-end">
-								<p className="relative z-30 text-2xl text-white [text-shadow:0_3px_8px_rgba(90,90,90,0.4)]">
-									{calculateDday(dday.date)}
-								</p>
-								<p className="relative z-30 text-sm text-gray-400/60 [text-shadow:0_3px_8px_rgba(90,90,90,0.4)]">
-									{dday.date}
-								</p>
-							</div>
+							<p className="relative z-30 text-sm text-gray-400/60 [text-shadow:0_3px_8px_rgba(90,90,90,0.4)]">
+								{dday.date}
+							</p>
 						</div>
-					))}
-				</div>
+					</div>
+				))}
 			</div>
-		</>
+		</div>
 	);
 }

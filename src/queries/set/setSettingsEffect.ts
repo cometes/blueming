@@ -1,5 +1,7 @@
 import axios from "axios";
+import { getAuthHeader } from "@/queries/getAuthHeader";
 import type { EffectSettings } from "@/contexts/SettingsContext";
+import { revalidateSettingsCache } from "@/queries/revalidateSettings";
 
 export type SetSettingsEffectPayload = EffectSettings;
 
@@ -18,11 +20,14 @@ export const setSettingsEffect = async (
 	payload: SetSettingsEffectPayload
 ): Promise<SetSettingsEffectResponse> => {
 	try {
+		const headers = await getAuthHeader();
 		const response = await axios.post<SetSettingsEffectResponse>(
 			"https://api-w5buphcleq-du.a.run.app/settings/general/effect",
-			payload
+			payload,
+			{ headers }
 		);
 
+		await revalidateSettingsCache();
 		return response.data;
 	} catch (error) {
 		if (axios.isAxiosError(error)) {

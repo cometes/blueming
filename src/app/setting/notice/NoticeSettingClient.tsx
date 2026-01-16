@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import { useEditor } from "@tiptap/react";
 import { EditorContent } from "@tiptap/react";
@@ -22,8 +22,8 @@ import {
 import { extensions } from "@/components/editor/TiptapEditor";
 import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { setSettingsNotice } from "@/queries/set/setSettingsNotice";
-import { convertSlateToHTML, isSlateFormat } from "@/lib/slate-to-tiptap";
 
 const CANVAS_RATIO_BASE = 12;
 const LAYOUT_ITEM_ID = "공지";
@@ -41,6 +41,11 @@ const GRADIENT_SETTINGS = {
 } as const;
 
 const MARQUEE_TYPES = ["투명", "컬러"] as const;
+const LEGACY_MARQUEE_TYPE_MAP: Record<string, (typeof MARQUEE_TYPES)[number]> =
+	{
+		transparent: "투명",
+		color: "컬러",
+	};
 
 interface Ratio {
 	w: number;
@@ -53,6 +58,7 @@ interface MarqueeSettings {
 	gradientWidth: number;
 	textColor: string;
 	backgroundColor: string;
+	marqueeType: string;
 }
 
 interface EditorDimensions {
@@ -85,8 +91,13 @@ const calculateRatio = (width: number, height: number): Ratio => {
 	}
 };
 
+const normalizeMarqueeType = (value: unknown) => {
+	if (typeof value !== "string") return "투명";
+	return LEGACY_MARQUEE_TYPE_MAP[value] ?? value;
+};
+
 export default function NoticeSettingClient() {
-	const { main, refreshSettings } = useSettings();
+	const { main, refreshSettings, updateMain } = useSettings();
 	const canvasRef = useRef<HTMLDivElement>(null);
 
 	// Marquee Settings State
@@ -106,11 +117,14 @@ export default function NoticeSettingClient() {
 	// Editor State
 	const [ratio, setRatio] = useState<Ratio>({ w: 0, h: 0 });
 	const [showResetDialog, setShowResetDialog] = useState(false);
+	const [isSyncing, setIsSyncing] = useState(true);
+	const [editorContent, setEditorContent] = useState("<p></p>");
 
 	// Tiptap Editor
 	const editor = useEditor({
 		extensions,
 		content: "<p></p>",
+		immediatelyRender: false,
 		editorProps: {
 			attributes: {
 				class: "prose prose-sm max-w-none focus:outline-none h-full p-4",
@@ -120,6 +134,7 @@ export default function NoticeSettingClient() {
 
 	// Load initial data from settings
 	useEffect(() => {
+		setIsSyncing(true);
 		if (main?.notice) {
 			const noticeData = main.notice;
 
@@ -128,32 +143,27 @@ export default function NoticeSettingClient() {
 			}
 
 			if (noticeData.noticeContent) {
-				try {
-					const content =
-						typeof noticeData.noticeContent === "string"
-							? noticeData.noticeContent
-							: JSON.stringify(noticeData.noticeContent);
-
-					// Check if it's Slate format and convert to HTML
-					if (isSlateFormat(content)) {
-						const slateNodes = JSON.parse(content);
-						const html = convertSlateToHTML(slateNodes);
-						editor?.commands.setContent(html);
-					} else if (content.startsWith("<")) {
-						// Already HTML format
-						editor?.commands.setContent(content);
-					} else {
-						// Plain text fallback
-						editor?.commands.setContent(`<p>${content}</p>`);
-					}
-				} catch {
+				const content =
+					typeof noticeData.noticeContent === "string"
+						? noticeData.noticeContent
+						: "";
+				if (content.trim()) {
+					const nextContent = content.startsWith("<")
+						? content
+						: `<p>${content}</p>`;
+					editor?.commands.setContent(nextContent);
+					setEditorContent(nextContent);
+				} else {
 					editor?.commands.setContent("<p></p>");
+					setEditorContent("<p></p>");
 				}
+			} else {
+				setEditorContent(editor?.getHTML() || "<p></p>");
 			}
 
 			if (noticeData.marqueeSettings) {
 				const marqueeSettings = noticeData.marqueeSettings;
-				setCurrentType(marqueeSettings.type || "투명");
+				setCurrentType(normalizeMarqueeType(marqueeSettings.type));
 				setGradientColor(
 					marqueeSettings.gradientColor || DEFAULT_COLORS.GRADIENT
 				);
@@ -166,7 +176,67 @@ export default function NoticeSettingClient() {
 				);
 			}
 		}
+		setIsSyncing(false);
 	}, [main?.notice, editor]);
+
+	useEffect(() => {
+		if (!editor) return;
+		const updateContent = () => {
+			setEditorContent(editor.getHTML());
+		};
+		updateContent();
+		editor.on("blur", updateContent);
+		return () => {
+			editor.off("blur", updateContent);
+		};
+	}, [editor]);
+
+	const isDirty = useMemo(() => {
+		if (isSyncing) return false;
+		const normalizeContent = (html?: string) => (html || "<p></p>").trim();
+		const baseline = main?.notice;
+		const baselineMarquee = baseline?.marqueeSettings;
+
+		const baselineBannerText = baseline?.bannerText || "";
+		const baselineContent =
+			typeof baseline?.noticeContent === "string" &&
+			baseline.noticeContent.trim()
+				? baseline.noticeContent.trim()
+				: "<p></p>";
+		const baselineType = normalizeMarqueeType(baselineMarquee?.type);
+		const baselineGradientColor =
+			baselineMarquee?.gradientColor || DEFAULT_COLORS.GRADIENT;
+		const baselineGradientWidth =
+			baselineMarquee?.gradientWidth || GRADIENT_SETTINGS.DEFAULT;
+		const baselineTextColor = baselineMarquee?.textColor || DEFAULT_COLORS.TEXT;
+		const baselineBackgroundColor =
+			baselineMarquee?.backgroundColor || DEFAULT_COLORS.BACKGROUND;
+
+		const currentContent = normalizeContent(editorContent);
+
+		return (
+			bannerText !== baselineBannerText ||
+			currentContent !== baselineContent ||
+			currentType !== baselineType ||
+			gradientColor !== baselineGradientColor ||
+			gradientWidth !== baselineGradientWidth ||
+			textColor !== baselineTextColor ||
+			backgroundColor !== baselineBackgroundColor
+		);
+	}, [
+		bannerText,
+		editor,
+		currentType,
+		gradientColor,
+		gradientWidth,
+		textColor,
+		backgroundColor,
+		main?.notice,
+		isSyncing,
+		editorContent,
+	]);
+
+	useSettingStatus("notice", isDirty ? "dirty" : "saved");
 
 	// Load layout ratio
 	useEffect(() => {
@@ -206,6 +276,7 @@ export default function NoticeSettingClient() {
 				gradientWidth,
 				textColor,
 				backgroundColor,
+			marqueeType: currentType,
 			};
 
 			const editorDimensions = canvasRef.current
@@ -225,6 +296,7 @@ export default function NoticeSettingClient() {
 			};
 
 			await setSettingsNotice(noticeData);
+			updateMain?.({ notice: noticeData });
 			await refreshSettings?.({ broadcast: true });
 
 			// Broadcast update
@@ -232,7 +304,7 @@ export default function NoticeSettingClient() {
 			channel.postMessage({ content: noticeContent, editorDimensions });
 			channel.close();
 
-			toast.success("설정이 저장되었습니다!");
+			toast.success("저장되었습니다.");
 		} catch {
 			toast.error("저장에 실패했습니다.");
 		}
@@ -245,6 +317,7 @@ export default function NoticeSettingClient() {
 		backgroundColor,
 		editor,
 		refreshSettings,
+		updateMain,
 	]);
 
 	// Reset handler
@@ -259,11 +332,13 @@ export default function NoticeSettingClient() {
 					gradientWidth: GRADIENT_SETTINGS.DEFAULT,
 					textColor: DEFAULT_COLORS.TEXT,
 					backgroundColor: DEFAULT_COLORS.BACKGROUND,
+				marqueeType: "투명",
 				},
 				editorDimensions: { width: 0, height: 0 },
 			};
 
 			await setSettingsNotice(resetData);
+			updateMain?.({ notice: resetData });
 			await refreshSettings?.({ broadcast: true });
 
 			// Reset state
@@ -288,7 +363,7 @@ export default function NoticeSettingClient() {
 		} catch {
 			toast.error("초기화에 실패했습니다.");
 		}
-	}, [editor, refreshSettings]);
+	}, [editor, refreshSettings, updateMain]);
 
 	return (
 		<form
@@ -471,7 +546,9 @@ export default function NoticeSettingClient() {
 				>
 					초기화하기
 				</Button>
-				<Button type="submit">저장하기</Button>
+				<Button type="submit" disabled={!isDirty}>
+					저장하기
+				</Button>
 			</div>
 
 			{/* Reset Confirmation Dialog */}

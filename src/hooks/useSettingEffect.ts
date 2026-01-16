@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
 import { setSettingsEffect } from "@/queries/set/setSettingsEffect";
@@ -41,6 +41,21 @@ export const useSettingEffect = () => {
 	const [currentEffectType, setCurrentEffectType] = useState<EffectSettings["type"]>(
 		(effectData?.type as EffectSettings["type"]) || "없음"
 	);
+	const baselineEffect = useMemo(
+		() => ({
+			enabled: effectData?.enabled ?? defaultEffectSetting.enabled,
+			type:
+				(effectData?.type as EffectSettings["type"]) || defaultEffectSetting.type,
+		}),
+		[effectData]
+	);
+	const baseline = initialEffectRef.current ?? baselineEffect;
+	const isDirty = useMemo(
+		() =>
+			effectSetting.enabled !== baseline.enabled ||
+			effectSetting.type !== baseline.type,
+		[effectSetting, baselineEffect]
+	);
 
 	// Load existing data when effectData changes
 	useEffect(() => {
@@ -72,11 +87,9 @@ export const useSettingEffect = () => {
 					  }
 			);
 
-			if (nextType !== currentEffectType) {
-				setCurrentEffectType(nextType);
-			}
+			setCurrentEffectType((prev) => (prev === nextType ? prev : nextType));
 		}
-	}, [effectData, currentEffectType]);
+	}, [effectData]);
 
 	// Restore settings when leaving without saving
 	useEffect(() => {
@@ -177,10 +190,10 @@ export const useSettingEffect = () => {
 			});
 			channel.close();
 
-			toast.success("이펙트 설정이 초기화되었습니다.");
+			toast.success("초기화되었습니다.");
 			initialEffectRef.current = defaultEffectSetting;
 		} catch {
-			toast.error("이펙트 설정을 초기화하지 못했습니다.");
+			toast.error("초기화에 실패했습니다.");
 		}
 	}, [general, updateGeneral, refreshSettings]);
 
@@ -208,11 +221,11 @@ export const useSettingEffect = () => {
 			});
 			channel.close();
 
-			toast.success("이펙트 설정이 성공적으로 저장되었습니다.");
+			toast.success("저장되었습니다.");
 			initialEffectRef.current = effectSetting;
 			isDirtyRef.current = false;
 		} catch {
-			toast.error("이펙트 설정을 저장하지 못했습니다.");
+			toast.error("저장에 실패했습니다.");
 		}
 	}, [effectSetting, general, updateGeneral, refreshSettings]);
 
@@ -224,6 +237,7 @@ export const useSettingEffect = () => {
 		setEffectSetting,
 		updateEffectSetting,
 		handleReset,
-		handleSave
+		handleSave,
+		isDirty,
 	};
 };

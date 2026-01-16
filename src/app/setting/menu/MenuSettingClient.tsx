@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import { ColorPicker } from "@/components/ui/color-picker";
 import RadioItem from "@/components/items/RadioItem";
 import { useSettingMenu } from "@/hooks/useSettingMenu";
+import { useSettingStatus } from "@/hooks/useSettingStatus";
 import MenuPreviewItem from "@/components/items/MenuPreviewItem";
 import MenuAddModal from "@/components/modal/MenuAddModal";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
@@ -126,11 +127,13 @@ export default function MenuSettingClient() {
 		handleUpdateMenu,
 		handleDeleteMenu,
 		handleDragEnd,
+		isDirty,
 	} = useSettingMenu();
 
 	const { uploadFile } = useFileUpload();
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 	const [showResetConfirm, setShowResetConfirm] = useState(false);
+	useSettingStatus("menu", isDirty ? "dirty" : "saved");
 	const [openFolders, setOpenFolders] = useState<{ [key: string]: boolean }>(
 		{}
 	);
@@ -156,8 +159,10 @@ export default function MenuSettingClient() {
 				return <Archive size={16} className="text-sub-text" />;
 			case "갤러리":
 				return <ImageIcon size={16} className="text-sub-text" />;
-			case "스레드":
+			case "메모":
 				return <MessageCircle size={16} className="text-sub-text" />;
+			case "포토보드":
+				return <ImageIcon size={16} className="text-sub-text" />;
 			case "설정":
 				return <Settings size={16} className="text-sub-text" />;
 			case "폴더":
@@ -874,7 +879,9 @@ export default function MenuSettingClient() {
 						</Button>
 					)}
 
-					<Button type="submit">저장하기</Button>
+					<Button type="submit" disabled={!isDirty}>
+						저장하기
+					</Button>
 				</div>
 			</form>
 		</>

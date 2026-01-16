@@ -151,8 +151,8 @@ export const YoutubeButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
         data-style="ghost"
         role="button"
         tabIndex={0}
-        aria-label="Add YouTube video"
-        tooltip="Add YouTube video"
+        aria-label="유튜브 동영상 추가"
+        tooltip="유튜브 동영상 추가"
         ref={ref}
         {...props}
       >
@@ -195,7 +195,7 @@ const YoutubeMain: React.FC<YoutubeMainProps> = ({
 
     const normalizedUrl = normalizeYoutubeUrl(url)
     if (!normalizedUrl) {
-      setError("올바른 YouTube URL을 입력해주세요.")
+      setError("올바른 유튜브 URL을 입력해주세요.")
       return
     }
 
@@ -213,7 +213,7 @@ const YoutubeMain: React.FC<YoutubeMainProps> = ({
       <div className="space-y-2">
         <input
           type="url"
-          placeholder="YouTube URL 또는 비디오 ID를 입력하세요..."
+          placeholder="유튜브 URL 또는 비디오 ID를 입력하세요..."
           value={url}
           onChange={handleUrlChange}
           onKeyDown={handleKeyDown}
@@ -237,7 +237,7 @@ const YoutubeMain: React.FC<YoutubeMainProps> = ({
         <Button
           type="button"
           onClick={handleSetYoutube}
-          title="YouTube 비디오 추가"
+          title="유튜브 영상 추가"
           disabled={!url.trim()}
           data-style="ghost"
         >
@@ -252,7 +252,7 @@ const YoutubeMain: React.FC<YoutubeMainProps> = ({
             <Button
               type="button"
               onClick={removeYoutube}
-              title="YouTube 비디오 제거"
+              title="유튜브 영상 제거"
               data-style="ghost"
             >
               <TrashIcon className="tiptap-button-icon" />
