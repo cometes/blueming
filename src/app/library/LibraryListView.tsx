@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpDown, Pin } from "lucide-react";
+import { ArrowUpDown, Pin, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { dateConvert } from "@/lib/date";
 import ItemGallery from "@/components/items/Gallery";
@@ -25,6 +25,7 @@ interface LibraryItem {
 	tags?: string[];
 	thumbnail?: string;
 	pinned?: boolean;
+	allow?: "all" | "password" | "secret";
 }
 
 interface LibraryListViewProps {
@@ -116,6 +117,9 @@ export default function LibraryListView({
 								>
 									<div className="flex items-center gap-2 min-w-0">
 										<Pin size={14} className="text-theme-primary" />
+										{item.allow === "password" && (
+											<Lock size={14} className="text-sub-text shrink-0" />
+										)}
 										<span className="text-sm text-main-text truncate">
 											{item.title}
 										</span>

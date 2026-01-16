@@ -59,7 +59,7 @@ export default function SettingLayout({
 	return (
 		<div
 			className={cn(
-				"w-full max-w-[1200px] mx-auto mt-12 px-4 pb-4",
+				"w-full max-w-[1200px] mx-auto mt-4 px-4 pb-4",
 				shouldAnimate ? "animate-in fade-in-0 duration-500" : "opacity-100"
 			)}
 		>

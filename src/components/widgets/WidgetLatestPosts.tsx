@@ -10,6 +10,7 @@ interface LibraryItem {
 	slug?: string;
 	title: string;
 	createdAt: string;
+	allow?: "all" | "password" | "secret";
 }
 
 const MAX_ITEMS = 5;

@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Lock } from "lucide-react";
 
 interface ItemListProps {
 	data: {
@@ -17,6 +17,7 @@ interface ItemListProps {
 		tags?: string[];
 		thumbnail?: string;
 		pinned?: boolean;
+		allow?: "all" | "password" | "secret";
 	};
 	detailQuery?: string;
 }
@@ -56,6 +57,9 @@ export default function ItemListWithImage({
 								>
 									고정
 								</Badge>
+							)}
+							{data.allow === "password" && (
+								<Lock size={14} className="text-sub-text shrink-0" />
 							)}
 							<h3
 								className={cn(

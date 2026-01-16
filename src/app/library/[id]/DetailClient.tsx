@@ -2,7 +2,14 @@
 
 import { useMoveToPage } from "@/hooks/useMoveToPage";
 import { dateConvert } from "@/lib/date";
-import { ChevronLeft, ChevronRight, Pin, Pencil, Trash2 } from "lucide-react";
+import {
+	ChevronLeft,
+	ChevronRight,
+	Pin,
+	Pencil,
+	Trash2,
+	Lock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -11,8 +18,10 @@ import { useAdmin } from "@/hooks/auth/UseAdmin";
 import { deleteLibraryPost } from "@/queries/set/deleteLibrary";
 import { setLibraryPin } from "@/queries/set/setLibraryPin";
 import { apiClient, getApiErrorMessage } from "@/queries/apiClient";
+import { getAuthHeader } from "@/queries/getAuthHeader";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAuthStore } from "@/store/auth/store";
 import { Input } from "@/components/ui/input";
 import {
 	Tooltip,
@@ -54,6 +63,7 @@ export default function DetailClient({ detailData }) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const { isAdmin } = useAdmin();
+	const isAuthLoading = useAuthStore((state) => state.isLoading);
 	const listPage = searchParams.get("page");
 	const listPath = listPage ? `/library?page=${listPage}` : "/library";
 	const detailQuery = listPage ? `?page=${listPage}` : "";
@@ -62,6 +72,7 @@ export default function DetailClient({ detailData }) {
 	const [password, setPassword] = useState("");
 	const [passwordError, setPasswordError] = useState("");
 	const [isVerifying, setIsVerifying] = useState(false);
+	const [authChecked, setAuthChecked] = useState(false);
 	const parsedContent = useMemo(() => {
 		if (!localDetail?.content) return null;
 
@@ -79,8 +90,7 @@ export default function DetailClient({ detailData }) {
 				.replace(/"/g, "&quot;")
 				.replace(/'/g, "&#39;");
 
-		const toParagraphHtml = (value: string) =>
-			`<p>${escapeHtml(value)}</p>`;
+		const toParagraphHtml = (value: string) => `<p>${escapeHtml(value)}</p>`;
 
 		const rawContent = localDetail.content;
 		if (typeof rawContent === "string") {
@@ -224,6 +234,7 @@ export default function DetailClient({ detailData }) {
 			setLocalDetail(response.data);
 			setPassword("");
 			setPasswordError("");
+			setAuthChecked(true);
 		} catch (error) {
 			setPasswordError(
 				getApiErrorMessage(error, "비밀번호가 올바르지 않습니다.")
@@ -233,203 +244,279 @@ export default function DetailClient({ detailData }) {
 		}
 	};
 
+	useEffect(() => {
+		if (!requiresPassword) {
+			setAuthChecked(true);
+			return;
+		}
+		setAuthChecked(false);
+	}, [detailId, requiresPassword]);
+
+	useEffect(() => {
+		if (!requiresPassword || !detailId) return;
+		if (isAuthLoading) return;
+		let isMounted = true;
+
+		const fetchWithAuth = async () => {
+			const headers = await getAuthHeader();
+			if (!headers.Authorization) {
+				if (isMounted) setAuthChecked(true);
+				return;
+			}
+			try {
+				const response = await apiClient.get(`/library/detail/${detailId}`, {
+					headers,
+				});
+				if (isMounted && response.data?.content) {
+					setLocalDetail(response.data);
+				}
+			} catch {
+				// Ignore: user isn't author or no auth
+			} finally {
+				if (isMounted) setAuthChecked(true);
+			}
+		};
+
+		fetchWithAuth();
+
+		return () => {
+			isMounted = false;
+		};
+	}, [detailId, isAuthLoading, requiresPassword]);
+
 	return (
 		<div className="Wrapper min-h-100vh">
 			<div
 				className="Container w-3xl min-h-dvh m-auto bg-card backdrop-blur-card border-card px-6 pt-10 pb-10 flex flex-col justify-between"
 				style={{ borderTop: "none", borderBottom: "none" }}
 			>
-				<div>
-					<div>
-						<Button onClick={onClickMoveToPage(listPath)}>목록으로</Button>
+				{requiresPassword && !authChecked ? (
+					<div className="flex flex-col items-center justify-center min-h-[60vh]">
+						<div
+							className="w-10 h-10 rounded-full border-2 border-card-border border-t-theme-primary animate-spin"
+							aria-label="로딩 중"
+						/>
 					</div>
-					<div className="TitleWrap mt-15">
-						<h1 className="Title text-3xl text-main-text font-bold tracking-normal">
-							{localDetail?.title}
-						</h1>
-						<h2 className="Subtitle text-lg text-sub-text mt-2 font-medium">
-							{localDetail?.subtitle}
-						</h2>
-						<div className="EditWrap flex items-center mt-10">
-							{localDetail?.tags?.length > 0 && (
-								<div className="TagBox flex">
-									{/* 태그 */}
-									{localDetail.tags?.length > 0 && (
-										<div className="flex flex-wrap gap-2 mt-1.5">
-											{localDetail.tags.map((tag, index) => (
-												<Badge
-													key={index}
-													variant="secondary"
-													className={cn(
-														"px-3 text-xs font-medium rounded-full",
-														"bg-theme-primary/10 text-theme-primary border-theme-primary/20",
-														"hover:bg-theme-primary/20"
-													)}
-													style={{
-														transition:
-															"background-color 200ms, color 200ms, border-color 200ms",
-													}}
-												>
-													{tag}
-												</Badge>
-											))}
+				) : requiresPassword ? (
+					<div className="flex flex-col items-center justify-center min-h-[60vh]">
+						<div className="flex flex-col items-center gap-6 w-full max-w-md">
+							<div className="w-20 h-20 rounded-full bg-card-bg border-2 border-card flex items-center justify-center">
+								<Lock size={30} className="text-sub-text" />
+							</div>
+							<div className="text-center">
+								<h2 className="text-2xl font-semibold text-main-text mb-2">
+									보호된 게시글입니다.
+								</h2>
+								<p className="text-sub-text">
+									게시글 열람을 위해서 비밀번호를 입력해 주세요.
+								</p>
+							</div>
+							<div className="w-full flex flex-col gap-3">
+								<div className="flex items-center justify-center gap-2">
+									<input
+										type="password"
+										value={password}
+										onChange={(e) => setPassword(e.target.value)}
+										onKeyDown={(e) => {
+											if (e.key === "Enter") {
+												handleVerifyPassword();
+											}
+										}}
+										placeholder="비밀번호를 입력해주세요."
+										className="w-44 rounded-card border-card bg-card-bg px-3 py-2 text-sm text-main-text focus:outline-none focus:ring-0 focus:border-theme-primary"
+									/>
+								</div>
+								{passwordError && (
+									<p className="text-sm text-red-500 text-center">
+										{passwordError}
+									</p>
+								)}
+							</div>
+							<Button
+								variant="default"
+								onClick={onClickMoveToPage(listPath)}
+								className="mt-4"
+							>
+								목록으로
+							</Button>
+						</div>
+					</div>
+				) : (
+					<div>
+						<div>
+							<Button onClick={onClickMoveToPage(listPath)}>목록으로</Button>
+						</div>
+						<div className="TitleWrap mt-15">
+							<h1 className="Title text-3xl text-main-text font-bold tracking-normal">
+								{localDetail?.title}
+							</h1>
+							<h2 className="Subtitle text-lg text-sub-text mt-2 font-medium">
+								{localDetail?.subtitle}
+							</h2>
+							<div className="EditWrap flex items-center mt-10">
+								{localDetail?.tags?.length > 0 && (
+									<div className="TagBox flex">
+										{/* 태그 */}
+										{localDetail.tags?.length > 0 && (
+											<div className="flex flex-wrap gap-2 mt-1.5">
+												{localDetail.tags.map((tag, index) => (
+													<Badge
+														key={index}
+														variant="secondary"
+														className={cn(
+															"px-3 text-xs font-medium rounded-full",
+															"bg-theme-primary/10 text-theme-primary border-theme-primary/20",
+															"hover:bg-theme-primary/20"
+														)}
+														style={{
+															transition:
+																"background-color 200ms, color 200ms, border-color 200ms",
+														}}
+													>
+														{tag}
+													</Badge>
+												))}
+											</div>
+										)}
+									</div>
+								)}
+
+								<div className="EditBox flex gap-4 items-center ml-auto">
+									<span className="CreatedAt text-sub-text">
+										{dateConvert(localDetail?.createdAt)}
+									</span>
+									{isAdmin && (
+										<div className="flex items-center gap-3">
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<button
+														type="button"
+														onClick={handleTogglePin}
+														className={cn(
+															"w-8 h-8 rounded-full flex items-center justify-center border border-card cursor-pointer",
+															isPinned ? "text-theme-primary" : "text-sub-text"
+														)}
+														style={{ transition: "color 200ms ease-out" }}
+														aria-label="공지로 설정"
+													>
+														<Pin size={16} />
+													</button>
+												</TooltipTrigger>
+												<TooltipContent className="text-xs">
+													{isPinned ? "공지 해제" : "공지로 설정"}
+												</TooltipContent>
+											</Tooltip>
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<button
+														type="button"
+														onClick={onClickMoveToPage(
+															`/library/${localDetail?.id}/edit`
+														)}
+														className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
+														style={{ transition: "color 200ms ease-out" }}
+														aria-label="수정"
+													>
+														<Pencil size={16} />
+													</button>
+												</TooltipTrigger>
+												<TooltipContent className="text-xs">
+													수정
+												</TooltipContent>
+											</Tooltip>
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<button
+														type="button"
+														onClick={handleDelete}
+														className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
+														style={{ transition: "color 200ms ease-out" }}
+														aria-label="삭제"
+													>
+														<Trash2 size={16} />
+													</button>
+												</TooltipTrigger>
+												<TooltipContent className="text-xs">
+													삭제
+												</TooltipContent>
+											</Tooltip>
 										</div>
 									)}
 								</div>
-							)}
-
-							<div className="EditBox flex gap-4 items-center ml-auto">
-								<span className="CreatedAt text-sub-text">
-									{dateConvert(localDetail?.createdAt)}
-								</span>
-								{isAdmin && (
-									<div className="flex items-center gap-3">
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<button
-													type="button"
-													onClick={handleTogglePin}
-													className={cn(
-														"w-8 h-8 rounded-full flex items-center justify-center border border-card cursor-pointer",
-														isPinned ? "text-theme-primary" : "text-sub-text"
-													)}
-													style={{ transition: "color 200ms ease-out" }}
-													aria-label="공지로 설정"
-												>
-													<Pin size={16} />
-												</button>
-											</TooltipTrigger>
-											<TooltipContent className="text-xs">
-												{isPinned ? "공지 해제" : "공지로 설정"}
-											</TooltipContent>
-										</Tooltip>
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<button
-													type="button"
-													onClick={onClickMoveToPage(
-														`/library/${localDetail?.id}/edit`
-													)}
-													className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
-													style={{ transition: "color 200ms ease-out" }}
-													aria-label="수정"
-												>
-													<Pencil size={16} />
-												</button>
-											</TooltipTrigger>
-											<TooltipContent className="text-xs">수정</TooltipContent>
-										</Tooltip>
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<button
-													type="button"
-													onClick={handleDelete}
-													className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
-													style={{ transition: "color 200ms ease-out" }}
-													aria-label="삭제"
-												>
-													<Trash2 size={16} />
-												</button>
-											</TooltipTrigger>
-											<TooltipContent className="text-xs">삭제</TooltipContent>
-										</Tooltip>
-									</div>
-								)}
 							</div>
 						</div>
+						<Separator className="mb-[60px] mt-7 bg-card-border" />
+						{!parsedContent || !editor || editor.isEmpty ? (
+							<p className="text-sub-text">내용이 없습니다.</p>
+						) : (
+							<EditorContent editor={editor} />
+						)}
 					</div>
-					<Separator className="mb-[60px] mt-7 bg-card-border" />
-					{requiresPassword ? (
-						<div className="mt-12 p-6 border-card rounded-card bg-card-bg">
-							<p className="text-main-text font-medium">
-								비밀번호가 필요한 게시글입니다.
-							</p>
-							<div className="mt-4 flex items-center gap-2">
-								<Input
-									type="password"
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
-									placeholder="비밀번호를 입력해주세요."
-									className="flex-1"
-								/>
-								<Button
-									type="button"
-									onClick={handleVerifyPassword}
-									disabled={isVerifying}
-								>
-									확인
-								</Button>
-							</div>
-							{passwordError && (
-								<p className="mt-2 text-xs text-red-500">
-									{passwordError}
-								</p>
-							)}
-						</div>
-					) : !parsedContent || !editor || editor.isEmpty ? (
-						<p className="text-sub-text">내용이 없습니다.</p>
-					) : (
-						<EditorContent editor={editor} />
-					)}
-				</div>
-				<div className="PrevNextWrap flex justify-between mt-24">
-					{localDetail?.prevPost ? (
-						<div
-							className="PrevNextBox prev flex-none flex items-center cursor-pointer rounded-card max-w-52 p-3 border-card bg-card-bg overflow-hidden group min-w-48"
-							onClick={onClickMoveToPage(
-								`/library/${localDetail?.prevPost?.slug || localDetail?.prevPost?.id}${detailQuery}`
-							)}
-						>
+				)}
+				{!requiresPassword && (
+					<div className="PrevNextWrap flex justify-between mt-24">
+						{localDetail?.prevPost ? (
 							<div
-								className="PrevNextIconBox prevIcon w-12 h-12 flex-none flex items-center justify-center rounded-full bg-gray-300 group-hover:-translate-x-1"
-								style={{ transition: "all 300ms ease-in-out" }}
+								className="PrevNextBox prev flex-none flex items-center cursor-pointer rounded-card max-w-52 p-3 border-card bg-card-bg overflow-hidden group min-w-48"
+								onClick={onClickMoveToPage(
+									`/library/${
+										localDetail?.prevPost?.slug || localDetail?.prevPost?.id
+									}${detailQuery}`
+								)}
 							>
-								<ChevronLeft size={20} className="text-gray-600" />
-							</div>
-							<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 48px)] pl-3.5">
-								<span className="PrevNextText text-sm text-sub-text">
-									이전 글
-								</span>
-								<p
-									className="PrevNextTitle text-xl font-semibold text-sub-text whitespace-nowrap overflow-hidden text-ellipsis w-full group-hover:text-gray-500"
-									style={{ transition: "color 300ms" }}
+								<div
+									className="PrevNextIconBox prevIcon w-12 h-12 flex-none flex items-center justify-center rounded-full bg-gray-300 group-hover:-translate-x-1"
+									style={{ transition: "all 300ms ease-in-out" }}
 								>
-									{localDetail?.prevPost?.title}
-								</p>
+									<ChevronLeft size={20} className="text-gray-600" />
+								</div>
+								<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 48px)] pl-3.5">
+									<span className="PrevNextText text-sm text-sub-text">
+										이전 글
+									</span>
+									<p
+										className="PrevNextTitle text-xl font-semibold text-sub-text whitespace-nowrap overflow-hidden text-ellipsis w-full group-hover:text-gray-500"
+										style={{ transition: "color 300ms" }}
+									>
+										{localDetail?.prevPost?.title}
+									</p>
+								</div>
 							</div>
-						</div>
-					) : (
-						<div className="flex-none" />
-					)}
-					{localDetail?.nextPost ? (
-						<div
-							className="PrevNextBox next flex-none flex items-center cursor-pointer rounded-card max-w-52 p-3 border-card bg-card-bg overflow-hidden flex-row-reverse group min-w-48"
-							onClick={onClickMoveToPage(
-								`/library/${localDetail?.nextPost?.slug || localDetail?.nextPost?.id}${detailQuery}`
-							)}
-						>
+						) : (
+							<div className="flex-none" />
+						)}
+						{localDetail?.nextPost ? (
 							<div
-								className="PrevNextIconBox nextIcon w-12 h-12 flex-none flex items-center justify-center rounded-full bg-gray-300 group-hover:translate-x-1"
-								style={{ transition: "all 300ms ease-in-out" }}
+								className="PrevNextBox next flex-none flex items-center cursor-pointer rounded-card max-w-52 p-3 border-card bg-card-bg overflow-hidden flex-row-reverse group min-w-48"
+								onClick={onClickMoveToPage(
+									`/library/${
+										localDetail?.nextPost?.slug || localDetail?.nextPost?.id
+									}${detailQuery}`
+								)}
 							>
-								<ChevronRight size={20} className="text-gray-600" />
-							</div>
-							<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 48px)] pr-3.5 flex flex-col items-end">
-								<span className="PrevNextText text-sm text-sub-text">
-									다음 글
-								</span>
-								<p
-									className="PrevNextTitle text-xl font-semibold text-sub-text whitespace-nowrap overflow-hidden text-ellipsis w-full text-end group-hover:text-gray-500"
-									style={{ transition: "color 300ms" }}
+								<div
+									className="PrevNextIconBox nextIcon w-12 h-12 flex-none flex items-center justify-center rounded-full bg-gray-300 group-hover:translate-x-1"
+									style={{ transition: "all 300ms ease-in-out" }}
 								>
-									{localDetail?.nextPost?.title}
-								</p>
+									<ChevronRight size={20} className="text-gray-600" />
+								</div>
+								<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 48px)] pr-3.5 flex flex-col items-end">
+									<span className="PrevNextText text-sm text-sub-text">
+										다음 글
+									</span>
+									<p
+										className="PrevNextTitle text-xl font-semibold text-sub-text whitespace-nowrap overflow-hidden text-ellipsis w-full text-end group-hover:text-gray-500"
+										style={{ transition: "color 300ms" }}
+									>
+										{localDetail?.nextPost?.title}
+									</p>
+								</div>
 							</div>
-						</div>
-					) : (
-						<div className="flex-none" />
-					)}
-				</div>
+						) : (
+							<div className="flex-none" />
+						)}
+					</div>
+				)}
 			</div>
 		</div>
 	);
