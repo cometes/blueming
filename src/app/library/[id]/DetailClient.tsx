@@ -10,8 +10,10 @@ import { Separator } from "@/components/ui/separator";
 import { useAdmin } from "@/hooks/auth/UseAdmin";
 import { deleteLibraryPost } from "@/queries/set/deleteLibrary";
 import { setLibraryPin } from "@/queries/set/setLibraryPin";
+import { apiClient, getApiErrorMessage } from "@/queries/apiClient";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Input } from "@/components/ui/input";
 import {
 	Tooltip,
 	TooltipContent,
@@ -55,9 +57,13 @@ export default function DetailClient({ detailData }) {
 	const listPage = searchParams.get("page");
 	const listPath = listPage ? `/library?page=${listPage}` : "/library";
 	const detailQuery = listPage ? `?page=${listPage}` : "";
+	const [localDetail, setLocalDetail] = useState(detailData);
 	const [isPinned, setIsPinned] = useState(Boolean(detailData?.pinned));
+	const [password, setPassword] = useState("");
+	const [passwordError, setPasswordError] = useState("");
+	const [isVerifying, setIsVerifying] = useState(false);
 	const parsedContent = useMemo(() => {
-		if (!detailData?.content) return null;
+		if (!localDetail?.content) return null;
 
 		const isTiptapDoc = (value: unknown) => {
 			if (!value || typeof value !== "object") return false;
@@ -76,7 +82,7 @@ export default function DetailClient({ detailData }) {
 		const toParagraphHtml = (value: string) =>
 			`<p>${escapeHtml(value)}</p>`;
 
-		const rawContent = detailData.content;
+		const rawContent = localDetail.content;
 		if (typeof rawContent === "string") {
 			const trimmed = rawContent.trim();
 			if (!trimmed) return "";
@@ -99,7 +105,7 @@ export default function DetailClient({ detailData }) {
 
 		const fallbackHtml = renderRichText(rawContent);
 		return fallbackHtml || null;
-	}, [detailData?.content]);
+	}, [localDetail?.content]);
 	const viewerExtensions = useMemo(
 		() => [
 			StarterKit.configure({
@@ -150,7 +156,7 @@ export default function DetailClient({ detailData }) {
 		editable: false,
 		editorProps: {
 			attributes: {
-				class: "tiptap prose max-w-none text-main-text",
+				class: "tiptap prose max-w-none text-main-text readonly",
 			},
 		},
 	});
@@ -159,13 +165,22 @@ export default function DetailClient({ detailData }) {
 		setIsPinned(Boolean(detailData?.pinned));
 	}, [detailData?.pinned]);
 
+	useEffect(() => {
+		if (!editor || parsedContent == null) return;
+		editor.commands.setContent(parsedContent);
+	}, [editor, parsedContent]);
+
+	useEffect(() => {
+		setLocalDetail(detailData);
+	}, [detailData]);
+
 	const handleDelete = async () => {
-		if (!detailData?.id) return;
+		if (!localDetail?.id) return;
 		const confirmed = window.confirm("이 게시글을 삭제할까요?");
 		if (!confirmed) return;
 
 		try {
-			await deleteLibraryPost(detailData.id);
+			await deleteLibraryPost(localDetail.id);
 			toast.success("삭제되었습니다.");
 			router.push(listPath);
 			router.refresh();
@@ -175,11 +190,11 @@ export default function DetailClient({ detailData }) {
 	};
 
 	const handleTogglePin = async () => {
-		if (!detailData?.id) return;
+		if (!localDetail?.id) return;
 		const nextPinned = !isPinned;
 		setIsPinned(nextPinned);
 		try {
-			await setLibraryPin(detailData.id, nextPinned);
+			await setLibraryPin(localDetail.id, nextPinned);
 			toast.success(
 				nextPinned ? "공지로 설정되었습니다." : "공지 설정이 해제되었습니다."
 			);
@@ -189,27 +204,59 @@ export default function DetailClient({ detailData }) {
 		}
 	};
 
+	const requiresPassword =
+		localDetail?.allow === "password" && !localDetail?.content;
+	const detailId = localDetail?.slug || localDetail?.id;
+
+	const handleVerifyPassword = async () => {
+		if (!detailId || isVerifying) return;
+		if (!password.trim()) {
+			setPasswordError("비밀번호를 입력해주세요.");
+			return;
+		}
+
+		setIsVerifying(true);
+		setPasswordError("");
+		try {
+			const response = await apiClient.get(`/library/detail/${detailId}`, {
+				headers: { "x-post-password": password },
+			});
+			setLocalDetail(response.data);
+			setPassword("");
+			setPasswordError("");
+		} catch (error) {
+			setPasswordError(
+				getApiErrorMessage(error, "비밀번호가 올바르지 않습니다.")
+			);
+		} finally {
+			setIsVerifying(false);
+		}
+	};
+
 	return (
 		<div className="Wrapper min-h-100vh">
-			<div className="Container w-3xl min-h-dvh m-auto bg-card backdrop-blur-card border-card px-6 pt-20 pb-10 flex flex-col justify-between">
+			<div
+				className="Container w-3xl min-h-dvh m-auto bg-card backdrop-blur-card border-card px-6 pt-10 pb-10 flex flex-col justify-between"
+				style={{ borderTop: "none", borderBottom: "none" }}
+			>
 				<div>
 					<div>
 						<Button onClick={onClickMoveToPage(listPath)}>목록으로</Button>
 					</div>
-					<div className="TitleWrap mt-10">
+					<div className="TitleWrap mt-15">
 						<h1 className="Title text-3xl text-main-text font-bold tracking-normal">
-							{detailData?.title}
+							{localDetail?.title}
 						</h1>
 						<h2 className="Subtitle text-lg text-sub-text mt-2 font-medium">
-							{detailData?.subtitle}
+							{localDetail?.subtitle}
 						</h2>
 						<div className="EditWrap flex items-center mt-10">
-							{detailData?.tags?.length > 0 && (
+							{localDetail?.tags?.length > 0 && (
 								<div className="TagBox flex">
 									{/* 태그 */}
-									{detailData.tags?.length > 0 && (
+									{localDetail.tags?.length > 0 && (
 										<div className="flex flex-wrap gap-2 mt-1.5">
-											{detailData.tags.map((tag, index) => (
+											{localDetail.tags.map((tag, index) => (
 												<Badge
 													key={index}
 													variant="secondary"
@@ -233,7 +280,7 @@ export default function DetailClient({ detailData }) {
 
 							<div className="EditBox flex gap-4 items-center ml-auto">
 								<span className="CreatedAt text-sub-text">
-									{dateConvert(detailData?.createdAt)}
+									{dateConvert(localDetail?.createdAt)}
 								</span>
 								{isAdmin && (
 									<div className="flex items-center gap-3">
@@ -261,7 +308,7 @@ export default function DetailClient({ detailData }) {
 												<button
 													type="button"
 													onClick={onClickMoveToPage(
-														`/library/${detailData?.id}/edit`
+														`/library/${localDetail?.id}/edit`
 													)}
 													className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
 													style={{ transition: "color 200ms ease-out" }}
@@ -292,18 +339,45 @@ export default function DetailClient({ detailData }) {
 						</div>
 					</div>
 					<Separator className="mb-[60px] mt-7 bg-card-border" />
-					{!parsedContent || !editor || editor.isEmpty ? (
+					{requiresPassword ? (
+						<div className="mt-12 p-6 border-card rounded-card bg-card-bg">
+							<p className="text-main-text font-medium">
+								비밀번호가 필요한 게시글입니다.
+							</p>
+							<div className="mt-4 flex items-center gap-2">
+								<Input
+									type="password"
+									value={password}
+									onChange={(e) => setPassword(e.target.value)}
+									placeholder="비밀번호를 입력해주세요."
+									className="flex-1"
+								/>
+								<Button
+									type="button"
+									onClick={handleVerifyPassword}
+									disabled={isVerifying}
+								>
+									확인
+								</Button>
+							</div>
+							{passwordError && (
+								<p className="mt-2 text-xs text-red-500">
+									{passwordError}
+								</p>
+							)}
+						</div>
+					) : !parsedContent || !editor || editor.isEmpty ? (
 						<p className="text-sub-text">내용이 없습니다.</p>
 					) : (
 						<EditorContent editor={editor} />
 					)}
 				</div>
 				<div className="PrevNextWrap flex justify-between mt-24">
-					{detailData?.prevPost ? (
+					{localDetail?.prevPost ? (
 						<div
 							className="PrevNextBox prev flex-none flex items-center cursor-pointer rounded-card max-w-52 p-3 border-card bg-card-bg overflow-hidden group min-w-48"
 							onClick={onClickMoveToPage(
-								`/library/${detailData?.prevPost?.id}${detailQuery}`
+								`/library/${localDetail?.prevPost?.slug || localDetail?.prevPost?.id}${detailQuery}`
 							)}
 						>
 							<div
@@ -320,18 +394,18 @@ export default function DetailClient({ detailData }) {
 									className="PrevNextTitle text-xl font-semibold text-sub-text whitespace-nowrap overflow-hidden text-ellipsis w-full group-hover:text-gray-500"
 									style={{ transition: "color 300ms" }}
 								>
-									{detailData?.prevPost?.title}
+									{localDetail?.prevPost?.title}
 								</p>
 							</div>
 						</div>
 					) : (
 						<div className="flex-none" />
 					)}
-					{detailData?.nextPost ? (
+					{localDetail?.nextPost ? (
 						<div
 							className="PrevNextBox next flex-none flex items-center cursor-pointer rounded-card max-w-52 p-3 border-card bg-card-bg overflow-hidden flex-row-reverse group min-w-48"
 							onClick={onClickMoveToPage(
-								`/library/${detailData?.nextPost?.id}${detailQuery}`
+								`/library/${localDetail?.nextPost?.slug || localDetail?.nextPost?.id}${detailQuery}`
 							)}
 						>
 							<div
@@ -348,7 +422,7 @@ export default function DetailClient({ detailData }) {
 									className="PrevNextTitle text-xl font-semibold text-sub-text whitespace-nowrap overflow-hidden text-ellipsis w-full text-end group-hover:text-gray-500"
 									style={{ transition: "color 300ms" }}
 								>
-									{detailData?.nextPost?.title}
+									{localDetail?.nextPost?.title}
 								</p>
 							</div>
 						</div>

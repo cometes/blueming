@@ -5,6 +5,7 @@ import type { CreateLibraryPayload } from "@/queries/set/createLibrary";
 export interface UpdateLibraryResponse {
 	postId: string;
 	updatedAt?: string | null;
+	slug?: string | null;
 }
 
 export const updateLibraryPost = async (

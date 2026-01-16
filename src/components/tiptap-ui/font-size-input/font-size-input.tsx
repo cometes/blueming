@@ -247,7 +247,7 @@ export function FontSizeInput({
         onBlur={handleBlur}
         disabled={isDisabled}
         placeholder={currentFontSize === "mixed" ? "" : "16"}
-        className="w-12 px-1 py-1 text-sm text-center border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+        className="w-11 px-0.5 py-0.5 text-sm text-center border border-gray-300/30 rounded focus:outline-none focus:ring-1 focus:ring-theme-primary focus:border-theme-primary disabled:bg-card-bg disabled:border-0 disabled:ring-0 disabled:text-[#666] disabled:cursor-not-allowed"
         aria-label="글자 크기"
         title="폰트 크기 (12-56px)"
       />

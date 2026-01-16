@@ -241,7 +241,7 @@ const ImageUploadDragArea: React.FC<ImageUploadDragAreaProps> = ({
 
   return (
     <div
-      className={`tiptap-image-upload-dragger bg-card ${dragover ? "tiptap-image-upload-dragger-active" : ""}`}
+      className={`tiptap-image-upload-dragger ${dragover ? "tiptap-image-upload-dragger-active" : ""}`}
       onDrop={onDrop}
       onDragOver={onDragover}
       onDragLeave={onDragleave}
@@ -337,6 +337,7 @@ const DropZoneContent: React.FC<{ maxSize: number }> = ({ maxSize }) => (
 
 export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
   const { accept, limit, maxSize } = props.node.attrs
+  const { deleteNode } = props
   const inputRef = React.useRef<HTMLInputElement>(null)
   const extension = props.extension
   const filesRef = React.useRef<File[]>([])
@@ -477,6 +478,17 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
       tabIndex={0}
       onClick={handleClick}
     >
+      <button
+        type="button"
+        className="tiptap-image-upload-remove-btn cursor-pointer"
+        onClick={(event) => {
+          event.stopPropagation()
+          deleteNode?.()
+        }}
+        aria-label="이미지 업로드 삭제"
+      >
+        <CloseIcon />
+      </button>
       {!fileItem && (
         <>
           <ImageUploadDragArea onFile={handleUpload}>
@@ -490,7 +502,7 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
               <PopoverTrigger asChild>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -498,9 +510,9 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
                 </Button>
               </PopoverTrigger>
               <PopoverContent
-                className="w-[360px] p-3"
+                className="w-[360px] p-3 bg-card border-card rounded-card backdrop-blur-card text-main-text"
                 side="bottom"
-                align="start"
+                align="center"
               >
                 <div className="text-xs font-semibold text-main-text mb-2">
                   이미지 에셋

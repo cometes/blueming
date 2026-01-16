@@ -53,20 +53,20 @@ export default function LibrarySettingsDialog({
 						<p> 페이지 설정</p>
 						<Button onClick={onSave}>저장하기</Button>
 					</DialogTitle>
-					<DialogDescription className=" px-5 py-4 text-main-text">
+					<div className="px-5 py-4 text-main-text">
 						<div className="flex flex-col gap-4">
 							<div>
 								<p>페이지 레이아웃</p>
 								<div className="flex gap-2 mt-2">
 									<Button
-										variant={tempLayoutType === "list" ? "default" : "outline"}
+										variant={tempLayoutType === "list" ? "default" : "ghost"}
 										onClick={() => setTempLayoutType("list")}
 									>
 										<Rows3 /> 리스트형
 									</Button>
 									<Button
 										variant={
-											tempLayoutType === "listWithImage" ? "default" : "outline"
+											tempLayoutType === "listWithImage" ? "default" : "ghost"
 										}
 										onClick={() => setTempLayoutType("listWithImage")}
 									>
@@ -105,7 +105,7 @@ export default function LibrarySettingsDialog({
 								<div className="flex gap-2 mt-2">
 									<Button
 										variant={
-											tempWritePermission === "admin" ? "default" : "outline"
+											tempWritePermission === "admin" ? "default" : "ghost"
 										}
 										onClick={() => setTempWritePermission("admin")}
 									>
@@ -113,7 +113,7 @@ export default function LibrarySettingsDialog({
 									</Button>
 									<Button
 										variant={
-											tempWritePermission === "member" ? "default" : "outline"
+											tempWritePermission === "member" ? "default" : "ghost"
 										}
 										onClick={() => setTempWritePermission("member")}
 									>
@@ -122,7 +122,7 @@ export default function LibrarySettingsDialog({
 								</div>
 							</div>
 						</div>
-					</DialogDescription>
+					</div>
 				</DialogHeader>
 			</DialogContent>
 		</Dialog>

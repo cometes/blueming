@@ -36,9 +36,35 @@
 
 .tiptap-image-upload {
   // margin: 2rem 0;
+  position: relative;
 
   input[type="file"] {
     display: none;
+  }
+
+  .tiptap-image-upload-remove-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 2;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    background-color: rgba(0, 0, 0, 0.35);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 200ms ease;
+
+    svg {
+      width: 0.85rem;
+      height: 0.85rem;
+    }
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.55);
+    }
   }
 
   .tiptap-image-upload-dropzone {

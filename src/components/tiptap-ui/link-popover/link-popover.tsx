@@ -232,6 +232,7 @@ const LinkMain: React.FC<LinkMainProps> = ({
 				autoCorrect="off"
 				autoCapitalize="off"
 				className="tiptap-input tiptap-input-clamp"
+				style={{ fontSize: "0.875rem" }}
 			/>
 
 			<div className="tiptap-button-group" data-orientation="horizontal">

@@ -90,10 +90,11 @@ export default function Layout({ children }: LayoutProps) {
 				<header
 					className={cn(
 						"flex justify-between items-center px-6 py-0 w-full h-12",
-						"fixed top-0 left-0 border-b border-card-bg z-50",
-						"transition-transform ease-in-out duration-300 backdrop-blur-sm",
+						"sticky top-0 left-0 border-b border-card-bg z-50",
+						"backdrop-blur-sm",
 						isHeaderVisible ? "translate-y-0" : "-translate-y-full"
 					)}
+					style={{ transition: "transform 300ms ease-in-out" }}
 				>
 					<h1
 						onClick={() => {

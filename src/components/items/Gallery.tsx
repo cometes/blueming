@@ -28,7 +28,7 @@ export default function ItemGallery({
 		Boolean(data.thumbnail) &&
 		!imageError &&
 		!data.thumbnail?.includes("example.com");
-	const detailPath = `/library/${data.id}${detailQuery}`;
+	const detailPath = `/library/${data.slug || data.id}${detailQuery}`;
 
 	return (
 		<div
