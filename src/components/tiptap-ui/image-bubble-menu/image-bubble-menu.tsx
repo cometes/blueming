@@ -90,7 +90,7 @@ export const ImageBubbleMenu: React.FC<ImageBubbleMenuProps> = ({
           data-style="ghost"
           data-active-state={currentAlign === 'left' ? 'on' : 'off'}
           onClick={() => setImageAlign('left')}
-          tooltip="Align left"
+          tooltip="왼쪽 정렬"
         >
           <AlignLeftIcon className="tiptap-button-icon" />
         </Button>
@@ -101,7 +101,7 @@ export const ImageBubbleMenu: React.FC<ImageBubbleMenuProps> = ({
           data-style="ghost"
           data-active-state={currentAlign === 'center' ? 'on' : 'off'}
           onClick={() => setImageAlign('center')}
-          tooltip="Align center"
+          tooltip="가운데 정렬"
         >
           <AlignCenterIcon className="tiptap-button-icon" />
         </Button>
@@ -112,7 +112,7 @@ export const ImageBubbleMenu: React.FC<ImageBubbleMenuProps> = ({
           data-style="ghost"
           data-active-state={currentAlign === 'right' ? 'on' : 'off'}
           onClick={() => setImageAlign('right')}
-          tooltip="Align right"
+          tooltip="오른쪽 정렬"
         >
           <AlignRightIcon className="tiptap-button-icon" />
         </Button>

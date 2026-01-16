@@ -45,8 +45,8 @@ export const historyShortcutKeys: Partial<Record<HistoryAction, string>> = {
 }
 
 export const historyActionLabels: Record<HistoryAction, string> = {
-  undo: "Undo",
-  redo: "Redo",
+  undo: "실행 취소",
+  redo: "다시 실행",
 }
 
 /**

@@ -259,9 +259,9 @@ export function TextBackgroundColorButton({
 				data-disabled={isDisabled}
 				role="button"
 				tabIndex={-1}
-				aria-label="Background color"
+				aria-label="배경색"
 				aria-pressed={isActive}
-				tooltip="Background color"
+				tooltip="배경색"
 				onClick={handleButtonClick}
 				{...buttonProps}
 			>
@@ -312,7 +312,7 @@ export function TextBackgroundColorButton({
 								onClick={handleClearColor}
 								className="flex-1 text-xs px-2 py-1"
 							>
-								Clear
+								지우기
 							</Button>
 						)}
 						<Button
@@ -321,7 +321,7 @@ export function TextBackgroundColorButton({
 							onClick={handleApplyColor}
 							className="flex-1 text-xs px-2 py-1"
 						>
-							Apply
+							적용
 						</Button>
 					</div>
 				</div>

@@ -13,6 +13,7 @@ import { YoutubeIcon } from "@/components/tiptap-icons/youtube-icon"
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"
 import { Button } from "@/components/tiptap-ui-primitive/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 export interface YoutubeUploadButtonProps extends ButtonProps {
   editor?: Editor | null
@@ -136,14 +137,14 @@ export function useYoutubeUploadButton(
       return false
     }
 
-    const url = prompt("YouTube 비디오 URL을 입력하세요:")
+    const url = prompt("유튜브 영상 URL을 입력하세요:")
 
     if (!url) return false
 
     const formattedUrl = formatYoutubeUrl(url)
 
     if (!formattedUrl) {
-      alert("올바른 YouTube URL을 입력해주세요.")
+      alert("올바른 유튜브 URL을 입력해주세요.")
       return false
     }
 
@@ -180,13 +181,10 @@ export const YoutubeUploadButton = React.forwardRef<
     const [isOpen, setIsOpen] = React.useState(false)
     const [youtubeUrl, setYoutubeUrl] = React.useState("")
     const [error, setError] = React.useState("")
-    const popupRef = React.useRef<HTMLDivElement>(null)
-    const buttonRef = React.useRef<HTMLButtonElement>(null)
 
     // Merge refs
     const mergedRef = React.useCallback(
       (node: HTMLButtonElement | null) => {
-        buttonRef.current = node
         if (typeof ref === "function") {
           ref(node)
         } else if (ref) {
@@ -196,59 +194,13 @@ export const YoutubeUploadButton = React.forwardRef<
       [ref]
     )
 
-    // 팝업 위치 계산
-    const [popupPosition, setPopupPosition] = React.useState<{
-      top: number
-      left: number
-    } | null>(null)
-
-    React.useEffect(() => {
-      if (isOpen && buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect()
-        setPopupPosition({
-          top: rect.bottom + 4,
-          left: rect.left,
-        })
+    const handleOpenChange = React.useCallback((open: boolean) => {
+      setIsOpen(open)
+      if (!open) {
+        setYoutubeUrl("")
+        setError("")
       }
-    }, [isOpen])
-
-    // 외부 클릭 시 팝업 닫기
-    React.useEffect(() => {
-      if (!isOpen) return
-
-      const handleClickOutside = (event: MouseEvent) => {
-        if (
-          popupRef.current &&
-          !popupRef.current.contains(event.target as Node) &&
-          buttonRef.current &&
-          !buttonRef.current.contains(event.target as Node)
-        ) {
-          setIsOpen(false)
-          setYoutubeUrl("")
-          setError("")
-        }
-      }
-
-      document.addEventListener("mousedown", handleClickOutside)
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside)
-      }
-    }, [isOpen])
-
-    const handleButtonClick = React.useCallback(
-      (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault()
-        e.stopPropagation()
-
-        if (!isDisabled) {
-          setIsOpen(!isOpen)
-          setError("")
-        }
-
-        onClick?.(e)
-      },
-      [onClick, isDisabled, isOpen]
-    )
+    }, [])
 
     const handleInsert = React.useCallback(() => {
       if (!editor || !youtubeUrl.trim()) return
@@ -256,7 +208,7 @@ export const YoutubeUploadButton = React.forwardRef<
       const formattedUrl = formatYoutubeUrl(youtubeUrl.trim())
 
       if (!formattedUrl) {
-        setError("올바른 YouTube URL을 입력해주세요.")
+        setError("올바른 유튜브 URL을 입력해주세요.")
         return
       }
 
@@ -267,7 +219,7 @@ export const YoutubeUploadButton = React.forwardRef<
         setYoutubeUrl("")
         setError("")
       } else {
-        setError("YouTube 비디오를 삽입하지 못했습니다.")
+        setError("유튜브 영상을 삽입하지 못했습니다.")
       }
     }, [editor, youtubeUrl])
 
@@ -291,43 +243,35 @@ export const YoutubeUploadButton = React.forwardRef<
 
     return (
       <div className="relative">
-        <Button
-          ref={mergedRef}
-          type="button"
-          className={className.trim()}
-          disabled={isDisabled}
-          data-style="ghost"
-          data-active-state={isActive ? "on" : "off"}
-          data-disabled={isDisabled}
-          role="button"
-          tabIndex={-1}
-          aria-label="Add YouTube video"
-          aria-pressed={isActive}
-          tooltip="Add YouTube video"
-          onClick={handleButtonClick}
-          {...buttonProps}
-        >
-          {children || (
-            <>
-              <YoutubeIcon className="tiptap-button-icon" />
-              {/* {text && <span className="tiptap-button-text">{text}</span>} */}
-            </>
-          )}
-        </Button>
-
-        {isOpen && popupPosition && (
-          <div
-            ref={popupRef}
-            className="fixed p-3 bg-white border border-gray-300 rounded-lg shadow-xl z-[9999] min-w-[320px]"
-            style={{
-              top: `${popupPosition.top}px`,
-              left: `${popupPosition.left}px`,
-              boxShadow: '0 10px 25px rgba(0,0,0,0.3)'
-            }}
-          >
+        <Popover open={isOpen} onOpenChange={handleOpenChange}>
+          <PopoverTrigger asChild>
+            <Button
+              ref={mergedRef}
+              type="button"
+              className={className.trim()}
+              disabled={isDisabled}
+              data-style="ghost"
+              data-active-state={isActive ? "on" : "off"}
+              data-disabled={isDisabled}
+              role="button"
+              tabIndex={-1}
+              aria-label="유튜브 동영상 추가"
+              aria-pressed={isActive}
+              tooltip="유튜브 동영상 추가"
+              onClick={onClick}
+              {...buttonProps}
+            >
+              {children || (
+                <>
+                  <YoutubeIcon className="tiptap-button-icon" />
+                  {/* {text && <span className="tiptap-button-text">{text}</span>} */}
+                </>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[320px] p-3" side="bottom" align="start">
             <div className="space-y-2">
-              <div className="text-xs text-gray-600 mb-2">YouTube 비디오 URL</div>
-
+              <div className="text-xs text-gray-600 mb-2">유튜브 영상 URL</div>
               <input
                 type="text"
                 value={youtubeUrl}
@@ -340,34 +284,27 @@ export const YoutubeUploadButton = React.forwardRef<
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 autoFocus
               />
-
-              {error && (
-                <div className="text-xs text-red-500">{error}</div>
-              )}
-
+              {error && <div className="text-xs text-red-500">{error}</div>}
               <div className="flex gap-2 pt-2">
-                <button
+                <Button
                   type="button"
                   onClick={handleInsert}
-                  className="flex-1 px-3 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1"
                 >
                   삽입
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  onClick={() => {
-                    setIsOpen(false)
-                    setYoutubeUrl("")
-                    setError("")
-                  }}
-                  className="flex-1 px-3 py-2 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  data-style="ghost"
+                  onClick={() => handleOpenChange(false)}
+                  className="flex-1"
                 >
                   취소
-                </button>
+                </Button>
               </div>
             </div>
-          </div>
-        )}
+          </PopoverContent>
+        </Popover>
       </div>
     )
   }

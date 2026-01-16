@@ -114,7 +114,7 @@ export function useCodeBlockState(
   }, [editor, isDisabled])
 
   const shortcutKey = "Ctrl-Alt-c"
-  const label = "Code Block"
+  const label = "코드 블록"
 
   return {
     nodeInSchema,
@@ -181,7 +181,7 @@ export const CodeBlockButton = React.forwardRef<
         data-disabled={isDisabled}
         role="button"
         tabIndex={-1}
-        aria-label="codeBlock"
+        aria-label={label}
         aria-pressed={isActive}
         tooltip={label}
         shortcutKeys={shortcutKey}

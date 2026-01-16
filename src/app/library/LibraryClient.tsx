@@ -1,36 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import ItemCard from "@/components/items/Card";
-import ItemGallery from "@/components/items/Gallery";
-import { Plus, Search, Settings, X, ArrowUpDown, Pin } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Plus, Search, Settings, X } from "lucide-react";
 import AdminOnly from "@/components/common/AdminOnly";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-	Pagination,
-	PaginationContent,
-	PaginationItem,
-	PaginationLink,
-	PaginationNext,
-	PaginationPrevious,
-} from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
 import { useMoveToPage } from "@/hooks/useMoveToPage";
-import ItemListWithImage from "@/components/items/ListWithImage";
-import ItemList from "@/components/items/List";
 import LibrarySettingsDialog from "@/components/modal/LibrarySettingsDialog";
 import { setSettingsLibrary } from "@/queries/set/setSettingsLibrary";
 import { useSettings } from "@/contexts/SettingsContext";
 import { toast } from "sonner";
-import { fetchLibraryList, fetchLibraryTags } from "@/queries/fetch/fetchLibrary";
-import { dateConvert } from "@/lib/date";
-import { setLibraryPin } from "@/queries/set/setLibraryPin";
+import { useLibraryFilters } from "@/hooks/library/useLibraryFilters";
+import { useLibraryListData } from "@/hooks/library/useLibraryListData";
+import LibraryListView from "./LibraryListView";
+import LibrarySeriesView from "./LibrarySeriesView";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface LibraryItem {
 	id: string;
 	title: string;
 	subtitle?: string;
+	author?: string;
 	slug?: string;
 	createdAt: string;
 	tags?: string[];
@@ -43,6 +34,7 @@ interface LibraryClientProps {
 	pinnedData: LibraryItem[];
 	listTotal: number;
 	seriesData: LibraryItem[];
+	tagData?: string[];
 }
 
 export default function LibraryClient({
@@ -50,32 +42,17 @@ export default function LibraryClient({
 	pinnedData,
 	listTotal,
 	seriesData,
+	tagData,
 }: LibraryClientProps) {
 	const { library, updateLibrary, refreshSettings } = useSettings();
 	const [isSeriesOn, setIsSeriesOn] = useState(false);
 	const [isCardOn, setIsCardOn] = useState(false);
-	const [segmentedValue, setSegmentedValue] = useState("row");
 	const { onClickMoveToPage } = useMoveToPage();
-	const [searchQuery, setSearchQuery] = useState("");
-	const [appliedQuery, setAppliedQuery] = useState("");
-	const [activeTag, setActiveTag] = useState<string>("전체");
-	const [sortOrder, setSortOrder] = useState<"latest" | "oldest" | "title">(
-		"latest"
-	);
-	const [listPage, setListPage] = useState(1);
-	const [seriesPage, setSeriesPage] = useState(1);
-	const [listItems, setListItems] = useState<LibraryItem[]>(listData);
-	const [pinnedItems, setPinnedItems] = useState<LibraryItem[]>(pinnedData);
-	const [listTotalCount, setListTotalCount] = useState(listTotal);
-	const [tagOptions, setTagOptions] = useState<string[]>([]);
-	const [isListReady, setIsListReady] = useState(true);
-	const setActivePage = (page: number) => {
-		if (isSeriesOn) {
-			setSeriesPage(page);
-		} else {
-			setListPage(page);
-		}
-	};
+	const router = useRouter();
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const [isCardPrefsLoaded, setIsCardPrefsLoaded] = useState(false);
+	const isSyncingFromQuery = useRef(false);
 
 	const defaultLibrarySettings = useMemo(
 		() => ({
@@ -109,6 +86,39 @@ export default function LibraryClient({
 		resolvedLibrarySettings.writePermission
 	);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const {
+		searchQuery,
+		setSearchQuery,
+		appliedQuery,
+		setAppliedQuery,
+		activeTag,
+		setActiveTag,
+		sortOrder,
+		setSortOrder,
+		listPage,
+		seriesPage,
+		setListPage,
+		setActivePage,
+	} = useLibraryFilters({ isSeriesOn, postsPerPage });
+	const {
+		listItems,
+		pinnedItems,
+		listTotalCount,
+		tagOptions,
+		isListReady,
+	} = useLibraryListData({
+		initialList: listData,
+		initialPinned: pinnedData,
+		initialTotal: listTotal,
+		initialTags: tagData,
+		isSeriesOn,
+		listPage,
+		postsPerPage,
+		sortOrder,
+		activeTag,
+		appliedQuery,
+		setListPage,
+	});
 
 	// Dialog 임시 상태 (저장 전까지 사용)
 	const [tempLayoutType, setTempLayoutType] = useState(layoutType);
@@ -117,35 +127,55 @@ export default function LibraryClient({
 	const [tempWritePermission, setTempWritePermission] =
 		useState(writePermission);
 
-	// 로컬 스토리지에서 상태 불러오기
-	useEffect(() => {
-		const savedIsSeriesOn = localStorage.getItem("isSeriesOn");
-		const savedIsCardOn = localStorage.getItem("isCardOn");
-		const savedSegmentedValue = localStorage.getItem("segmentedValue");
-
-		if (savedIsSeriesOn !== null) {
-			setIsSeriesOn(savedIsSeriesOn === "true");
+	const updateTabParam = (nextIsSeriesOn: boolean) => {
+		const params = new URLSearchParams(searchParams.toString());
+		if (nextIsSeriesOn) {
+			params.set("tab", "series");
+		} else {
+			params.delete("tab");
 		}
+		const query = params.toString();
+		router.replace(query ? `${pathname}?${query}` : pathname, {
+			scroll: false,
+		});
+	};
+
+	const updatePageParam = (nextPage: number) => {
+		const params = new URLSearchParams(searchParams.toString());
+		if (nextPage > 1) {
+			params.set("page", String(nextPage));
+		} else {
+			params.delete("page");
+		}
+		const query = params.toString();
+		router.replace(query ? `${pathname}?${query}` : pathname, {
+			scroll: false,
+		});
+	};
+
+	// URL 쿼리에서 탭 상태 복원
+	useEffect(() => {
+		const tab = searchParams.get("tab");
+		setIsSeriesOn(tab === "series");
+	}, [searchParams]);
+
+	// 로컬 스토리지에서 카드 뷰 상태 불러오기
+	useEffect(() => {
+		const savedIsCardOn = localStorage.getItem("isCardOn");
+
 		if (savedIsCardOn !== null) {
 			setIsCardOn(savedIsCardOn === "true");
 		}
-		if (savedSegmentedValue !== null) {
-			setSegmentedValue(savedSegmentedValue);
-		} else if (savedIsCardOn === "true") {
-			setSegmentedValue("gallery");
-		}
+		setIsCardPrefsLoaded(true);
 	}, []);
 
-	// 상태 변경 시 로컬 스토리지에 저장
+	// 카드 뷰 상태 변경 시 로컬 스토리지에 저장
 	useEffect(() => {
-		localStorage.setItem("isSeriesOn", isSeriesOn.toString());
+		if (!isCardPrefsLoaded) {
+			return;
+		}
 		localStorage.setItem("isCardOn", isCardOn.toString());
-		localStorage.setItem("segmentedValue", segmentedValue);
-	}, [
-		isSeriesOn,
-		isCardOn,
-		segmentedValue,
-	]);
+	}, [isCardOn, isCardPrefsLoaded]);
 
 	useEffect(() => {
 		setLayoutType(resolvedLibrarySettings.layoutType);
@@ -153,6 +183,29 @@ export default function LibraryClient({
 		setPostsPerRow(resolvedLibrarySettings.postsPerRow);
 		setWritePermission(resolvedLibrarySettings.writePermission);
 	}, [resolvedLibrarySettings]);
+
+	useEffect(() => {
+		if (isSeriesOn) return;
+		const pageParam = searchParams.get("page");
+		const parsedPage = pageParam ? Number(pageParam) : 1;
+		if (Number.isFinite(parsedPage) && parsedPage > 0 && parsedPage !== listPage) {
+			isSyncingFromQuery.current = true;
+			setListPage(parsedPage);
+		}
+	}, [isSeriesOn, searchParams, setListPage]);
+
+	useEffect(() => {
+		if (isSeriesOn) return;
+		if (isSyncingFromQuery.current) {
+			isSyncingFromQuery.current = false;
+			return;
+		}
+		const pageParam = searchParams.get("page");
+		const parsedPage = pageParam ? Number(pageParam) : 1;
+		if (parsedPage !== listPage) {
+			updatePageParam(listPage);
+		}
+	}, [isSeriesOn, listPage, pathname, router, searchParams]);
 
 	// Dialog가 열릴 때 현재 설정값으로 임시 상태 초기화
 	useEffect(() => {
@@ -189,26 +242,7 @@ export default function LibraryClient({
 		}
 	};
 
-	useEffect(() => {
-		setListItems(listData);
-		setPinnedItems(pinnedData);
-		setListTotalCount(listTotal);
-		setIsListReady(true);
-	}, [listData, listTotal, pinnedData]);
 
-	useEffect(() => {
-		const loadTags = async () => {
-			try {
-				const { data } = await fetchLibraryTags();
-				if (Array.isArray(data)) {
-					setTagOptions(data);
-				}
-			} catch {
-				setTagOptions([]);
-			}
-		};
-		loadTags();
-	}, []);
 
 	const filteredSeriesData = useMemo(() => {
 		const sorted = [...seriesData].sort((a, b) => {
@@ -222,116 +256,35 @@ export default function LibraryClient({
 		return sorted;
 	}, [seriesData, sortOrder]);
 
-	const totalItems = isSeriesOn
-		? filteredSeriesData.length
-		: listTotalCount + pinnedItems.length;
-	const totalPages = Math.max(1, Math.ceil(totalItems / postsPerPage));
-	const activePage = isSeriesOn ? seriesPage : listPage;
-	const currentPageSafe = Math.min(activePage, totalPages);
-	const startIndex = (currentPageSafe - 1) * postsPerPage;
-	const pagedListData = listItems;
-	const pagedSeriesData = filteredSeriesData.slice(
-		startIndex,
-		startIndex + postsPerPage
-	);
-
-	const handleTogglePin = async (id: string, nextPinned: boolean) => {
-		try {
-			await setLibraryPin(id, nextPinned);
-			if (!isSeriesOn) {
-				const { data } = await fetchLibraryList({
-					page: listPage,
-					limit: postsPerPage,
-					sort: sortOrder,
-					tag: activeTag === "전체" ? undefined : activeTag,
-					query: appliedQuery || undefined,
-				});
-				setListItems(Array.isArray(data?.items) ? data.items : []);
-				setPinnedItems(Array.isArray(data?.pinnedItems) ? data.pinnedItems : []);
-				setListTotalCount(typeof data?.total === "number" ? data.total : 0);
-			}
-			toast.success(nextPinned ? "상단에 고정되었습니다." : "고정이 해제되었습니다.");
-		} catch {
-			toast.error("고정 상태 변경에 실패했습니다.");
-		}
-	};
-
-useEffect(() => {
-	setListPage(1);
-}, [sortOrder, appliedQuery, activeTag, postsPerPage]);
-
-useEffect(() => {
-	setSeriesPage(1);
-}, [sortOrder, postsPerPage]);
-
-	useEffect(() => {
-		if (isSeriesOn) {
-			return;
-		}
-
-		const fetchPage = async () => {
-			setIsListReady(false);
-			try {
-				const { data } = await fetchLibraryList({
-					page: listPage,
-					limit: postsPerPage,
-					sort: sortOrder,
-					tag: activeTag === "전체" ? undefined : activeTag,
-					query: appliedQuery || undefined,
-				});
-				setListItems(Array.isArray(data?.items) ? data.items : []);
-				setPinnedItems(
-					Array.isArray(data?.pinnedItems) ? data.pinnedItems : []
-				);
-				setListTotalCount(typeof data?.total === "number" ? data.total : 0);
-
-				const nextTotalPages = Math.max(
-					1,
-					Math.ceil((data?.total || 0) / postsPerPage)
-				);
-				if (listPage > nextTotalPages) {
-					setListPage(nextTotalPages);
-				}
-			} catch {
-				setListItems([]);
-				setListTotalCount(0);
-			} finally {
-				setIsListReady(true);
-			}
+	const { totalPages, currentPageSafe, pagedSeriesData } = useMemo(() => {
+		const totalItems = isSeriesOn
+			? filteredSeriesData.length
+			: listTotalCount;
+		const nextTotalPages = Math.max(1, Math.ceil(totalItems / postsPerPage));
+		const activePage = isSeriesOn ? seriesPage : listPage;
+		const nextCurrentPage = Math.min(activePage, nextTotalPages);
+		const startIndex = (nextCurrentPage - 1) * postsPerPage;
+		return {
+			totalPages: nextTotalPages,
+			currentPageSafe: nextCurrentPage,
+			pagedSeriesData: filteredSeriesData.slice(
+				startIndex,
+				startIndex + postsPerPage
+			),
 		};
-
-		fetchPage();
-	}, [isSeriesOn, listPage, postsPerPage, sortOrder, activeTag, appliedQuery]);
-
-	useEffect(() => {
-		if (isSeriesOn) {
-			return;
-		}
-
-		if (currentPageSafe >= totalPages) {
-			return;
-		}
-
-		const nextPage = currentPageSafe + 1;
-		fetchLibraryList(
-			{
-				page: nextPage,
-				limit: postsPerPage,
-				sort: sortOrder,
-				tag: activeTag === "전체" ? undefined : activeTag,
-				query: appliedQuery || undefined,
-			},
-			{ useCache: true, staleTimeMs: 60_000 }
-		);
 	}, [
+		filteredSeriesData,
 		isSeriesOn,
-		currentPageSafe,
-		totalPages,
+		listPage,
+		seriesPage,
+		listTotalCount,
+		pinnedItems.length,
 		postsPerPage,
-		sortOrder,
-		activeTag,
-		appliedQuery,
 	]);
+
+	const detailQuery = useMemo(() => {
+		return currentPageSafe > 1 ? `?page=${currentPageSafe}` : "";
+	}, [currentPageSafe]);
 
 	return (
 		<>
@@ -354,6 +307,7 @@ useEffect(() => {
 							onClick={() => {
 								setIsCardOn(false);
 								setIsSeriesOn(false);
+								updateTabParam(false);
 							}}
 						>
 							<span className="w-full h-[3px] rounded-[1px] bg-[#dee2e6]" />
@@ -365,6 +319,7 @@ useEffect(() => {
 							onClick={() => {
 								setIsCardOn(true);
 								setIsSeriesOn(false);
+								updateTabParam(false);
 							}}
 						>
 							<span className="w-full h-full rounded-[1px] bg-[#dee2e6]" />
@@ -383,7 +338,7 @@ useEffect(() => {
 							onKeyDown={(e) => {
 								if (e.key === "Enter") {
 									e.preventDefault();
-									setAppliedQuery(searchQuery);
+									setAppliedQuery(searchQuery.trim());
 								}
 							}}
 							onEndIconClick={
@@ -446,6 +401,7 @@ useEffect(() => {
 							)}
 							onClick={() => {
 								setIsSeriesOn(false);
+								updateTabParam(false);
 							}}
 						>
 							글
@@ -457,6 +413,7 @@ useEffect(() => {
 							)}
 							onClick={() => {
 								setIsSeriesOn(true);
+								updateTabParam(true);
 							}}
 						>
 							시리즈
@@ -469,201 +426,31 @@ useEffect(() => {
 						)}
 					/>
 				</div>
-				{isSeriesOn && (
-					<div
-						className={cn("grid gap-2.5 mt-10", `grid-cols-${postsPerRow}`)}
-						style={{
-							gridTemplateColumns: `repeat(${postsPerRow}, minmax(0, 1fr))`,
-						}}
-					>
-						{pagedSeriesData.map((el) => (
-							<ItemCard data={el} key={el.id} />
-						))}
-					</div>
-				)}
-				{!isSeriesOn && (
-					<>
-						<div className="mt-3 flex items-center justify-between">
-							<span className="text-sm text-sub-text">
-								총 {listTotalCount + pinnedItems.length}개
-							</span>
-							<button
-								type="button"
-								onClick={() =>
-									setSortOrder((prev) =>
-										prev === "latest"
-											? "oldest"
-											: prev === "oldest"
-												? "title"
-												: "latest"
-									)
-								}
-								className="text-theme-primary font-medium inline-flex items-center gap-1 hover:opacity-70 transition-opacity cursor-pointer"
-							>
-								<ArrowUpDown size={14} className="text-theme-primary" />
-								{sortOrder === "latest"
-									? "최신순"
-									: sortOrder === "oldest"
-										? "오래된순"
-										: "제목순"}
-							</button>
-						</div>
-						<div className="mt-3 flex flex-col min-h-[520px]">
-							{pinnedItems.length > 0 && (
-								<div className="rounded-card border-card bg-card mb-4">
-									<div className="px-4 py-3 border-b border-card-bg text-sm font-medium text-main-text">
-										공지
-									</div>
-									<div className="divide-y divide-card-bg">
-										{pinnedItems.map((item) => (
-											<button
-												key={item.id}
-												type="button"
-												onClick={onClickMoveToPage(`/library/${item.id}`)}
-												className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-card-bg/50 transition-colors"
-											>
-												<div className="flex items-center gap-2 min-w-0">
-													<Pin size={14} className="text-theme-primary" />
-													<span className="text-sm text-main-text truncate">
-														{item.title}
-													</span>
-												</div>
-												<span className="text-xs text-sub-text shrink-0">
-													{dateConvert(item.createdAt)}
-												</span>
-											</button>
-										))}
-									</div>
-								</div>
-							)}
-							<div
-								className={cn(
-									"grid transition-opacity duration-300 ease-out",
-									isListReady ? "opacity-100" : "opacity-0",
-									isCardOn
-										? `gap-2.5 grid-cols-${postsPerRow}`
-										: "gap-4 grid-cols-1"
-								)}
-								style={
-									isCardOn
-										? {
-												gridTemplateColumns: `repeat(${postsPerRow}, minmax(0, 1fr))`,
-										  }
-										: undefined
-								}
-							>
-								{isCardOn && (
-									<>
-										{pagedListData.map((el) => (
-											<ItemGallery
-												data={el}
-												key={el.id}
-												onTogglePin={handleTogglePin}
-											/>
-										))}
-									</>
-								)}
-								{!isCardOn && layoutType === "listWithImage" && (
-									<>
-										{pagedListData.map((el) => (
-											<ItemListWithImage
-												data={el}
-												key={el.id}
-												onTogglePin={handleTogglePin}
-											/>
-										))}
-									</>
-								)}
-								{!isCardOn && layoutType === "list" && (
-									<>
-										{pagedListData.map((el) => (
-											<ItemList
-												data={el}
-												key={el.id}
-												onTogglePin={handleTogglePin}
-											/>
-										))}
-									</>
-								)}
-							</div>
-							{tagOptions.length > 0 && (
-								<div className="flex flex-wrap gap-2 mt-6 justify-center">
-									<button
-										type="button"
-										className={cn(
-											"px-3 py-1 text-xs font-medium rounded-full border",
-											activeTag === "전체"
-												? "bg-theme-primary/10 text-theme-primary border-theme-primary/20"
-												: "bg-card border-card text-sub-text hover:border-theme-primary/40"
-										)}
-										onClick={() => setActiveTag("전체")}
-									>
-										전체
-									</button>
-									{tagOptions.map((tag) => (
-										<button
-											key={tag}
-											type="button"
-											className={cn(
-												"px-3 py-1 text-xs font-medium rounded-full border",
-												activeTag === tag
-													? "bg-theme-primary/10 text-theme-primary border-theme-primary/20"
-													: "bg-card border-card text-sub-text hover:border-theme-primary/40"
-											)}
-											onClick={() => setActiveTag(tag)}
-										>
-											{tag}
-										</button>
-									))}
-								</div>
-							)}
-							{totalPages > 1 && (
-								<div className="flex justify-center mt-auto pt-7">
-									<Pagination>
-										<PaginationContent>
-											<PaginationItem>
-												<PaginationPrevious
-													href="#"
-													onClick={(e) => {
-														e.preventDefault();
-														setActivePage(Math.max(1, currentPageSafe - 1));
-													}}
-												/>
-											</PaginationItem>
-											{Array.from({ length: totalPages }).map((_, index) => {
-												const page = index + 1;
-												return (
-													<PaginationItem key={page}>
-														<PaginationLink
-															href="#"
-															isActive={page === currentPageSafe}
-															onClick={(e) => {
-																e.preventDefault();
-																setActivePage(page);
-															}}
-														>
-															{page}
-														</PaginationLink>
-													</PaginationItem>
-												);
-											})}
-											<PaginationItem>
-												<PaginationNext
-													href="#"
-													onClick={(e) => {
-														e.preventDefault();
-														setActivePage(
-															Math.min(totalPages, currentPageSafe + 1)
-														);
-													}}
-												/>
-											</PaginationItem>
-										</PaginationContent>
-									</Pagination>
-								</div>
-							)}
-						</div>
-					</>
+				{isSeriesOn ? (
+					<LibrarySeriesView
+						postsPerRow={postsPerRow}
+						seriesItems={pagedSeriesData}
+					/>
+				) : (
+					<LibraryListView
+						listItems={listItems}
+						pinnedItems={pinnedItems}
+						listTotalCount={listTotalCount}
+						isListReady={isListReady}
+						isCardOn={isCardOn}
+						layoutType={layoutType}
+						postsPerRow={postsPerRow}
+						tagOptions={tagOptions}
+						activeTag={activeTag}
+						setActiveTag={setActiveTag}
+						sortOrder={sortOrder}
+						setSortOrder={setSortOrder}
+						onClickMoveToPage={onClickMoveToPage}
+						detailQuery={detailQuery}
+						totalPages={totalPages}
+						currentPageSafe={currentPageSafe}
+						setActivePage={setActivePage}
+					/>
 				)}
 			</div>
 		</>

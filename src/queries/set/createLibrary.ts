@@ -1,4 +1,4 @@
-import axios from "axios";
+import { apiClient, getApiErrorMessage } from "@/queries/apiClient";
 import { getAuthHeader } from "@/queries/getAuthHeader";
 
 export interface CreateLibraryPayload {
@@ -33,8 +33,8 @@ export const createLibraryPost = async (
 		const allow = payload.visibility;
 		const slug = payload.slug?.trim() || undefined;
 		const headers = await getAuthHeader();
-		const response = await axios.post<CreateLibraryResponse>(
-			"https://api-w5buphcleq-du.a.run.app/library/create",
+		const response = await apiClient.post<CreateLibraryResponse>(
+			"/library/create",
 			{
 				title: payload.title,
 				subtitle: payload.subtitle,
@@ -53,15 +53,7 @@ export const createLibraryPost = async (
 
 		return response.data;
 	} catch (error) {
-		if (axios.isAxiosError(error)) {
-			const status = error.response?.status;
-			const apiError =
-				error.response?.data?.error ||
-				error.response?.data?.message ||
-				"게시글 생성에 실패했습니다.";
-			throw new Error(status ? `${status} ${apiError}` : apiError);
-		}
-		throw error;
+		throw new Error(getApiErrorMessage(error, "게시글 생성에 실패했습니다."));
 	}
 };
 
@@ -74,8 +66,8 @@ export const checkSlugAvailability = async (
 	slug: string
 ): Promise<boolean> => {
 	try {
-		const response = await axios.get<{ available: boolean }>(
-			`https://api-w5buphcleq-du.a.run.app/library/check-slug/${slug}`
+		const response = await apiClient.get<{ available: boolean }>(
+			`/library/check-slug/${slug}`
 		);
 
 		return response.data.available;

@@ -119,7 +119,7 @@ export function shouldShowHeadingButton(params: {
 }
 
 export function getFormattedHeadingName(level: Level): string {
-  return `Heading ${level}`
+  return `제목 ${level}`
 }
 
 export function useHeadingState(

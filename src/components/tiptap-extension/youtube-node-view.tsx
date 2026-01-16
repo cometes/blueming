@@ -95,7 +95,9 @@ export const YoutubeNodeView: React.FC<NodeViewProps> = ({ node, editor, selecte
         className={`youtube-box ${selected ? 'ProseMirror-selectednode' : ''} ${isResizing ? 'is-resizing' : ''}`}
         data-drag-handle
       >
-        {selected && <ImageBubbleMenu editor={editor} currentAlign={align} nodeType="youtube" />}
+        {selected && editor.isEditable && (
+          <ImageBubbleMenu editor={editor} currentAlign={align} nodeType="youtube" />
+        )}
         {selected && (
           <>
             <div

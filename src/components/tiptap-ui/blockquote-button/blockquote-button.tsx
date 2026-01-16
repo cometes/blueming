@@ -112,7 +112,7 @@ export function useBlockquoteState(
 	}, [editor, isDisabled]);
 
 	const shortcutKey = "Ctrl-Shift-b";
-	const label = "Blockquote";
+	const label = "인용문";
 
 	return {
 		nodeInSchema,
@@ -179,7 +179,7 @@ export const BlockquoteButton = React.forwardRef<
 				data-disabled={isDisabled}
 				role="button"
 				tabIndex={-1}
-				aria-label="blockquote"
+				aria-label={label}
 				aria-pressed={isActive}
 				tooltip={label}
 				shortcutKeys={shortcutKey}
