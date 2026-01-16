@@ -12,6 +12,7 @@ interface LibraryItem {
 	tags?: string[];
 	thumbnail?: string;
 	pinned?: boolean;
+	allow?: "all" | "password" | "secret";
 }
 
 interface LibrarySeriesViewProps {

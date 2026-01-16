@@ -15,6 +15,7 @@ import CreateModal, { CreateMetaValue } from "@/components/modal/createModal";
 import { createLibraryPost } from "@/queries/set/createLibrary";
 import { updateLibraryPost } from "@/queries/set/updateLibrary";
 import { apiClient, getApiErrorMessage } from "@/queries/apiClient";
+import { getAuthHeader } from "@/queries/getAuthHeader";
 import { toast } from "sonner";
 import { useAdmin } from "@/hooks/auth/UseAdmin";
 import { useAuthStore } from "@/store/auth/store";
@@ -183,6 +184,33 @@ export default function LibararyNewClient({
 			setIsVerifyingPassword(false);
 		}
 	};
+
+	React.useEffect(() => {
+		if (!needsPasswordForEdit || !initialData?.id) return;
+		let isMounted = true;
+
+		const fetchWithAuth = async () => {
+			const headers = await getAuthHeader();
+			if (!headers.Authorization) return;
+			try {
+				const detailId = initialData?.slug || initialData?.id;
+				const response = await apiClient.get(`/library/detail/${detailId}`, {
+					headers,
+				});
+				if (isMounted && response.data?.content) {
+					applyDetailData(response.data);
+				}
+			} catch {
+				// Ignore: user isn't author or no auth
+			}
+		};
+
+		fetchWithAuth();
+
+		return () => {
+			isMounted = false;
+		};
+	}, [applyDetailData, initialData?.id, initialData?.slug, needsPasswordForEdit]);
 
 	if (mode === "edit" && !isAuthLoading && !isAdmin) {
 		return null;

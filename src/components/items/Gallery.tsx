@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { Lock } from "lucide-react";
 
 interface ItemGalleryProps {
 	data: {
@@ -14,6 +15,7 @@ interface ItemGalleryProps {
 		tags?: string[];
 		thumbnail?: string;
 		pinned?: boolean;
+		allow?: "all" | "password" | "secret";
 	};
 	detailQuery?: string;
 }
@@ -50,7 +52,10 @@ export default function ItemGallery({
 				style={{ transition: "all 0.3s ease-in-out" }}
 			>
 				<div className="GalleryTitleBox flex justify-between items-center relative z-20">
-					<div className="min-w-0">
+					<div className="min-w-0 flex items-center gap-2">
+						{data.allow === "password" && (
+							<Lock size={14} className="text-white shrink-0" />
+						)}
 						<p className="GalleryTitle text-lg font-medium break-keep overflow-hidden text-ellipsis text-white">
 							{data.title}
 						</p>

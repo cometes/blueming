@@ -27,6 +27,7 @@ interface LibraryItem {
 	tags?: string[];
 	thumbnail?: string;
 	pinned?: boolean;
+	allow?: "all" | "password" | "secret";
 }
 
 interface LibraryClientProps {
@@ -368,7 +369,7 @@ export default function LibraryClient({
 							setTempWritePermission={setTempWritePermission}
 							onSave={handleSaveSettings}
 							trigger={
-								<Button className="bg-card border-card text-main-text rounded-full w-10 h-10">
+								<Button className="bg-card border-card text-main-text rounded-full w-10 h-10 hover:border-transparent">
 									<Settings />
 								</Button>
 							}

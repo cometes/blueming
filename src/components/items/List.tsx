@@ -2,7 +2,7 @@ import { useMoveToPage } from "@/hooks/useMoveToPage";
 import { dateConvert } from "@/lib/date";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Lock } from "lucide-react";
 
 interface ItemListProps {
 	data: {
@@ -15,6 +15,7 @@ interface ItemListProps {
 		tags?: string[];
 		thumbnail?: string;
 		pinned?: boolean;
+		allow?: "all" | "password" | "secret";
 	};
 	detailQuery?: string;
 }
@@ -34,28 +35,31 @@ export default function ItemList({ data, detailQuery = "" }: ItemListProps) {
 		>
 			{/* 왼쪽 컨텐츠 영역 */}
 			<div className="w-full">
-				<div>
-					{/* 제목과 날짜 */}
-					<div>
-						<div className="flex items-center gap-2">
-							{data.pinned && (
-								<Badge
-									variant="secondary"
-									className="px-2 text-[10px] rounded-full bg-theme-primary/10 text-theme-primary border-theme-primary/20"
-								>
-									고정
-								</Badge>
-							)}
-							<h3
-								className={cn(
-									"text-lg font-semibold text-main-text leading-tight",
-									"line-clamp-2 group-hover:text-theme-primary"
-								)}
-								style={{ transition: "color 0.2s ease-out" }}
-							>
-								{data.title}
-							</h3>
-						</div>
+						<div>
+							{/* 제목과 날짜 */}
+							<div>
+								<div className="flex items-center gap-2">
+									{data.pinned && (
+										<Badge
+											variant="secondary"
+											className="px-2 text-[10px] rounded-full bg-theme-primary/10 text-theme-primary border-theme-primary/20"
+										>
+											고정
+										</Badge>
+									)}
+									{data.allow === "password" && (
+										<Lock size={14} className="text-sub-text shrink-0" />
+									)}
+									<h3
+										className={cn(
+											"text-lg font-semibold text-main-text leading-tight",
+											"line-clamp-2 group-hover:text-theme-primary"
+										)}
+										style={{ transition: "color 0.2s ease-out" }}
+									>
+										{data.title}
+									</h3>
+								</div>
 						{/* 부제목 */}
 						{data.subtitle && (
 							<p className="text-sub-text leading-relaxed line-clamp-2 text-sm">
