@@ -21,7 +21,7 @@ interface ItemListProps {
 
 export default function ItemList({ data, detailQuery = "" }: ItemListProps) {
 	const { onClickMoveToPage } = useMoveToPage();
-	const detailPath = `/library/${data.id}${detailQuery}`;
+	const detailPath = `/library/${data.slug || data.id}${detailQuery}`;
 
 	return (
 		<article

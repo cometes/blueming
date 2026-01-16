@@ -88,7 +88,7 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 	return (
 		<div className="w-full max-w-3xl mx-auto mt-20 mb-20">
 			<Button
-				onClick={onClickMoveToPage("/library/")}
+				onClick={onClickMoveToPage("/library?tab=series")}
 				variant="outline"
 				className="mb-10"
 			>
@@ -206,7 +206,9 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 							{/* Post Image */}
 							<div
 								className="h-[120px] aspect-video bg-card border border-card-border rounded-md cursor-pointer overflow-hidden relative"
-								onClick={onClickMoveToPage(`/library/${el.id}`)}
+								onClick={onClickMoveToPage(
+									`/library/${el.slug || el.id}`
+								)}
 							>
 								{el.thumbnail && !failedImages[el.id] ? (
 									<Image
@@ -226,7 +228,9 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 								{/* Post Title */}
 								<h2
 									className="flex cursor-pointer"
-									onClick={onClickMoveToPage(`/library/${el.id}`)}
+									onClick={onClickMoveToPage(
+										`/library/${el.slug || el.id}`
+									)}
 								>
 									<span className="block text-sub-text italic text-2xl font-semibold">
 										{isSorted ? sortedData.length - index : index + 1}.

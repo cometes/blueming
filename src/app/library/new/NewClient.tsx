@@ -14,6 +14,7 @@ import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
 import CreateModal, { CreateMetaValue } from "@/components/modal/createModal";
 import { createLibraryPost } from "@/queries/set/createLibrary";
 import { updateLibraryPost } from "@/queries/set/updateLibrary";
+import { apiClient, getApiErrorMessage } from "@/queries/apiClient";
 import { toast } from "sonner";
 import { useAdmin } from "@/hooks/auth/UseAdmin";
 import { useAuthStore } from "@/store/auth/store";
@@ -63,6 +64,10 @@ export default function LibararyNewClient({
 	const [subtitle, setSubtitle] = React.useState("");
 	const [metaOpen, setMetaOpen] = React.useState(false);
 	const [isSubmitting, setIsSubmitting] = React.useState(false);
+	const [contentOverride, setContentOverride] = React.useState<string | null>(null);
+	const [passwordInput, setPasswordInput] = React.useState("");
+	const [passwordError, setPasswordError] = React.useState("");
+	const [isVerifyingPassword, setIsVerifyingPassword] = React.useState(false);
 	const [metaValue, setMetaValue] = React.useState<CreateMetaValue>({
 		tags: [],
 		series: "",
@@ -75,13 +80,14 @@ export default function LibararyNewClient({
 	});
 
 	const initialContent = React.useMemo(() => {
-		if (!initialData?.content) return "";
+		const raw = contentOverride ?? initialData?.content;
+		if (!raw) return "";
 		try {
-			return JSON.parse(initialData.content);
+			return JSON.parse(raw);
 		} catch {
 			return "";
 		}
-	}, [initialData?.content]);
+	}, [contentOverride, initialData?.content]);
 
 	const editor = useEditor({
 		extensions: extensions,
@@ -93,6 +99,12 @@ export default function LibararyNewClient({
 			},
 		},
 	});
+
+	React.useEffect(() => {
+		if (!editor) return;
+		if (!initialContent) return;
+		editor.commands.setContent(initialContent);
+	}, [editor, initialContent]);
 
 	React.useEffect(() => {
 		if (mode !== "edit" || isAuthLoading) return;
@@ -121,6 +133,57 @@ export default function LibararyNewClient({
 		});
 	}, [initialData]);
 
+	const needsPasswordForEdit =
+		mode === "edit" &&
+		initialData?.allow === "password" &&
+		!initialData?.content &&
+		!contentOverride;
+
+	const applyDetailData = (data: LibraryNewClientProps["initialData"]) => {
+		if (!data) return;
+		setTitle(data.title || "");
+		setSubtitle(data.subtitle || "");
+		setMetaValue({
+			tags: data.tags ?? [],
+			series: data.series ?? "",
+			slug: data.slug ?? "",
+			summary: data.summary ?? "",
+			visibility: data.allow ?? "all",
+			password: data.allow === "password" ? data.password ?? "" : "",
+			thumbnail: data.thumbnail ?? "",
+			pinned: data.pinned ?? false,
+		});
+		if (data.content) {
+			setContentOverride(data.content);
+		}
+	};
+
+	const handleVerifyPassword = async () => {
+		if (!initialData?.id || isVerifyingPassword) return;
+		if (!passwordInput.trim()) {
+			setPasswordError("비밀번호를 입력해주세요.");
+			return;
+		}
+
+		setIsVerifyingPassword(true);
+		setPasswordError("");
+		try {
+			const detailId = initialData?.slug || initialData?.id;
+			const response = await apiClient.get(`/library/detail/${detailId}`, {
+				headers: { "x-post-password": passwordInput.trim() },
+			});
+			applyDetailData(response.data);
+			setPasswordInput("");
+			setPasswordError("");
+		} catch (error) {
+			setPasswordError(
+				getApiErrorMessage(error, "비밀번호가 올바르지 않습니다.")
+			);
+		} finally {
+			setIsVerifyingPassword(false);
+		}
+	};
+
 	if (mode === "edit" && !isAuthLoading && !isAdmin) {
 		return null;
 	}
@@ -129,12 +192,12 @@ export default function LibararyNewClient({
 		const plainText = editor?.getText().trim() ?? "";
 
 		if (!title.trim()) {
-			alert("제목을 입력해 주세요.");
+			toast.error("제목을 입력해 주세요.");
 			return;
 		}
 
 		if (!plainText) {
-			alert("내용을 입력해 주세요.");
+			toast.error("내용을 입력해 주세요.");
 			return;
 		}
 
@@ -177,10 +240,11 @@ export default function LibararyNewClient({
 					toast.error("수정할 게시글을 찾지 못했습니다.");
 					return;
 				}
-				await updateLibraryPost(initialData.id, payload);
+				const response = await updateLibraryPost(initialData.id, payload);
 				toast.success("게시글이 수정되었습니다.");
 				setMetaOpen(false);
-				router.push(`/library/${initialData.id}`);
+				const detailId = response.slug ?? initialData.id;
+				router.push(`/library/${detailId}`);
 				router.refresh();
 				return;
 			}
@@ -188,7 +252,8 @@ export default function LibararyNewClient({
 			const response = await createLibraryPost(payload);
 			toast.success("게시글이 저장되었습니다.");
 			setMetaOpen(false);
-			router.push(`/library/${response.postId}`);
+			const detailId = response.slug ?? response.postId;
+			router.push(`/library/${detailId}`);
 			router.refresh();
 		} catch (error) {
 			const message =
@@ -205,7 +270,7 @@ export default function LibararyNewClient({
 				{/* Header */}
 				<header className="Header w-full h-[60px] border-b border-card-bg backdrop-blur-card fixed top-0 left-0 z-50">
 					<div className="HeaderContainer px-20 h-full flex justify-between items-center">
-						<Button onClick={onClickMoveToPage("/library/")}>뒤로가기</Button>
+						<Button variant="ghost" onClick={onClickMoveToPage("/library/")}>뒤로가기</Button>
 						{/* Tiptap Toolbar */}
 						<TiptapToolbar editor={editor} />
 						<Button onClick={handleOpenMeta}>
@@ -261,6 +326,34 @@ export default function LibararyNewClient({
 
 					<Separator className="mt-7" />
 					<div className="EditorBox pt-12 relative flex flex-col grow min-h-[400px]">
+						{needsPasswordForEdit && (
+							<div className="mb-6 p-4 rounded-card border-card bg-card-bg">
+								<p className="text-main-text text-sm">
+									보호글입니다. 비밀번호를 입력하면 내용을 불러옵니다.
+								</p>
+								<div className="mt-3 flex items-center gap-2">
+									<Input
+										type="password"
+										value={passwordInput}
+										onChange={(e) => setPasswordInput(e.target.value)}
+										placeholder="비밀번호를 입력해주세요."
+										className="flex-1"
+									/>
+									<Button
+										type="button"
+										onClick={handleVerifyPassword}
+										disabled={isVerifyingPassword}
+									>
+										확인
+									</Button>
+								</div>
+								{passwordError && (
+									<p className="mt-2 text-xs text-red-500">
+										{passwordError}
+									</p>
+								)}
+							</div>
+						)}
 						{/* Editor Content */}
 						<div className="mt-4 flex-1">
 							<EditorContent

@@ -22,6 +22,7 @@ export interface TextBackgroundColorButtonProps extends ButtonProps {
 }
 
 export const defaultBackgroundColors = [
+	"rgba(0, 0, 0, 0)",
 	"#FFFFFF", // White
 	"#F5F5F5", // Light Gray
 	"#E5E5E5", // Gray
@@ -103,7 +104,7 @@ export function TextBackgroundColorButton({
 	const { general } = useSettings();
 	const mainFontColor = general?.design?.font?.mainFontColor || "#000000";
 	const [isOpen, setIsOpen] = React.useState(false);
-	const [pickerColor, setPickerColor] = React.useState("#FFFF00");
+	const [pickerColor, setPickerColor] = React.useState("");
 	const popupRef = React.useRef<HTMLDivElement>(null);
 	const buttonRef = React.useRef<HTMLButtonElement>(null);
 	const previousIsOpenRef = React.useRef(false);
@@ -132,14 +133,13 @@ export function TextBackgroundColorButton({
 			if (currentColor) {
 				setPickerColor(currentColor);
 			} else {
-				setPickerColor("#FFFF00");
+				setPickerColor("");
 			}
 		}
 	}, [isOpen, currentColor]);
 
 	// 팝업이 닫힐 때 색상 적용
 	React.useEffect(() => {
-		// 팝업이 열려있다가 닫힐 때 색상 적용
 		if (previousIsOpenRef.current && !isOpen) {
 			handleApplyColorRef.current();
 		}
@@ -208,7 +208,8 @@ export function TextBackgroundColorButton({
 
 	const handleClearColor = React.useCallback(() => {
 		if (!editor || isDisabled) return;
-		unsetBackgroundColor(editor);
+		setPickerColor("");
+		editor.chain().focus().unsetHighlight().run();
 		setIsOpen(false);
 	}, [editor, isDisabled]);
 
@@ -304,7 +305,7 @@ export function TextBackgroundColorButton({
 							presetColors={defaultBackgroundColors}
 						/>
 					</div>
-					<div className="mt-2 flex gap-2">
+					{/* <div className="mt-2 flex gap-2">
 						{currentColor && (
 							<Button
 								type="button"
@@ -323,7 +324,7 @@ export function TextBackgroundColorButton({
 						>
 							적용
 						</Button>
-					</div>
+					</div> */}
 				</div>
 			)}
 		</div>

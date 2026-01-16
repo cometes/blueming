@@ -46,6 +46,7 @@
 	--card-border-style: solid;
 	--card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 	--card-translate-y: -2px;
+	--card-blur: 4px;
 }
 
 /* 글로벌 스타일 */
@@ -184,6 +185,7 @@ body {
 	--size-widget-border: var(--widget-border-width);
 	--size-card-border: var(--card-border-width);
 	--size-widget-blur: var(--widget-blur);
+	--size-card-blur: var(--card-blur);
 	--size-card-translate-y: var(--card-translate-y);
 
 	/* 그림자 */
@@ -297,7 +299,6 @@ body {
 		transform: translate3d(0, -50%, 0);
 	}
 }
-
 
 @layer components {
 	.widget-wrapper {
@@ -542,6 +543,8 @@ body {
 .tiptap.ProseMirror {
 	font-size: 16px;
 	line-height: 1.6;
+	--tt-cursor-color: var(--color-theme-primary);
+	--tt-selected-node-outline: var(--color-theme-primary);
 }
 
 .rich-text-viewer img {
@@ -571,10 +574,132 @@ body {
 
 /* Tiptap Toolbar 버튼 아이콘 색상 */
 .tiptap-button {
+	cursor: pointer;
 	--tt-button-default-icon-color: var(--color-main) !important;
-	--tt-button-hover-icon-color: var(--color-main) !important;
-	--tt-button-active-icon-color: var(--color-main) !important;
-	--tt-button-hover-bg-color: var(--color-sub) !important;
+	--tt-button-hover-icon-color: var(--color-theme-primary) !important;
+	--tt-button-active-icon-color: var(--color-theme-primary) !important;
+	--tt-button-hover-bg-color: transparent !important;
+
+	--tt-button-default-bg-color: transparent;
+	--tt-button-hover-bg-color: transparent;
+	--tt-button-active-bg-color: transparent;
+	--tt-button-active-bg-color-emphasized: transparent;
+	--tt-button-active-bg-color-subdued: transparent;
+	--tt-button-active-hover-bg-color: transparent;
+	--tt-button-active-hover-bg-color-emphasized: transparent;
+	--tt-button-active-hover-bg-color-subdued: transparent;
+	--tt-button-disabled-bg-color: transparent;
+	background-color: transparent !important;
+	--tt-button-disabled-icon-color: #333 !important;
+}
+
+.tiptap-button:hover {
+	background-color: color-mix(
+		in srgb,
+		var(--color-card-bg) 40%,
+		transparent
+	) !important;
+}
+
+.tiptap-button:active,
+.tiptap-button[data-active-state="on"] {
+	background-color: color-mix(
+		in srgb,
+		var(--color-card-bg) 40%,
+		transparent
+	) !important;
+}
+
+.tiptap-dropdown-menu {
+	--tt-popover-border: var(--card-border-width) var(--card-border-style)
+		var(--card-border-color);
+	--tt-popover-bg-color: var(--color-card-bg) !important;
+	--tt-popover-text-color: var(--color-main-text) !important;
+	--tt-popover-label: var(--color-main-text) !important;
+	backdrop-filter: blur(var(--card-blur)) !important;
+
+	button {
+		color: var(--color-main-text);
+	}
+
+	button:hover {
+		color: var(--color-theme-primary);
+	}
+
+	button[aria-pressed="true"] .tiptap-button-text {
+		color: var(--color-theme-primary);
+	}
+}
+
+.tiptap-popover {
+	--tt-popover-border: var(--card-border-width) var(--card-border-style)
+		var(--card-border-color);
+	--tt-popover-bg-color: var(--color-card-bg) !important;
+	--tt-popover-text-color: var(--color-main-text) !important;
+	--tt-popover-label: var(--color-main-text) !important;
+	backdrop-filter: blur(var(--card-blur)) !important;
+
+	button {
+		color: var(--color-main-text);
+	}
+
+	button:hover {
+		color: var(--color-theme-primary);
+	}
+
+	button[aria-pressed="true"] .tiptap-button-text {
+		color: var(--color-theme-primary);
+	}
+}
+
+.sketch-picker input {
+	border: 1px solid var(--card-border-color) !important;
+	border-radius: 6px !important;
+	box-shadow: none !important;
+	background-color: var(--color-card-bg) !important;
+	color: var(--color-main-text) !important;
+}
+
+.sketch-picker {
+	background: var(--color-card-bg) !important;
+	border: 1px solid var(--card-border-color) !important;
+	border-radius: var(--card-border-radius) !important;
+	box-shadow: none !important;
+	backdrop-filter: var(--size-card-blur) !important;
+}
+
+.sketch-picker input:focus {
+	border-color: var(--color-theme-primary) !important;
+	outline: none !important;
+	box-shadow: 0 0 0 1px var(--color-theme-primary) !important;
+}
+
+.sketch-picker label {
+	color: #666 !important;
+}
+
+.sketch-picker .flexbox-fix {
+	border-top: none !important;
+}
+
+.tiptap-image-upload-dragger {
+	background: var(--color-card-bg) !important;
+	border: 1px solid var(--card-border-color) !important;
+	border-radius: var(--card-border-radius) !important;
+	box-shadow: none !important;
+	backdrop-filter: var(--size-card-blur) !important;
+}
+
+.tiptap-image-upload .tiptap-image-upload-dropzone-rect-primary {
+	color: var(--card-border-color) !important;
+}
+
+.tiptap-image-upload-text {
+	color: var(--color-sub-text) !important;
+}
+
+.tiptap-image-upload-icon-container {
+	background-color: var(--color-theme-primary) !important;
 }
 
 /* ScrollArea thumb 색상을 위젯 보더 색으로 */
@@ -585,30 +710,30 @@ body {
 @theme inline {
 	--animate-marquee: marquee var(--duration) infinite linear;
 	--animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
-  @keyframes marquee {
-  from {
-    transform: translateX(0);
+	@keyframes marquee {
+		from {
+			transform: translateX(0);
 		}
-  to {
-    transform: translateX(calc(-100% - var(--gap)));
+		to {
+			transform: translateX(calc(-100% - var(--gap)));
 		}
 	}
-  @keyframes marquee-vertical {
-  from {
-    transform: translateY(0);
+	@keyframes marquee-vertical {
+		from {
+			transform: translateY(0);
 		}
-  to {
-    transform: translateY(calc(-100% - var(--gap)));
+		to {
+			transform: translateY(calc(-100% - var(--gap)));
 		}
 	}
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+	* {
+		@apply border-border outline-ring/50;
 	}
-  body {
-    @apply bg-background text-foreground;
+	body {
+		@apply bg-background text-foreground;
 	}
 }
 
@@ -648,9 +773,9 @@ body {
 .cloud:nth-child(2) {
 	z-index: 0;
 	background: #fff;
-	box-shadow: -2.1875em 0.6875em 0 -0.6875em #fff, 2.0625em 0.9375em 0 -0.9375em #fff,
-		0 0 0 0.375em #fff, -2.1875em 0.6875em 0 -0.3125em #fff,
-		2.0625em 0.9375em 0 -0.5625em #fff;
+	box-shadow: -2.1875em 0.6875em 0 -0.6875em #fff,
+		2.0625em 0.9375em 0 -0.9375em #fff, 0 0 0 0.375em #fff,
+		-2.1875em 0.6875em 0 -0.3125em #fff, 2.0625em 0.9375em 0 -0.5625em #fff;
 	opacity: 0.3;
 	transform: scale(0.5) translate(6em, -3em);
 	animation: cloud 4s linear infinite;

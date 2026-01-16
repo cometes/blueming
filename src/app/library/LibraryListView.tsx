@@ -106,7 +106,7 @@ export default function LibraryListView({
 									key={item.id}
 									type="button"
 									onClick={onClickMoveToPage(
-										`/library/${item.id}${detailQuery}`
+									`/library/${item.slug || item.id}${detailQuery}`
 									)}
 									className="w-full p-2.5 flex items-center justify-between text-left hover:bg-card-bg/50 cursor-pointer"
 									style={{

@@ -26,7 +26,7 @@ export const fetchLibraryTagsServer = async () => {
 
 export const fetchLibraryDetailServer = async (id: string | string[]) => {
 	const response = await fetch(`${API_BASE}/library/detail/${id}`, {
-		next: { revalidate: defaultRevalidateSeconds },
+		cache: "no-store",
 	});
 	if (!response.ok) {
 		throw new Error("Failed to fetch detail");

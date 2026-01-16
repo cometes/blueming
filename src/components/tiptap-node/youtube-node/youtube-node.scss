@@ -76,7 +76,7 @@
           transform: translateY(-50%);
           width: 4px;
           height: 40px;
-          background-color: var(--tt-brand-color-500);
+          background-color: var(--tt-selected-node-outline, var(--color-theme-primary));
           border-radius: 2px;
         }
 
@@ -107,7 +107,7 @@
   }
 
   &.ProseMirror-focused .youtube-wrapper .youtube-box.ProseMirror-selectednode img.youtube-thumbnail-image {
-    outline-color: var(--tt-brand-color-500);
+    outline-color: var(--tt-selected-node-outline, var(--color-theme-primary));
   }
 
   // 실제 렌더링된 HTML에서 iframe으로 표시
