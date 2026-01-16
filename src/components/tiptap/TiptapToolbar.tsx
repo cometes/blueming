@@ -100,7 +100,7 @@ const MainToolbarContent = ({
 
 			<ToolbarGroup>
 				<ImageUploadButton text="이미지" editor={editor} />
-				<YoutubeUploadButton text="유튜브" editor={editor} />
+				<YoutubeUploadButton editor={editor} />
 			</ToolbarGroup>
 
 			<Spacer />

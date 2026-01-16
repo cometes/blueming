@@ -1,16 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import GalleryGrid from "./components/GalleryGrid";
 import { dummyGalleryImages, type GalleryImage } from "./dummyData";
 
 export default function GalleryClient() {
-	const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(
-		null
-	);
-
 	const handleImageClick = (image: GalleryImage) => {
-		setSelectedImage(image);
 		// 추후 모달이나 상세 페이지로 이동 가능
 		console.log("Selected image:", image);
 	};

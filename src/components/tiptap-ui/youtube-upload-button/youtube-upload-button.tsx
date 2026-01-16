@@ -195,7 +195,6 @@ const YoutubeMain: React.FC<YoutubeMainProps> = ({
 	url,
 	setUrl,
 	setYoutube,
-	isActive,
 	onStartEditing,
 	onStopEditing,
 }) => {

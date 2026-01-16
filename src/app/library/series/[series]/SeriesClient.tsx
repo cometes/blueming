@@ -5,8 +5,6 @@ import { ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMoveToPage } from "@/hooks/useMoveToPage";
 import { dateConvert } from "@/lib/date";
-import { cn } from "@/lib/utils";
-import Fallback from "@/components/common/Fallback";
 import AdminOnly from "@/components/common/AdminOnly";
 import {
 	Tooltip,
@@ -18,6 +16,7 @@ import Image from "next/image";
 
 interface SeriesPost {
 	id: string;
+	slug?: string;
 	title: string;
 	subtitle?: string;
 	thumbnail?: string;
@@ -35,39 +34,34 @@ interface SeriesClientProps {
 	seriesListData: SeriesData | null;
 }
 
-type EditableSeriesPost = SeriesPost & {
-	included: boolean;
-};
-
 export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 	const [isSorted, setIsSorted] = useState(false);
 	const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 	const [isEditOpen, setIsEditOpen] = useState(false);
 	const { onClickMoveToPage } = useMoveToPage();
 
+	const [seriesMeta, setSeriesMeta] = useState(() => {
+		if (!seriesListData) {
+			return {
+				name: "",
+				thumbnail: "",
+				posts: [],
+			};
+		}
+		return {
+			name: seriesListData.series,
+			thumbnail: seriesListData.lastUpdatedThumbnail ?? "",
+			posts: seriesListData.data.map((post) => ({
+				...post,
+				included: true,
+			})),
+		};
+	});
+	const [draftMeta, setDraftMeta] = useState(seriesMeta);
+
 	const markFailed = (key: string) => {
 		setFailedImages((prev) => (prev[key] ? prev : { ...prev, [key]: true }));
 	};
-
-	if (!seriesListData) {
-		return (
-			<div className="w-full max-w-3xl mx-auto mt-20 mb-10">
-				<p className="text-center text-sub-text">
-					시리즈 데이터를 불러올 수 없습니다.
-				</p>
-			</div>
-		);
-	}
-
-	const [seriesMeta, setSeriesMeta] = useState(() => ({
-		name: seriesListData.series,
-		thumbnail: seriesListData.lastUpdatedThumbnail ?? "",
-		posts: seriesListData.data.map((post) => ({
-			...post,
-			included: true,
-		})),
-	}));
-	const [draftMeta, setDraftMeta] = useState(seriesMeta);
 
 	useEffect(() => {
 		if (!isEditOpen) return;
@@ -85,11 +79,21 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 		return isSorted ? [...base].reverse() : base;
 	}, [isSorted, seriesMeta.posts]);
 
+	if (!seriesListData) {
+		return (
+			<div className="w-full max-w-3xl mx-auto mt-20 mb-10">
+				<p className="text-center text-sub-text">
+					시리즈 데이터를 불러올 수 없습니다.
+				</p>
+			</div>
+		);
+	}
+
 	return (
 		<div className="w-full max-w-3xl mx-auto mt-20 mb-20">
 			<Button
 				onClick={onClickMoveToPage("/library?tab=series")}
-				variant="outline"
+				variant="default"
 				className="mb-10"
 			>
 				목록으로
@@ -114,6 +118,7 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 					<div className="flex flex-col justify-between h-full px-8 py-6">
 						<div>
 							<h1 className="text-3xl font-semibold">{seriesMeta.name}</h1>
+							<p className="mt-1">{seriesMeta.posts.length}개의 포스트</p>
 							<span className="text-sm text-sub-text mt-3 block">
 								마지막 업데이트{" "}
 								{seriesListData.lastUpdatedDate
@@ -121,8 +126,6 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 									: "-"}
 							</span>
 						</div>
-
-						<p className="">{seriesMeta.posts.length}개의 포스트</p>
 					</div>
 				</div>
 			</div>
@@ -206,9 +209,7 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 							{/* Post Image */}
 							<div
 								className="h-[120px] aspect-video bg-card border border-card-border rounded-md cursor-pointer overflow-hidden relative"
-								onClick={onClickMoveToPage(
-									`/library/${el.slug || el.id}`
-								)}
+								onClick={onClickMoveToPage(`/library/${el.slug || el.id}`)}
 							>
 								{el.thumbnail && !failedImages[el.id] ? (
 									<Image
@@ -218,9 +219,7 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 										className="object-cover transition-transform duration-200 hover:scale-110"
 										onError={() => markFailed(el.id)}
 									/>
-								) : (
-									null
-								)}
+								) : null}
 							</div>
 
 							{/* Post Info */}
@@ -228,9 +227,7 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 								{/* Post Title */}
 								<h2
 									className="flex cursor-pointer"
-									onClick={onClickMoveToPage(
-										`/library/${el.slug || el.id}`
-									)}
+									onClick={onClickMoveToPage(`/library/${el.slug || el.id}`)}
 								>
 									<span className="block text-sub-text italic text-2xl font-semibold">
 										{isSorted ? sortedData.length - index : index + 1}.
