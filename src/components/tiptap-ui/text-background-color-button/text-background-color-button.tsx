@@ -206,12 +206,6 @@ export function TextBackgroundColorButton({
 		[editor, isDisabled]
 	);
 
-	const handleClearColor = React.useCallback(() => {
-		if (!editor || isDisabled) return;
-		setPickerColor("");
-		editor.chain().focus().unsetHighlight().run();
-		setIsOpen(false);
-	}, [editor, isDisabled]);
 
 	const handleColorChange = React.useCallback((color: ColorResult) => {
 		// 드래그 중에는 미리보기만 (색상 적용하지 않음)

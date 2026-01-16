@@ -180,11 +180,6 @@ const renderNode = (node: RichTextNode | null | undefined): string => {
 	}
 };
 
-type TiptapNode = {
-	type?: string;
-	content?: TiptapNode[];
-};
-
 const isTiptapDoc = (content: unknown) => {
 	if (!content || typeof content !== "object") return false;
 	const doc = content as { type?: unknown; content?: unknown };

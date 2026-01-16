@@ -436,7 +436,7 @@ export default function WidgetMenu() {
 		<>
 			<aside
 				className={cn(
-					"menu-desktop min-w-[200px] h-dvh flex flex-col items-center justify-center shrink-0 sticky top-0",
+					"menu-desktop min-w-[200px] h-[calc(100vh-48px)] flex flex-col items-center justify-center shrink-0 sticky top-0",
 					design?.bgType === "없음" && "bg-transparent",
 					"bg-center"
 				)}
@@ -469,7 +469,7 @@ export default function WidgetMenu() {
 			</aside>
 
 			<aside
-				className="menu-iconbar h-dvh flex flex-col items-center shrink-0 sticky top-0 overflow-visible"
+				className="menu-iconbar h-[calc(100vh-48px)] flex flex-col items-center shrink-0 sticky top-0 overflow-visible"
 				style={iconBarStyle}
 			>
 				<nav className="w-full h-full flex flex-col items-center py-6 overflow-visible gap-4 justify-center">
@@ -550,9 +550,9 @@ export default function WidgetMenu() {
 										})}
 									</ul>
 								) : null}
-						</li>
-					))}
-			</ul>
+							</li>
+						))}
+					</ul>
 
 					<div className="flex flex-col items-center gap-3">
 						<button

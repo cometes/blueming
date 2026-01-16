@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import type { GalleryImage } from "../dummyData";
 
 interface GalleryItemProps {
