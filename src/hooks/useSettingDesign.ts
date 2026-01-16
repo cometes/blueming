@@ -109,6 +109,14 @@ export const useSettingDesign = () => {
   const [currentDesignSetting, setCurrentDesignSetting] = useState(() =>
     mergeWithDefaults(defaultValues, design)
   );
+  const baselineDesign = useMemo(
+    () => mergeWithDefaults(defaultValues, design),
+    [design]
+  );
+  const isDirty = useMemo(
+    () => !_.isEqual(currentDesignSetting, baselineDesign),
+    [currentDesignSetting, baselineDesign]
+  );
 
   // Still update when design changes, but it should already be properly initialized
   useEffect(() => {
@@ -170,9 +178,9 @@ export const useSettingDesign = () => {
       });
       channel.close();
 
-      toast.success("성공적으로 설정을 저장했습니다.");
+      toast.success("저장되었습니다.");
     } catch {
-      toast.error("설정을 저장하지 못했습니다.");
+      toast.error("저장에 실패했습니다.");
     }
   };
 
@@ -193,10 +201,10 @@ export const useSettingDesign = () => {
       });
       channel.close();
 
-      toast.success("성공적으로 설정을 초기화했습니다.");
+      toast.success("초기화되었습니다.");
       setOpenReset(false);
     } catch {
-      toast.error("설정을 초기화하지 못했습니다.");
+      toast.error("초기화에 실패했습니다.");
       setOpenReset(false);
     }
   };
@@ -218,6 +226,7 @@ export const useSettingDesign = () => {
     card: currentDesignSetting.card,
     font: currentDesignSetting.font,
     widget: currentDesignSetting.widget,
+    isDirty,
     onClickSubmit,
     openReset,
     setOpenReset,

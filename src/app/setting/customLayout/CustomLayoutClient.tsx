@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +26,7 @@ import { useCollisionDetection, LayoutItem } from "@/components/setting/customLa
 import { GridPosition } from "@/components/setting/customLayout/useGridSnap";
 import { setCustomLayout } from "@/queries/set/setCustomLayout";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useSettingStatus } from "@/hooks/useSettingStatus";
 
 interface Widget {
 	id: string;
@@ -60,6 +61,11 @@ const widgetOptions = [
 	{ label: "디데이", value: "디데이" },
 	{ label: "최신글", value: "최신글" },
 	{ label: "뮤직플레이어", value: "뮤직플레이어" },
+	{ label: "날씨&시계", value: "날씨&시계" },
+	{ label: "이미지 위젯 1", value: "이미지 위젯 1" },
+	{ label: "이미지 위젯 2", value: "이미지 위젯 2" },
+	{ label: "이미지 위젯 3", value: "이미지 위젯 3" },
+	{ label: "이미지 위젯 4", value: "이미지 위젯 4" },
 ];
 
 const widgetColors = [
@@ -76,6 +82,13 @@ const widgetColors = [
 
 const DESKTOP_GRID = { columns: 12, rows: 12 };
 const MOBILE_GRID = { columns: 8, rows: 12 };
+const IMAGE_WIDGET_IDS = [
+	"이미지 위젯 1",
+	"이미지 위젯 2",
+	"이미지 위젯 3",
+	"이미지 위젯 4",
+];
+const MAX_IMAGE_WIDGETS = IMAGE_WIDGET_IDS.length;
 
 export default function CustomLayoutClient() {
 	const { main, updateMain, refreshSettings } = useSettings();
@@ -92,6 +105,7 @@ export default function CustomLayoutClient() {
 	const [layoutMode, setLayoutMode] = useState<"desktop" | "mobile">(
 		"desktop"
 	);
+	const [isSyncing, setIsSyncing] = useState(true);
 
 	const containerRef = useRef<HTMLDivElement>(null);
 	const layoutChannelRef = useRef<BroadcastChannel | null>(null);
@@ -107,9 +121,44 @@ export default function CustomLayoutClient() {
 	const activeWidgets = activeLayout
 		.map((item) => activeWidgetList.find((widget) => widget.id === item.i))
 		.filter((widget): widget is Widget => Boolean(widget));
+	const baselineLayout = useMemo(
+		() => ({
+			layout: customLayout?.layout ?? [],
+			mobileLayout: customLayout?.mobileLayout ?? [],
+			desktopWidgets: customLayout?.desktopWidgets ?? [],
+			mobileWidgets: customLayout?.mobileWidgets ?? [],
+			desktopUsedColors: customLayout?.desktopUsedColors ?? [],
+			mobileUsedColors: customLayout?.mobileUsedColors ?? [],
+		}),
+		[customLayout]
+	);
+	const currentLayout = useMemo(
+		() => ({
+			layout: desktopLayout,
+			mobileLayout,
+			desktopWidgets,
+			mobileWidgets,
+			desktopUsedColors,
+			mobileUsedColors,
+		}),
+		[
+			desktopLayout,
+			mobileLayout,
+			desktopWidgets,
+			mobileWidgets,
+			desktopUsedColors,
+			mobileUsedColors,
+		]
+	);
+	const isDirty = useMemo(() => {
+		if (isSyncing) return false;
+		return JSON.stringify(currentLayout) !== JSON.stringify(baselineLayout);
+	}, [currentLayout, baselineLayout, isSyncing]);
+	useSettingStatus("mainLayout", isDirty ? "dirty" : "saved");
 
 	// Load saved layout from settings
 	useEffect(() => {
+		setIsSyncing(true);
 		if (customLayout) {
 			const legacyWidgets =
 				"widgets" in customLayout
@@ -127,6 +176,7 @@ export default function CustomLayoutClient() {
 			setDesktopUsedColors(customLayout.desktopUsedColors || legacyUsedColors || []);
 			setMobileUsedColors(customLayout.mobileUsedColors || []);
 		}
+		setIsSyncing(false);
 	}, [customLayout]);
 
 	// Setup broadcast channel for live updates
@@ -167,8 +217,8 @@ export default function CustomLayoutClient() {
 		}
 
 		// Check if widget already exists in current layout
-		const isWidgetInActiveLayout = activeLayout.some(
-			(item) => item.i === selectedWidget
+		const isWidgetInActiveLayout = activeWidgets.some(
+			(widget) => widget.id === selectedWidget
 		);
 
 		if (isWidgetInActiveLayout) {
@@ -176,9 +226,15 @@ export default function CustomLayoutClient() {
 			return;
 		}
 
-		if (activeLayout.length >= 9) {
-			toast.warning("최대 9개의 위젯만 추가할 수 있습니다.");
-			return;
+		const isImageWidget = IMAGE_WIDGET_IDS.includes(selectedWidget);
+		if (isImageWidget) {
+			const imageWidgetCount = activeWidgets.filter((widget) =>
+				IMAGE_WIDGET_IDS.includes(widget.id)
+			).length;
+			if (imageWidgetCount >= MAX_IMAGE_WIDGETS) {
+				toast.warning("이미지 위젯은 최대 4개까지 추가할 수 있습니다.");
+				return;
+			}
 		}
 
 		const currentCollision = isDesktopMode ? desktopCollision : mobileCollision;
@@ -234,6 +290,7 @@ export default function CustomLayoutClient() {
 	}, [
 		selectedWidget,
 		activeLayout,
+		activeWidgets,
 		activeWidgetList,
 		isDesktopMode,
 		desktopCollision,
@@ -352,9 +409,9 @@ export default function CustomLayoutClient() {
 			updateMain({ customLayout: layoutData });
 			layoutChannelRef.current?.postMessage(layoutData);
 
-			toast.success("레이아웃이 성공적으로 저장되었습니다.");
+			toast.success("저장되었습니다.");
 		} catch {
-			toast.error("레이아웃 저장 중 오류가 발생했습니다.");
+			toast.error("저장에 실패했습니다.");
 		}
 	}, [
 		desktopLayout,
@@ -549,7 +606,9 @@ export default function CustomLayoutClient() {
 				>
 					초기화하기
 				</Button>
-				<Button onClick={handleSaveLayout}>저장하기</Button>
+				<Button onClick={handleSaveLayout} disabled={!isDirty}>
+					저장하기
+				</Button>
 			</div>
 
 			<Dialog open={showClearDialog} onOpenChange={setShowClearDialog}>

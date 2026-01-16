@@ -32,12 +32,14 @@ interface CustomLayoutData {
 }
 
 export const setCustomLayout = async (value: CustomLayoutData) => {
+  const authHeader = await getAuthHeader();
   const result = await fetch(
     "https://api-w5buphcleq-du.a.run.app/settings/main/customLayout",
     {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        ...authHeader
       },
       body: JSON.stringify({ value }),
       next: {
@@ -48,7 +50,10 @@ export const setCustomLayout = async (value: CustomLayoutData) => {
 
   const data = await result.json();
 
+  await revalidateSettingsCache();
   return {
     data
   };
 };
+import { getAuthHeader } from "@/queries/getAuthHeader";
+import { revalidateSettingsCache } from "@/queries/revalidateSettings";

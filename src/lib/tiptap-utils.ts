@@ -1,5 +1,6 @@
 import type { Attrs, Node } from "@tiptap/pm/model"
 import type { Editor } from "@tiptap/react"
+import { getAuthHeader } from "@/queries/getAuthHeader"
 
 export const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
@@ -164,10 +165,12 @@ export const handleImageUpload = async (
     onProgress?.({ progress: 30 })
 
     // 서버에 업로드
+    const authHeader = await getAuthHeader()
     const response = await fetch(
       "https://api-w5buphcleq-du.a.run.app/images/uploadImage",
       {
         method: "POST",
+        headers: authHeader,
         body: formData,
         signal: abortSignal,
       }

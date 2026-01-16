@@ -3,93 +3,144 @@ import { dateConvert } from "@/lib/date";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { MessageCircle, Lock } from "lucide-react";
 
 interface ItemListProps {
 	data: {
 		id: string;
 		title: string;
 		subtitle?: string;
+		author?: string;
+		slug?: string;
 		createdAt: string;
 		tags?: string[];
 		thumbnail?: string;
+		pinned?: boolean;
+		allow?: "all" | "password" | "secret";
 	};
+	detailQuery?: string;
 }
 
-export default function ItemListWithImage({ data }: ItemListProps) {
+export default function ItemListWithImage({
+	data,
+	detailQuery = "",
+}: ItemListProps) {
 	const { onClickMoveToPage } = useMoveToPage();
+	const [imageError, setImageError] = useState(false);
+	const hasThumbnail =
+		Boolean(data.thumbnail) &&
+		!imageError &&
+		!data.thumbnail?.includes("example.com");
+	const detailPath = `/library/${data.slug || data.id}${detailQuery}`;
 
 	return (
 		<article
 			className={cn(
 				"group relative bg-card border-card rounded-card backdrop-blur-card",
-				"flex items-center justify-between gap-6 cursor-pointer",
-				"transition-all duration-300 ease-out overflow-hidden"
+				"flex items-stretch justify-between gap-6 cursor-pointer",
+				"overflow-hidden"
 			)}
-			onClick={onClickMoveToPage(`/library/${data.id}`)}
+			style={{ transition: "all 0.3s ease-out" }}
+			onClick={onClickMoveToPage(detailPath)}
 		>
 			{/* 왼쪽 컨텐츠 영역 */}
-			<div className="flex flex-col min-w-0 px-6 py-5 h-full justify-between">
-				{/* 제목과 부제목과 태그 */}
-				<div>
-					<h3
-						className={cn(
-							"text-lg font-semibold text-main-text leading-tight",
-							"line-clamp-2 group-hover:text-theme-primary transition-colors duration-200"
-						)}
-					>
-						{data.title}
-					</h3>
-					{/* 부제목 */}
-					{data.subtitle && (
-						<p className="text-sub-text leading-relaxed line-clamp-2 text-base">
-							{data.subtitle}
-						</p>
-					)}
-					{/* 태그 */}
-					{data.tags?.length > 0 && (
-						<div className="flex flex-wrap gap-2 mt-1.5">
-							{data.tags.slice(0, 3).map((tag, index) => (
+			<div className="flex flex-col min-w-0 p-5 h-full justify-between">
+				{/* 제목, 부제목, 태그 */}
+				<div className="flex flex-col justify-between h-full">
+					<div>
+						<div className="flex items-center gap-2">
+							{data.pinned && (
 								<Badge
-									key={index}
 									variant="secondary"
-									className={cn(
-										"px-3 text-xs font-medium rounded-full",
-										"bg-theme-primary/10 text-theme-primary border-theme-primary/20",
-										"hover:bg-theme-primary/20 transition-colors duration-200"
-									)}
+									className="px-2 text-[10px] rounded-full bg-theme-primary/10 text-theme-primary border-theme-primary/20"
 								>
-									{tag}
-								</Badge>
-							))}
-							{data.tags.length > 3 && (
-								<Badge
-									variant="outline"
-									className="px-3 py-1 text-xs font-medium rounded-full text-sub-text"
-								>
-									+{data.tags.length - 3}
+									고정
 								</Badge>
 							)}
+							{data.allow === "password" && (
+								<Lock size={14} className="text-sub-text shrink-0" />
+							)}
+							<h3
+								className={cn(
+									"text-lg font-semibold text-main-text leading-tight",
+									"line-clamp-2 group-hover:text-theme-primary"
+								)}
+								style={{ transition: "color 0.2s ease-out" }}
+							>
+								{data.title}
+							</h3>
 						</div>
-					)}
+						{/* 부제목 */}
+						{data.subtitle && (
+							<p className="text-sub-text leading-relaxed line-clamp-2 text-sm">
+								{data.subtitle}
+							</p>
+						)}
+					</div>
+					<div>
+						<div className="mt-2 flex items-center gap-2 text-xs text-sub-text">
+							{data.author && (
+								<span className="font-medium text-main-text">
+									{data.author}
+								</span>
+							)}
+							<span className="text-border">•</span>
+							<span className="inline-flex items-center gap-1">
+								<MessageCircle className="w-4 h-4" aria-hidden="true" />
+							</span>
+							<span className="text-border">•</span>
+							<time className="text-xs text-sub-text font-medium tracking-wide">
+								{dateConvert(data.createdAt)}
+							</time>
+						</div>
+						{/* 태그 */}
+						{data.tags?.length > 0 && (
+							<div className="flex flex-wrap gap-2 pt-1 mt-1.5">
+								{data.tags.slice(0, 3).map((tag, index) => (
+									<Badge
+										key={index}
+										variant="secondary"
+										className={cn(
+											"px-2.5 text-xs font-medium rounded-full",
+											"bg-theme-primary/10 text-theme-primary border-theme-primary/20",
+											"hover:bg-theme-primary/20"
+										)}
+										style={{
+											transition:
+												"background-color 0.2s ease-out, color 0.2s ease-out, border-color 0.2s ease-out",
+										}}
+									>
+										{tag}
+									</Badge>
+								))}
+								{data.tags.length > 3 && (
+									<Badge
+										variant="outline"
+										className="px-2.5 text-xs font-medium rounded-full text-sub-text"
+									>
+										+{data.tags.length - 3}
+									</Badge>
+								)}
+							</div>
+						)}
+					</div>
 				</div>
-				<time className="text-sm text-sub-text font-medium tracking-wide mt-3">
-					{dateConvert(data.createdAt)}
-				</time>
+				{/* 작성자, 댓글 아이콘, 날짜 */}
 			</div>
-			<div>
+			<div className="h-full">
 				{/* 오른쪽 이미지 영역 */}
-				{data.thumbnail ? (
+				{hasThumbnail ? (
 					<Image
 						src={data.thumbnail}
 						alt={data.title}
 						width={240}
 						height={100}
-						className="h-full object-cover aspect-video mask-l-from-80%"
+						className="h-full w-full object-cover mask-l-from-80%"
+						onError={() => setImageError(true)}
 					/>
 				) : (
-					<div className="h-full min-w-60 object-cover aspect-video mask-l-from-80% flex items-center justify-center bg-gray-200">
-						<span className="text-gray-500">No Image</span>
-					</div>
+					<div className="h-full min-w-60 mask-l-from-80%" />
 				)}
 			</div>
 		</article>

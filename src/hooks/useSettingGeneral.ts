@@ -39,6 +39,38 @@ export const useSettingGeneral = () => {
     generalData?.logoType || "없음"
   );
   const [bgThumbnail, setBgThumnail] = useState("");
+  const normalizedCurrent = useMemo(
+    () => ({
+      title: generalSetting.title || "",
+      desc: generalSetting.desc || "",
+      favicon: generalSetting.favicon || "",
+      shareImage: generalSetting.shareImage || "",
+      primaryColor: generalSetting.primaryColor || "",
+      secondaryColor: generalSetting.secondaryColor || "",
+      logoType: generalSetting.logoType || "없음",
+      logoImage: generalSetting.logoImage || "",
+      logoText: generalSetting.logoText || ""
+    }),
+    [generalSetting]
+  );
+  const normalizedInitial = useMemo(
+    () => ({
+      title: generalData.title || "",
+      desc: generalData.desc || "",
+      favicon: generalData.favicon || "",
+      shareImage: generalData.shareImage || "",
+      primaryColor: generalData.primaryColor || "",
+      secondaryColor: generalData.secondaryColor || "",
+      logoType: generalData.logoType || "없음",
+      logoImage: generalData.logoImage || "",
+      logoText: generalData.logoText || ""
+    }),
+    [generalData]
+  );
+  const isDirty = useMemo(
+    () => JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedInitial),
+    [normalizedCurrent, normalizedInitial]
+  );
 
   // Form setup
   const {
@@ -162,9 +194,9 @@ export const useSettingGeneral = () => {
       });
       channel.close();
 
-      toast.success("일반 설정이 초기화되었습니다.");
+      toast.success("초기화되었습니다.");
     } catch {
-      toast.error("일반 설정을 초기화하지 못했습니다.");
+      toast.error("초기화에 실패했습니다.");
     }
   }, [reset, updateGeneral, refreshSettings]);
 
@@ -183,9 +215,9 @@ export const useSettingGeneral = () => {
       });
       channel.close();
       
-      toast.success("일반 설정이 성공적으로 저장되었습니다.");
+      toast.success("저장되었습니다.");
     } catch {
-      toast.error("일반 설정을 저장하지 못했습니다.");
+      toast.error("저장에 실패했습니다.");
     }
   }, [generalSetting, updateGeneral, refreshSettings]);
 
@@ -208,5 +240,6 @@ export const useSettingGeneral = () => {
     handleSave,
     bgThumbnail,
     setBgThumnail,
+    isDirty,
   };
 };

@@ -17,6 +17,7 @@ import RadioItem from "@/components/items/RadioItem";
 import { useModal } from "@/hooks/useModal";
 import { useSettingDesign } from "@/hooks/useSettingDesign";
 import WidgetSetting from "@/components/setting/widget";
+import { useSettingStatus } from "@/hooks/useSettingStatus";
 
 const BACKGROUND_TYPES = {
 	IMAGE: "이미지",
@@ -45,10 +46,12 @@ export default function DesignSettingClient() {
 		onClickSubmit,
 		onClickReset,
 		updateDesignSetting,
+		isDirty,
 	} = useSettingDesign();
 
 	const { showModal } = useModal();
 	const [showResetConfirm, setShowResetConfirm] = useState(false);
+	useSettingStatus("design", isDirty ? "dirty" : "saved");
 
 	const confirmReset = () => {
 		onClickReset();
@@ -340,7 +343,9 @@ export default function DesignSettingClient() {
 					</Button>
 				)}
 
-				<Button type="submit">저장하기</Button>
+				<Button type="submit" disabled={!isDirty}>
+					저장하기
+				</Button>
 			</div>
 		</form>
 	);

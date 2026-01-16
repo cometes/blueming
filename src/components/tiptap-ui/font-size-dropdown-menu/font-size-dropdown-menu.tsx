@@ -194,9 +194,9 @@ export function FontSizeDropdownMenu({
           data-disabled={isDisabled}
           role="button"
           tabIndex={-1}
-          aria-label="Font size"
+          aria-label="글자 크기"
           aria-pressed={isActive}
-          tooltip="Font size"
+          tooltip="글자 크기"
           {...props}
         >
           <FontSizeIcon className="tiptap-button-icon" />
@@ -241,7 +241,7 @@ export function FontSizeDropdownMenu({
                 onClick={handleClearSize}
                 className="w-full justify-start"
               >
-                Default
+                기본
               </Button>
             </DropdownMenuItem>
           )}

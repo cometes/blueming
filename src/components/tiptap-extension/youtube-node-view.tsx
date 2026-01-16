@@ -26,6 +26,7 @@ export const YoutubeNodeView: React.FC<NodeViewProps> = ({ node, editor, selecte
   const thumbnailUrl = videoId
     ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
     : ""
+  const embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}` : src
 
   const [isResizing, setIsResizing] = React.useState(false)
   const [currentWidth, setCurrentWidth] = React.useState<number | null>(initialWidth)
@@ -95,8 +96,10 @@ export const YoutubeNodeView: React.FC<NodeViewProps> = ({ node, editor, selecte
         className={`youtube-box ${selected ? 'ProseMirror-selectednode' : ''} ${isResizing ? 'is-resizing' : ''}`}
         data-drag-handle
       >
-        {selected && <ImageBubbleMenu editor={editor} currentAlign={align} nodeType="youtube" />}
-        {selected && (
+        {selected && editor.isEditable && (
+          <ImageBubbleMenu editor={editor} currentAlign={align} nodeType="youtube" />
+        )}
+        {selected && editor.isEditable && (
           <>
             <div
               className="resize-handle resize-handle-left"
@@ -109,26 +112,40 @@ export const YoutubeNodeView: React.FC<NodeViewProps> = ({ node, editor, selecte
           </>
         )}
         <div ref={containerRef} className="youtube-thumbnail-container" style={containerStyle}>
-          <img
-            src={thumbnailUrl}
-            data-youtube-thumbnail="true"
-            data-youtube-src={src}
-            width="100%"
-            height={currentWidth ? Math.round(currentWidth * 0.5625) : Math.round(initialWidth * 0.5625)}
-            className="youtube-thumbnail-image"
-            alt="YouTube video thumbnail"
-          />
-          <div className="youtube-play-icon-overlay">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="white"
-              style={{ marginLeft: '2px' }}
-            >
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </div>
+          {editor.isEditable ? (
+            <>
+              <img
+                src={thumbnailUrl}
+                data-youtube-thumbnail="true"
+                data-youtube-src={src}
+                width="100%"
+                height={currentWidth ? Math.round(currentWidth * 0.5625) : Math.round(initialWidth * 0.5625)}
+                className="youtube-thumbnail-image"
+                alt="YouTube video thumbnail"
+              />
+              <div className="youtube-play-icon-overlay">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="white"
+                  style={{ marginLeft: '2px' }}
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+            </>
+          ) : (
+            <iframe
+              src={embedUrl}
+              title="YouTube video"
+              width="100%"
+              height={currentWidth ? Math.round(currentWidth * 0.5625) : Math.round(initialWidth * 0.5625)}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{ border: 0, display: "block" }}
+            />
+          )}
         </div>
       </div>
     </NodeViewWrapper>

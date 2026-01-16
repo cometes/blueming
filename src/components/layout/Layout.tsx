@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import LoginButton from "../common/LoginButton";
 import WidgetMenu from "../widgets/WidgetMenu";
 import BackgroundEffect from "../effects/BackgroundEffect";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -18,6 +17,7 @@ export default function Layout({ children }: LayoutProps) {
 	const { general } = useSettings();
 
 	const isMainPage = pathname === "/";
+	const isStickerBoardEditPage = pathname === "/setting/stickerBoard/edit";
 
 	// 기본 레이아웃 구조를 사용하지 않을 페이지들 (메인 페이지 포함)
 	const customLayoutPages = [""];
@@ -42,7 +42,9 @@ export default function Layout({ children }: LayoutProps) {
 	});
 
 	// 헤더를 숨길지 결정하는 함수
-	const shouldHideHeader = hideHeaderPages.includes(pathname);
+	const shouldHideHeader =
+		hideHeaderPages.includes(pathname) ||
+		(pathname.startsWith("/library/") && pathname.endsWith("/edit"));
 
 	const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 	const [lastScrollY, setLastScrollY] = useState(0);
@@ -76,7 +78,6 @@ export default function Layout({ children }: LayoutProps) {
 		return (
 			<>
 				<BackgroundEffect />
-				<LoginButton />
 				{children}
 			</>
 		);
@@ -85,15 +86,15 @@ export default function Layout({ children }: LayoutProps) {
 	// 일반 페이지의 경우 기본 레이아웃 구조 적용
 	return (
 		<>
-			<LoginButton />
 			{!shouldHideHeader && (
 				<header
 					className={cn(
 						"flex justify-between items-center px-6 py-0 w-full h-12",
-						"fixed top-0 left-0 border-b border-card-bg z-50",
-						"transition-transform ease-in-out duration-300 backdrop-blur-sm",
+						"sticky top-0 left-0 border-b border-card-bg z-50",
+						"backdrop-blur-sm",
 						isHeaderVisible ? "translate-y-0" : "-translate-y-full"
 					)}
+					style={{ transition: "transform 300ms ease-in-out" }}
 				>
 					<h1
 						onClick={() => {
@@ -108,11 +109,15 @@ export default function Layout({ children }: LayoutProps) {
 
 			<div
 				className={cn(
-					"w-full mx-auto px-5",
-					isMainPage ? "max-w-7xl h-dvh" : "max-w-5xl h-auto"
+					"w-full mx-auto",
+					isStickerBoardEditPage
+						? "max-w-none px-0 h-auto"
+						: isMainPage
+							? "max-w-7xl px-5 h-dvh"
+							: "max-w-5xl px-5 h-auto"
 				)}
 			>
-				<div className="w-full h-full flex items-start justify-center gap-6 relative z-10">
+				<div className="w-full h-calc(100vh-48px) flex items-start justify-center gap-6 relative z-10">
 					{!shouldHideMenu && <WidgetMenu />}
 					{children}
 				</div>

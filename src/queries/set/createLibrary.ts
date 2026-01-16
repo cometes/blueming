@@ -1,4 +1,5 @@
-import axios from "axios";
+import { apiClient, getApiErrorMessage } from "@/queries/apiClient";
+import { getAuthHeader } from "@/queries/getAuthHeader";
 
 export interface CreateLibraryPayload {
 	title: string;
@@ -11,51 +12,48 @@ export interface CreateLibraryPayload {
 	visibility: "all" | "password" | "secret";
 	password?: string;
 	thumbnail?: string;
+	pinned?: boolean;
 }
 
 export interface CreateLibraryResponse {
-	success: boolean;
-	data: {
-		id: string;
-		slug?: string;
-		title: string;
-		createdAt: string;
-	};
-	message?: string;
+	postId: string;
+	createdAt: string | null;
+	slug?: string | null;
 }
 
 /**
  * 게시글을 생성합니다.
  * @param payload 게시글 데이터
- * @returns 생성된 게시글 정보 (id, slug 포함)
+ * @returns 생성된 게시글 정보 (postId, slug 포함)
  */
 export const createLibraryPost = async (
 	payload: CreateLibraryPayload
 ): Promise<CreateLibraryResponse> => {
 	try {
-		const response = await axios.post<CreateLibraryResponse>(
-			"https://api-w5buphcleq-du.a.run.app/library/create",
+		const allow = payload.visibility;
+		const slug = payload.slug?.trim() || undefined;
+		const headers = await getAuthHeader();
+		const response = await apiClient.post<CreateLibraryResponse>(
+			"/library/create",
 			{
-				...payload,
-				// slug가 빈 문자열이면 null로 변환
-				slug: payload.slug?.trim() || null,
-				// 비공개 게시글이 아니면 password 제거
-				password:
-					payload.visibility === "password"
-						? payload.password
-						: undefined,
-			}
+				title: payload.title,
+				subtitle: payload.subtitle,
+				content: payload.content,
+				slug,
+				summary: payload.summary,
+				tags: payload.tags,
+				series: payload.series,
+				allow,
+				password: allow === "password" ? payload.password : null,
+				thumbnail: payload.thumbnail,
+				pinned: payload.pinned ?? false,
+			},
+			{ headers }
 		);
 
 		return response.data;
 	} catch (error) {
-		if (axios.isAxiosError(error)) {
-			throw new Error(
-				error.response?.data?.message ||
-					"게시글 생성에 실패했습니다."
-			);
-		}
-		throw error;
+		throw new Error(getApiErrorMessage(error, "게시글 생성에 실패했습니다."));
 	}
 };
 
@@ -68,8 +66,8 @@ export const checkSlugAvailability = async (
 	slug: string
 ): Promise<boolean> => {
 	try {
-		const response = await axios.get<{ available: boolean }>(
-			`https://api-w5buphcleq-du.a.run.app/library/check-slug/${slug}`
+		const response = await apiClient.get<{ available: boolean }>(
+			`/library/check-slug/${slug}`
 		);
 
 		return response.data.available;
@@ -78,5 +76,3 @@ export const checkSlugAvailability = async (
 		return true;
 	}
 };
-
-

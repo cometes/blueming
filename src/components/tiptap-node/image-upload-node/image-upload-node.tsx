@@ -5,6 +5,11 @@ import type { NodeViewProps } from "@tiptap/react"
 import { NodeViewWrapper } from "@tiptap/react"
 import { CloseIcon } from "@/components/tiptap-icons/close-icon"
 import "@/components/tiptap-node/image-upload-node/image-upload-node.scss"
+import type { StickerAsset, StickerAssetTab } from "@/types/stickerBoard"
+import { listStickerAssets, markStickerAssetUsed } from "@/queries/stickerAssets"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
 
 export interface FileItem {
   id: string
@@ -34,7 +39,9 @@ function useFileUpload(options: UploadOptions) {
   const uploadFile = async (file: File): Promise<string | null> => {
     if (file.size > options.maxSize) {
       const error = new Error(
-        `File size exceeds maximum allowed (${options.maxSize / 1024 / 1024}MB)`
+        `파일 크기가 허용된 최대치(${
+          options.maxSize / 1024 / 1024
+        }MB)를 초과했습니다.`
       )
       options.onError?.(error)
       return null
@@ -54,7 +61,7 @@ function useFileUpload(options: UploadOptions) {
 
     try {
       if (!options.upload) {
-        throw new Error("Upload function is not defined")
+        throw new Error("업로드 함수가 정의되어 있지 않습니다.")
       }
 
       const url = await options.upload(
@@ -71,7 +78,7 @@ function useFileUpload(options: UploadOptions) {
         abortController.signal
       )
 
-      if (!url) throw new Error("Upload failed: No URL returned")
+      if (!url) throw new Error("업로드 실패: URL이 반환되지 않았습니다.")
 
       if (!abortController.signal.aborted) {
         setFileItem((prev) => {
@@ -99,7 +106,7 @@ function useFileUpload(options: UploadOptions) {
           }
         })
         options.onError?.(
-          error instanceof Error ? error : new Error("Upload failed")
+          error instanceof Error ? error : new Error("업로드에 실패했습니다.")
         )
       }
       return null
@@ -108,22 +115,20 @@ function useFileUpload(options: UploadOptions) {
 
   const uploadFiles = async (files: File[]): Promise<string | null> => {
     if (!files || files.length === 0) {
-      options.onError?.(new Error("No files to upload"))
+      options.onError?.(new Error("업로드할 파일이 없습니다."))
       return null
     }
 
     if (options.limit && files.length > options.limit) {
       options.onError?.(
-        new Error(
-          `Maximum ${options.limit} file${options.limit === 1 ? "" : "s"} allowed`
-        )
+        new Error(`최대 ${options.limit}개 파일만 업로드할 수 있습니다.`)
       )
       return null
     }
 
     const file = files[0]
     if (!file) {
-      options.onError?.(new Error("File is undefined"))
+      options.onError?.(new Error("파일을 찾을 수 없습니다."))
       return null
     }
 
@@ -236,7 +241,7 @@ const ImageUploadDragArea: React.FC<ImageUploadDragAreaProps> = ({
 
   return (
     <div
-      className={`tiptap-image-upload-dragger bg-card ${dragover ? "tiptap-image-upload-dragger-active" : ""}`}
+      className={`tiptap-image-upload-dragger ${dragover ? "tiptap-image-upload-dragger-active" : ""}`}
       onDrop={onDrop}
       onDragOver={onDragover}
       onDragLeave={onDragleave}
@@ -262,7 +267,7 @@ const ImageUploadPreview: React.FC<ImageUploadPreviewProps> = ({
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes"
     const k = 1024
-    const sizes = ["Bytes", "KB", "MB", "GB"]
+    const sizes = ["바이트", "KB", "MB", "GB"]
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
   }
@@ -321,10 +326,10 @@ const DropZoneContent: React.FC<{ maxSize: number }> = ({ maxSize }) => (
 
     <div className="tiptap-image-upload-content">
       <span className="tiptap-image-upload-text">
-        <em>Click to upload</em> or drag and drop
+        <em>클릭하여 업로드</em>하거나 드래그 앤 드롭하세요
       </span>
       <span className="tiptap-image-upload-subtext">
-        Maximum file size {maxSize / 1024 / 1024}MB.
+        최대 파일 크기 {maxSize / 1024 / 1024}MB
       </span>
     </div>
   </>
@@ -332,13 +337,22 @@ const DropZoneContent: React.FC<{ maxSize: number }> = ({ maxSize }) => (
 
 export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
   const { accept, limit, maxSize } = props.node.attrs
+  const { deleteNode } = props
   const inputRef = React.useRef<HTMLInputElement>(null)
   const extension = props.extension
   const filesRef = React.useRef<File[]>([])
+  const [assetOpen, setAssetOpen] = React.useState(false)
+  const [assetTab, setAssetTab] = React.useState<StickerAssetTab>("all")
+  const [assets, setAssets] = React.useState<StickerAsset[]>([])
+  const [assetsLoading, setAssetsLoading] = React.useState(false)
+  const [assetsError, setAssetsError] = React.useState<string | null>(null)
 
-  const handleImageInsert = React.useCallback((url: string) => {
+  const handleImageInsert = React.useCallback((url: string, altText?: string) => {
     const pos = props.getPos()
-    const filename = filesRef.current[0]?.name.replace(/\.[^/.]+$/, "") || "unknown"
+    const filename =
+      altText ||
+      filesRef.current[0]?.name.replace(/\.[^/.]+$/, "") ||
+      "알 수 없음"
 
     // Load image to get natural dimensions
     const img = new Image()
@@ -391,6 +405,26 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
     img.src = url
   }, [props])
 
+  const refreshAssets = React.useCallback(async () => {
+    setAssetsLoading(true)
+    setAssetsError(null)
+    try {
+      const list = await listStickerAssets(assetTab)
+      setAssets(list)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "에셋을 불러오지 못했습니다."
+      setAssetsError(msg)
+      setAssets([])
+    } finally {
+      setAssetsLoading(false)
+    }
+  }, [assetTab])
+
+  React.useEffect(() => {
+    if (!assetOpen) return
+    void refreshAssets()
+  }, [assetOpen, refreshAssets])
+
   const uploadOptions: UploadOptions = {
     maxSize,
     limit,
@@ -408,7 +442,7 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) {
-      extension.options.onError?.(new Error("No file selected"))
+      extension.options.onError?.(new Error("선택된 파일이 없습니다."))
       return
     }
     handleUpload(Array.from(files))
@@ -426,16 +460,124 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
     }
   }
 
+  const handleSelectAsset = React.useCallback(
+    async (asset: StickerAsset) => {
+      handleImageInsert(asset.url, asset.name || "에셋 이미지")
+      setAssetOpen(false)
+      try {
+        await markStickerAssetUsed(asset.id)
+      } catch {
+      }
+    },
+    [handleImageInsert]
+  )
+
   return (
     <NodeViewWrapper
       className="tiptap-image-upload"
       tabIndex={0}
       onClick={handleClick}
     >
+      <button
+        type="button"
+        className="tiptap-image-upload-remove-btn cursor-pointer"
+        onClick={(event) => {
+          event.stopPropagation()
+          deleteNode?.()
+        }}
+        aria-label="이미지 업로드 삭제"
+      >
+        <CloseIcon />
+      </button>
       {!fileItem && (
-        <ImageUploadDragArea onFile={handleUpload}>
-          <DropZoneContent maxSize={maxSize} />
-        </ImageUploadDragArea>
+        <>
+          <ImageUploadDragArea onFile={handleUpload}>
+            <DropZoneContent maxSize={maxSize} />
+          </ImageUploadDragArea>
+          <div
+            className="mt-3 flex justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Popover open={assetOpen} onOpenChange={setAssetOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  에셋에서 가져오기
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-[360px] p-3 bg-card border-card rounded-card backdrop-blur-card text-main-text"
+                side="bottom"
+                align="center"
+              >
+                <div className="text-xs font-semibold text-main-text mb-2">
+                  이미지 에셋
+                </div>
+                <Tabs
+                  value={assetTab}
+                  onValueChange={(value) => setAssetTab(value as StickerAssetTab)}
+                >
+                  <TabsList className="w-full">
+                    <TabsTrigger value="all" className="flex-1 text-xs">
+                      전체
+                    </TabsTrigger>
+                    <TabsTrigger value="favorites" className="flex-1 text-xs">
+                      즐겨찾기
+                    </TabsTrigger>
+                    <TabsTrigger value="recent" className="flex-1 text-xs">
+                      최근
+                    </TabsTrigger>
+                  </TabsList>
+                  {(["all", "favorites", "recent"] as StickerAssetTab[]).map(
+                    (tab) => (
+                      <TabsContent key={tab} value={tab} className="mt-3">
+                        {assetsLoading ? (
+                          <div className="py-6 text-center text-xs text-gray-400">
+                            불러오는 중...
+                          </div>
+                        ) : assetsError ? (
+                          <div className="py-3 text-xs text-red-500">
+                            {assetsError}
+                          </div>
+                        ) : assets.length === 0 ? (
+                          <div className="py-6 text-center text-xs text-gray-400">
+                            에셋이 없습니다.
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-3 gap-2">
+                            {assets.map((asset) => (
+                              <button
+                                key={asset.id}
+                                type="button"
+                                className="relative block w-full aspect-square rounded-md border border-card bg-background/30 overflow-hidden"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  void handleSelectAsset(asset)
+                                }}
+                                title="클릭하여 이미지 추가"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={asset.url}
+                                  alt={asset.name ?? "asset"}
+                                  className="h-full w-full object-cover"
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </TabsContent>
+                    )
+                  )}
+                </Tabs>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </>
       )}
 
       {fileItem && (

@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import AdminRoute from "@/components/common/AdminRoute";
 import SettingLayout from "@/components/layout/SettingLayout";
+import { SettingStatusProvider } from "@/contexts/SettingStatusContext";
 
 const GeneralSettingClient = dynamic(() => import("./general/GeneralSettingClient"));
 const DesignSettingClient = dynamic(() => import("./design/DesignSettingClient"));
@@ -17,6 +18,15 @@ const ProfileSettingClient = dynamic(() => import("./profile/ProfileSettingClien
 const SlideSettingClient = dynamic(() => import("./slide/SlideSettingClient"));
 const DdaySettingClient = dynamic(() => import("./dday/DdaySettingClient"));
 const EffectSettingClient = dynamic(() => import("./effect/EffectSettingClient"));
+const StickerBoardSettingClient = dynamic(
+	() => import("./stickerBoard/StickerBoardSettingClient")
+);
+const ImageWidgetSettingClient = dynamic(
+	() => import("./imageWidget/ImageWidgetSettingClient")
+);
+const WeatherClockSettingClient = dynamic(
+	() => import("./weatherClock/WeatherClockSettingClient")
+);
 
 type SettingSection = {
 	id: string;
@@ -117,11 +127,32 @@ export default function SettingClient({ initialSection }: SettingClientProps) {
 						desc: "디데이 기능을 설정할 수 있습니다.",
 						Component: DdaySettingClient,
 					},
-				],
-			},
-		],
-		[]
-	);
+					{
+						id: "stickerBoard",
+						label: "스티커보드 설정",
+						title: "스티커보드 설정",
+						desc: "메인 페이지 스티커보드를 설정할 수 있습니다.",
+						Component: StickerBoardSettingClient,
+					},
+				{
+					id: "imageWidget",
+					label: "이미지 위젯 설정",
+					title: "이미지 위젯 설정",
+					desc: "메인 페이지 이미지 위젯을 설정할 수 있습니다.",
+					Component: ImageWidgetSettingClient,
+				},
+				{
+					id: "weatherClock",
+					label: "날씨&시계 설정",
+					title: "날씨&시계 설정",
+					desc: "메인 페이지 날씨&시계 위젯을 설정할 수 있습니다.",
+					Component: WeatherClockSettingClient,
+				},
+			],
+		},
+	],
+	[]
+);
 
 	const allSections = useMemo(
 		() => settingGroups.flatMap((group) => group.items),
@@ -176,15 +207,17 @@ export default function SettingClient({ initialSection }: SettingClientProps) {
 
 	return (
 		<AdminRoute>
-			<SettingLayout
-				sidebarGroups={sidebarGroups}
-				activeSection={activeSection}
-				onSectionChange={handleSectionChange}
-				title={currentSection?.title || ""}
-				description={currentSection?.desc || ""}
-			>
-				{currentSection ? <currentSection.Component /> : null}
-			</SettingLayout>
+			<SettingStatusProvider>
+				<SettingLayout
+					sidebarGroups={sidebarGroups}
+					activeSection={activeSection}
+					onSectionChange={handleSectionChange}
+					title={currentSection?.title || ""}
+					description={currentSection?.desc || ""}
+				>
+					{currentSection ? <currentSection.Component /> : null}
+				</SettingLayout>
+			</SettingStatusProvider>
 		</AdminRoute>
 	);
 }

@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { useEditor, EditorContent } from "@tiptap/react";
 import { ImagePlus, Trash2 } from "lucide-react";
@@ -20,6 +20,7 @@ import { extensions } from "@/components/editor/TiptapEditor";
 import SimpleTiptapToolbar from "@/components/tiptap/SimpleTiptapToolbar";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useSettingStatus } from "@/hooks/useSettingStatus";
 import {
 	setSettingsProfile,
 	ProfileData,
@@ -108,6 +109,7 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 export default function ProfileSettingClient() {
 	const settings = useSettings();
 	const refreshSettings = settings.refreshSettings;
+	const updateMain = settings.updateMain;
 	const [profileData, setProfileData] = useState<ProfileData>({
 		headerImage: "",
 		profileImage: "",
@@ -122,6 +124,8 @@ export default function ProfileSettingClient() {
 		""
 	);
 	const [thumbnail, setThumbnail] = useState("");
+	const [isSyncing, setIsSyncing] = useState(true);
+	const [editorContent, setEditorContent] = useState("<p></p>");
 
 	// Initialize Tiptap editor
 	const editor = useEditor({
@@ -133,6 +137,7 @@ export default function ProfileSettingClient() {
 			}) || extensions.find((ext) => ext.name === "placeholder"),
 		].filter(Boolean),
 		content: "<p></p>",
+		immediatelyRender: false,
 		editorProps: {
 			attributes: {
 				class: "tiptap ProseMirror focus:outline-none min-h-[88px]",
@@ -142,6 +147,7 @@ export default function ProfileSettingClient() {
 
 	// Load profile data from settings
 	useEffect(() => {
+		setIsSyncing(true);
 		if (settings.main?.profile) {
 			const profile = settings.main.profile;
 
@@ -171,9 +177,66 @@ export default function ProfileSettingClient() {
 			// Set editor content
 			if (editor && introductionHTML) {
 				editor.commands.setContent(introductionHTML);
+				setEditorContent(introductionHTML);
 			}
 		}
+		setIsSyncing(false);
 	}, [settings.main?.profile, editor]);
+
+	useEffect(() => {
+		if (!editor) return;
+		const updateContent = () => {
+			setEditorContent(editor.getHTML());
+		};
+		updateContent();
+		editor.on("blur", updateContent);
+		return () => {
+			editor.off("blur", updateContent);
+		};
+	}, [editor]);
+
+	const isDirty = useMemo(() => {
+		if (isSyncing) return false;
+		const normalizeContent = (html?: string) => (html || "<p></p>").trim();
+		const baseline = settings.main?.profile;
+		const intro = editorContent || "<p></p>";
+
+		if (!baseline) {
+			return (
+				profileData.nickname !== "" ||
+				profileData.etc !== "" ||
+				profileData.headerImage !== "" ||
+				profileData.profileImage !== "" ||
+				intro !== "<p></p>"
+			);
+		}
+
+		let baselineIntro = "<p></p>";
+		if (baseline?.introduction) {
+			if (isSlateFormat(baseline.introduction)) {
+				try {
+					const parsed = JSON.parse(baseline.introduction);
+					if (Array.isArray(parsed)) {
+						baselineIntro = convertSlateToHTML(parsed);
+					}
+				} catch {
+					baselineIntro = baseline.introduction;
+				}
+			} else {
+				baselineIntro = baseline.introduction;
+			}
+		}
+
+		return (
+			profileData.nickname !== (baseline.nickname || "") ||
+			profileData.etc !== (baseline.etc || "") ||
+			profileData.headerImage !== (baseline.headerImage || "") ||
+			profileData.profileImage !== (baseline.profileImage || "") ||
+			normalizeContent(intro) !== normalizeContent(baselineIntro)
+		);
+	}, [profileData, editorContent, settings.main?.profile, isSyncing]);
+
+	useSettingStatus("profile", isDirty ? "dirty" : "saved");
 
 	const handleInputChange = useCallback(
 		(field: keyof ProfileData, value: string) => {
@@ -252,6 +315,7 @@ export default function ProfileSettingClient() {
 			};
 
 			await setSettingsProfile(dataToSave);
+			updateMain?.({ profile: dataToSave });
 			await refreshSettings?.({ broadcast: true });
 
 			// Broadcast update
@@ -259,11 +323,11 @@ export default function ProfileSettingClient() {
 			channel.postMessage({ profile: dataToSave, timestamp: Date.now() });
 			channel.close();
 
-			toast.success("프로필이 저장되었습니다.");
+			toast.success("저장되었습니다.");
 		} catch {
-			toast.error("프로필 저장에 실패했습니다.");
+			toast.error("저장에 실패했습니다.");
 		}
-	}, [profileData, editor, refreshSettings]);
+	}, [profileData, editor, refreshSettings, updateMain]);
 
 	const handleReset = useCallback(async () => {
 		try {
@@ -276,6 +340,7 @@ export default function ProfileSettingClient() {
 			};
 
 			await setSettingsProfile(emptyProfile);
+			updateMain?.({ profile: emptyProfile });
 			await refreshSettings?.({ broadcast: true });
 
 			setProfileData(emptyProfile);
@@ -291,7 +356,7 @@ export default function ProfileSettingClient() {
 		} catch {
 			toast.error("프로필 초기화에 실패했습니다.");
 		}
-	}, [editor, refreshSettings]);
+	}, [editor, refreshSettings, updateMain]);
 
 	const openImageDialog = (field: ImageField) => {
 		setCurrentImageField(field);
@@ -403,7 +468,9 @@ export default function ProfileSettingClient() {
 					>
 						초기화하기
 					</Button>
-					<Button type="submit">저장하기</Button>
+					<Button type="submit" disabled={!isDirty}>
+						저장하기
+					</Button>
 				</div>
 
 				{/* Reset Confirmation Dialog */}

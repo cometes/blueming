@@ -249,9 +249,9 @@ export function TextColorButton({
 				data-disabled={isDisabled}
 				role="button"
 				tabIndex={-1}
-				aria-label="Text color"
+				aria-label="텍스트 색상"
 				aria-pressed={isActive}
-				tooltip="Text color"
+				tooltip="텍스트 색상"
 				onClick={handleButtonClick}
 				{...buttonProps}
 			>
@@ -302,7 +302,7 @@ export function TextColorButton({
 								onClick={handleClearColor}
 								className="flex-1 text-xs px-2 py-1"
 							>
-								Clear
+								지우기
 							</Button>
 						)}
 						<Button
@@ -311,7 +311,7 @@ export function TextColorButton({
 							onClick={handleApplyColor}
 							className="flex-1 text-xs px-2 py-1"
 						>
-							Apply
+							적용
 						</Button>
 					</div>
 				</div>

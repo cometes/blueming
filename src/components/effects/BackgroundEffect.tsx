@@ -74,9 +74,12 @@ export default function BackgroundEffect() {
 	};
 
 	return (
-		<>
+		<div
+			className="background-effect-layer fixed inset-0 z-0"
+			aria-hidden="true"
+		>
 			{renderEffect()}
 			<RainWindowEffect active={isRainWindowActive} />
-		</>
+		</div>
 	);
 }

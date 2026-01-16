@@ -22,6 +22,7 @@ export interface TextBackgroundColorButtonProps extends ButtonProps {
 }
 
 export const defaultBackgroundColors = [
+	"rgba(0, 0, 0, 0)",
 	"#FFFFFF", // White
 	"#F5F5F5", // Light Gray
 	"#E5E5E5", // Gray
@@ -103,7 +104,7 @@ export function TextBackgroundColorButton({
 	const { general } = useSettings();
 	const mainFontColor = general?.design?.font?.mainFontColor || "#000000";
 	const [isOpen, setIsOpen] = React.useState(false);
-	const [pickerColor, setPickerColor] = React.useState("#FFFF00");
+	const [pickerColor, setPickerColor] = React.useState("");
 	const popupRef = React.useRef<HTMLDivElement>(null);
 	const buttonRef = React.useRef<HTMLButtonElement>(null);
 	const previousIsOpenRef = React.useRef(false);
@@ -132,14 +133,13 @@ export function TextBackgroundColorButton({
 			if (currentColor) {
 				setPickerColor(currentColor);
 			} else {
-				setPickerColor("#FFFF00");
+				setPickerColor("");
 			}
 		}
 	}, [isOpen, currentColor]);
 
 	// 팝업이 닫힐 때 색상 적용
 	React.useEffect(() => {
-		// 팝업이 열려있다가 닫힐 때 색상 적용
 		if (previousIsOpenRef.current && !isOpen) {
 			handleApplyColorRef.current();
 		}
@@ -206,11 +206,6 @@ export function TextBackgroundColorButton({
 		[editor, isDisabled]
 	);
 
-	const handleClearColor = React.useCallback(() => {
-		if (!editor || isDisabled) return;
-		unsetBackgroundColor(editor);
-		setIsOpen(false);
-	}, [editor, isDisabled]);
 
 	const handleColorChange = React.useCallback((color: ColorResult) => {
 		// 드래그 중에는 미리보기만 (색상 적용하지 않음)
@@ -259,9 +254,9 @@ export function TextBackgroundColorButton({
 				data-disabled={isDisabled}
 				role="button"
 				tabIndex={-1}
-				aria-label="Background color"
+				aria-label="배경색"
 				aria-pressed={isActive}
-				tooltip="Background color"
+				tooltip="배경색"
 				onClick={handleButtonClick}
 				{...buttonProps}
 			>
@@ -304,7 +299,7 @@ export function TextBackgroundColorButton({
 							presetColors={defaultBackgroundColors}
 						/>
 					</div>
-					<div className="mt-2 flex gap-2">
+					{/* <div className="mt-2 flex gap-2">
 						{currentColor && (
 							<Button
 								type="button"
@@ -312,7 +307,7 @@ export function TextBackgroundColorButton({
 								onClick={handleClearColor}
 								className="flex-1 text-xs px-2 py-1"
 							>
-								Clear
+								지우기
 							</Button>
 						)}
 						<Button
@@ -321,9 +316,9 @@ export function TextBackgroundColorButton({
 							onClick={handleApplyColor}
 							className="flex-1 text-xs px-2 py-1"
 						>
-							Apply
+							적용
 						</Button>
-					</div>
+					</div> */}
 				</div>
 			)}
 		</div>

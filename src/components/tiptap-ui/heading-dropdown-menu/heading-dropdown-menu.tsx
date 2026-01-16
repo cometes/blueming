@@ -111,9 +111,9 @@ export function HeadingDropdownMenu({
           data-disabled={isDisabled}
           role="button"
           tabIndex={-1}
-          aria-label="Format text as heading"
+          aria-label="제목 스타일"
           aria-pressed={isAnyHeadingActive}
-          tooltip="Heading"
+          tooltip="제목"
           {...props}
         >
           {getActiveIcon()}

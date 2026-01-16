@@ -2,6 +2,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import type { StickerBoardSettings } from "@/types/stickerBoard";
 
 // Layout Types
 interface LayoutItem {
@@ -80,6 +81,16 @@ interface Profile {
 	nickname: string;
 	introduction: string;
 	headerImage: string;
+}
+
+interface ImageWidgetSettings {
+	images: string[];
+	fits?: Array<"cover" | "contain">;
+}
+
+interface WeatherClockSettings {
+	enabled: boolean;
+	city: string;
 }
 
 // Menu Types
@@ -212,6 +223,16 @@ interface MainSettings {
 	notice?: Notice;
 	dday?: DdayItem[];
 	profile?: Profile;
+	stickerBoard?: StickerBoardSettings;
+	imageWidget?: ImageWidgetSettings;
+	weatherClock?: WeatherClockSettings;
+}
+
+interface LibrarySettings {
+	layoutType: "list" | "listWithImage";
+	postsPerPage: number;
+	postsPerRow: number;
+	writePermission: "admin" | "member";
 }
 
 // Root Settings Context
@@ -230,10 +251,12 @@ interface SettingsContextType {
 		design: Design;
 	};
 	main?: MainSettings;
+	library?: LibrarySettings;
 	updateGeneral?: (general: Partial<GeneralSettings>) => void;
 	updateDesign?: (design: Design) => void;
 	updateMenu?: (menu: Menu) => void;
 	updateMain?: (main: Partial<MainSettings>) => void;
+	updateLibrary?: (library: Partial<LibrarySettings>) => void;
 	refreshSettings?: (options?: { broadcast?: boolean }) => Promise<void>;
 }
 
@@ -256,6 +279,7 @@ export const useSettings = (): SettingsContextType => {
 export type {
 	SettingsContextType,
 	MainSettings,
+	LibrarySettings,
 	CustomLayout,
 	LayoutItem,
 	WidgetItem,
@@ -263,6 +287,8 @@ export type {
 	Notice,
 	DdayItem,
 	Profile,
+	ImageWidgetSettings,
+	WeatherClockSettings,
 	MenuItem,
 	SubMenu,
 	MenuDesign,
@@ -271,4 +297,5 @@ export type {
 	General,
 	ThemeItem,
 	EffectSettings,
+	StickerBoardSettings,
 };

@@ -118,8 +118,15 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 	// Use node.attrs.width for the actual width, currentWidth only for preview during resize
 	const imgStyle: React.CSSProperties = React.useMemo(() => {
 		const width = isResizing ? currentWidth : node.attrs.width || currentWidth;
-		if (width !== null) {
-			return { width: `${width}px`, maxWidth: "100%" };
+		if (width !== null && width !== undefined) {
+			let widthValue = "";
+			if (typeof width === "number") {
+				widthValue = `${width}px`;
+			} else {
+				const raw = String(width).trim();
+				widthValue = /^\d+(\.\d+)?$/.test(raw) ? `${raw}px` : raw;
+			}
+			return { width: widthValue, maxWidth: "100%" };
 		}
 		return {};
 	}, [currentWidth, node.attrs.width, isResizing]);
@@ -137,8 +144,10 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 					isResizing ? "is-resizing" : ""
 				}`}
 			>
-				{selected && <ImageBubbleMenu editor={editor} currentAlign={align} />}
-				{selected && (
+				{selected && editor.isEditable && (
+					<ImageBubbleMenu editor={editor} currentAlign={align} />
+				)}
+				{selected && editor.isEditable && (
 					<>
 						<div
 							className="resize-handle resize-handle-left"
