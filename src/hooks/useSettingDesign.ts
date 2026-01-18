@@ -18,6 +18,7 @@ const defaultValues = {
 		borderWidth: 1,
 		blur: 6,
 		borderImage: "",
+		borderImageType: "full",
 	},
 	card: {
 		type: "라이트",

@@ -6,6 +6,7 @@ import { Menu, ChevronLeft } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useSettingStatusContext } from "@/contexts/SettingStatusContext";
+import { useSettingHeaderActionContext } from "@/contexts/SettingHeaderActionContext";
 
 interface SettingSidebarItem {
 	id: string;
@@ -36,6 +37,7 @@ export default function SettingLayout({
 }: SettingLayoutProps) {
 	const [isAsideExpanded, setIsAsideExpanded] = useState(false);
 	const { overallStatus, dirtyCount } = useSettingStatusContext();
+	const { action } = useSettingHeaderActionContext();
 	const [shouldAnimate] = useState(() => {
 		if (typeof window === "undefined") return false;
 		return !(window as Window & { __settingFadeInSeen?: boolean })
@@ -200,24 +202,30 @@ export default function SettingLayout({
 						onClick={(e) => e.stopPropagation()}
 					>
 						{/* Header */}
-						<div className="px-5 py-3 border-b border-card-bg flex-none">
-							<div className="flex items-center gap-3">
-								<p className="text-2xl font-bold text-main-text">{title}</p>
-								<Badge
-									variant="outline"
-									className={cn(
-										"text-[11px] px-2 py-0.5",
-										currentStatus === "dirty"
-											? "border-amber-400 text-amber-500 bg-amber-500/10"
-											: "border-emerald-400 text-emerald-500 bg-emerald-500/10"
-									)}
-								>
-									{currentStatus === "dirty"
-										? `저장 필요${dirtyCount > 0 ? ` · ${dirtyCount}` : ""}`
-										: "저장됨"}
-								</Badge>
+						<div className="px-5 py-3 border-b border-card-bg flex items-center justify-between">
+							<div>
+								<div className="flex items-center gap-3">
+									<p className="text-2xl font-bold text-main-text">{title}</p>
+									<Badge
+										variant="outline"
+										className={cn(
+											"text-[11px] px-2 py-0.5",
+											currentStatus === "dirty"
+												? "border-amber-400 text-amber-500 bg-amber-500/10"
+												: "border-emerald-400 text-emerald-500 bg-emerald-500/10"
+										)}
+									>
+										{currentStatus === "dirty"
+											? `저장 필요${dirtyCount > 0 ? ` · ${dirtyCount}` : ""}`
+											: "저장됨"}
+									</Badge>
+								</div>
+								<p className="text-sub-text text-sm mt-2">{description}</p>
 							</div>
-							<p className="text-sub-text text-sm mt-2">{description}</p>
+
+							{action ? (
+								<div className="flex items-center">{action}</div>
+							) : null}
 						</div>
 
 						{/* Content Area */}

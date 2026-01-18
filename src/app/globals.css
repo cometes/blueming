@@ -310,6 +310,43 @@ body {
 		border-style: solid;
 		backdrop-filter: blur(var(--widget-blur));
 	}
+	
+	/* 보더 이미지 코너만 적용 */
+	.widget-wrapper[data-border-image-type="corner"] {
+		position: relative;
+	}
+	
+	.widget-wrapper[data-border-image-type="corner"]::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 30px;
+		height: 30px;
+		background-image: var(--widget-corner-image);
+		background-size: contain;
+		background-repeat: no-repeat;
+		background-position: top left;
+		pointer-events: none;
+		z-index: 10;
+	}
+	
+	.widget-wrapper[data-border-image-type="corner"]::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		right: 0;
+		width: 30px;
+		height: 30px;
+		background-image: var(--widget-corner-image);
+		background-size: contain;
+		background-repeat: no-repeat;
+		background-position: top right;
+		pointer-events: none;
+		z-index: 10;
+	}
+	
+	/* 하단 코너는 별도 요소로 추가 필요 (CSS만으로는 제한적) */
 	.card-wrapper {
 		/* @apply; */
 		background: var(--card-bg);

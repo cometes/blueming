@@ -141,6 +141,7 @@ interface Menu {
 // Design Types
 interface WidgetDesign {
 	borderImage: string;
+	borderImageType?: "full" | "corner";
 	borderRadius: number;
 	borderColor: string;
 	background: string;

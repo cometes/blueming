@@ -29,7 +29,7 @@ export const WidgetList = ({ widgets, onRemove }: WidgetListProps) => {
 
 	return (
 		<div className="w-full lg:w-1/4">
-			<h3 className="text-base font-semibold text-foreground mb-3">
+			<h3 className="text-base font-semibold text-sub-text mb-3">
 				위젯 목록
 			</h3>
 			<div className="space-y-2">

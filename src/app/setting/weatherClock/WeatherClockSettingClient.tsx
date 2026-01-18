@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Save } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -9,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
+import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
 import { setSettingsMainWeatherClock } from "@/queries/set/setSettingsMainWeatherClock";
 
 export default function WeatherClockSettingClient() {
@@ -27,6 +29,24 @@ export default function WeatherClockSettingClient() {
 	}, [enabled, city, settings.main?.weatherClock, isSyncing]);
 
 	useSettingStatus("weatherClock", isDirty ? "dirty" : "saved");
+	useSettingHeaderAction(
+		<Button
+			type="submit"
+			form="setting-form-weatherClock"
+			variant="ghost"
+			size="icon"
+			disabled={!isDirty}
+			aria-label="저장하기"
+			title="저장하기"
+			className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+			style={{
+				transition: "all 0.3s ease-in-out",
+			}}
+		>
+			<Save size={16} />
+		</Button>,
+		[isDirty]
+	);
 
 	// Load from settings
 	useEffect(() => {
@@ -74,7 +94,14 @@ export default function WeatherClockSettingClient() {
 	}, [settings.main?.weatherClock]);
 
 	return (
-		<div className="space-y-6">
+		<form
+			id="setting-form-weatherClock"
+			onSubmit={(e) => {
+				e.preventDefault();
+				handleSave();
+			}}
+			className="space-y-6"
+		>
 			<div className="flex items-center justify-between">
 				<div className="space-y-0.5">
 					<Label htmlFor="enabled">위젯 활성화</Label>
@@ -109,10 +136,8 @@ export default function WeatherClockSettingClient() {
 				<Button variant="outline" onClick={handleReset} disabled={!isDirty}>
 					취소
 				</Button>
-				<Button onClick={handleSave} disabled={!isDirty}>
-					저장
-				</Button>
+				{/* 저장 버튼은 헤더로 이동 */}
 			</div>
-		</div>
+		</form>
 	);
 }

@@ -13,6 +13,16 @@ import { useModal } from "@/hooks/useModal";
 import { useSettingGeneral } from "@/hooks/useSettingGeneral";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
+import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
+import { Save } from "lucide-react";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 
 type ImageField = "favicon" | "shareImage" | "logoImage";
 
@@ -122,12 +132,30 @@ export default function GeneralSettingClient() {
 	} = useSettingGeneral();
 
 	const { showModal, isModalOpen, setIsModalOpen } = useModal();
-	const [showResetConfirm, setShowResetConfirm] = useState(false);
+	const [showResetDialog, setShowResetDialog] = useState(false);
 
 	const [currentImageField, setCurrentImageField] = useState<ImageField | null>(
 		null
 	);
 	useSettingStatus("general", isDirty ? "dirty" : "saved");
+	useSettingHeaderAction(
+		<Button
+			type="submit"
+			form="setting-form-general"
+			variant="ghost"
+			size="icon"
+			disabled={!isDirty}
+			aria-label="저장하기"
+			title="저장하기"
+			className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+			style={{
+				transition: "all 0.3s ease-in-out",
+			}}
+		>
+			<Save size={16} />
+		</Button>,
+		[isDirty]
+	);
 
 	const openImageModal = (field: ImageField) => {
 		setCurrentImageField(field);
@@ -149,13 +177,17 @@ export default function GeneralSettingClient() {
 		handleSave();
 	};
 
-	const confirmReset = () => {
+	const handleResetConfirm = () => {
 		handleReset();
-		setShowResetConfirm(false);
+		setShowResetDialog(false);
 	};
 
 	return (
-		<form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+		<form
+			id="setting-form-general"
+			onSubmit={handleSubmit(onSubmit)}
+			className="space-y-8"
+		>
 			{/* Temporary: ImageUploadModal will be created later */}
 
 			{/* 홈페이지 설정 Section */}
@@ -344,43 +376,51 @@ export default function GeneralSettingClient() {
 
 			{/* Submit Buttons */}
 			<div className="flex justify-end gap-3 pt-6">
-				{/* Simple Reset Confirmation */}
-				{showResetConfirm ? (
-					<div className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-						<span className="text-sm text-red-700 dark:text-red-300">
-							정말 초기화할까요?
-						</span>
-						<Button
-							type="button"
-							variant="destructive"
-							size="sm"
-							onClick={confirmReset}
-						>
-							O
-						</Button>
+				<Button
+					type="button"
+					onClick={() => setShowResetDialog(true)}
+					className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
+					style={{
+						transition: "all 0.3s ease-in-out",
+					}}
+				>
+					초기화하기
+				</Button>
+
+			{/* 저장 버튼은 헤더로 이동 */}
+			</div>
+
+			<Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+				<DialogContent className="rounded-card border-card bg-card-bg backdrop-blur-sm">
+					<DialogHeader>
+						<DialogTitle>일반 설정 초기화</DialogTitle>
+						<DialogDescription>
+							정말 일반 설정을 초기화할까요? 모든 설정이 기본값으로 돌아갑니다.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
 						<Button
 							type="button"
 							variant="outline"
-							size="sm"
-							onClick={() => setShowResetConfirm(false)}
+							onClick={() => setShowResetDialog(false)}
+							className="rounded-card border-card bg-card-bg"
 						>
-							X
+							취소
 						</Button>
-					</div>
-				) : (
-					<Button
-						type="button"
-						variant="destructive"
-						onClick={() => setShowResetConfirm(true)}
-					>
-						초기화하기
-					</Button>
-				)}
-
-				<Button type="submit" disabled={!isDirty}>
-					저장하기
-				</Button>
-			</div>
+						<Button
+							type="button"
+							variant="destructive"
+							onClick={handleResetConfirm}
+							className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
+							style={{
+								transition: "all 0.3s ease-in-out",
+							}}
+						>
+							초기화
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 
 			<ImageUploadDialog
 				isOpen={isModalOpen}
