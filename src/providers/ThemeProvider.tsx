@@ -57,6 +57,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 		root.style.setProperty('--card-border-style', 'solid');
 		root.style.setProperty('--card-shadow', design.card.boxShadow);
 		root.style.setProperty('--card-translate-y', `${design.card.translateY}px`);
+		root.style.setProperty('--card-blur', `${design.card.blur}px`);
 	};
 
 	useEffect(() => {

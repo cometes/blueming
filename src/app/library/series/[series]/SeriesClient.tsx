@@ -90,7 +90,7 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 	}
 
 	return (
-		<div className="w-full max-w-3xl mx-auto mt-20 mb-20">
+		<div className="w-full max-w-[700px] mx-auto mt-20 mb-20">
 			<Button
 				onClick={onClickMoveToPage("/library?tab=series")}
 				variant="default"
@@ -103,7 +103,7 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 			<div className="mt-10">
 				{/* Title Image */}
 				<div
-					className="relative w-full min-h-80 rounded-card overflow-hidden flex items-end"
+					className="relative w-full min-h-[300px] rounded-card overflow-hidden flex items-end"
 					style={
 						seriesMeta.thumbnail && !failedImages.header
 							? {
@@ -115,73 +115,80 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 					}
 				>
 					{/* Title Box */}
-					<div className="flex flex-col justify-between h-full px-8 py-6">
+					<div className="flex flex-col justify-between w-full h-full px-8 py-6">
 						<div>
 							<h1 className="text-3xl font-semibold">{seriesMeta.name}</h1>
 							<p className="mt-1">{seriesMeta.posts.length}개의 포스트</p>
-							<span className="text-sm text-sub-text mt-3 block">
-								마지막 업데이트{" "}
-								{seriesListData.lastUpdatedDate
-									? dateConvert(seriesListData.lastUpdatedDate)
-									: "-"}
-							</span>
+							<div className="flex items-center justify-between mt-3 w-full">
+								<span className="text-sm text-sub-text block">
+									마지막 업데이트{" "}
+									{seriesListData.lastUpdatedDate
+										? dateConvert(seriesListData.lastUpdatedDate)
+										: "-"}
+								</span>
+								<div>
+									{/* Edit Buttons */}
+									<AdminOnly>
+										<div>
+											<div className="flex justify-end">
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<button
+															type="button"
+															className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer hover:text-main-text"
+															style={{ transition: "color 200ms ease-out" }}
+															aria-label="수정"
+															onClick={() => setIsEditOpen(true)}
+														>
+															<Pencil size={16} />
+														</button>
+													</TooltipTrigger>
+													<TooltipContent className="text-xs">
+														수정
+													</TooltipContent>
+												</Tooltip>
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<button
+															type="button"
+															className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer hover:text-main-text ml-3"
+															style={{ transition: "color 200ms ease-out" }}
+															aria-label="삭제"
+														>
+															<Trash2 size={16} />
+														</button>
+													</TooltipTrigger>
+													<TooltipContent className="text-xs">
+														삭제
+													</TooltipContent>
+												</Tooltip>
+											</div>
+										</div>
+									</AdminOnly>
+
+									<SeriesEditDialog
+										open={isEditOpen}
+										onOpenChange={setIsEditOpen}
+										draft={draftMeta}
+										setDraft={setDraftMeta}
+										onCancel={() => {
+											setDraftMeta(seriesMeta);
+											setIsEditOpen(false);
+										}}
+										onSave={() => {
+											setSeriesMeta(draftMeta);
+											setIsEditOpen(false);
+										}}
+									/>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 
 			{/* Divider */}
-			<div className="h-px bg-card-border mt-10" />
-
-			{/* Edit Buttons */}
-			<AdminOnly>
-				<div className="mt-8">
-					<div className="flex justify-end">
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<button
-									type="button"
-									className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer hover:text-main-text"
-									style={{ transition: "color 200ms ease-out" }}
-									aria-label="수정"
-									onClick={() => setIsEditOpen(true)}
-								>
-									<Pencil size={16} />
-								</button>
-							</TooltipTrigger>
-							<TooltipContent className="text-xs">수정</TooltipContent>
-						</Tooltip>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<button
-									type="button"
-									className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer hover:text-main-text ml-3"
-									style={{ transition: "color 200ms ease-out" }}
-									aria-label="삭제"
-								>
-									<Trash2 size={16} />
-								</button>
-							</TooltipTrigger>
-							<TooltipContent className="text-xs">삭제</TooltipContent>
-						</Tooltip>
-					</div>
-				</div>
-			</AdminOnly>
-
-			<SeriesEditDialog
-				open={isEditOpen}
-				onOpenChange={setIsEditOpen}
-				draft={draftMeta}
-				setDraft={setDraftMeta}
-				onCancel={() => {
-					setDraftMeta(seriesMeta);
-					setIsEditOpen(false);
-				}}
-				onSave={() => {
-					setSeriesMeta(draftMeta);
-					setIsEditOpen(false);
-				}}
-			/>
+			{/* <div className="h-px bg-card-border mt-10" /> */}
 
 			{/* Sort Button */}
 			<div className="flex justify-end mt-5">
@@ -199,16 +206,18 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 					</span>
 				</button>
 			</div>
-
 			{/* Posts List */}
-			<ul>
+			<ul className="border-card rounded-card bg-card mt-5 backdrop-blur-xs">
 				{sortedData.map((el, index) => (
-					<li key={el.id} className="list-none mt-[60px]">
+					<li
+						key={el.id}
+						className="list-none border-b border-card-border last:border-b-0 p-4"
+					>
 						{/* Post Content */}
-						<div className="flex items-center mt-2.5">
+						<div className="flex items-center ">
 							{/* Post Image */}
 							<div
-								className="h-[120px] aspect-video bg-card border border-card-border rounded-md cursor-pointer overflow-hidden relative"
+								className="h-[80px] aspect-video bg-card border border-card-border rounded-card cursor-pointer overflow-hidden relative"
 								onClick={onClickMoveToPage(`/library/${el.slug || el.id}`)}
 							>
 								{el.thumbnail && !failedImages[el.id] ? (
@@ -223,21 +232,21 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 							</div>
 
 							{/* Post Info */}
-							<div className="p-4 flex flex-col justify-between h-30">
+							<div className="flex flex-col justify-between ml-4">
 								{/* Post Title */}
 								<h2
 									className="flex cursor-pointer"
 									onClick={onClickMoveToPage(`/library/${el.slug || el.id}`)}
 								>
-									<span className="block text-sub-text italic text-2xl font-semibold">
+									<span className="block text-sub-text italic text-xl font-semibold">
 										{isSorted ? sortedData.length - index : index + 1}.
 									</span>
-									<span className="block text-sub-text-dark text-2xl font-semibold ml-2.5 hover:text-theme-primary transition-colors">
+									<span className="block text-sub-text-dark text-xl font-semibold ml-2.5 hover:text-theme-primary transition-colors">
 										{el.title}
 									</span>
 								</h2>
-								<div className="">
-									<p className="text-sub-text cursor-pointer hover:text-main-text transition-colors">
+								<div className="mt-2">
+									<p className="text-sub-text cursor-pointer hover:text-main-text transition-colors text-sm">
 										{el.subtitle}
 									</p>
 									<span className="text-sub-text text-sm">
