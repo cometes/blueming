@@ -46,7 +46,7 @@ export default function RadioItem({
 			</span>
 			<span
 				className={cn(
-					"ml-2 transition-colors",
+					"ml-2 transition-colors break-keep",
 					checked ? "text-theme-primary font-medium" : "text-sub-text"
 				)}
 			>

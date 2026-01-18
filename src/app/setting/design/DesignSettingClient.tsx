@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { ImagePlus, Trash2 } from "lucide-react";
+import { ImagePlus, Trash2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ColorPicker } from "@/components/ui/color-picker";
@@ -18,6 +18,15 @@ import { useModal } from "@/hooks/useModal";
 import { useSettingDesign } from "@/hooks/useSettingDesign";
 import WidgetSetting from "@/components/setting/widget";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
+import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 
 const BACKGROUND_TYPES = {
 	IMAGE: "이미지",
@@ -50,16 +59,35 @@ export default function DesignSettingClient() {
 	} = useSettingDesign();
 
 	const { showModal } = useModal();
-	const [showResetConfirm, setShowResetConfirm] = useState(false);
+	const [showResetDialog, setShowResetDialog] = useState(false);
 	useSettingStatus("design", isDirty ? "dirty" : "saved");
+	useSettingHeaderAction(
+		<Button
+			type="submit"
+			form="setting-form-design"
+			variant="ghost"
+			size="icon"
+			disabled={!isDirty}
+			aria-label="저장하기"
+			title="저장하기"
+			className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+			style={{
+				transition: "all 0.3s ease-in-out",
+			}}
+		>
+			<Save size={16} />
+		</Button>,
+		[isDirty]
+	);
 
-	const confirmReset = () => {
+	const handleReset = () => {
 		onClickReset();
-		setShowResetConfirm(false);
+		setShowResetDialog(false);
 	};
 
 	return (
 		<form
+			id="setting-form-design"
 			onSubmit={(e) => {
 				e.preventDefault();
 				onClickSubmit();
@@ -311,42 +339,52 @@ export default function DesignSettingClient() {
 
 			{/* Submit Buttons */}
 			<div className="flex justify-end gap-3 pt-6">
-				{showResetConfirm ? (
-					<div className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-						<span className="text-sm text-red-700 dark:text-red-300">
-							정말 초기화할까요?
-						</span>
-						<Button
-							type="button"
-							variant="destructive"
-							size="sm"
-							onClick={confirmReset}
-						>
-							O
-						</Button>
+				<Button
+					type="button"
+					onClick={() => setShowResetDialog(true)}
+					className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
+					style={{
+						transition: "all 0.3s ease-in-out",
+					}}
+				>
+					초기화하기
+				</Button>
+
+				{/* 저장 버튼은 헤더로 이동 */}
+			</div>
+
+			<Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+				<DialogContent className="rounded-card border-card bg-card-bg backdrop-blur-sm">
+					<DialogHeader>
+						<DialogTitle>디자인 초기화</DialogTitle>
+						<DialogDescription>
+							정말 디자인 설정을 초기화할까요? 모든 설정이 기본값으로
+							돌아갑니다.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
 						<Button
 							type="button"
 							variant="outline"
-							size="sm"
-							onClick={() => setShowResetConfirm(false)}
+							onClick={() => setShowResetDialog(false)}
+							className="rounded-card border-card bg-card-bg"
 						>
-							X
+							취소
 						</Button>
-					</div>
-				) : (
-					<Button
-						type="button"
-						variant="destructive"
-						onClick={() => setShowResetConfirm(true)}
-					>
-						초기화하기
-					</Button>
-				)}
-
-				<Button type="submit" disabled={!isDirty}>
-					저장하기
-				</Button>
-			</div>
+						<Button
+							type="button"
+							variant="destructive"
+							onClick={handleReset}
+							className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
+							style={{
+								transition: "all 0.3s ease-in-out",
+							}}
+						>
+							초기화
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</form>
 	);
 }

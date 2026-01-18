@@ -21,6 +21,8 @@ import SimpleTiptapToolbar from "@/components/tiptap/SimpleTiptapToolbar";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
+import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
+import { Save } from "lucide-react";
 import {
 	setSettingsProfile,
 	ProfileData,
@@ -237,6 +239,24 @@ export default function ProfileSettingClient() {
 	}, [profileData, editorContent, settings.main?.profile, isSyncing]);
 
 	useSettingStatus("profile", isDirty ? "dirty" : "saved");
+	useSettingHeaderAction(
+		<Button
+			type="submit"
+			form="setting-form-profile"
+			variant="ghost"
+			size="icon"
+			disabled={!isDirty}
+			aria-label="저장하기"
+			title="저장하기"
+			className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+			style={{
+				transition: "all 0.3s ease-in-out",
+			}}
+		>
+			<Save size={16} />
+		</Button>,
+		[isDirty]
+	);
 
 	const handleInputChange = useCallback(
 		(field: keyof ProfileData, value: string) => {
@@ -374,6 +394,7 @@ export default function ProfileSettingClient() {
 			/>
 
 			<form
+				id="setting-form-profile"
 				onSubmit={(e) => {
 					e.preventDefault();
 					handleSave();
@@ -463,19 +484,20 @@ export default function ProfileSettingClient() {
 				<div className="flex justify-end gap-3 pt-6">
 					<Button
 						type="button"
-						variant="destructive"
 						onClick={() => setShowResetDialog(true)}
+						className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
+						style={{
+							transition: "all 0.3s ease-in-out",
+						}}
 					>
 						초기화하기
 					</Button>
-					<Button type="submit" disabled={!isDirty}>
-						저장하기
-					</Button>
+					{/* 저장 버튼은 헤더로 이동 */}
 				</div>
 
 				{/* Reset Confirmation Dialog */}
 				<Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-					<DialogContent>
+					<DialogContent className="rounded-card border-card bg-card-bg backdrop-blur-sm">
 						<DialogHeader>
 							<DialogTitle>프로필 초기화</DialogTitle>
 							<DialogDescription>
@@ -484,12 +506,22 @@ export default function ProfileSettingClient() {
 						</DialogHeader>
 						<DialogFooter>
 							<Button
+								type="button"
 								variant="outline"
 								onClick={() => setShowResetDialog(false)}
+								className="rounded-card border-card bg-card-bg"
 							>
 								취소
 							</Button>
-							<Button variant="destructive" onClick={handleReset}>
+							<Button
+								type="button"
+								variant="destructive"
+								onClick={handleReset}
+								className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
+								style={{
+									transition: "all 0.3s ease-in-out",
+								}}
+							>
 								초기화
 							</Button>
 						</DialogFooter>

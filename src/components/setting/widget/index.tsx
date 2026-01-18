@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Trash2, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -10,6 +11,7 @@ import RadioItem from "@/components/items/RadioItem";
 import { useSettingDesign } from "@/hooks/useSettingDesign";
 import { cn } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
+import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 
 interface WidgetSettings {
 	background: string;
@@ -19,6 +21,7 @@ interface WidgetSettings {
 	borderWidth: number;
 	blur: number;
 	borderImage: string;
+	borderImageType?: "full" | "corner";
 }
 
 interface CardSettings extends WidgetSettings {
@@ -47,6 +50,9 @@ export default function WidgetSetting({
 }: WidgetSettingProps) {
 	const { lightPreset, darkPreset, presetTypes, radiusTypes, lineTypes } =
 		useSettingDesign();
+
+	const [isBorderImageModalOpen, setIsBorderImageModalOpen] = useState(false);
+	const [borderImageThumbnail, setBorderImageThumbnail] = useState("");
 
 	const applyPreset = (presetType: string) => {
 		if (presetType === PRESET_TYPES.LIGHT) {
@@ -88,7 +94,12 @@ export default function WidgetSetting({
 					{/* 위젯 프리뷰 */}
 					<div className="flex flex-col items-center p-8 rounded-card border-card bg-card-bg filter-blur-card mb-8 relative">
 						<div
-							className="relative z-10 flex items-center justify-center h-[100px] aspect-[3/1] bg-clip-padding transition-all"
+							className={cn(
+								"relative z-10 flex items-center justify-center h-[100px] aspect-[3/1] bg-clip-padding transition-all",
+								widget.borderImage &&
+									widget.borderImageType === "corner" &&
+									"border-corner-image"
+							)}
 							style={{
 								borderStyle: widget.borderStyle,
 								borderWidth: `${widget.borderWidth}px`,
@@ -96,9 +107,51 @@ export default function WidgetSetting({
 								borderColor: widget.borderColor,
 								backgroundColor: widget.background,
 								backdropFilter: `blur(${widget.blur}px)`,
+								...(widget.borderImage &&
+									widget.borderImageType === "full" && {
+										borderImage: `url("${widget.borderImage}") ${widget.borderWidth} fill`,
+										borderImageSlice: widget.borderWidth,
+									}),
+								...(widget.borderImage &&
+									widget.borderImageType === "corner" &&
+									({
+										"--corner-image": `url("${widget.borderImage}")`,
+									} as React.CSSProperties)),
 							}}
 						>
 							<p className="text-sub-text font-medium">위젯 프리뷰입니다.</p>
+							{widget.borderImage && widget.borderImageType === "corner" && (
+								<>
+									<div
+										className="absolute top-0 left-0 w-[30px] h-[30px] bg-no-repeat bg-contain"
+										style={{
+											backgroundImage: `url("${widget.borderImage}")`,
+											backgroundPosition: "top left",
+										}}
+									/>
+									<div
+										className="absolute top-0 right-0 w-[30px] h-[30px] bg-no-repeat bg-contain"
+										style={{
+											backgroundImage: `url("${widget.borderImage}")`,
+											backgroundPosition: "top right",
+										}}
+									/>
+									<div
+										className="absolute bottom-0 left-0 w-[30px] h-[30px] bg-no-repeat bg-contain"
+										style={{
+											backgroundImage: `url("${widget.borderImage}")`,
+											backgroundPosition: "bottom left",
+										}}
+									/>
+									<div
+										className="absolute bottom-0 right-0 w-[30px] h-[30px] bg-no-repeat bg-contain"
+										style={{
+											backgroundImage: `url("${widget.borderImage}")`,
+											backgroundPosition: "bottom right",
+										}}
+									/>
+								</>
+							)}
 						</div>
 						<img
 							src="/꼬솜.png"
@@ -157,18 +210,30 @@ export default function WidgetSetting({
 									위젯 모서리 둥글기
 								</h3>
 							</div>
-							<div className="grid grid-cols-4 gap-2 flex-1 max-w-sm">
-								{radiusTypes.map((el) => (
-									<RadioItem
-										key={el}
-										onClickRadio={() =>
-											updateDesignSetting("widget.borderRadius", el)
-										}
-										checked={widget.borderRadius === el}
-										content={`${el}px`}
-										className="p-2"
-									/>
-								))}
+							<div className="flex items-center gap-4 flex-1 max-w-md w-full">
+								<Slider
+									min={0}
+									max={15}
+									step={1}
+									value={[widget.borderRadius]}
+									onValueChange={(val) =>
+										updateDesignSetting("widget.borderRadius", val[0])
+									}
+									className="flex-1 min-w-[150px]"
+								/>
+								<Input
+									type="number"
+									min={0}
+									max={15}
+									value={widget.borderRadius}
+									onChange={(e) =>
+										updateDesignSetting(
+											"widget.borderRadius",
+											Number(e.target.value)
+										)
+									}
+									className="w-20 rounded-card border-card bg-card-bg"
+								/>
 							</div>
 						</div>
 
@@ -261,34 +326,93 @@ export default function WidgetSetting({
 								</h3>
 								<p className="text-xs text-sub-text-light mt-1">권장 90 * 90</p>
 							</div>
-							<div className="flex items-center gap-3">
-								<div className="w-24 h-24 rounded-card border-card bg-card-bg overflow-hidden flex items-center justify-center">
+							<div className="flex flex-col gap-3 flex-1">
+								<div className="flex items-center gap-3">
 									{widget.borderImage ? (
-										<img
-											src={widget.borderImage}
-											alt="border"
-											className="w-full h-full object-cover"
-										/>
+										<>
+											<div className="w-24 h-24 rounded-card border-card bg-card-bg overflow-hidden flex items-center justify-center">
+												<img
+													src={widget.borderImage}
+													alt="border"
+													className="w-full h-full object-cover"
+												/>
+											</div>
+											<Button
+												variant="outline"
+												size="sm"
+												onClick={() =>
+													updateDesignSetting("widget.borderImage", "")
+												}
+												className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+												style={{
+													transition: "all 0.3s ease-in-out",
+												}}
+											>
+												<Trash2 size={14} className="mr-2" />
+												비우기
+											</Button>
+										</>
 									) : (
-										<span className="text-[10px] text-gray-400">
-											이미지 없음
-										</span>
+										<div
+											onClick={() => setIsBorderImageModalOpen(true)}
+											className="w-24 h-24 rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors"
+										>
+											<ImagePlus
+												size={28}
+												color="#9BA2A8"
+												absoluteStrokeWidth={true}
+											/>
+											<span className="text-[10px] text-gray-400">
+												Upload Image
+											</span>
+										</div>
 									)}
 								</div>
-								<Button
-									variant="outline"
-									size="sm"
-									onClick={() => updateDesignSetting("widget.borderImage", "")}
-									className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
-									style={{
-										transition: "all 0.3s ease-in-out",
-									}}
-								>
-									<Trash2 size={14} className="mr-2" />
-									비우기
-								</Button>
+								{widget.borderImage && (
+									<div className="flex items-center gap-3">
+										<span className="text-sm text-sub-text min-w-[100px]">
+											적용 방식:
+										</span>
+										<div className="grid grid-cols-2 gap-2 ">
+											<RadioItem
+												onClickRadio={() =>
+													updateDesignSetting("widget.borderImageType", "full")
+												}
+												checked={
+													widget.borderImageType === "full" ||
+													!widget.borderImageType
+												}
+												content="전체"
+												className="p-2"
+											/>
+											<RadioItem
+												onClickRadio={() =>
+													updateDesignSetting(
+														"widget.borderImageType",
+														"corner"
+													)
+												}
+												checked={widget.borderImageType === "corner"}
+												content="코너만"
+												className="p-2"
+											/>
+										</div>
+									</div>
+								)}
 							</div>
 						</div>
+
+						<ImageUploadDialog
+							isOpen={isBorderImageModalOpen}
+							onOpenChange={setIsBorderImageModalOpen}
+							thumbnail={borderImageThumbnail}
+							setThumbnail={setBorderImageThumbnail}
+							onUpload={(url) => {
+								updateDesignSetting("widget.borderImage", url);
+								setBorderImageThumbnail("");
+								setIsBorderImageModalOpen(false);
+							}}
+						/>
 					</div>
 				</div>
 			</section>
@@ -335,7 +459,7 @@ export default function WidgetSetting({
 
 					<div>
 						{/* 프리셋 */}
-						<div className="section-box flex items-center mt-4">
+						<div className="section-box flex items-center my-4">
 							<div className="text-box w-[220px] pr-5">
 								<h3 className="font-medium text-sub-text">프리셋</h3>
 							</div>
@@ -352,7 +476,7 @@ export default function WidgetSetting({
 						</div>
 
 						{card.type === PRESET_TYPES.CUSTOM && (
-							<div className="pt-4 border-t border-dashed">
+							<div className="pt-4 border-t border-solid">
 								{/* 카드 배경 컬러 */}
 								<div className="section-box flex items-center mt-4">
 									<div className="text-box w-[220px] pr-5">
@@ -412,18 +536,30 @@ export default function WidgetSetting({
 											카드 모서리 둥글기
 										</h3>
 									</div>
-									<div className="grid grid-cols-4 gap-2 flex-1 max-w-sm">
-										{radiusTypes.map((el) => (
-											<RadioItem
-												key={el}
-												onClickRadio={() =>
-													updateDesignSetting("card.borderRadius", el)
-												}
-												checked={card.borderRadius === el}
-												content={`${el}px`}
-												className="p-2"
-											/>
-										))}
+									<div className="flex items-center gap-4 flex-1 max-w-md w-full">
+										<Slider
+											min={0}
+											max={15}
+											step={1}
+											value={[card.borderRadius]}
+											onValueChange={(val) =>
+												updateDesignSetting("card.borderRadius", val[0])
+											}
+											className="flex-1 min-w-[150px]"
+										/>
+										<Input
+											type="number"
+											min={0}
+											max={15}
+											value={card.borderRadius}
+											onChange={(e) =>
+												updateDesignSetting(
+													"card.borderRadius",
+													Number(e.target.value)
+												)
+											}
+											className="w-20 rounded-card border-card bg-card-bg"
+										/>
 									</div>
 								</div>
 
