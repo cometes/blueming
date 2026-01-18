@@ -442,7 +442,7 @@ body {
 
 	/* Backdrop blur utilities */
 	.backdrop-blur-card {
-		backdrop-filter: blur(var(--widget-blur));
+		backdrop-filter: blur(var(--card-blur));
 	}
 	.backdrop-blur-widget {
 		backdrop-filter: blur(var(--size-widget-blur));

@@ -86,6 +86,7 @@ const buildThemeStyle = (settings: ThemeSettings | null) => {
 		`--card-border-style:solid`,
 		`--card-shadow:${design.card?.boxShadow ?? "none"}`,
 		`--card-translate-y:${design.card?.translateY ?? 0}px`,
+		`--card-blur:${design.card?.blur ?? 0}px`,
 	];
 
 	if (design.background?.type === "이미지" && design.background?.image) {

@@ -90,7 +90,7 @@ export default function Layout({ children }: LayoutProps) {
 				<header
 					className={cn(
 						"flex justify-between items-center px-6 py-0 w-full h-12",
-						"sticky top-0 left-0 border-b border-card-bg z-50",
+						"fixed top-0 left-0 border-b border-card-bg z-50",
 						"backdrop-blur-sm",
 						isHeaderVisible ? "translate-y-0" : "-translate-y-full"
 					)}
@@ -117,7 +117,7 @@ export default function Layout({ children }: LayoutProps) {
 							: "max-w-5xl px-5 h-auto"
 				)}
 			>
-				<div className="w-full h-calc(100vh-48px) flex items-start justify-center gap-6 relative z-10">
+				<div className="w-full h-dvh flex items-start justify-center gap-6 relative z-10">
 					{!shouldHideMenu && <WidgetMenu />}
 					{children}
 				</div>
