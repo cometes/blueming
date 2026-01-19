@@ -17,6 +17,7 @@ export default function WidgetWeatherClock() {
 
 	const enabled = weatherClockSettings?.enabled ?? true;
 	const city = weatherClockSettings?.city || "Seoul";
+	const backgroundImage = weatherClockSettings?.backgroundImage || "";
 
 	// Fetch weather data
 	useEffect(() => {
@@ -76,18 +77,18 @@ export default function WidgetWeatherClock() {
 
 	const formattedDate = useMemo(() => {
 		if (!currentTime) return "";
-		const month = currentTime.getMonth() + 1;
-		const day = currentTime.getDate();
+		const month = currentTime.getUTCMonth() + 1;
+		const day = currentTime.getUTCDate();
 		const weekday = ["일", "월", "화", "수", "목", "금", "토"][
-			currentTime.getDay()
+			currentTime.getUTCDay()
 		];
 		return `${month}월 ${day}일 ${weekday}요일`;
 	}, [currentTime]);
 
 	const formattedTime = useMemo(() => {
 		if (!currentTime) return "";
-		const hours = String(currentTime.getHours()).padStart(2, "0");
-		const minutes = String(currentTime.getMinutes()).padStart(2, "0");
+		const hours = String(currentTime.getUTCHours()).padStart(2, "0");
+		const minutes = String(currentTime.getUTCMinutes()).padStart(2, "0");
 		return `${hours}:${minutes}`;
 	}, [currentTime]);
 
@@ -121,13 +122,29 @@ export default function WidgetWeatherClock() {
 
 	return (
 		<div
-			className="widget-wrapper weather-widget"
-			style={{ "--weather-icon-size": "0.5em" } as React.CSSProperties}
+			className="widget-wrapper weather-widget relative overflow-hidden"
+			style={{
+				"--weather-icon-size": "0.5em",
+				...(backgroundImage && {
+					backgroundImage: `url("${backgroundImage}")`,
+					backgroundSize: "cover",
+					backgroundPosition: "center",
+				}),
+			} as React.CSSProperties}
 		>
-			<div className="weather-widget-shell p-3 pt-0 h-full">
-				<div className="weather-widget-card h-full flex flex-col justify-between">
+			{/* 배경 이미지가 있을 때 텍스트 가독성을 위한 오버레이 */}
+			{backgroundImage && (
+				<div className="absolute inset-0 bg-black/20 pointer-events-none" />
+			)}
+
+			<div className="weather-widget-shell p-3 pt-0 h-full relative z-10">
+				<div
+					className={`weather-widget-card h-full flex flex-col justify-between ${
+						backgroundImage ? "text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" : ""
+					}`}
+				>
 					<div className="flex justify-between items-center">
-						<div className="weather-widget-temp ">
+						<div className="weather-widget-temp">
 							<p className="text-3xl">{weather.temperature}°</p>
 							<div className="weather-widget-city flex items-center">
 								<MapPin className="weather-widget-pin w-3.5" />

@@ -362,7 +362,7 @@ export default function AssetSettingClient() {
 				<div
 					className="grid gap-1.5"
 					style={{
-						gridTemplateColumns: "repeat(4, minmax(160px, 1fr))",
+						gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
 					}}
 				>
 					{visibleAssets.map((asset) => (
