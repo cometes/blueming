@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
-import { ImagePlus, Trash2, Save } from "lucide-react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { ImagePlus, Trash2, Save, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ColorPicker } from "@/components/ui/color-picker";
@@ -14,11 +14,15 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import RadioItem from "@/components/items/RadioItem";
-import { useModal } from "@/hooks/useModal";
 import { useSettingDesign } from "@/hooks/useSettingDesign";
 import WidgetSetting from "@/components/setting/widget";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
+import { useSettings } from "@/contexts/SettingsContext";
+import { setSettingsGeneralFontRegistry } from "@/queries/set/setSettingsGeneralFontRegistry";
+import FontRegisterDialog from "@/components/modal/FontRegisterDialog";
+import { useFileUpload } from "@/hooks/useFileUpload";
+import { toast } from "sonner";
 import {
 	Dialog,
 	DialogContent,
@@ -43,6 +47,12 @@ const FONT_SAMPLE_TEXTS = {
 const ICON_SIZE = 28;
 const ICON_COLOR = "#9BA2A8";
 
+// 로컬 이미지 미리보기를 위한 타입
+interface PendingImage {
+	file: File;
+	previewUrl: string;
+}
+
 export default function DesignSettingClient() {
 	const {
 		BGTypes,
@@ -58,16 +68,30 @@ export default function DesignSettingClient() {
 		isDirty,
 	} = useSettingDesign();
 
-	const { showModal } = useModal();
+	const { general, updateGeneral, refreshSettings } = useSettings();
+	const { uploadFile, state: uploadState } = useFileUpload();
 	const [showResetDialog, setShowResetDialog] = useState(false);
-	useSettingStatus("design", isDirty ? "dirty" : "saved");
+	const [isFontDialogOpen, setIsFontDialogOpen] = useState(false);
+
+	// pending 배경 이미지 저장
+	const [pendingBgImage, setPendingBgImage] = useState<PendingImage | null>(null);
+	// pending 위젯 보더 이미지 저장
+	const [pendingBorderImage, setPendingBorderImage] = useState<PendingImage | null>(null);
+
+	const hasPendingImage = pendingBgImage !== null || pendingBorderImage !== null;
+
+	useSettingStatus("design", isDirty || hasPendingImage ? "dirty" : "saved");
+	const fontRegistry = useMemo(
+		() => general?.fontRegistry ?? [],
+		[general?.fontRegistry]
+	);
 	useSettingHeaderAction(
 		<Button
 			type="submit"
 			form="setting-form-design"
 			variant="ghost"
 			size="icon"
-			disabled={!isDirty}
+			disabled={(!isDirty && !hasPendingImage) || uploadState.loading}
 			aria-label="저장하기"
 			title="저장하기"
 			className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
@@ -77,24 +101,118 @@ export default function DesignSettingClient() {
 		>
 			<Save size={16} />
 		</Button>,
-		[isDirty]
+		[isDirty, hasPendingImage, uploadState.loading]
 	);
 
+	// 배경 이미지 파일 선택 시 로컬 미리보기만 표시
+	const handleFileSelect = (file: File) => {
+		const previewUrl = URL.createObjectURL(file);
+		setPendingBgImage({ file, previewUrl });
+	};
+
+	// 배경 이미지 비우기
+	const handleImageClear = () => {
+		if (pendingBgImage) {
+			URL.revokeObjectURL(pendingBgImage.previewUrl);
+			setPendingBgImage(null);
+		}
+		updateDesignSetting("background.image", "");
+	};
+
+	// 보더 이미지 파일 선택 시 로컬 미리보기만 표시
+	const handleBorderImageSelect = (file: File) => {
+		const previewUrl = URL.createObjectURL(file);
+		setPendingBorderImage({ file, previewUrl });
+	};
+
+	// 저장 버튼 클릭 시 실행
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		try {
+			let shouldDelay = false;
+
+			// 1. pending 배경 이미지가 있으면 먼저 업로드
+			if (pendingBgImage) {
+				const url = await uploadFile(pendingBgImage.file);
+				updateDesignSetting("background.image", url);
+				URL.revokeObjectURL(pendingBgImage.previewUrl);
+				setPendingBgImage(null);
+				shouldDelay = true;
+			}
+
+			// 2. pending 보더 이미지가 있으면 업로드
+			if (pendingBorderImage) {
+				const url = await uploadFile(pendingBorderImage.file);
+				updateDesignSetting("widget.borderImage", url);
+				URL.revokeObjectURL(pendingBorderImage.previewUrl);
+				setPendingBorderImage(null);
+				shouldDelay = true;
+			}
+
+			// 3. 이미지 업로드가 있었다면 약간의 딜레이 후 저장, 없으면 바로 저장
+			if (shouldDelay) {
+				setTimeout(() => {
+					onClickSubmit();
+				}, 100);
+			} else {
+				onClickSubmit();
+			}
+		} catch (error) {
+			const message =
+				error instanceof Error
+					? error.message
+					: "저장에 실패했습니다.";
+			toast.error(message);
+		}
+	};
+
 	const handleReset = () => {
+		// pending 이미지 URL 정리
+		if (pendingBgImage) {
+			URL.revokeObjectURL(pendingBgImage.previewUrl);
+			setPendingBgImage(null);
+		}
+		if (pendingBorderImage) {
+			URL.revokeObjectURL(pendingBorderImage.previewUrl);
+			setPendingBorderImage(null);
+		}
 		onClickReset();
 		setShowResetDialog(false);
 	};
 
+	// 컴포넌트 언마운트 시 blob URL 정리
+	useEffect(() => {
+		return () => {
+			if (pendingBgImage) {
+				URL.revokeObjectURL(pendingBgImage.previewUrl);
+			}
+			if (pendingBorderImage) {
+				URL.revokeObjectURL(pendingBorderImage.previewUrl);
+			}
+		};
+	}, [pendingBgImage, pendingBorderImage]);
+
+	const handleUpdateFontRegistry = useCallback(
+		async (nextRegistry) => {
+			try {
+				await setSettingsGeneralFontRegistry(nextRegistry);
+				updateGeneral?.({ fontRegistry: nextRegistry });
+				await refreshSettings?.({ broadcast: true });
+				toast.success("폰트가 저장되었습니다.");
+			} catch {
+				toast.error("폰트 저장에 실패했습니다.");
+			}
+		},
+		[refreshSettings, updateGeneral]
+	);
+
 	return (
 		<form
 			id="setting-form-design"
-			onSubmit={(e) => {
-				e.preventDefault();
-				onClickSubmit();
-			}}
+			onSubmit={handleSubmit}
 			className="space-y-8"
 		>
-			{/* Temporary: ImageUploadModal will be created later */}
 
 			{/* 배경 디자인 설정 Section */}
 			<section>
@@ -126,50 +244,63 @@ export default function DesignSettingClient() {
 								<h3 className="font-medium text-sub-text">배경 이미지</h3>
 							</div>
 							<div className="flex items-center gap-3">
-								{background.image ? (
-									<div className="w-3xs aspect-video rounded-card border-card bg-card-bg overflow-hidden">
+								<label
+									className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
+										uploadState.loading ? "opacity-60 pointer-events-none" : ""
+									}`}
+								>
+									{pendingBgImage?.previewUrl || background.image ? (
 										<img
-											src={background.image}
+											src={pendingBgImage?.previewUrl || background.image}
 											alt="배경 이미지"
 											className="w-full h-full object-contain"
 										/>
-									</div>
-								) : (
-									<div
-										onClick={showModal}
-										className="w-3xs aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors"
-									>
-										<ImagePlus
-											size={ICON_SIZE}
-											color={ICON_COLOR}
-											absoluteStrokeWidth={true}
-										/>
-										<span className="text-xs text-gray-500 dark:text-gray-400">
-											이미지 업로드
-										</span>
-									</div>
-								)}
-								<Button
-									type="button"
-									variant="outline"
-									size="sm"
-									onClick={() => {
-										updateDesignSetting("background.image", "");
-									}}
-									className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
-									style={{
-										transition: "all 0.3s ease-in-out",
-									}}
-								>
-									<Trash2
-										size={14}
-										className="mr-2"
+									) : (
+										<>
+											<ImagePlus
+												size={ICON_SIZE}
+												color={ICON_COLOR}
+												absoluteStrokeWidth={true}
+											/>
+											<span className="text-xs text-gray-500 dark:text-gray-400">
+												이미지 업로드
+											</span>
+										</>
+									)}
+									<input
+										type="file"
+										accept="image/*"
+										className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+										onChange={(event) => {
+											const file = event.target.files?.[0];
+											if (file) {
+												handleFileSelect(file);
+											}
+											event.target.value = "";
+										}}
+									/>
+								</label>
+								{(pendingBgImage || background.image) && (
+									<Button
+										type="button"
+										variant="outline"
+										size="sm"
+										onClick={handleImageClear}
+										className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
 										style={{
 											transition: "all 0.3s ease-in-out",
 										}}
-									/>
-									비우기
-								</Button>
+									>
+										<Trash2
+											size={14}
+											className="mr-2"
+											style={{
+												transition: "all 0.3s ease-in-out",
+											}}
+										/>
+										비우기
+									</Button>
+								)}
 							</div>
 						</div>
 					)}
@@ -206,13 +337,30 @@ export default function DesignSettingClient() {
 				widget={widget}
 				card={card}
 				updateDesignSetting={updateDesignSetting}
+				pendingBorderImage={pendingBorderImage?.file || null}
+				onBorderImageSelect={handleBorderImageSelect}
+				isUploading={uploadState.loading}
 			/>
 
 			<Separator className="my-12" />
 
 			{/* 폰트 설정 Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">폰트 설정</h2>
+				<div className="flex items-center justify-between">
+					<h2 className="text-[20px] font-semibold">폰트 설정</h2>
+					<Button
+						type="button"
+						variant="outline"
+						onClick={() => setIsFontDialogOpen(true)}
+						className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+						style={{
+							transition: "all 0.3s ease-in-out",
+						}}
+					>
+						<Plus size={14} className="mr-2" />
+						폰트 등록
+					</Button>
+				</div>
 				<div className="section-wrap mt-6">
 					{/* Font Preview */}
 					<div className="font-sample-wrap flex flex-col items-center p-7 rounded-card border-card bg-card-bg filter-blur-card mt-4">
@@ -385,6 +533,12 @@ export default function DesignSettingClient() {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
+			<FontRegisterDialog
+				open={isFontDialogOpen}
+				onOpenChange={setIsFontDialogOpen}
+				fontRegistry={fontRegistry}
+				onUpdate={handleUpdateFontRegistry}
+			/>
 		</form>
 	);
 }

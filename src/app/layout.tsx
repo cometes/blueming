@@ -15,6 +15,7 @@ type ThemeSettings = {
 			desc?: string;
 			shareImage?: string;
 		};
+		fontRegistry?: FontRegistryItem[];
 		design?: {
 			font?: {
 				bodyFontFamily?: string;
@@ -44,6 +45,14 @@ type ThemeSettings = {
 			};
 		};
 	};
+};
+
+type FontRegistryItem = {
+	id?: string;
+	name?: string;
+	family?: string;
+	url?: string;
+	source?: "url" | "file";
 };
 
 type AppSettings = ThemeSettings & {
@@ -85,7 +94,6 @@ const buildThemeStyle = (settings: ThemeSettings | null) => {
 		`--card-border-style:solid`,
 		`--card-shadow:${design.card?.boxShadow ?? "none"}`,
 		`--card-translate-y:${design.card?.translateY ?? 0}px`,
-		`--card-blur:${design.card?.blur ?? 0}px`,
 	];
 
 	if (design.background?.type === "이미지" && design.background?.image) {
@@ -116,6 +124,48 @@ const getPreloadImageUrls = (settings: AppSettings | null) => {
 		new Set(urls.filter((url): url is string => !!url))
 	);
 };
+
+const getFontRegistry = (settings: ThemeSettings | null) =>
+	settings?.general?.fontRegistry ?? [];
+
+const getFontFormat = (url: string) => {
+	const cleanUrl = url.split("?")[0];
+	const ext = cleanUrl.split(".").pop()?.toLowerCase();
+	switch (ext) {
+		case "woff2":
+			return "woff2";
+		case "woff":
+			return "woff";
+		case "ttf":
+			return "truetype";
+		case "otf":
+			return "opentype";
+		case "eot":
+			return "embedded-opentype";
+		default:
+			return undefined;
+	}
+};
+
+const isFontFileUrl = (url: string) => {
+	const cleanUrl = url.split("?")[0].toLowerCase();
+	return /\.(woff2|woff|ttf|otf|eot)$/.test(cleanUrl);
+};
+
+const buildFontFaceCSS = (fonts: FontRegistryItem[]) =>
+	fonts
+		.filter(
+			(font) =>
+				font?.family &&
+				font?.url &&
+				(font?.source === "file" || isFontFileUrl(font.url))
+		)
+		.map((font) => {
+			const format = getFontFormat(font.url as string);
+			const formatValue = format ? ` format("${format}")` : "";
+			return `@font-face{font-family:"${font.family}";src:url("${font.url}")${formatValue};font-display:swap;}`;
+		})
+		.join("");
 
 async function getSettings(): Promise<AppSettings | null> {
 	try {
@@ -176,6 +226,8 @@ export default async function RootLayout({
 	const settings = await getSettings();
 	const themeStyle = buildThemeStyle(settings);
 	const preloadImages = getPreloadImageUrls(settings);
+	const fontRegistry = getFontRegistry(settings);
+	const fontFaceCSS = buildFontFaceCSS(fontRegistry);
 	const favicon = settings?.general?.general?.favicon;
 
 	return (
@@ -194,6 +246,22 @@ export default async function RootLayout({
 				{preloadImages.map((url) => (
 					<link key={url} rel="preload" as="image" href={url} />
 				))}
+				{fontRegistry
+					.filter(
+						(font) =>
+							font?.source === "url" && font?.url && !isFontFileUrl(font.url)
+					)
+					.map((font) => (
+						<link
+							key={font.id || font.url}
+							rel="stylesheet"
+							href={font.url as string}
+							data-font-registry="true"
+						/>
+					))}
+				{fontFaceCSS ? (
+					<style data-font-registry="true">{fontFaceCSS}</style>
+				) : null}
 				{themeStyle ? <style>{themeStyle}</style> : null}
 			</head>
 			<body>

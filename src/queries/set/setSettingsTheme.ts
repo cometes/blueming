@@ -6,7 +6,7 @@ export const setSettingsTheme = async (value: unknown) => {
   const authHeader = await getAuthHeader();
   const result = await axios.post(
     "https://api-w5buphcleq-du.a.run.app/settings/general/theme",
-    { value },
+    value,
     {
       headers: {
         "Content-Type": "application/json",

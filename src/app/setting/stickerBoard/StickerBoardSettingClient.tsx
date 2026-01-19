@@ -175,8 +175,6 @@ export default function StickerBoardSettingClient() {
 
 	const components = settings.components ?? [];
 	const pctVisible = components.filter((c) => c.isVisible !== false);
-	const visibleCount = pctVisible.length;
-	const totalCount = components.length;
 
 	return (
 		<section className="space-y-6">
@@ -184,28 +182,9 @@ export default function StickerBoardSettingClient() {
 				<div>
 					<h2 className="text-[20px] font-semibold">스티커보드 설정</h2>
 					<p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-						12x12 컨테이너 안에서 스티커보드 캔버스를 미리봅니다.
+						스티커보드 미리보기
 					</p>
-					<div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-						<span className="inline-flex items-center rounded-full border border-card bg-background/60 px-2 py-0.5 text-gray-600 dark:text-gray-300">
-							캔버스 {ratio.w}×{ratio.h}
-						</span>
-						<span className="inline-flex items-center rounded-full border border-card bg-background/60 px-2 py-0.5 text-gray-600 dark:text-gray-300">
-							스티커 {visibleCount}/{totalCount}
-						</span>
-						{settings.enabled !== undefined && (
-							<span
-								className={[
-									"inline-flex items-center rounded-full border px-2 py-0.5",
-									settings.enabled
-										? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300"
-										: "border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-800 dark:bg-gray-900/30 dark:text-gray-300",
-								].join(" ")}
-							>
-								{settings.enabled ? "노출 중" : "숨김"}
-							</span>
-						)}
-					</div>
+					
 				</div>
 				<Button asChild>
 					<Link href="/setting/stickerBoard/edit">스티커보드 편집하기</Link>
@@ -245,18 +224,7 @@ export default function StickerBoardSettingClient() {
 					</div>
 				</div>
 
-				<div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-					<span>
-						캔버스 비율: {ratio.w} x {ratio.h}
-					</span>
-					<span>· 표시 중 {visibleCount}개</span>
-					{settings.maxStickers !== undefined && (
-						<span>· 최대 스티커 {settings.maxStickers}개</span>
-					)}
-					{settings.allowGuest !== undefined && (
-						<span>· 비회원 {settings.allowGuest ? "허용" : "미허용"}</span>
-					)}
-				</div>
+				
 			</div>
 		</section>
 	);

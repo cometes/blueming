@@ -242,13 +242,30 @@ export default function WidgetMenu() {
 	// -------------------------------------------------------------------------
 
 	const renderLogo = () => {
-		if (design?.logoType !== "이미지" || !design?.logoImage) return null;
+		type MenuDesignWithLogo = typeof design & { logoText?: string; logoImage?: string };
+		const designWithLogo = design as MenuDesignWithLogo;
+
+		if (design?.logoType === "텍스트" && designWithLogo?.logoText) {
+			return (
+				<div
+					className="text-center mb-4 font-bold text-4xl px-4 w-50 h-20 flex items-center justify-center break-keep"
+					style={{
+						color: design.fontColor,
+						fontFamily: "var(--font-title)",
+					}}
+				>
+					{designWithLogo.logoText}
+				</div>
+			);
+		}
+
+		if (design?.logoType !== "이미지" || !designWithLogo?.logoImage) return null;
 
 		return (
 			<div className="max-w-[200px] aspect-square">
 				<Image
 					className="w-full h-full block object-cover object-center"
-					src={design.logoImage}
+					src={designWithLogo.logoImage}
 					alt="Logo"
 					width={200}
 					height={200}
@@ -329,11 +346,14 @@ export default function WidgetMenu() {
 							<a
 								className={cn(
 									"text-sm min-h-9 w-full px-7 flex items-center cursor-pointer",
-									"transition-opacity duration-300 bg-no-repeat bg-contain bg-center",
+									"bg-no-repeat bg-contain bg-center",
 									"hover:opacity-80",
 									textAlignClass
 								)}
-								style={getItemBackgroundStyle(subMenuImage)}
+								style={{
+									...getItemBackgroundStyle(subMenuImage),
+									transition: "opacity 300ms ease",
+								}}
 								onClick={() => {
 									setOpenFolders((prev) => ({
 										...prev,
@@ -356,22 +376,24 @@ export default function WidgetMenu() {
 			<li
 				key={item.uniqueId}
 				className={cn(
-					"w-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
+					"w-full flex flex-col overflow-hidden",
 					textAlignClass
 				)}
+				style={{ transition: "all 300ms ease-in-out" }}
 			>
 				{/* Main Menu Item */}
 				<a
 					onClick={handleMenuClick(item)}
 					className={cn(
 						"cursor-pointer font-medium min-h-10 w-full px-7 flex items-center",
-						"bg-no-repeat bg-contain bg-center hover:opacity-80 transition-opacity",
+						"bg-no-repeat bg-contain bg-center hover:opacity-80",
 						openFolders[item.uniqueId] && "open",
 						textAlignClass
 					)}
 					style={{
 						...getItemBackgroundStyle(item.image),
 						color: design?.fontColor,
+						transition: "opacity 300ms ease",
 					}}
 				>
 					{!item.image && item.name}
@@ -391,9 +413,9 @@ export default function WidgetMenu() {
 					type="button"
 					className={cn(
 						"w-9 h-9 rounded-full flex items-center justify-center cursor-pointer",
-						"transition-all duration-300 ease-in-out",
-						"hover:bg-gray-50/60 hover:animate-jingle"
+						"hover:bg-theme-primary/60 hover:animate-jingle"
 					)}
+					style={{ transition: "all 300ms ease-in-out" }}
 					aria-label="알림"
 				>
 					<Bell size={20} color={design?.fontColor || "#333"} />
@@ -404,8 +426,9 @@ export default function WidgetMenu() {
 					type="button"
 					className={cn(
 						"w-9 h-9 rounded-full flex items-center justify-center cursor-pointer",
-						"transition-all duration-300 ease-in-out hover:bg-gray-50/60"
+						"hover:bg-theme-primary/60"
 					)}
+					style={{ transition: "all 300ms ease-in-out" }}
 					aria-label="음악"
 				>
 					<div className="flex items-end justify-center w-4 h-4">
@@ -442,7 +465,10 @@ export default function WidgetMenu() {
 				)}
 				style={asideBackgroundStyle}
 			>
-				<nav className="w-full h-full flex flex-col justify-center">
+				<nav
+					className="w-full h-full flex flex-col justify-center"
+					style={{ fontFamily: "var(--font-title)" }}
+				>
 					{/* Logo */}
 					{renderLogo()}
 
@@ -502,7 +528,10 @@ export default function WidgetMenu() {
 											{getMenuIcon(item.category)}
 										</button>
 									)}
-									<span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-card bg-card-bg px-2 py-1 text-xs text-sub-text opacity-0 translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0">
+									<span
+										className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-card bg-card-bg px-2 py-1 text-xs text-sub-text opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0"
+										style={{ transition: "all 300ms ease" }}
+									>
 										{item.name}
 									</span>
 								</div>
@@ -541,7 +570,10 @@ export default function WidgetMenu() {
 														>
 															{getMenuIcon(name)}
 														</button>
-														<span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-card bg-card-bg px-2 py-1 text-xs text-sub-text opacity-0 translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0">
+														<span
+															className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-card bg-card-bg px-2 py-1 text-xs text-sub-text opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0"
+															style={{ transition: "all 300ms ease" }}
+														>
 															{name}
 														</span>
 													</div>

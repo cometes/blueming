@@ -21,6 +21,8 @@ interface ImageUploadDialogProps {
 	thumbnail: string;
 	setThumbnail: (url: string) => void;
 	onUpload: (url: string) => void;
+	uploadMode?: "immediate" | "deferred";
+	onFileSelect?: (file: File, previewUrl: string) => void;
 }
 
 export default function ImageUploadDialog({
@@ -29,6 +31,8 @@ export default function ImageUploadDialog({
 	thumbnail,
 	setThumbnail,
 	onUpload,
+	uploadMode = "immediate",
+	onFileSelect,
 }: ImageUploadDialogProps) {
 	const [isUploading, setIsUploading] = useState(false);
 
@@ -38,6 +42,13 @@ export default function ImageUploadDialog({
 		try {
 			const file = event.target.files?.[0];
 			if (!file) return;
+
+			if (uploadMode === "deferred") {
+				const previewUrl = URL.createObjectURL(file);
+				setThumbnail(previewUrl);
+				onFileSelect?.(file, previewUrl);
+				return;
+			}
 
 			setIsUploading(true);
 
@@ -74,11 +85,15 @@ export default function ImageUploadDialog({
 	};
 
 	const handleUpload = () => {
-		if (thumbnail) {
-			onUpload(thumbnail);
+		if (!thumbnail) return;
+
+		onUpload(thumbnail);
+
+		if (uploadMode === "immediate") {
 			setThumbnail("");
-			onOpenChange(false);
 		}
+
+		onOpenChange(false);
 	};
 
 	return (
@@ -134,7 +149,7 @@ export default function ImageUploadDialog({
 						className="w-full sm:w-auto"
 					>
 						<Upload size={14} className="mr-2" />
-						업로드
+						{uploadMode === "deferred" ? "선택" : "업로드"}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

@@ -157,6 +157,13 @@ interface FontDesign {
 	titleFontFamily: string;
 }
 
+interface FontRegistryItem {
+	id: string;
+	name: string;
+	family: string;
+	source: "url" | "file";
+	url: string;
+}
 interface CardDesign {
 	boxShadow: string;
 	borderRadius: number;
@@ -242,6 +249,7 @@ interface GeneralSettings {
 	general?: General;
 	menu?: Menu;
 	design?: Design;
+	fontRegistry?: FontRegistryItem[];
 }
 
 interface SettingsContextType {
@@ -250,6 +258,7 @@ interface SettingsContextType {
 		general: General;
 		menu: Menu;
 		design: Design;
+		fontRegistry?: FontRegistryItem[];
 	};
 	main?: MainSettings;
 	library?: LibrarySettings;
@@ -296,6 +305,7 @@ export type {
 	Menu,
 	Design,
 	General,
+	FontRegistryItem,
 	ThemeItem,
 	EffectSettings,
 	StickerBoardSettings,

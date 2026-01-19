@@ -4,14 +4,13 @@
 import { useEffect, useState } from "react";
 import { ImagePlus, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { getAuthHeader } from "@/queries/getAuthHeader";
+import { useFileUpload } from "@/hooks/useFileUpload";
 import {
 	Dialog,
 	DialogContent,
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-	DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,83 +28,73 @@ export default function SlideAddDialog({
 	onOpenChange,
 	onAdd,
 }: SlideAddDialogProps) {
+	const { uploadFile, state: uploadState } = useFileUpload();
 	const [image, setImage] = useState("");
 	const [url, setUrl] = useState("");
 	const [target, setTarget] = useState(false);
-	const [isUploading, setIsUploading] = useState(false);
+	const [pendingImage, setPendingImage] = useState<{
+		file: File;
+		previewUrl: string;
+	} | null>(null);
 
 	useEffect(() => {
 		if (!isOpen) {
+			if (pendingImage) {
+				URL.revokeObjectURL(pendingImage.previewUrl);
+			}
 			setImage("");
 			setUrl("");
 			setTarget(false);
+			setPendingImage(null);
 		}
-	}, [isOpen]);
+	}, [isOpen, pendingImage]);
 
-	const handleFileUpload = async (
-		event: React.ChangeEvent<HTMLInputElement>
-	) => {
-		try {
-			const file = event.target.files?.[0];
-			if (!file) return;
-
-			setIsUploading(true);
-
-			const formData = new FormData();
-			formData.append("image", file);
-
-			const authHeader = await getAuthHeader();
-			const response = await fetch(
-				"https://api-w5buphcleq-du.a.run.app/images/uploadImage",
-				{
-					method: "POST",
-					headers: authHeader,
-					body: formData,
-				}
-			);
-
-			if (!response.ok) {
-				throw new Error("Upload failed");
+	useEffect(() => {
+		return () => {
+			if (pendingImage) {
+				URL.revokeObjectURL(pendingImage.previewUrl);
 			}
+		};
+	}, [pendingImage]);
 
-			const data = await response.json();
-			const uploadedUrl = data.file?.url;
-
-			if (uploadedUrl) {
-				setImage(uploadedUrl);
-			} else {
-				toast.error("URL이 반환되지 않았습니다.");
-			}
-		} catch {
-			toast.error("이미지 업로드 중 오류가 발생했습니다.");
-		} finally {
-			setIsUploading(false);
+	const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+		if (pendingImage) {
+			URL.revokeObjectURL(pendingImage.previewUrl);
 		}
+		const previewUrl = URL.createObjectURL(file);
+		setPendingImage({ file, previewUrl });
+		setImage(previewUrl);
+		event.target.value = "";
 	};
 
-	const handleAdd = () => {
-		if (!image) {
+	const handleAdd = async () => {
+		if (!pendingImage) {
 			toast.error("이미지를 업로드해주세요.");
 			return;
 		}
-
-		onAdd({ image, url, target });
-		setImage("");
-		setUrl("");
-		setTarget(false);
-		onOpenChange(false);
+		try {
+			const uploadedUrl = await uploadFile(pendingImage.file);
+			onAdd({ image: uploadedUrl, url, target });
+			URL.revokeObjectURL(pendingImage.previewUrl);
+			setPendingImage(null);
+			setImage("");
+			setUrl("");
+			setTarget(false);
+			onOpenChange(false);
+		} catch {
+			toast.error("이미지 업로드 중 오류가 발생했습니다.");
+		}
 	};
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-2xl w-full bg-card-bg border-card rounded-card">
+			<DialogContent className="max-w-2xl w-full bg-card-bg border-card rounded-card backdrop-blur-card">
 				<DialogHeader>
 					<DialogTitle className="text-[20px] font-semibold">
 						슬라이드 추가하기
 					</DialogTitle>
-					<DialogDescription className="text-sm text-sub-text">
-						이미지와 링크 정보를 한 번에 추가하세요.
-					</DialogDescription>
 				</DialogHeader>
 
 				<div className="grid gap-4 md:grid-cols-[240px_minmax(0,1fr)]">
@@ -130,8 +119,8 @@ export default function SlideAddDialog({
 							<input
 								type="file"
 								accept="image/*"
-								onChange={handleFileUpload}
-								disabled={isUploading}
+								onChange={handleFileSelect}
+								disabled={uploadState.loading}
 								className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
 							/>
 						</div>
@@ -169,14 +158,14 @@ export default function SlideAddDialog({
 				<DialogFooter className="gap-2 sm:gap-3">
 					<Button
 						type="button"
-						variant="outline"
+						variant="ghost"
 						onClick={() => onOpenChange(false)}
 					>
 						취소
 					</Button>
 					<Button
 						onClick={handleAdd}
-						disabled={!image || isUploading}
+						disabled={!image || uploadState.loading}
 						className="w-full sm:w-auto"
 					>
 						<Upload size={14} className="mr-2" />

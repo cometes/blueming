@@ -48,20 +48,22 @@ export const useFileUpload = (options?: FileUploadOptions): UseFileUploadReturn 
     }
 
     // 파일 타입 검사
-    const isValidType = config.allowedTypes.some(type => {
-      if (type.endsWith("/*")) {
-        const category = type.slice(0, -2);
-        return file.type.startsWith(category);
-      }
-      return file.type === type;
-    });
+    if (!config.allowedTypes.includes("*/*")) {
+      const isValidType = config.allowedTypes.some(type => {
+        if (type.endsWith("/*")) {
+          const category = type.slice(0, -2);
+          return file.type.startsWith(category);
+        }
+        return file.type === type;
+      });
 
-    if (!isValidType) {
-      setState(prev => ({ 
-        ...prev, 
-        error: "지원하지 않는 파일 형식입니다." 
-      }));
-      return false;
+      if (!isValidType) {
+        setState(prev => ({ 
+          ...prev, 
+          error: "지원하지 않는 파일 형식입니다." 
+        }));
+        return false;
+      }
     }
 
     return true;

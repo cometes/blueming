@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Draggable } from "@hello-pangea/dnd";
 import { format } from "date-fns";
 import { Trash2, GripVertical, X, ImagePlus } from "lucide-react";
@@ -17,7 +17,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { DatePicker } from "@/components/ui/date-picker";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -37,7 +36,57 @@ export default function DdayItem({
 	onDelete,
 }: DdayItemProps) {
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [dateInput, setDateInput] = useState(dday.date?.replace(/-/g, "") || "");
+	const [dateError, setDateError] = useState("");
 	const { uploadFile } = useFileUpload();
+
+	useEffect(() => {
+		setDateInput(dday.date?.replace(/-/g, "") || "");
+		setDateError("");
+	}, [dday.date]);
+
+	const parseYYYYMMDD = (value: string) => {
+		if (value.length !== 8) return null;
+		const year = Number(value.slice(0, 4));
+		const month = Number(value.slice(4, 6));
+		const day = Number(value.slice(6, 8));
+
+		if (!year || month < 1 || month > 12 || day < 1 || day > 31) {
+			return null;
+		}
+
+		const parsed = new Date(year, month - 1, day);
+		if (
+			parsed.getFullYear() !== year ||
+			parsed.getMonth() !== month - 1 ||
+			parsed.getDate() !== day
+		) {
+			return null;
+		}
+
+		return parsed;
+	};
+
+	const handleDateInputChange = (value: string) => {
+		const digits = value.replace(/\D/g, "").slice(0, 8);
+		setDateInput(digits);
+
+		if (digits.length < 8) {
+			setDateError("");
+			onUpdate({ date: "" });
+			return;
+		}
+
+		const parsed = parseYYYYMMDD(digits);
+		if (!parsed) {
+			setDateError("올바른 날짜를 입력해주세요.");
+			onUpdate({ date: "" });
+			return;
+		}
+
+		setDateError("");
+		onUpdate({ date: format(parsed, "yyyy-MM-dd") });
+	};
 
 	const handleImageUpload = async (file: File) => {
 		try {
@@ -120,17 +169,18 @@ export default function DdayItem({
 									onChange={(e) => onUpdate({ title: e.target.value })}
 									className="w-full"
 								/>
-								<div className="relative w-full">
-									<DatePicker
-										date={dday.date ? new Date(dday.date) : undefined}
-										onDateChange={(date) =>
-											onUpdate({
-												date: date ? format(date, "yyyy-MM-dd") : "",
-											})
-										}
-										className="relative"
-										buttonClassName="w-full"
+								<div className="space-y-2">
+									<Input
+										value={dateInput}
+										onChange={(e) => handleDateInputChange(e.target.value)}
+										placeholder="20260129"
+										inputMode="numeric"
+										maxLength={8}
+										className="w-full"
 									/>
+									{dateError ? (
+										<p className="text-xs text-red-500">{dateError}</p>
+									) : null}
 								</div>
 								<div className="flex items-center gap-2">
 									<Checkbox
@@ -149,7 +199,9 @@ export default function DdayItem({
 								</div>
 								<div className="flex justify-end">
 									<Button
-										variant="destructive"
+										variant="default"
+										className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10 backdrop-blur-card"
+										style={{ transition: "all 300ms ease" }}
 										size="sm"
 										onClick={() => setShowDeleteDialog(true)}
 									>
