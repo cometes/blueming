@@ -64,6 +64,10 @@ const mergeWithDefaults = (defaults, current) => {
 export const useSettingDesign = () => {
   const { general, updateDesign, refreshSettings } = useSettings();
   const design = useMemo(() => general?.design || {}, [general?.design]); // Ensure design is not undefined
+  const fontRegistry = useMemo(
+    () => general?.fontRegistry || [],
+    [general?.fontRegistry]
+  );
 
   const [bgThumbnail, setBgThumnail] = useState("");
   const [openReset, setOpenReset] = useState(false);
@@ -99,11 +103,28 @@ export const useSettingDesign = () => {
     boxShadow: "rgba(0, 0, 0, 0.1) 0px 20px 20px -10px",
     translateY: -5
   };
-  const fontTitle = [
+  const baseFontOptions = [
     { label: "프리텐다드", value: "Pretendard" },
     { label: "조선일보명조", value: "Chosunilbo" }
   ];
-  const fontBody = [{ label: "프리텐다드", value: "Pretendard" }];
+  const registryFonts = fontRegistry
+    .filter((font) => font?.family)
+    .map((font) => ({
+      label: font.name || font.family,
+      value: font.family,
+    }));
+  const buildFontOptions = (defaults) => {
+    const merged = [...defaults, ...registryFonts];
+    const seen = new Set();
+    return merged.filter((item) => {
+      if (seen.has(item.value)) return false;
+      seen.add(item.value);
+      return true;
+    });
+  };
+  const fontOptions = buildFontOptions(baseFontOptions);
+  const fontTitle = fontOptions;
+  const fontBody = fontOptions;
 
   // Initialize with merged defaults and design immediately
   // This is the key change from the original code - we're merging on initialization

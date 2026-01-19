@@ -5,8 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
@@ -18,15 +24,17 @@ export default function WeatherClockSettingClient() {
 	const refreshSettings = settings.refreshSettings;
 	const updateMain = settings.updateMain;
 
-	const [enabled, setEnabled] = useState(true);
 	const [city, setCity] = useState("Seoul");
 	const [isSyncing, setIsSyncing] = useState(true);
+	const [showResetDialog, setShowResetDialog] = useState(false);
 
 	const isDirty = useMemo(() => {
 		if (isSyncing) return false;
-		const baseline = settings.main?.weatherClock || { enabled: true, city: "Seoul" };
-		return enabled !== baseline.enabled || city !== baseline.city;
-	}, [enabled, city, settings.main?.weatherClock, isSyncing]);
+		const baseline = settings.main?.weatherClock || {
+			city: "Seoul",
+		};
+		return city !== baseline.city;
+	}, [city, settings.main?.weatherClock, isSyncing]);
 
 	useSettingStatus("weatherClock", isDirty ? "dirty" : "saved");
 	useSettingHeaderAction(
@@ -53,7 +61,6 @@ export default function WeatherClockSettingClient() {
 		setIsSyncing(true);
 		const weatherClock = settings.main?.weatherClock;
 		if (weatherClock) {
-			setEnabled(weatherClock.enabled);
 			setCity(weatherClock.city);
 		}
 		setIsSyncing(false);
@@ -67,7 +74,7 @@ export default function WeatherClockSettingClient() {
 			}
 
 			const weatherClockSettings = {
-				enabled,
+				enabled: true,
 				city: city.trim(),
 			};
 
@@ -79,65 +86,107 @@ export default function WeatherClockSettingClient() {
 			console.error("Failed to save weather clock settings:", error);
 			toast.error("저장에 실패했습니다.");
 		}
-	}, [enabled, city, refreshSettings, updateMain]);
+	}, [city, refreshSettings, updateMain]);
 
-	const handleReset = useCallback(() => {
-		const weatherClock = settings.main?.weatherClock;
-		if (weatherClock) {
-			setEnabled(weatherClock.enabled);
-			setCity(weatherClock.city);
-		} else {
-			setEnabled(true);
-			setCity("Seoul");
+	const handleReset = useCallback(async () => {
+		try {
+			const resetData = {
+				enabled: true,
+				city: "Seoul",
+			};
+
+			await setSettingsMainWeatherClock(resetData);
+			await refreshSettings?.({ broadcast: true });
+			updateMain?.({ weatherClock: resetData });
+
+			// Reset state
+			setCity(resetData.city);
+
+			toast.success("날씨&시계 설정이 초기화되었습니다.");
+			setShowResetDialog(false);
+		} catch {
+			toast.error("초기화에 실패했습니다.");
 		}
-		toast.info("변경사항이 취소되었습니다.");
-	}, [settings.main?.weatherClock]);
+	}, [refreshSettings, updateMain]);
 
 	return (
-		<form
-			id="setting-form-weatherClock"
-			onSubmit={(e) => {
-				e.preventDefault();
-				handleSave();
-			}}
-			className="space-y-6"
-		>
-			<div className="flex items-center justify-between">
-				<div className="space-y-0.5">
-					<Label htmlFor="enabled">위젯 활성화</Label>
+		<>
+			<form
+				id="setting-form-weatherClock"
+				onSubmit={(e) => {
+					e.preventDefault();
+					handleSave();
+				}}
+				className="space-y-6"
+			>
+				<div className="space-y-2">
+					<Label htmlFor="city">도시명</Label>
+					<Input
+						id="city"
+						type="text"
+						placeholder="예: Seoul, Busan, Tokyo"
+						value={city}
+						onChange={(e) => setCity(e.target.value)}
+					/>
 					<p className="text-sm text-sub-text">
-						날씨&시계 위젯을 메인 페이지에 표시합니다.
+						날씨 정보를 표시할 도시를 영문으로 입력해주세요. (예: Seoul, Busan,
+						Tokyo, New York)
 					</p>
 				</div>
-				<Switch id="enabled" checked={enabled} onCheckedChange={setEnabled} />
-			</div>
 
-			<Separator />
+				<div className="flex justify-end gap-3 pt-6">
+					<Button
+						type="button"
+						onClick={() => setShowResetDialog(true)}
+						className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
+						style={{
+							transition: "all 0.3s ease-in-out",
+						}}
+					>
+						초기화하기
+					</Button>
+					{/* 저장 버튼은 헤더로 이동 */}
+				</div>
+			</form>
 
-			<div className="space-y-2">
-				<Label htmlFor="city">도시명</Label>
-				<Input
-					id="city"
-					type="text"
-					placeholder="예: Seoul, Busan, Tokyo"
-					value={city}
-					onChange={(e) => setCity(e.target.value)}
-					disabled={!enabled}
-				/>
-				<p className="text-sm text-sub-text">
-					날씨 정보를 표시할 도시를 영문으로 입력해주세요. (예: Seoul, Busan, Tokyo, New
-					York)
-				</p>
-			</div>
-
-			<Separator />
-
-			<div className="flex justify-end gap-2">
-				<Button variant="outline" onClick={handleReset} disabled={!isDirty}>
-					취소
-				</Button>
-				{/* 저장 버튼은 헤더로 이동 */}
-			</div>
-		</form>
+			{/* Reset Dialog */}
+			<Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+				<DialogContent className="max-w-sm rounded-card">
+					<DialogHeader>
+						<DialogTitle className="text-lg font-semibold text-main-text">
+							날씨&시계 초기화
+						</DialogTitle>
+						<DialogDescription className="text-sm text-sub-text">
+							정말 날씨&시계 설정을 초기화할까요? 모든 설정이 기본값으로
+							돌아갑니다.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter className="flex justify-end gap-2">
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setShowResetDialog(false)}
+							className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+							style={{
+								transition: "all 0.3s ease-in-out",
+							}}
+						>
+							취소
+						</Button>
+						<Button
+							type="button"
+							variant="destructive"
+							onClick={handleReset}
+							className="rounded-card border-card bg-card-bg hover:border-red-400 hover:text-red-400 hover:bg-red-400/10"
+							style={{
+								transition: "all 0.3s ease-in-out",
+							}}
+						>
+							초기화
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+		</>
 	);
 }

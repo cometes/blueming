@@ -46,6 +46,7 @@ export default function Layout({ children }: LayoutProps) {
 
 	const isMainPage = pathname === "/";
 	const isStickerBoardEditPage = pathname === "/setting/stickerBoard/edit";
+	const isMenuRightAligned = general?.menu?.design?.align === "오른쪽";
 
 	// 기본 레이아웃 구조를 사용하지 않을 페이지들 (메인 페이지 포함)
 	const customLayoutPages = [""];
@@ -161,8 +162,9 @@ export default function Layout({ children }: LayoutProps) {
 				)}
 			>
 				<div className="w-full h-dvh flex items-start justify-center gap-6 relative z-10">
-					{!shouldHideMenu && <WidgetMenu />}
+					{!shouldHideMenu && !isMenuRightAligned && <WidgetMenu />}
 					{children}
+					{!shouldHideMenu && isMenuRightAligned && <WidgetMenu />}
 				</div>
 			</div>
 			<BackgroundEffect />

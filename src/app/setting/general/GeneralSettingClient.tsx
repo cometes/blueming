@@ -1,7 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
+	/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,12 +9,12 @@ import { Separator } from "@/components/ui/separator";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { ColorPalettePreview } from "@/components/ui/color-palette-preview";
 import RadioItem from "@/components/items/RadioItem";
-import { useModal } from "@/hooks/useModal";
 import { useSettingGeneral } from "@/hooks/useSettingGeneral";
-import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
 import { Save } from "lucide-react";
+import { useFileUpload } from "@/hooks/useFileUpload";
+import { toast } from "sonner";
 import {
 	Dialog,
 	DialogContent,
@@ -37,20 +37,28 @@ const PLACEHOLDERS = {
 
 const UPLOAD_TEXT = "Upload Image";
 
+// 로컬 이미지 미리보기를 위한 타입
+interface PendingImage {
+	file: File;
+	previewUrl: string;
+}
+
 interface ImageUploadSectionProps {
 	title: string;
 	description?: string;
 	imageSrc?: string;
-	onImageClick: () => void;
+	onFileSelect: (file: File) => void;
 	onClearClick: () => void;
+	isUploading?: boolean;
 }
 
 const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 	title,
 	description,
 	imageSrc,
-	onImageClick,
+	onFileSelect,
 	onClearClick,
+	isUploading = false,
 }) => (
 	<div className="section-box flex items-center mt-4">
 		<div className="text-box w-[220px]">
@@ -62,50 +70,63 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 			)}
 		</div>
 		<div className="flex items-center gap-3">
-			{imageSrc ? (
-				<>
-					<div className="w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden">
-						<img
-							src={imageSrc}
-							alt={title}
-							className="w-full h-full object-contain"
+			<label
+				className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
+					isUploading ? "opacity-60 pointer-events-none" : ""
+				}`}
+			>
+				{imageSrc ? (
+					<img
+						src={imageSrc}
+						alt={title}
+						className="w-full h-full object-contain"
+					/>
+				) : (
+					<>
+						<ImagePlus
+							size={ICON_SIZE}
+							color={ICON_COLOR}
+							absoluteStrokeWidth={true}
 						/>
-					</div>
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={onClearClick}
-						className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+						<span className="text-xs text-gray-500 dark:text-gray-400">
+							{UPLOAD_TEXT}
+						</span>
+					</>
+				)}
+				<input
+					type="file"
+					accept="image/*"
+					className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+					onChange={(event) => {
+						const file = event.target.files?.[0];
+						if (file) {
+							onFileSelect(file);
+						}
+						event.target.value = "";
+					}}
+				/>
+			</label>
+			{imageSrc ? (
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					onClick={onClearClick}
+					className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+					style={{
+						transition: "all 0.3s ease-in-out",
+					}}
+				>
+					<Trash2
+						size={14}
+						className="mr-2"
 						style={{
 							transition: "all 0.3s ease-in-out",
 						}}
-					>
-						<Trash2
-							size={14}
-							className="mr-2"
-							style={{
-								transition: "all 0.3s ease-in-out",
-							}}
-						/>
-						비우기
-					</Button>
-				</>
-			) : (
-				<div
-					onClick={onImageClick}
-					className="w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors"
-				>
-					<ImagePlus
-						size={ICON_SIZE}
-						color={ICON_COLOR}
-						absoluteStrokeWidth={true}
 					/>
-					<span className="text-xs text-gray-500 dark:text-gray-400">
-						{UPLOAD_TEXT}
-					</span>
-				</div>
-			)}
+					비우기
+				</Button>
+			) : null}
 		</div>
 	</div>
 );
@@ -126,25 +147,35 @@ export default function GeneralSettingClient() {
 		handleClearImage,
 		handleReset,
 		handleSave,
-		bgThumbnail,
-		setBgThumnail,
 		isDirty,
 	} = useSettingGeneral();
 
-	const { showModal, isModalOpen, setIsModalOpen } = useModal();
 	const [showResetDialog, setShowResetDialog] = useState(false);
+	const { uploadFile, state: uploadState } = useFileUpload();
 
-	const [currentImageField, setCurrentImageField] = useState<ImageField | null>(
-		null
-	);
-	useSettingStatus("general", isDirty ? "dirty" : "saved");
+	// 업로드 대기 중인 이미지들을 저장
+	const [pendingImages, setPendingImages] = useState<
+		Record<ImageField, PendingImage | null>
+	>({
+		favicon: null,
+		shareImage: null,
+		logoImage: null,
+	});
+
+	// pending 이미지가 있는지 체크
+	const hasPendingImages =
+		pendingImages.favicon !== null ||
+		pendingImages.shareImage !== null ||
+		pendingImages.logoImage !== null;
+
+	useSettingStatus("general", isDirty || hasPendingImages ? "dirty" : "saved");
 	useSettingHeaderAction(
 		<Button
 			type="submit"
 			form="setting-form-general"
 			variant="ghost"
 			size="icon"
-			disabled={!isDirty}
+			disabled={(!isDirty && !hasPendingImages) || uploadState.loading}
 			aria-label="저장하기"
 			title="저장하기"
 			className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
@@ -154,33 +185,100 @@ export default function GeneralSettingClient() {
 		>
 			<Save size={16} />
 		</Button>,
-		[isDirty]
+		[isDirty, hasPendingImages, uploadState.loading]
 	);
 
-	const openImageModal = (field: ImageField) => {
-		setCurrentImageField(field);
-		if (generalSetting[field]) {
-			setBgThumnail(generalSetting[field]);
-		} else {
-			setBgThumnail("");
+	// 파일 선택 시 로컬 미리보기만 표시
+	const handleFileSelect = (field: ImageField, file: File) => {
+		const previewUrl = URL.createObjectURL(file);
+		setPendingImages((prev) => ({
+			...prev,
+			[field]: { file, previewUrl },
+		}));
+	};
+
+	// 이미지 비우기 (로컬 미리보기 또는 서버 이미지)
+	const handleImageClear = (field: ImageField) => {
+		// pending 이미지가 있으면 URL 해제
+		if (pendingImages[field]) {
+			URL.revokeObjectURL(pendingImages[field]!.previewUrl);
+			setPendingImages((prev) => ({
+				...prev,
+				[field]: null,
+			}));
 		}
-		showModal();
+		// 서버 이미지 제거
+		handleClearImage(field);
 	};
 
-	const handleImageUploadConfirm = (url: string) => {
-		if (!currentImageField) return;
-		handleImageUpload(currentImageField, url);
-		setIsModalOpen(false);
-	};
+	// 저장 버튼 클릭 시 실행
+	const onSubmit = async () => {
+		try {
+			// 1. pending 이미지들을 먼저 업로드
+			const uploadedUrls: Partial<Record<ImageField, string>> = {};
 
-	const onSubmit = () => {
-		handleSave();
+			for (const field of Object.keys(pendingImages) as ImageField[]) {
+				const pending = pendingImages[field];
+				if (pending) {
+					const url = await uploadFile(pending.file);
+					uploadedUrls[field] = url;
+					// 업로드된 URL을 즉시 반영
+					handleImageUpload(field, url);
+					// blob URL 해제
+					URL.revokeObjectURL(pending.previewUrl);
+				}
+			}
+
+			// pending 이미지 초기화
+			setPendingImages({
+				favicon: null,
+				shareImage: null,
+				logoImage: null,
+			});
+
+			// 2. 업로드된 이미지 URL을 포함하여 제네럴 세팅 저장
+			const updatedSetting = {
+				...generalSetting,
+				...uploadedUrls,
+			};
+
+			await handleSave(updatedSetting);
+		} catch (error) {
+			const message =
+				error instanceof Error
+					? error.message
+					: "저장에 실패했습니다.";
+			toast.error(message);
+		}
 	};
 
 	const handleResetConfirm = () => {
+		// pending 이미지 URL 정리
+		Object.values(pendingImages).forEach((pending) => {
+			if (pending) {
+				URL.revokeObjectURL(pending.previewUrl);
+			}
+		});
+		setPendingImages({
+			favicon: null,
+			shareImage: null,
+			logoImage: null,
+		});
+
 		handleReset();
 		setShowResetDialog(false);
 	};
+
+	// 컴포넌트 언마운트 시 blob URL 정리
+	useEffect(() => {
+		return () => {
+			Object.values(pendingImages).forEach((pending) => {
+				if (pending) {
+					URL.revokeObjectURL(pending.previewUrl);
+				}
+			});
+		};
+	}, [pendingImages]);
 
 	return (
 		<form
@@ -250,18 +348,24 @@ export default function GeneralSettingClient() {
 					<ImageUploadSection
 						title="파비콘 (32x32)"
 						description="브라우저 옆에 띄우는 작은 아이콘"
-						imageSrc={generalSetting.favicon}
-						onImageClick={() => openImageModal("favicon")}
-						onClearClick={() => handleClearImage("favicon")}
+						imageSrc={
+							pendingImages.favicon?.previewUrl || generalSetting.favicon
+						}
+						onFileSelect={(file) => handleFileSelect("favicon", file)}
+						onClearClick={() => handleImageClear("favicon")}
+						isUploading={uploadState.loading}
 					/>
 
 					{/* URL 공유 이미지 */}
 					<ImageUploadSection
 						title="URL 공유 이미지"
 						description="1200 * 630 권장"
-						imageSrc={generalSetting.shareImage}
-						onImageClick={() => openImageModal("shareImage")}
-						onClearClick={() => handleClearImage("shareImage")}
+						imageSrc={
+							pendingImages.shareImage?.previewUrl || generalSetting.shareImage
+						}
+						onFileSelect={(file) => handleFileSelect("shareImage", file)}
+						onClearClick={() => handleImageClear("shareImage")}
+						isUploading={uploadState.loading}
 					/>
 
 					{/* 메인 컬러 */}
@@ -338,9 +442,12 @@ export default function GeneralSettingClient() {
 						<ImageUploadSection
 							title="홈페이지 로고"
 							description="홈페이지의 대표 로고를 커스텀 할 수 있습니다."
-							imageSrc={generalSetting.logoImage}
-							onImageClick={() => openImageModal("logoImage")}
-							onClearClick={() => handleClearImage("logoImage")}
+							imageSrc={
+								pendingImages.logoImage?.previewUrl || generalSetting.logoImage
+							}
+							onFileSelect={(file) => handleFileSelect("logoImage", file)}
+							onClearClick={() => handleImageClear("logoImage")}
+							isUploading={uploadState.loading}
 						/>
 					)}
 
@@ -422,13 +529,6 @@ export default function GeneralSettingClient() {
 				</DialogContent>
 			</Dialog>
 
-			<ImageUploadDialog
-				isOpen={isModalOpen}
-				onOpenChange={setIsModalOpen}
-				thumbnail={bgThumbnail}
-				setThumbnail={setBgThumnail}
-				onUpload={handleImageUploadConfirm}
-			/>
 		</form>
 	);
 }

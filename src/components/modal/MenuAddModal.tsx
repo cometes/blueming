@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -59,7 +59,7 @@ export default function MenuAddModal({
 	boardArr,
 	cancelModal,
 }: MenuAddModalProps) {
-	const { uploadFile } = useFileUpload();
+	const { uploadFile, state: uploadState } = useFileUpload();
 	const [activeTab, setActiveTab] = useState<MenuTab>("posting");
 	const [formData, setFormData] = useState<MenuFormData>({
 		name: "",
@@ -72,20 +72,106 @@ export default function MenuAddModal({
 		iconImage: "",
 	});
 
-	const handleAdd = () => {
-		if (!formData.name) return;
-		onAddMenu({ ...formData, type: activeTab });
-		setFormData({
-			name: "",
-			category: "",
-			url: "",
-			isPublic: true,
-			openInNewTab: false,
-			subMenus: [],
-			image: "",
-			iconImage: "",
+	interface PendingImage {
+		file: File;
+		previewUrl: string;
+	}
+
+	const [pendingImages, setPendingImages] = useState<{
+		image: PendingImage | null;
+		iconImage: PendingImage | null;
+	}>({
+		image: null,
+		iconImage: null,
+	});
+	const [pendingSubMenuImages, setPendingSubMenuImages] = useState<
+		Record<string, PendingImage>
+	>({});
+
+	const clearPendingImage = (key: "image" | "iconImage") => {
+		const pending = pendingImages[key];
+		if (!pending) return;
+		URL.revokeObjectURL(pending.previewUrl);
+		setPendingImages((prev) => ({ ...prev, [key]: null }));
+	};
+
+	const clearPendingSubMenuImage = (name: string) => {
+		const pending = pendingSubMenuImages[name];
+		if (!pending) return;
+		URL.revokeObjectURL(pending.previewUrl);
+		setPendingSubMenuImages((prev) => {
+			const next = { ...prev };
+			delete next[name];
+			return next;
 		});
-		setIsModalOpen(false);
+	};
+
+	const revokePendingImages = () => {
+		if (pendingImages.image) {
+			URL.revokeObjectURL(pendingImages.image.previewUrl);
+		}
+		if (pendingImages.iconImage) {
+			URL.revokeObjectURL(pendingImages.iconImage.previewUrl);
+		}
+		Object.values(pendingSubMenuImages).forEach((pending) => {
+			URL.revokeObjectURL(pending.previewUrl);
+		});
+	};
+
+	const resetPendingImages = () => {
+		revokePendingImages();
+		setPendingImages({ image: null, iconImage: null });
+		setPendingSubMenuImages({});
+	};
+
+	const handleAdd = async () => {
+		if (!formData.name) return;
+		try {
+			let nextFormData = { ...formData };
+
+			if (pendingImages.image) {
+				const url = await uploadFile(pendingImages.image.file);
+				URL.revokeObjectURL(pendingImages.image.previewUrl);
+				nextFormData = { ...nextFormData, image: url };
+			}
+
+			if (pendingImages.iconImage) {
+				const url = await uploadFile(pendingImages.iconImage.file);
+				URL.revokeObjectURL(pendingImages.iconImage.previewUrl);
+				nextFormData = { ...nextFormData, iconImage: url };
+			}
+
+			if (nextFormData.subMenus.length > 0) {
+				const updatedSubMenus = [...nextFormData.subMenus];
+				for (let i = 0; i < updatedSubMenus.length; i += 1) {
+					const subMenu = updatedSubMenus[i];
+					const name = typeof subMenu === "string" ? subMenu : subMenu.name;
+					const pending = pendingSubMenuImages[name];
+					if (pending) {
+						const url = await uploadFile(pending.file);
+						URL.revokeObjectURL(pending.previewUrl);
+						updatedSubMenus[i] = { name, image: url };
+					}
+				}
+				nextFormData = { ...nextFormData, subMenus: updatedSubMenus };
+			}
+
+			onAddMenu({ ...nextFormData, type: activeTab });
+			setFormData({
+				name: "",
+				category: "",
+				url: "",
+				isPublic: true,
+				openInNewTab: false,
+				subMenus: [],
+				image: "",
+				iconImage: "",
+			});
+			resetPendingImages();
+			setIsModalOpen(false);
+		} catch {
+			toast.error("이미지 업로드에 실패했습니다.");
+		}
 	};
 
 	const handleAddSubMenu = (boardName: string) => {
@@ -100,56 +186,63 @@ export default function MenuAddModal({
 	};
 
 	const handleRemoveSubMenu = (idx: number) => {
+		const target = formData.subMenus[idx];
+		const targetName = typeof target === "string" ? target : target.name;
+		clearPendingSubMenuImage(targetName);
 		setFormData({
 			...formData,
 			subMenus: formData.subMenus.filter((_, i) => i !== idx),
 		});
 	};
 
-	const handleMainImageUpload = async (
-		e: React.ChangeEvent<HTMLInputElement>
-	) => {
+	const handleMainImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
-		if (!file) return;
-		try {
-			const url = await uploadFile(file);
-			setFormData({ ...formData, image: url });
-			toast.success("이미지가 업로드되었습니다.");
-		} catch {
-			toast.error("이미지 업로드에 실패했습니다.");
+		if (file) {
+			const previewUrl = URL.createObjectURL(file);
+			setPendingImages((prev) => ({
+				...prev,
+				image: { file, previewUrl },
+			}));
 		}
+		e.target.value = "";
 	};
 
-	const handleIconImageUpload = async (
-		e: React.ChangeEvent<HTMLInputElement>
-	) => {
+	const handleIconImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
-		if (!file) return;
-		try {
-			const url = await uploadFile(file);
-			setFormData({ ...formData, iconImage: url });
-			toast.success("아이콘 이미지가 업로드되었습니다.");
-		} catch {
-			toast.error("아이콘 이미지 업로드에 실패했습니다.");
+		if (file) {
+			const previewUrl = URL.createObjectURL(file);
+			setPendingImages((prev) => ({
+				...prev,
+				iconImage: { file, previewUrl },
+			}));
 		}
+		e.target.value = "";
 	};
 
-	const handleSubMenuImageUpload = async (file: File, idx: number) => {
-		try {
-			const url = await uploadFile(file);
-			const updatedSubMenus = formData.subMenus.map((subMenu, i) => {
-				if (i === idx) {
-					const name = typeof subMenu === "string" ? subMenu : subMenu.name;
-					return { name, image: url };
-				}
-				return subMenu;
-			});
-			setFormData({ ...formData, subMenus: updatedSubMenus });
-			toast.success("이미지가 업로드되었습니다.");
-		} catch {
-			toast.error("이미지 업로드에 실패했습니다.");
-		}
+	const handleSubMenuImageSelect = (file: File, name: string) => {
+		const previewUrl = URL.createObjectURL(file);
+		setPendingSubMenuImages((prev) => ({
+			...prev,
+			[name]: { file, previewUrl },
+		}));
 	};
+
+	useEffect(() => {
+		if (
+			!isModalOpen &&
+			(pendingImages.image ||
+				pendingImages.iconImage ||
+				Object.keys(pendingSubMenuImages).length > 0)
+		) {
+			resetPendingImages();
+		}
+	}, [isModalOpen, pendingImages, pendingSubMenuImages]);
+
+	useEffect(() => {
+		return () => {
+			revokePendingImages();
+		};
+	}, [pendingImages, pendingSubMenuImages]);
 
 	return (
 		<Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -282,6 +375,8 @@ export default function MenuAddModal({
 										{formData.subMenus.map((sm, idx) => {
 											const smName = typeof sm === "string" ? sm : sm.name;
 											const smImage = typeof sm === "object" ? sm.image : "";
+											const smPreview =
+												pendingSubMenuImages[smName]?.previewUrl || smImage;
 											return (
 												<div
 													key={idx}
@@ -291,7 +386,7 @@ export default function MenuAddModal({
 														{smName}
 													</span>
 													<div className="flex items-center gap-2">
-														{!smImage && (
+														{!smPreview && (
 															<label className="cursor-pointer p-1.5 hover:bg-card-bg rounded-md text-sub-text hover:text-theme-primary transition-all">
 																<ImagePlus size={16} />
 																<input
@@ -300,7 +395,10 @@ export default function MenuAddModal({
 																	accept="image/*"
 																	onChange={(e) => {
 																		const file = e.target.files?.[0];
-																		if (file) handleSubMenuImageUpload(file, idx);
+																		if (file) {
+																			handleSubMenuImageSelect(file, smName);
+																		}
+																		e.target.value = "";
 																	}}
 																/>
 															</label>
@@ -313,10 +411,10 @@ export default function MenuAddModal({
 														>
 															<Trash2 size={16} />
 														</Button>
-														{smImage && (
+														{smPreview && (
 															<div className="relative w-[150px] max-h-9 rounded-card bg-theme-primary/10 border border-card overflow-hidden group">
 																<img
-																	src={smImage}
+																	src={smPreview}
 																	alt="하위 메뉴 이미지"
 																	className="w-full h-full object-contain"
 																/>
@@ -324,6 +422,10 @@ export default function MenuAddModal({
 																	variant="ghost"
 																	size="icon"
 																	onClick={() => {
+																		if (pendingSubMenuImages[smName]) {
+																			clearPendingSubMenuImage(smName);
+																			return;
+																		}
 																		const updatedSubMenus = formData.subMenus.map(
 																			(subMenu, i) => {
 																				if (i === idx) {
@@ -409,17 +511,23 @@ export default function MenuAddModal({
 								<p className="text-[10px] text-sub-text mb-2">
 									권장 사이즈: 220 * 80
 								</p>
-								{formData.image ? (
+								{pendingImages.image?.previewUrl || formData.image ? (
 									<div className="relative aspect-[22/8] w-full max-w-[280px] rounded-card border border-card overflow-hidden bg-card-bg group">
 										<img
-											src={formData.image}
+											src={pendingImages.image?.previewUrl || formData.image}
 											alt="메뉴 이미지"
 											className="w-full h-full object-contain"
 										/>
 										<Button
 											variant="ghost"
 											size="icon"
-											onClick={() => setFormData({ ...formData, image: "" })}
+											onClick={() => {
+												if (pendingImages.image) {
+													clearPendingImage("image");
+													return;
+												}
+												setFormData({ ...formData, image: "" });
+											}}
 											className="absolute top-1 right-1 h-5 w-5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity p-0"
 											style={{ backgroundColor: "#111", color: "#fff" }}
 										>
@@ -439,7 +547,7 @@ export default function MenuAddModal({
 											type="file"
 											className="hidden"
 											accept="image/*"
-											onChange={handleMainImageUpload}
+											onChange={handleMainImageSelect}
 										/>
 									</label>
 								)}
@@ -455,17 +563,25 @@ export default function MenuAddModal({
 								<p className="text-[10px] text-sub-text mb-2">
 									권장 사이즈: 64 * 64
 								</p>
-								{formData.iconImage ? (
+								{pendingImages.iconImage?.previewUrl || formData.iconImage ? (
 									<div className="relative aspect-square w-16 rounded-card border border-card overflow-hidden bg-card-bg group">
 										<img
-											src={formData.iconImage}
+											src={
+												pendingImages.iconImage?.previewUrl || formData.iconImage
+											}
 											alt="아이콘 이미지"
 											className="w-full h-full object-contain"
 										/>
 										<Button
 											variant="ghost"
 											size="icon"
-											onClick={() => setFormData({ ...formData, iconImage: "" })}
+											onClick={() => {
+												if (pendingImages.iconImage) {
+													clearPendingImage("iconImage");
+													return;
+												}
+												setFormData({ ...formData, iconImage: "" });
+											}}
 											className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full opacity-0 group-hover:opacity-100 transition-opacity p-0"
 											style={{ backgroundColor: "#111", color: "#fff" }}
 										>
@@ -485,7 +601,7 @@ export default function MenuAddModal({
 											type="file"
 											className="hidden"
 											accept="image/*"
-											onChange={handleIconImageUpload}
+											onChange={handleIconImageSelect}
 										/>
 									</label>
 								)}
@@ -497,7 +613,11 @@ export default function MenuAddModal({
 					<Button variant="outline" onClick={cancelModal}>
 						취소
 					</Button>
-					<Button onClick={handleAdd} disabled={!formData.name} className="px-8">
+					<Button
+						onClick={handleAdd}
+						disabled={!formData.name || uploadState.loading}
+						className="px-8"
+					>
 						추가하기
 					</Button>
 				</div>

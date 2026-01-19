@@ -77,7 +77,9 @@ const isGroupSticker = (
 
 type PctSticker = Extract<StickerBoardComponent, { xPct: number }>;
 
-const isPctSticker = (component: StickerBoardComponent): component is PctSticker =>
+const isPctSticker = (
+	component: StickerBoardComponent
+): component is PctSticker =>
 	typeof (component as { xPct?: unknown }).xPct === "number";
 
 export default function StickerBoardEditPage() {
@@ -601,7 +603,8 @@ export default function StickerBoardEditPage() {
 			const list = await listStickerAssets(tab);
 			setAssets(list.filter((a) => a.url));
 		} catch (e) {
-			const msg = e instanceof Error ? e.message : "에셋을 불러오지 못했습니다.";
+			const msg =
+				e instanceof Error ? e.message : "에셋을 불러오지 못했습니다.";
 			setAssets([]);
 			setAssetsError(msg);
 		} finally {
@@ -1983,7 +1986,7 @@ export default function StickerBoardEditPage() {
 	};
 
 	return (
-		<main className="w-full min-h-[calc(100vh)] flex items-center justify-center">
+		<main className="w-full min-h-[calc(100vh)] flex items-center justify-center mt-5">
 			<ImageUploadDialog
 				isOpen={isImageDialogOpen}
 				onOpenChange={setIsImageDialogOpen}
@@ -2007,9 +2010,7 @@ export default function StickerBoardEditPage() {
 				<header className="mb-6 flex items-end justify-between gap-6">
 					<div>
 						<h1 className="text-2xl font-semibold">스티커보드 편집</h1>
-						<p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-							레이아웃만 먼저 구성했습니다. (반응형/기능은 추후)
-						</p>
+
 						{editingGroup && (
 							<div className="mt-3 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs text-blue-700">
 								<span className="font-medium">
@@ -2054,7 +2055,7 @@ export default function StickerBoardEditPage() {
 						gridTemplateColumns: "1fr 768px 1fr",
 					}}
 				>
-					<aside className="rounded-card border border-card bg-card-bg/60 p-4">
+					<aside className="rounded-card border border-card bg-card-bg/60 p-4 backdrop-blur-card">
 						<div className="flex items-center justify-between gap-3">
 							<div className="flex items-center gap-2">
 								<Layers className="h-4 w-4 text-gray-500" />
@@ -2106,11 +2107,18 @@ export default function StickerBoardEditPage() {
 													const isSelected = selectedId === layer.id;
 													const isVisible = layer.isVisible !== false;
 													const isLocked = layer.isLocked === true;
-													const isGroup = isGroupSticker(layer as StickerBoardGroupComponent);
+													const isGroup = isGroupSticker(
+														layer as StickerBoardGroupComponent
+													);
 													const label = isGroup
 														? (layer as StickerBoardGroupComponent).name
-															? String((layer as StickerBoardGroupComponent).name)
-															: `그룹 (${(layer as StickerBoardGroupComponent).children?.length ?? 0})`
+															? String(
+																	(layer as StickerBoardGroupComponent).name
+															  )
+															: `그룹 (${
+																	(layer as StickerBoardGroupComponent).children
+																		?.length ?? 0
+															  })`
 														: layer.type === "text"
 														? layer.text?.trim()
 															? layer.text.trim().slice(0, 20)
@@ -2191,53 +2199,64 @@ export default function StickerBoardEditPage() {
 																		{isGroup &&
 																			expandedGroupIds.has(layer.id) && (
 																				<div className="mt-1 space-y-1 pl-4">
-																					{((layer as StickerBoardGroupComponent).children ?? [])
+																					{(
+																						(
+																							layer as StickerBoardGroupComponent
+																						).children ?? []
+																					)
 																						.slice()
 																						.sort(
-																							(a: StickerBoardComponent, b: StickerBoardComponent) =>
+																							(
+																								a: StickerBoardComponent,
+																								b: StickerBoardComponent
+																							) =>
 																								(b.zIndex ?? 0) -
 																								(a.zIndex ?? 0)
 																						)
-																						.map((child: StickerBoardComponent) => {
-																							const childLabel =
-																								child.type === "text"
-																									? child.text?.trim()
-																										? child.text
-																												.trim()
-																												.slice(0, 18)
-																										: "텍스트"
-																									: child.type === "image"
-																									? "이미지"
-																									: "스티커";
-																							const isChildSelected =
-																								editingGroupId === layer.id &&
-																								selectedId === child.id;
-																							return (
-																								<div
-																									key={child.id}
-																									className={[
-																										"flex items-center gap-2 rounded border px-2 py-1",
-																										isChildSelected
-																											? "border-blue-300 bg-blue-50/60"
-																											: "border-transparent bg-transparent hover:bg-black/5",
-																									].join(" ")}
-																									onClick={(e) => {
-																										e.stopPropagation();
-																										enterGroupEdit(layer.id);
-																										setSelection(
-																											new Set([child.id]),
-																											child.id
-																										);
-																									}}
-																									role="button"
-																									tabIndex={0}
-																								>
-																									<span className="text-[11px] text-gray-500 truncate">
-																										{childLabel}
-																									</span>
-																								</div>
-																							);
-																						})}
+																						.map(
+																							(
+																								child: StickerBoardComponent
+																							) => {
+																								const childLabel =
+																									child.type === "text"
+																										? child.text?.trim()
+																											? child.text
+																													.trim()
+																													.slice(0, 18)
+																											: "텍스트"
+																										: child.type === "image"
+																										? "이미지"
+																										: "스티커";
+																								const isChildSelected =
+																									editingGroupId === layer.id &&
+																									selectedId === child.id;
+																								return (
+																									<div
+																										key={child.id}
+																										className={[
+																											"flex items-center gap-2 rounded border px-2 py-1",
+																											isChildSelected
+																												? "border-blue-300 bg-blue-50/60"
+																												: "border-transparent bg-transparent hover:bg-black/5",
+																										].join(" ")}
+																										onClick={(e) => {
+																											e.stopPropagation();
+																											enterGroupEdit(layer.id);
+																											setSelection(
+																												new Set([child.id]),
+																												child.id
+																											);
+																										}}
+																										role="button"
+																										tabIndex={0}
+																									>
+																										<span className="text-[11px] text-gray-500 truncate">
+																											{childLabel}
+																										</span>
+																									</div>
+																								);
+																							}
+																						)}
 																				</div>
 																			)}
 																	</div>
@@ -2317,7 +2336,7 @@ export default function StickerBoardEditPage() {
 						</div>
 					</aside>
 
-					<div className="rounded-card border border-card bg-card-bg/60 p-4">
+					<div className="rounded-card border border-card bg-card-bg/60 p-4 backdrop-blur-card">
 						<div className="text-sm font-semibold text-main-text">캔버스</div>
 						<p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
 							고정 폭 768px 캔버스 영역
@@ -2378,7 +2397,7 @@ export default function StickerBoardEditPage() {
 								{/* fitted canvas (ratio) */}
 								{ratio ? (
 									<div
-										className="relative rounded-card border border-card bg-white/90 overflow-visible shadow-[0_10px_25px_rgba(0,0,0,0.08)]"
+										className="relative bg-widget-bg backdrop-blur-widget rounded-widget border-widget overflow-visible shadow-[0_10px_25px_rgba(0,0,0,0.08)]"
 										style={{
 											gridColumn: (() => {
 												const span = Math.max(
@@ -2487,7 +2506,8 @@ export default function StickerBoardEditPage() {
 																height: `${component.heightPct}%`,
 																opacity,
 																mixBlendMode:
-																	(component.blendMode as React.CSSProperties["mixBlendMode"]) ?? "normal",
+																	(component.blendMode as React.CSSProperties["mixBlendMode"]) ??
+																	"normal",
 																zIndex: component.zIndex,
 																transform,
 																touchAction: "none",
@@ -2566,7 +2586,12 @@ export default function StickerBoardEditPage() {
 																					heightPct: found.heightPct,
 																				};
 																			})
-																			.filter((item): item is NonNullable<typeof item> => item !== null),
+																			.filter(
+																				(
+																					item
+																				): item is NonNullable<typeof item> =>
+																					item !== null
+																			),
 																	};
 																	return;
 																}
@@ -3362,7 +3387,7 @@ export default function StickerBoardEditPage() {
 						</div>
 					</div>
 
-					<aside className="rounded-card border border-card bg-card-bg/60 p-4">
+					<aside className="rounded-card border border-card bg-card-bg/60 p-4 backdrop-blur-card">
 						<div className="text-sm font-semibold text-main-text">
 							편집 패널
 						</div>
@@ -3371,7 +3396,7 @@ export default function StickerBoardEditPage() {
 						</p>
 
 						{/* Asset Panel */}
-						<div className="mt-4 rounded-card border border-card bg-card-bg p-3">
+						<div className="mt-4 rounded-card border border-card bg-card-bg p-3 backdrop-blur-card">
 							<div className="flex items-center justify-between gap-2">
 								<div className="text-xs font-semibold text-main-text">
 									이미지 에셋
@@ -3416,10 +3441,7 @@ export default function StickerBoardEditPage() {
 										<TabsTrigger value="all" className="flex-1 text-xs">
 											전체
 										</TabsTrigger>
-										<TabsTrigger
-											value="favorites"
-											className="flex-1 text-xs"
-										>
+										<TabsTrigger value="favorites" className="flex-1 text-xs">
 											즐겨찾기
 										</TabsTrigger>
 										<TabsTrigger value="recent" className="flex-1 text-xs">
@@ -3472,7 +3494,9 @@ export default function StickerBoardEditPage() {
 																			);
 																		}}
 																		onClick={() => {
-																			const base = cloneDraft(presentRef.current);
+																			const base = cloneDraft(
+																				presentRef.current
+																			);
 																			void addImageStickerAt({
 																				url: asset.url,
 																				centerXPct: 50,

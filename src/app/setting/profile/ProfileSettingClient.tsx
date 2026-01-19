@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dialog";
 import { extensions } from "@/components/editor/TiptapEditor";
 import SimpleTiptapToolbar from "@/components/tiptap/SimpleTiptapToolbar";
-import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
@@ -28,6 +27,7 @@ import {
 	ProfileData,
 } from "@/queries/set/setSettingsProfile";
 import { convertSlateToHTML, isSlateFormat } from "@/lib/slate-to-tiptap";
+import { useFileUpload } from "@/hooks/useFileUpload";
 
 const ICON_SIZE = 28;
 const ICON_COLOR = "#9BA2A8";
@@ -45,15 +45,17 @@ type ImageField = "headerImage" | "profileImage";
 interface ImageUploadSectionProps {
 	title: string;
 	imageSrc?: string;
-	onImageClick: () => void;
+	onFileSelect: (file: File) => void;
 	onClearClick: () => void;
+	isUploading?: boolean;
 }
 
 const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 	title,
 	imageSrc,
-	onImageClick,
+	onFileSelect,
 	onClearClick,
+	isUploading = false,
 }) => (
 	<div className="section-box flex items-center mt-4">
 		<div className="text-box w-[220px] pr-5">
@@ -90,9 +92,10 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 					</Button>
 				</>
 			) : (
-				<div
-					onClick={onImageClick}
-					className="w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors"
+				<label
+					className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
+						isUploading ? "opacity-60 pointer-events-none" : ""
+					}`}
 				>
 					<ImagePlus
 						size={ICON_SIZE}
@@ -102,7 +105,19 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 					<span className="text-xs text-gray-500 dark:text-gray-400">
 						{UPLOAD_TEXT}
 					</span>
-				</div>
+					<input
+						type="file"
+						accept="image/*"
+						className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+						onChange={(event) => {
+							const file = event.target.files?.[0];
+							if (file) {
+								onFileSelect(file);
+							}
+							event.target.value = "";
+						}}
+					/>
+				</label>
 			)}
 		</div>
 	</div>
@@ -112,6 +127,7 @@ export default function ProfileSettingClient() {
 	const settings = useSettings();
 	const refreshSettings = settings.refreshSettings;
 	const updateMain = settings.updateMain;
+	const { uploadFile, state: uploadState } = useFileUpload();
 	const [profileData, setProfileData] = useState<ProfileData>({
 		headerImage: "",
 		profileImage: "",
@@ -121,13 +137,15 @@ export default function ProfileSettingClient() {
 	});
 
 	const [showResetDialog, setShowResetDialog] = useState(false);
-	const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-	const [currentImageField, setCurrentImageField] = useState<ImageField | "">(
-		""
-	);
-	const [thumbnail, setThumbnail] = useState("");
 	const [isSyncing, setIsSyncing] = useState(true);
 	const [editorContent, setEditorContent] = useState("<p></p>");
+	const [pendingImages, setPendingImages] = useState<
+		Record<ImageField, { file: File; previewUrl: string } | null>
+	>({
+		headerImage: null,
+		profileImage: null,
+	});
+	const hasPendingImages = Object.values(pendingImages).some((img) => img);
 
 	// Initialize Tiptap editor
 	const editor = useEditor({
@@ -238,14 +256,14 @@ export default function ProfileSettingClient() {
 		);
 	}, [profileData, editorContent, settings.main?.profile, isSyncing]);
 
-	useSettingStatus("profile", isDirty ? "dirty" : "saved");
+	useSettingStatus("profile", isDirty || hasPendingImages ? "dirty" : "saved");
 	useSettingHeaderAction(
 		<Button
 			type="submit"
 			form="setting-form-profile"
 			variant="ghost"
 			size="icon"
-			disabled={!isDirty}
+			disabled={(!isDirty && !hasPendingImages) || uploadState.loading}
 			aria-label="저장하기"
 			title="저장하기"
 			className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
@@ -255,7 +273,7 @@ export default function ProfileSettingClient() {
 		>
 			<Save size={16} />
 		</Button>,
-		[isDirty]
+		[isDirty, hasPendingImages, uploadState.loading]
 	);
 
 	const handleInputChange = useCallback(
@@ -268,60 +286,29 @@ export default function ProfileSettingClient() {
 		[]
 	);
 
-	const handleImageUpload = useCallback(
-		async (url: string) => {
-			if (!currentImageField) return;
-
-			const newData = {
-				...profileData,
-				[currentImageField]: url,
-			};
-
-			setProfileData(newData);
-
-			try {
-				await setSettingsProfile(newData);
-				await refreshSettings?.({ broadcast: true });
-
-				// Broadcast update
-				const channel = new BroadcastChannel("profileUpdated");
-				channel.postMessage({ profile: newData, timestamp: Date.now() });
-				channel.close();
-
-				toast.success("이미지가 업로드되었습니다.");
-			} catch {
-				setProfileData(profileData);
-				toast.error("이미지 업로드 저장에 실패했습니다.");
-			}
-		},
-		[currentImageField, profileData, refreshSettings]
-	);
+	const handleFileSelect = useCallback((field: ImageField, file: File) => {
+		const previewUrl = URL.createObjectURL(file);
+		setPendingImages((prev) => ({
+			...prev,
+			[field]: { file, previewUrl },
+		}));
+	}, []);
 
 	const handleClearImage = useCallback(
-		async (field: ImageField) => {
-			const newData = {
-				...profileData,
+		(field: ImageField) => {
+			setPendingImages((prev) => {
+				const pending = prev[field];
+				if (pending) {
+					URL.revokeObjectURL(pending.previewUrl);
+				}
+				return { ...prev, [field]: null };
+			});
+			setProfileData((prev) => ({
+				...prev,
 				[field]: "",
-			};
-
-			setProfileData(newData);
-
-			try {
-				await setSettingsProfile(newData);
-				await refreshSettings?.({ broadcast: true });
-
-				// Broadcast update
-				const channel = new BroadcastChannel("profileUpdated");
-				channel.postMessage({ profile: newData, timestamp: Date.now() });
-				channel.close();
-
-				toast.success("이미지가 삭제되었습니다.");
-			} catch {
-				setProfileData(profileData);
-				toast.error("이미지 삭제 저장에 실패했습니다.");
-			}
+			}));
 		},
-		[profileData, refreshSettings]
+		[]
 	);
 
 	const handleSave = useCallback(async () => {
@@ -329,10 +316,23 @@ export default function ProfileSettingClient() {
 			// Get current editor content
 			const introductionHTML = editor?.getHTML() || "<p></p>";
 
-			const dataToSave = {
+			const dataToSave: ProfileData = {
 				...profileData,
 				introduction: introductionHTML,
 			};
+
+			if (pendingImages.headerImage) {
+				dataToSave.headerImage = await uploadFile(
+					pendingImages.headerImage.file
+				);
+				URL.revokeObjectURL(pendingImages.headerImage.previewUrl);
+			}
+			if (pendingImages.profileImage) {
+				dataToSave.profileImage = await uploadFile(
+					pendingImages.profileImage.file
+				);
+				URL.revokeObjectURL(pendingImages.profileImage.previewUrl);
+			}
 
 			await setSettingsProfile(dataToSave);
 			updateMain?.({ profile: dataToSave });
@@ -343,11 +343,16 @@ export default function ProfileSettingClient() {
 			channel.postMessage({ profile: dataToSave, timestamp: Date.now() });
 			channel.close();
 
+			setProfileData(dataToSave);
+			setPendingImages({
+				headerImage: null,
+				profileImage: null,
+			});
 			toast.success("저장되었습니다.");
 		} catch {
 			toast.error("저장에 실패했습니다.");
 		}
-	}, [profileData, editor, refreshSettings, updateMain]);
+	}, [profileData, editor, refreshSettings, updateMain, pendingImages, uploadFile]);
 
 	const handleReset = useCallback(async () => {
 		try {
@@ -364,6 +369,10 @@ export default function ProfileSettingClient() {
 			await refreshSettings?.({ broadcast: true });
 
 			setProfileData(emptyProfile);
+			setPendingImages({
+				headerImage: null,
+				profileImage: null,
+			});
 			editor?.commands.setContent("<p></p>");
 
 			// Broadcast update
@@ -378,21 +387,18 @@ export default function ProfileSettingClient() {
 		}
 	}, [editor, refreshSettings, updateMain]);
 
-	const openImageDialog = (field: ImageField) => {
-		setCurrentImageField(field);
-		setIsUploadDialogOpen(true);
-	};
+	useEffect(() => {
+		return () => {
+			Object.values(pendingImages).forEach((pending) => {
+				if (pending) {
+					URL.revokeObjectURL(pending.previewUrl);
+				}
+			});
+		};
+	}, [pendingImages]);
 
 	return (
 		<>
-			<ImageUploadDialog
-				isOpen={isUploadDialogOpen}
-				onOpenChange={setIsUploadDialogOpen}
-				thumbnail={thumbnail}
-				setThumbnail={setThumbnail}
-				onUpload={handleImageUpload}
-			/>
-
 			<form
 				id="setting-form-profile"
 				onSubmit={(e) => {
@@ -408,17 +414,25 @@ export default function ProfileSettingClient() {
 						{/* Header Image */}
 						<ImageUploadSection
 							title="헤더 이미지"
-							imageSrc={profileData.headerImage}
-							onImageClick={() => openImageDialog("headerImage")}
+							imageSrc={
+								pendingImages.headerImage?.previewUrl ||
+								profileData.headerImage
+							}
+							onFileSelect={(file) => handleFileSelect("headerImage", file)}
 							onClearClick={() => handleClearImage("headerImage")}
+							isUploading={uploadState.loading}
 						/>
 
 						{/* Profile Image */}
 						<ImageUploadSection
 							title="프로필 이미지"
-							imageSrc={profileData.profileImage}
-							onImageClick={() => openImageDialog("profileImage")}
+							imageSrc={
+								pendingImages.profileImage?.previewUrl ||
+								profileData.profileImage
+							}
+							onFileSelect={(file) => handleFileSelect("profileImage", file)}
 							onClearClick={() => handleClearImage("profileImage")}
+							isUploading={uploadState.loading}
 						/>
 
 						{/* Nickname */}

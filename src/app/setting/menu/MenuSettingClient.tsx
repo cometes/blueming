@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
 	Plus,
 	ImagePlus,
@@ -47,20 +47,30 @@ const ICON_COLOR = "#9BA2A8";
 const UPLOAD_TEXT = "Upload Image";
 const ICON_BAR_WIDTH = 88;
 
+// 로컬 이미지 미리보기를 위한 타입
+interface PendingImage {
+	file: File;
+	previewUrl: string;
+}
+
+type ImageFieldType = "logo" | "background" | "iconBarLogo" | "iconBarBackground";
+
 interface ImageUploadSectionProps {
 	title: string;
 	description?: string;
 	imageSrc?: string;
-	onImageClick: () => void;
+	onFileSelect: (file: File) => void;
 	onClearClick: () => void;
+	isUploading?: boolean;
 }
 
 const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 	title,
 	description,
 	imageSrc,
-	onImageClick,
+	onFileSelect,
 	onClearClick,
+	isUploading = false,
 }) => (
 	<div className="section-box flex items-center mt-4">
 		<div className="text-box w-[220px]">
@@ -72,49 +82,62 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 			)}
 		</div>
 		<div className="flex items-center gap-3">
-			{imageSrc ? (
-				<>
-					<div className="w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden">
-						<img
-							src={imageSrc}
-							alt={title}
-							className="w-full h-full object-contain"
+			<label
+				className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
+					isUploading ? "opacity-60 pointer-events-none" : ""
+				}`}
+			>
+				{imageSrc ? (
+					<img
+						src={imageSrc}
+						alt={title}
+						className="w-full h-full object-contain"
+					/>
+				) : (
+					<>
+						<ImagePlus
+							size={ICON_SIZE}
+							color={ICON_COLOR}
+							absoluteStrokeWidth={true}
 						/>
-					</div>
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={onClearClick}
-						className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+						<span className="text-xs text-gray-500 dark:text-gray-400">
+							{UPLOAD_TEXT}
+						</span>
+					</>
+				)}
+				<input
+					type="file"
+					accept="image/*"
+					className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+					onChange={(event) => {
+						const file = event.target.files?.[0];
+						if (file) {
+							onFileSelect(file);
+						}
+						event.target.value = "";
+					}}
+				/>
+			</label>
+			{imageSrc && (
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					onClick={onClearClick}
+					className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+					style={{
+						transition: "all 0.3s ease-in-out",
+					}}
+				>
+					<Trash2
+						size={14}
+						className="mr-2"
 						style={{
 							transition: "all 0.3s ease-in-out",
 						}}
-					>
-						<Trash2
-							size={14}
-							className="mr-2"
-							style={{
-								transition: "all 0.3s ease-in-out",
-							}}
-						/>
-						비우기
-					</Button>
-				</>
-			) : (
-				<div
-					onClick={onImageClick}
-					className="w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors"
-				>
-					<ImagePlus
-						size={ICON_SIZE}
-						color={ICON_COLOR}
-						absoluteStrokeWidth={true}
 					/>
-					<span className="text-xs text-gray-500 dark:text-gray-400">
-						{UPLOAD_TEXT}
-					</span>
-				</div>
+					비우기
+				</Button>
 			)}
 		</div>
 	</div>
@@ -140,17 +163,30 @@ export default function MenuSettingClient() {
 		isDirty,
 	} = useSettingMenu();
 
-	const { uploadFile } = useFileUpload();
+	const { uploadFile, state: uploadState } = useFileUpload();
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 	const [showResetDialog, setShowResetDialog] = useState(false);
-	useSettingStatus("menu", isDirty ? "dirty" : "saved");
+
+	// pending 이미지들 저장
+	const [pendingImages, setPendingImages] = useState<
+		Record<ImageFieldType, PendingImage | null>
+	>({
+		logo: null,
+		background: null,
+		iconBarLogo: null,
+		iconBarBackground: null,
+	});
+
+	const hasPendingImages = Object.values(pendingImages).some((img) => img !== null);
+
+	useSettingStatus("menu", isDirty || hasPendingImages ? "dirty" : "saved");
 	useSettingHeaderAction(
 		<Button
 			type="submit"
 			form="setting-form-menu"
 			variant="ghost"
 			size="icon"
-			disabled={!isDirty}
+			disabled={(!isDirty && !hasPendingImages) || uploadState.loading}
 			aria-label="저장하기"
 			title="저장하기"
 			className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
@@ -160,7 +196,7 @@ export default function MenuSettingClient() {
 		>
 			<Save size={16} />
 		</Button>,
-		[isDirty]
+		[isDirty, hasPendingImages, uploadState.loading]
 	);
 	const [openFolders, setOpenFolders] = useState<{ [key: string]: boolean }>(
 		{}
@@ -202,85 +238,51 @@ export default function MenuSettingClient() {
 		}
 	};
 
-	const handleLogoUpload = async (input: HTMLInputElement) => {
-		const file = input.files?.[0];
-		if (!file) return;
-		try {
-			const url = await uploadFile(file);
-			updateMenuSetting("logo.image", url);
-			toast.success("로고 이미지가 업로드되었습니다.");
-		} catch {
-			toast.error("로고 이미지 업로드에 실패했습니다.");
+	// 파일 선택 핸들러
+	const handleFileSelect = (field: ImageFieldType, file: File) => {
+		const previewUrl = URL.createObjectURL(file);
+		setPendingImages((prev) => ({
+			...prev,
+			[field]: { file, previewUrl },
+		}));
+	};
+
+	// 이미지 클리어 핸들러
+	const handleImageClear = (field: ImageFieldType) => {
+		// pending 이미지가 있으면 blob URL 정리
+		if (pendingImages[field]) {
+			URL.revokeObjectURL(pendingImages[field]!.previewUrl);
+			setPendingImages((prev) => ({
+				...prev,
+				[field]: null,
+			}));
+		}
+
+		// 실제 설정값도 클리어
+		switch (field) {
+			case "logo":
+				updateMenuSetting("logo.image", "");
+				break;
+			case "background":
+				updateMenuSetting("background.image", "");
+				break;
+			case "iconBarLogo":
+				updateMenuSetting("iconbar.logo.image", "");
+				break;
+			case "iconBarBackground":
+				updateMenuSetting("iconbar.background.image", "");
+				break;
 		}
 	};
 
-	const triggerLogoUpload = () => {
-		const input = document.createElement("input");
-		input.type = "file";
-		input.accept = "image/*";
-		input.onchange = () => handleLogoUpload(input);
-		input.click();
-	};
-
-	const handleBackgroundUpload = async (input: HTMLInputElement) => {
-		const file = input.files?.[0];
-		if (!file) return;
-		try {
-			const url = await uploadFile(file);
-			updateMenuSetting("background.image", url);
-			toast.success("배경 이미지가 업로드되었습니다.");
-		} catch {
-			toast.error("배경 이미지 업로드에 실패했습니다.");
-		}
-	};
-
-	const triggerBackgroundUpload = () => {
-		const input = document.createElement("input");
-		input.type = "file";
-		input.accept = "image/*";
-		input.onchange = () => handleBackgroundUpload(input);
-		input.click();
-	};
-
-	const handleIconBarLogoUpload = async (input: HTMLInputElement) => {
-		const file = input.files?.[0];
-		if (!file) return;
-		try {
-			const url = await uploadFile(file);
-			updateMenuSetting("iconbar.logo.image", url);
-			toast.success("아이콘바 로고가 업로드되었습니다.");
-		} catch {
-			toast.error("아이콘바 로고 업로드에 실패했습니다.");
-		}
-	};
-
-	const triggerIconBarLogoUpload = () => {
-		const input = document.createElement("input");
-		input.type = "file";
-		input.accept = "image/*";
-		input.onchange = () => handleIconBarLogoUpload(input);
-		input.click();
-	};
-
-	const handleIconBarBackgroundUpload = async (input: HTMLInputElement) => {
-		const file = input.files?.[0];
-		if (!file) return;
-		try {
-			const url = await uploadFile(file);
-			updateMenuSetting("iconbar.background.image", url);
-			toast.success("아이콘바 배경 이미지가 업로드되었습니다.");
-		} catch {
-			toast.error("아이콘바 배경 이미지 업로드에 실패했습니다.");
-		}
-	};
-
-	const triggerIconBarBackgroundUpload = () => {
-		const input = document.createElement("input");
-		input.type = "file";
-		input.accept = "image/*";
-		input.onchange = () => handleIconBarBackgroundUpload(input);
-		input.click();
-	};
+	// cleanup: 컴포넌트 언마운트 시 blob URL 정리
+	useEffect(() => {
+		return () => {
+			Object.values(pendingImages).forEach((img) => {
+				if (img) URL.revokeObjectURL(img.previewUrl);
+			});
+		};
+	}, [pendingImages]);
 
 	return (
 		<>
@@ -294,9 +296,60 @@ export default function MenuSettingClient() {
 
 			<form
 				id="setting-form-menu"
-				onSubmit={(e) => {
+				onSubmit={async (e) => {
 					e.preventDefault();
-					handleSave();
+
+					try {
+						// pending 이미지들이 있으면 먼저 업로드
+						const uploadedUrls: Partial<Record<ImageFieldType, string>> = {};
+
+						for (const field of Object.keys(
+							pendingImages
+						) as ImageFieldType[]) {
+							const pending = pendingImages[field];
+							if (pending) {
+								const url = await uploadFile(pending.file);
+								uploadedUrls[field] = url;
+								URL.revokeObjectURL(pending.previewUrl);
+							}
+						}
+
+						// 업로드된 URL들을 menuSetting에 반영
+						if (uploadedUrls.logo) {
+							updateMenuSetting("logo.image", uploadedUrls.logo);
+						}
+						if (uploadedUrls.background) {
+							updateMenuSetting("background.image", uploadedUrls.background);
+						}
+						if (uploadedUrls.iconBarLogo) {
+							updateMenuSetting("iconbar.logo.image", uploadedUrls.iconBarLogo);
+						}
+						if (uploadedUrls.iconBarBackground) {
+							updateMenuSetting(
+								"iconbar.background.image",
+								uploadedUrls.iconBarBackground
+							);
+						}
+
+						// pending 이미지 초기화
+						setPendingImages({
+							logo: null,
+							background: null,
+							iconBarLogo: null,
+							iconBarBackground: null,
+						});
+
+						// 약간의 딜레이 후 저장 (updateMenuSetting이 비동기적으로 상태를 업데이트할 수 있으므로)
+						if (Object.keys(uploadedUrls).length > 0) {
+							setTimeout(() => {
+								handleSave();
+							}, 100);
+						} else {
+							handleSave();
+						}
+					} catch {
+						toast.error("이미지 업로드 중 오류가 발생했습니다.");
+					}
 				}}
 				className="space-y-8"
 			>
@@ -304,286 +357,319 @@ export default function MenuSettingClient() {
 				<section>
 					<h2 className="text-[20px] font-semibold">메뉴 디자인</h2>
 					<div className="section-wrap mt-6">
-					<div className="section-box flex items-center mt-4">
-						<div className="text-box w-[220px]">
-							<h3 className="font-medium text-sub-text">디자인 모드</h3>
-							<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-								데스크톱/아이콘바 설정을 전환합니다.
-							</p>
-						</div>
-						<div className="flex flex-1 items-center">
-							<div className="inline-flex rounded-card border-card bg-card-bg p-1">
-								<button
-									type="button"
-									onClick={() => setDesignMode("desktop")}
-									className={`px-3 py-2 rounded-card text-sm font-medium transition-colors ${
-										designMode === "desktop"
-											? "bg-theme-primary text-white"
-											: "text-sub-text hover:bg-card-bg/70"
-									}`}
-								>
-									데스크톱 메뉴
-								</button>
-								<button
-									type="button"
-									onClick={() => setDesignMode("iconbar")}
-									className={`px-3 py-2 rounded-card text-sm font-medium transition-colors ${
-										designMode === "iconbar"
-											? "bg-theme-primary text-white"
-											: "text-sub-text hover:bg-card-bg/70"
-									}`}
-								>
-									아이콘바
-								</button>
+						<div className="section-box flex items-center mt-4">
+							<div className="text-box w-[220px]">
+								<h3 className="font-medium text-sub-text">디자인 모드</h3>
+								<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+									데스크톱/아이콘바 설정을 전환합니다.
+								</p>
 							</div>
-						</div>
-					</div>
-
-					{designMode === "desktop" && (
-						<>
-							{/* 메뉴 레이아웃 배치 */}
-							<div className="section-box flex items-center mt-4">
-								<div className="text-box w-[220px]">
-									<h3 className="font-medium text-sub-text">메뉴 레이아웃 배치</h3>
-								</div>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-									{align.map((el) => (
-										<RadioItem
-											key={el}
-											onClickRadio={() => updateMenuDesign("align", el)}
-											checked={menuDesign.align === el}
-											content={el}
-										/>
-									))}
-								</div>
-							</div>
-
-							{/* 메뉴 폰트 컬러 */}
-							<div className="section-box flex items-center mt-4">
-								<div className="text-box w-[220px]">
-									<h3 className="font-medium text-sub-text">메뉴 폰트 컬러</h3>
-								</div>
-								<div className="flex items-center gap-3">
-									<ColorPicker
-										value={menuDesign.fontColor}
-										onChange={(color) => updateMenuSetting("font.color", color)}
-									/>
-									<span
-										className="text-sm font-mono"
-										style={{ color: menuDesign.fontColor }}
+							<div className="flex flex-1 items-center">
+								<div className="inline-flex rounded-card border-card bg-card-bg p-1">
+									<button
+										type="button"
+										onClick={() => setDesignMode("desktop")}
+										className={`px-3 py-2 rounded-card text-sm font-medium transition-colors ${
+											designMode === "desktop"
+												? "bg-theme-primary text-white"
+												: "text-sub-text hover:bg-card-bg/70"
+										}`}
 									>
-										{menuDesign.fontColor}
-									</span>
+										데스크톱 메뉴
+									</button>
+									<button
+										type="button"
+										onClick={() => setDesignMode("iconbar")}
+										className={`px-3 py-2 rounded-card text-sm font-medium transition-colors ${
+											designMode === "iconbar"
+												? "bg-theme-primary text-white"
+												: "text-sub-text hover:bg-card-bg/70"
+										}`}
+									>
+										아이콘바
+									</button>
 								</div>
 							</div>
+						</div>
 
-							{/* 메뉴 텍스트 정렬 */}
-							<div className="section-box flex items-center mt-4">
-								<div className="text-box w-[220px]">
-									<h3 className="font-medium text-sub-text">메뉴 텍스트 정렬</h3>
-								</div>
-								<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-									{textAlign.map((el) => (
-										<RadioItem
-											key={el}
-											onClickRadio={() => updateMenuDesign("textAlign", el)}
-											checked={menuDesign.textAlign === el}
-											content={el}
-										/>
-									))}
-								</div>
-							</div>
-
-							{/* 메뉴 로고 타입 */}
-							<div className="section-box flex items-center mt-4">
-								<div className="text-box w-[220px]">
-									<h3 className="font-medium text-sub-text">메뉴 로고 타입</h3>
-								</div>
-								<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-									{menuTypes.map((el) => (
-										<RadioItem
-											key={el}
-											onClickRadio={() => updateMenuDesign("logoType", el)}
-											checked={menuDesign.logoType === el}
-											content={el}
-										/>
-									))}
-								</div>
-							</div>
-
-							{/* 로고 타이틀 (텍스트 로고일 때) */}
-							{menuDesign.logoType === "텍스트" && (
-								<div className="section-box flex items-center mt-4">
-									<div className="text-box w-[220px]">
-										<h3 className="font-medium text-sub-text">로고 타이틀</h3>
-									</div>
-									<div className="input-box flex-1">
-										<Input
-											placeholder="로고 타이틀을 입력해주세요"
-											value={menuDesign.logoText}
-											onChange={(e) =>
-												updateMenuSetting("logo.text", e.target.value)
-											}
-											className={
-												INPUT_HEIGHT +
-												" rounded-card border-card focus:border-card-active bg-card-bg"
-											}
-										/>
-									</div>
-								</div>
-							)}
-
-							{/* 로고 이미지 (이미지 로고일 때) */}
-							{menuDesign.logoType === "이미지" && (
-								<ImageUploadSection
-									title="로고 이미지"
-									description="메뉴에 표시될 로고 이미지를 업로드하세요"
-									imageSrc={menuDesign.logoImage}
-									onImageClick={triggerLogoUpload}
-									onClearClick={() => updateMenuSetting("logo.image", "")}
-								/>
-							)}
-
-							{/* 메뉴 배경 타입 */}
-							<div className="section-box flex items-center mt-4">
-								<div className="text-box w-[220px]">
-									<h3 className="font-medium text-sub-text">메뉴 배경 타입</h3>
-								</div>
-								<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-									{bgType.map((el) => (
-										<RadioItem
-											key={el}
-											onClickRadio={() => updateMenuDesign("bgType", el)}
-											checked={menuDesign.bgType === el}
-											content={el}
-										/>
-									))}
-								</div>
-							</div>
-
-							{/* 메뉴 배경 컬러 (단색일 때) */}
-							{menuDesign.bgType === "단색" && (
-								<div className="section-box flex items-center mt-4">
-									<div className="text-box w-[220px]">
-										<h3 className="font-medium text-sub-text">메뉴 배경 컬러</h3>
-									</div>
-									<div className="flex items-center gap-3">
-										<ColorPicker
-											value={menuDesign.backgroundColor}
-											onChange={(color) =>
-												updateMenuSetting("background.color", color)
-											}
-										/>
-										<span
-											className="text-sm font-mono"
-											style={{ color: menuDesign.backgroundColor }}
-										>
-											{menuDesign.backgroundColor}
-										</span>
-									</div>
-								</div>
-							)}
-
-							{/* 배경 이미지 (이미지일 때) */}
-							{menuDesign.bgType === "이미지" && (
-								<ImageUploadSection
-									title="배경 이미지"
-									description="메뉴 영역의 배경 이미지를 설정합니다."
-									imageSrc={menuDesign.backgroundImage}
-									onImageClick={triggerBackgroundUpload}
-									onClearClick={() => updateMenuSetting("background.image", "")}
-								/>
-							)}
-						</>
-					)}
-
-					{designMode === "iconbar" && (
-						<>
-							<div className="section-box flex items-center mt-4">
-								<div className="text-box w-[220px]">
-									<h3 className="font-medium text-sub-text">아이콘바 로고 타입</h3>
-								</div>
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-									{iconBarLogoTypes.map((el) => (
-										<RadioItem
-											key={el}
-											onClickRadio={() =>
-												updateMenuSetting("iconbar.logo.type", el)
-											}
-											checked={menuDesign.iconBarLogoType === el}
-											content={el}
-										/>
-									))}
-								</div>
-							</div>
-
-							{menuDesign.iconBarLogoType === "이미지" && (
-								<ImageUploadSection
-									title="아이콘바 로고 이미지"
-									description="아이콘바에 표시될 로고를 업로드하세요."
-									imageSrc={menuDesign.iconBarLogoImage}
-									onImageClick={triggerIconBarLogoUpload}
-									onClearClick={() =>
-										updateMenuSetting("iconbar.logo.image", "")
-									}
-								/>
-							)}
-
-							<div className="section-box flex items-center mt-4">
-								<div className="text-box w-[220px]">
-									<h3 className="font-medium text-sub-text">아이콘바 배경 타입</h3>
-								</div>
-								<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-									{iconBarBgTypes.map((el) => (
-										<RadioItem
-											key={el}
-											onClickRadio={() =>
-												updateMenuSetting("iconbar.bg.type", el)
-											}
-											checked={menuDesign.iconBarBgType === el}
-											content={el}
-										/>
-									))}
-								</div>
-							</div>
-
-							{menuDesign.iconBarBgType === "단색" && (
+						{designMode === "desktop" && (
+							<>
+								{/* 메뉴 레이아웃 배치 */}
 								<div className="section-box flex items-center mt-4">
 									<div className="text-box w-[220px]">
 										<h3 className="font-medium text-sub-text">
-											아이콘바 배경 컬러
+											메뉴 레이아웃 배치
+										</h3>
+									</div>
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+										{align.map((el) => (
+											<RadioItem
+												key={el}
+												onClickRadio={() => updateMenuDesign("align", el)}
+												checked={menuDesign.align === el}
+												content={el}
+											/>
+										))}
+									</div>
+								</div>
+
+								{/* 메뉴 폰트 컬러 */}
+								<div className="section-box flex items-center mt-4">
+									<div className="text-box w-[220px]">
+										<h3 className="font-medium text-sub-text">
+											메뉴 폰트 컬러
 										</h3>
 									</div>
 									<div className="flex items-center gap-3">
 										<ColorPicker
-											value={menuDesign.iconBarBackgroundColor || "#ffffff"}
+											value={menuDesign.fontColor}
 											onChange={(color) =>
-												updateMenuSetting("iconbar.background.color", color)
+												updateMenuSetting("font.color", color)
 											}
 										/>
 										<span
 											className="text-sm font-mono"
-											style={{ color: menuDesign.iconBarBackgroundColor }}
+											style={{ color: menuDesign.fontColor }}
 										>
-											{menuDesign.iconBarBackgroundColor}
+											{menuDesign.fontColor}
 										</span>
 									</div>
 								</div>
-							)}
 
-							{menuDesign.iconBarBgType === "이미지" && (
-								<ImageUploadSection
-									title="아이콘바 배경 이미지"
-									description="아이콘바의 배경 이미지를 설정합니다."
-									imageSrc={menuDesign.iconBarBackgroundImage}
-									onImageClick={triggerIconBarBackgroundUpload}
-									onClearClick={() =>
-										updateMenuSetting("iconbar.background.image", "")
-									}
-								/>
-							)}
-						</>
-					)}
+								{/* 메뉴 텍스트 정렬 */}
+								<div className="section-box flex items-center mt-4">
+									<div className="text-box w-[220px]">
+										<h3 className="font-medium text-sub-text">
+											메뉴 텍스트 정렬
+										</h3>
+									</div>
+									<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+										{textAlign.map((el) => (
+											<RadioItem
+												key={el}
+												onClickRadio={() => updateMenuDesign("textAlign", el)}
+												checked={menuDesign.textAlign === el}
+												content={el}
+											/>
+										))}
+									</div>
+								</div>
+
+								{/* 메뉴 로고 타입 */}
+								<div className="section-box flex items-center mt-4">
+									<div className="text-box w-[220px]">
+										<h3 className="font-medium text-sub-text">
+											메뉴 로고 타입
+										</h3>
+									</div>
+									<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+										{menuTypes.map((el) => (
+											<RadioItem
+												key={el}
+												onClickRadio={() => updateMenuDesign("logoType", el)}
+												checked={menuDesign.logoType === el}
+												content={el}
+											/>
+										))}
+									</div>
+								</div>
+
+								{/* 로고 타이틀 (텍스트 로고일 때) */}
+								{menuDesign.logoType === "텍스트" && (
+									<div className="section-box flex items-center mt-4">
+										<div className="text-box w-[220px]">
+											<h3 className="font-medium text-sub-text">로고 타이틀</h3>
+										</div>
+										<div className="input-box flex-1">
+											<Input
+												placeholder="로고 타이틀을 입력해주세요"
+												value={menuDesign.logoText}
+												onChange={(e) =>
+													updateMenuSetting("logo.text", e.target.value)
+												}
+												className={
+													INPUT_HEIGHT +
+													" rounded-card border-card focus:border-card-active bg-card-bg"
+												}
+											/>
+										</div>
+									</div>
+								)}
+
+								{/* 로고 이미지 (이미지 로고일 때) */}
+								{menuDesign.logoType === "이미지" && (
+									<ImageUploadSection
+										title="로고 이미지"
+										description="메뉴에 표시될 로고 이미지를 업로드하세요"
+										imageSrc={
+											pendingImages.logo?.previewUrl || menuDesign.logoImage
+										}
+										onFileSelect={(file) => handleFileSelect("logo", file)}
+										onClearClick={() => handleImageClear("logo")}
+										isUploading={uploadState.loading}
+									/>
+								)}
+
+								{/* 메뉴 배경 타입 */}
+								<div className="section-box flex items-center mt-4">
+									<div className="text-box w-[220px]">
+										<h3 className="font-medium text-sub-text">
+											메뉴 배경 타입
+										</h3>
+									</div>
+									<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+										{bgType.map((el) => (
+											<RadioItem
+												key={el}
+												onClickRadio={() => updateMenuDesign("bgType", el)}
+												checked={menuDesign.bgType === el}
+												content={el}
+											/>
+										))}
+									</div>
+								</div>
+
+								{/* 메뉴 배경 컬러 (단색일 때) */}
+								{menuDesign.bgType === "단색" && (
+									<div className="section-box flex items-center mt-4">
+										<div className="text-box w-[220px]">
+											<h3 className="font-medium text-sub-text">
+												메뉴 배경 컬러
+											</h3>
+										</div>
+										<div className="flex items-center gap-3">
+											<ColorPicker
+												value={menuDesign.backgroundColor}
+												onChange={(color) =>
+													updateMenuSetting("background.color", color)
+												}
+											/>
+											<span
+												className="text-sm font-mono"
+												style={{ color: menuDesign.backgroundColor }}
+											>
+												{menuDesign.backgroundColor}
+											</span>
+										</div>
+									</div>
+								)}
+
+								{/* 배경 이미지 (이미지일 때) */}
+								{menuDesign.bgType === "이미지" && (
+									<ImageUploadSection
+										title="배경 이미지"
+										description="메뉴 영역의 배경 이미지를 설정합니다."
+										imageSrc={
+											pendingImages.background?.previewUrl ||
+											menuDesign.backgroundImage
+										}
+										onFileSelect={(file) => handleFileSelect("background", file)}
+										onClearClick={() => handleImageClear("background")}
+										isUploading={uploadState.loading}
+									/>
+								)}
+							</>
+						)}
+
+						{designMode === "iconbar" && (
+							<>
+								<div className="section-box flex items-center mt-4">
+									<div className="text-box w-[220px]">
+										<h3 className="font-medium text-sub-text">
+											아이콘바 로고 타입
+										</h3>
+									</div>
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+										{iconBarLogoTypes.map((el) => (
+											<RadioItem
+												key={el}
+												onClickRadio={() =>
+													updateMenuSetting("iconbar.logo.type", el)
+												}
+												checked={menuDesign.iconBarLogoType === el}
+												content={el}
+											/>
+										))}
+									</div>
+								</div>
+
+								{menuDesign.iconBarLogoType === "이미지" && (
+									<ImageUploadSection
+										title="아이콘바 로고 이미지"
+										description="아이콘바에 표시될 로고를 업로드하세요."
+										imageSrc={
+											pendingImages.iconBarLogo?.previewUrl ||
+											menuDesign.iconBarLogoImage
+										}
+										onFileSelect={(file) =>
+											handleFileSelect("iconBarLogo", file)
+										}
+										onClearClick={() => handleImageClear("iconBarLogo")}
+										isUploading={uploadState.loading}
+									/>
+								)}
+
+								<div className="section-box flex items-center mt-4">
+									<div className="text-box w-[220px]">
+										<h3 className="font-medium text-sub-text">
+											아이콘바 배경 타입
+										</h3>
+									</div>
+									<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+										{iconBarBgTypes.map((el) => (
+											<RadioItem
+												key={el}
+												onClickRadio={() =>
+													updateMenuSetting("iconbar.bg.type", el)
+												}
+												checked={menuDesign.iconBarBgType === el}
+												content={el}
+											/>
+										))}
+									</div>
+								</div>
+
+								{menuDesign.iconBarBgType === "단색" && (
+									<div className="section-box flex items-center mt-4">
+										<div className="text-box w-[220px]">
+											<h3 className="font-medium text-sub-text">
+												아이콘바 배경 컬러
+											</h3>
+										</div>
+										<div className="flex items-center gap-3">
+											<ColorPicker
+												value={menuDesign.iconBarBackgroundColor || "#ffffff"}
+												onChange={(color) =>
+													updateMenuSetting("iconbar.background.color", color)
+												}
+											/>
+											<span
+												className="text-sm font-mono"
+												style={{ color: menuDesign.iconBarBackgroundColor }}
+											>
+												{menuDesign.iconBarBackgroundColor}
+											</span>
+										</div>
+									</div>
+								)}
+
+								{menuDesign.iconBarBgType === "이미지" && (
+									<ImageUploadSection
+										title="아이콘바 배경 이미지"
+										description="아이콘바의 배경 이미지를 설정합니다."
+										imageSrc={
+											pendingImages.iconBarBackground?.previewUrl ||
+											menuDesign.iconBarBackgroundImage
+										}
+										onFileSelect={(file) =>
+											handleFileSelect("iconBarBackground", file)
+										}
+										onClearClick={() => handleImageClear("iconBarBackground")}
+										isUploading={uploadState.loading}
+									/>
+								)}
+							</>
+						)}
 					</div>
 				</section>
 
@@ -608,7 +694,7 @@ export default function MenuSettingClient() {
 					</p>
 
 					{/* Menu Preview Container */}
-					<div className="section-wrap flex flex-col lg:flex-row justify-center gap-6 py-10 rounded-card border-card bg-card-bg">
+					<div className="section-wrap flex justify-center gap-6 py-10 rounded-card border-card bg-card-bg">
 						<aside
 							className={cn(
 								"w-[160px] h-[600px] rounded-xl shadow-2xl overflow-auto flex flex-col items-center justify-center",
@@ -628,7 +714,10 @@ export default function MenuSettingClient() {
 								backgroundPosition: "center",
 							}}
 						>
-							<nav className="w-full h-full flex flex-col justify-center py-6">
+							<nav
+								className="w-full h-full flex flex-col justify-center py-6"
+								style={{ fontFamily: "var(--font-title)" }}
+							>
 								{/* Logo */}
 								{menuDesign.logoType === "이미지" && menuDesign.logoImage && (
 									<div className="max-w-[160px] aspect-square px-4 mb-4">
@@ -643,7 +732,7 @@ export default function MenuSettingClient() {
 								)}
 								{menuDesign.logoType === "텍스트" && menuDesign.logoText && (
 									<div
-										className="text-center mb-4 font-bold text-lg px-4"
+										className="text-center mb-4 font-bold text-lg px-4 h-14 flex items-center justify-center break-keep"
 										style={{ color: menuDesign.fontColor }}
 									>
 										{menuDesign.logoText}
@@ -708,7 +797,9 @@ export default function MenuSettingClient() {
 														width: "1px",
 														background: menuDesign.fontColor || "#333333",
 														margin: "0 1px",
-														height: ["6px", "8px", "10px", "13px", "15px"][index],
+														height: ["6px", "8px", "10px", "13px", "15px"][
+															index
+														],
 													}}
 												/>
 											))}
@@ -749,7 +840,10 @@ export default function MenuSettingClient() {
 								backgroundPosition: "center",
 							}}
 						>
-							<nav className="w-full h-full flex flex-col items-center py-6 overflow-visible">
+							<nav
+								className="w-full h-full flex flex-col items-center justify-center py-6 overflow-visible gap-3"
+								style={{ fontFamily: "var(--font-title)" }}
+							>
 								<div className="w-full flex items-center justify-center mb-6">
 									{menuDesign.iconBarLogoType === "이미지" &&
 									menuDesign.iconBarLogoImage ? (
@@ -765,7 +859,7 @@ export default function MenuSettingClient() {
 									) : null}
 								</div>
 
-								<ul className="flex flex-col items-center gap-3 flex-1">
+								<ul className="flex flex-col items-center gap-3">
 									{menus.map((menu) => (
 										<li key={menu.uniqueId} className="relative">
 											<div className="relative group">
@@ -798,10 +892,15 @@ export default function MenuSettingClient() {
 												<ul
 													className="flex flex-col items-center gap-2 overflow-hidden"
 													style={{
-														marginTop: openFolders[menu.uniqueId] ? "8px" : "0px",
-														maxHeight: openFolders[menu.uniqueId] ? "160px" : "0px",
+														marginTop: openFolders[menu.uniqueId]
+															? "8px"
+															: "0px",
+														maxHeight: openFolders[menu.uniqueId]
+															? "160px"
+															: "0px",
 														opacity: openFolders[menu.uniqueId] ? 1 : 0,
-														transition: "max-height 300ms ease, opacity 300ms ease",
+														transition:
+															"max-height 300ms ease, opacity 300ms ease",
 													}}
 												>
 													{menu.subMenus.map((subMenu, idx) => {
@@ -853,7 +952,9 @@ export default function MenuSettingClient() {
 														width: "1px",
 														background: menuDesign.fontColor || "#333333",
 														margin: "0 1px",
-														height: ["6px", "8px", "10px", "13px", "15px"][index],
+														height: ["6px", "8px", "10px", "13px", "15px"][
+															index
+														],
 													}}
 												/>
 											))}
