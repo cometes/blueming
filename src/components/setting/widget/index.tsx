@@ -33,8 +33,9 @@ interface WidgetSettingProps {
 	widget: WidgetSettings;
 	card: CardSettings;
 	updateDesignSetting: (path: string, value: string | number) => void;
-	pendingBorderImage: File | null;
-	onBorderImageSelect: (file: File) => void;
+	pendingBorderImage?: File | null;
+	onBorderImageSelect?: (file: File) => void;
+	onOpenBorderImagePicker?: () => void;
 	isUploading?: boolean;
 }
 
@@ -48,8 +49,8 @@ export default function WidgetSetting({
 	widget,
 	card,
 	updateDesignSetting,
-	pendingBorderImage,
 	onBorderImageSelect,
+	onOpenBorderImagePicker,
 	isUploading = false,
 }: WidgetSettingProps) {
 	const { lightPreset, darkPreset, presetTypes, radiusTypes, lineTypes } =
@@ -90,7 +91,7 @@ export default function WidgetSetting({
 		<div className="space-y-8">
 			{/* 위젯 설정 Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">위젯 설정</h2>
+				<h2 className="text-[20px] font-semibold font-title">위젯 설정</h2>
 				<div className="section-wrap mt-6">
 					{/* 위젯 프리뷰 */}
 					<div className="flex flex-col items-center p-8 rounded-card border-card bg-card-bg filter-blur-card mb-8 relative">
@@ -329,42 +330,71 @@ export default function WidgetSetting({
 							</div>
 							<div className="flex flex-col gap-3 flex-1">
 								<div className="flex items-center gap-3">
-									<label
-										className={`relative w-24 h-24 rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
-											isUploading ? "opacity-60 pointer-events-none" : ""
-										}`}
-									>
-										{widget.borderImage ? (
-											<img
-												src={widget.borderImage}
-												alt="border"
-												className="w-full h-full object-cover"
-											/>
-										) : (
-											<>
-												<ImagePlus
-													size={28}
-													color="#9BA2A8"
-													absoluteStrokeWidth={true}
+									{onOpenBorderImagePicker ? (
+										<button
+											type="button"
+											onClick={onOpenBorderImagePicker}
+											className={`relative w-24 h-24 rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
+												isUploading ? "opacity-60 pointer-events-none" : ""
+											}`}
+										>
+											{widget.borderImage ? (
+												<img
+													src={widget.borderImage}
+													alt="border"
+													className="w-full h-full object-cover"
 												/>
-												<span className="text-[10px] text-gray-400">
-													Upload Image
-												</span>
-											</>
-										)}
-										<input
-											type="file"
-											accept="image/*"
-											className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-											onChange={(event) => {
-												const file = event.target.files?.[0];
-												if (file) {
-													onBorderImageSelect(file);
-												}
-												event.target.value = "";
-											}}
-										/>
-									</label>
+											) : (
+												<>
+													<ImagePlus
+														size={28}
+														color="#9BA2A8"
+														absoluteStrokeWidth={true}
+													/>
+													<span className="text-[10px] text-gray-400">
+														Upload Image
+													</span>
+												</>
+											)}
+										</button>
+									) : (
+										<label
+											className={`relative w-24 h-24 rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
+												isUploading ? "opacity-60 pointer-events-none" : ""
+											}`}
+										>
+											{widget.borderImage ? (
+												<img
+													src={widget.borderImage}
+													alt="border"
+													className="w-full h-full object-cover"
+												/>
+											) : (
+												<>
+													<ImagePlus
+														size={28}
+														color="#9BA2A8"
+														absoluteStrokeWidth={true}
+													/>
+													<span className="text-[10px] text-gray-400">
+														Upload Image
+													</span>
+												</>
+											)}
+											<input
+												type="file"
+												accept="image/*"
+												className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+												onChange={(event) => {
+													const file = event.target.files?.[0];
+													if (file) {
+														onBorderImageSelect(file);
+													}
+													event.target.value = "";
+												}}
+											/>
+										</label>
+									)}
 									{widget.borderImage && (
 										<Button
 											type="button"
@@ -424,7 +454,7 @@ export default function WidgetSetting({
 
 			{/* 카드 설정 Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">카드 설정</h2>
+				<h2 className="text-[20px] font-semibold font-title">카드 설정</h2>
 				<div className="section-wrap mt-6">
 					{/* 카드 프리뷰 */}
 					<div className="flex flex-col items-center p-8 rounded-card border-card bg-card-bg filter-blur-card mb-8 relative">

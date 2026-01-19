@@ -279,7 +279,7 @@ export default function ThemeSettingClient() {
 		<div className="space-y-8">
 			{/* 테마 저장 Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">
+				<h2 className="text-[20px] font-semibold font-title">
 					{SECTION_TEXTS.SAVE_TITLE}
 				</h2>
 				<p className="text-sm text-sub-text mt-1">
@@ -360,7 +360,7 @@ export default function ThemeSettingClient() {
 
 			{/* 테마 목록 Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">
+				<h2 className="text-[20px] font-semibold font-title">
 					{SECTION_TEXTS.LIST_TITLE}
 				</h2>
 				<div className="section-wrap mt-6">

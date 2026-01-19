@@ -186,7 +186,7 @@ export default function SlideSettingClient() {
 
 			<form id="setting-form-slide" onSubmit={handleSave} className="space-y-8">
 				<section>
-					<h2 className="text-[20px] font-semibold">슬라이드 배너 편집하기</h2>
+					<h2 className="text-[20px] font-semibold font-title">슬라이드 배너 편집하기</h2>
 					<p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
 						슬라이드 배너 이미지를 설정합니다. 드래그 앤 드롭으로 순서를 변경할
 						수 있습니다. 최대 8장까지 추가 가능합니다.

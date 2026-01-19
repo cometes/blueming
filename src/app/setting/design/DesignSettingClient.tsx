@@ -31,6 +31,10 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
+import AssetGrid from "@/components/asset/AssetGrid";
+import { listStickerAssets } from "@/queries/stickerAssets";
+import type { StickerAsset } from "@/types/stickerBoard";
 
 const BACKGROUND_TYPES = {
 	IMAGE: "이미지",
@@ -78,6 +82,16 @@ export default function DesignSettingClient() {
 	// pending 위젯 보더 이미지 저장
 	const [pendingBorderImage, setPendingBorderImage] = useState<PendingImage | null>(null);
 
+	// 이미지 업로드 다이얼로그 상태
+	type ImageField = "background" | "borderImage";
+	const [activeImageField, setActiveImageField] = useState<ImageField | null>(null);
+	const [dialogThumbnail, setDialogThumbnail] = useState("");
+	const [imageSource, setImageSource] = useState<"file" | "asset" | "existing" | null>(null);
+	const [assets, setAssets] = useState<StickerAsset[]>([]);
+	const [assetsLoading, setAssetsLoading] = useState(false);
+	const [assetsError, setAssetsError] = useState<string | null>(null);
+	const [assetSearchQuery, setAssetSearchQuery] = useState("");
+
 	const hasPendingImage = pendingBgImage !== null || pendingBorderImage !== null;
 
 	useSettingStatus("design", isDirty || hasPendingImage ? "dirty" : "saved");
@@ -104,12 +118,6 @@ export default function DesignSettingClient() {
 		[isDirty, hasPendingImage, uploadState.loading]
 	);
 
-	// 배경 이미지 파일 선택 시 로컬 미리보기만 표시
-	const handleFileSelect = (file: File) => {
-		const previewUrl = URL.createObjectURL(file);
-		setPendingBgImage({ file, previewUrl });
-	};
-
 	// 배경 이미지 비우기
 	const handleImageClear = () => {
 		if (pendingBgImage) {
@@ -119,10 +127,97 @@ export default function DesignSettingClient() {
 		updateDesignSetting("background.image", "");
 	};
 
-	// 보더 이미지 파일 선택 시 로컬 미리보기만 표시
-	const handleBorderImageSelect = (file: File) => {
-		const previewUrl = URL.createObjectURL(file);
-		setPendingBorderImage({ file, previewUrl });
+	// 에셋 목록 로드
+	const refreshAssets = useCallback(async () => {
+		try {
+			setAssetsLoading(true);
+			setAssetsError(null);
+			const list = await listStickerAssets("all");
+			setAssets(list);
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : "에셋을 불러오지 못했습니다.";
+			setAssetsError(message);
+		} finally {
+			setAssetsLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (!activeImageField) return;
+		void refreshAssets();
+	}, [activeImageField, refreshAssets]);
+
+	// 이미지 다이얼로그 열기
+	const handleOpenImageDialog = (field: ImageField) => {
+		let currentValue = "";
+		let pendingPreview = "";
+
+		if (field === "background") {
+			pendingPreview = pendingBgImage?.previewUrl || "";
+			currentValue = background.image || "";
+		} else if (field === "borderImage") {
+			pendingPreview = pendingBorderImage?.previewUrl || "";
+			currentValue = widget.borderImage || "";
+		}
+
+		const current = pendingPreview || currentValue || "";
+		setDialogThumbnail(current);
+		if (pendingPreview) {
+			setImageSource("file");
+		} else if (currentValue) {
+			setImageSource("existing");
+		} else {
+			setImageSource(null);
+		}
+		setActiveImageField(field);
+	};
+
+	// 다이얼로그에서 파일 선택
+	const handleImageFileSelect = (file: File, previewUrl: string) => {
+		if (!activeImageField) return;
+
+		if (activeImageField === "background") {
+			if (pendingBgImage) {
+				URL.revokeObjectURL(pendingBgImage.previewUrl);
+			}
+			setPendingBgImage({ file, previewUrl });
+		} else if (activeImageField === "borderImage") {
+			if (pendingBorderImage) {
+				URL.revokeObjectURL(pendingBorderImage.previewUrl);
+			}
+			setPendingBorderImage({ file, previewUrl });
+		}
+		setDialogThumbnail(previewUrl);
+		setImageSource("file");
+	};
+
+	// 에셋 선택
+	const handleSelectAsset = (asset: StickerAsset) => {
+		setDialogThumbnail(asset.url);
+		setImageSource("asset");
+	};
+
+	// 다이얼로그 확인
+	const handleImageDialogConfirm = (selectedUrl: string) => {
+		if (!activeImageField) return;
+
+		if (imageSource === "asset" && selectedUrl) {
+			if (activeImageField === "background") {
+				if (pendingBgImage) {
+					URL.revokeObjectURL(pendingBgImage.previewUrl);
+				}
+				setPendingBgImage(null);
+				updateDesignSetting("background.image", selectedUrl);
+			} else if (activeImageField === "borderImage") {
+				if (pendingBorderImage) {
+					URL.revokeObjectURL(pendingBorderImage.previewUrl);
+				}
+				setPendingBorderImage(null);
+				updateDesignSetting("widget.borderImage", selectedUrl);
+			}
+		}
+		setActiveImageField(null);
 	};
 
 	// 저장 버튼 클릭 시 실행
@@ -213,10 +308,46 @@ export default function DesignSettingClient() {
 			onSubmit={handleSubmit}
 			className="space-y-8"
 		>
+			<ImageUploadDialog
+				isOpen={activeImageField !== null}
+				onOpenChange={(open) => {
+					if (!open) {
+						setActiveImageField(null);
+						setAssetSearchQuery("");
+					}
+				}}
+				thumbnail={dialogThumbnail}
+				setThumbnail={setDialogThumbnail}
+				onUpload={handleImageDialogConfirm}
+				uploadMode="deferred"
+				onFileSelect={handleImageFileSelect}
+				rightContent={
+					<div>
+						<div className="text-xs font-semibold text-main-text mb-2">
+							에셋 목록
+						</div>
+						<AssetGrid
+							assets={assets}
+							loading={assetsLoading}
+							error={assetsError}
+							emptyMessage="에셋이 없습니다."
+							emptySearchMessage="검색 결과가 없습니다."
+							selectedUrl={dialogThumbnail}
+							onSelect={handleSelectAsset}
+							enableSearch
+							searchQuery={assetSearchQuery}
+							onSearchChange={setAssetSearchQuery}
+							gridTemplateColumns="repeat(4, minmax(0, 1fr))"
+							aspectClassName="aspect-square"
+							imageClassName="w-full h-full object-contain"
+						/>
+					</div>
+				}
+			/>
 
 			{/* 배경 디자인 설정 Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">배경 디자인 설정</h2>
+				<h2 className="text-[20px] font-semibold font-title">배경 디자인 설정</h2>
 				<div className="section-wrap mt-6">
 					{/* 배경 타입 */}
 					<div className="section-box flex items-center mt-4">
@@ -244,7 +375,9 @@ export default function DesignSettingClient() {
 								<h3 className="font-medium text-sub-text">배경 이미지</h3>
 							</div>
 							<div className="flex items-center gap-3">
-								<label
+								<button
+									type="button"
+									onClick={() => handleOpenImageDialog("background")}
 									className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
 										uploadState.loading ? "opacity-60 pointer-events-none" : ""
 									}`}
@@ -267,19 +400,7 @@ export default function DesignSettingClient() {
 											</span>
 										</>
 									)}
-									<input
-										type="file"
-										accept="image/*"
-										className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-										onChange={(event) => {
-											const file = event.target.files?.[0];
-											if (file) {
-												handleFileSelect(file);
-											}
-											event.target.value = "";
-										}}
-									/>
-								</label>
+								</button>
 								{(pendingBgImage || background.image) && (
 									<Button
 										type="button"
@@ -337,8 +458,7 @@ export default function DesignSettingClient() {
 				widget={widget}
 				card={card}
 				updateDesignSetting={updateDesignSetting}
-				pendingBorderImage={pendingBorderImage?.file || null}
-				onBorderImageSelect={handleBorderImageSelect}
+				onOpenBorderImagePicker={() => handleOpenImageDialog("borderImage")}
 				isUploading={uploadState.loading}
 			/>
 
@@ -347,7 +467,7 @@ export default function DesignSettingClient() {
 			{/* 폰트 설정 Section */}
 			<section>
 				<div className="flex items-center justify-between">
-					<h2 className="text-[20px] font-semibold">폰트 설정</h2>
+					<h2 className="text-[20px] font-semibold font-title">폰트 설정</h2>
 					<Button
 						type="button"
 						variant="outline"

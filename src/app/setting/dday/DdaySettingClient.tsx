@@ -179,7 +179,7 @@ export default function DdaySettingClient() {
 
 			<form id="setting-form-dday" onSubmit={handleSave} className="space-y-8">
 				<section>
-					<h2 className="text-[20px] font-semibold">디데이 설정</h2>
+					<h2 className="text-[20px] font-semibold font-title">디데이 설정</h2>
 					<p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
 						디데이를 설정합니다. 드래그 앤 드롭으로 순서를 변경할 수 있습니다.
 						최대 {MAX_DDAY}개까지 추가 가능합니다.

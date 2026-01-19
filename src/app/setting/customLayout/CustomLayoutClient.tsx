@@ -487,7 +487,7 @@ export default function CustomLayoutClient() {
 	return (
 		<div className="space-y-8">
 			<section>
-				<h2 className="text-[20px] font-semibold">커스텀 레이아웃 편집</h2>
+				<h2 className="text-[20px] font-semibold font-title">커스텀 레이아웃 편집</h2>
 				<div className="section-wrap mt-6">
 					<div className="rounded-card border-card bg-card-bg p-6 backdrop-blur-sm">
 						<ul className="space-y-1 text-sm text-sub-text">
@@ -507,7 +507,7 @@ export default function CustomLayoutClient() {
 			<Separator className="my-12" />
 
 			<section>
-				<h2 className="text-[20px] font-semibold">위젯 추가</h2>
+				<h2 className="text-[20px] font-semibold font-title">위젯 추가</h2>
 				<div className="section-wrap mt-6">
 					<div className="section-box flex items-center mt-4">
 						<div className="text-box w-[220px] pr-5">
@@ -540,7 +540,7 @@ export default function CustomLayoutClient() {
 			<Separator className="my-12" />
 
 			<section>
-				<h2 className="text-[20px] font-semibold">레이아웃 편집</h2>
+				<h2 className="text-[20px] font-semibold font-title">레이아웃 편집</h2>
 				<div className="section-wrap mt-6">
 					<div className="section-box flex items-center mt-4">
 						<div className="text-box w-[220px] pr-5">

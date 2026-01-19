@@ -396,7 +396,7 @@ export default function NoticeSettingClient() {
 		>
 			{/* Textbar Settings Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">텍스트바 설정</h2>
+				<h2 className="text-[20px] font-semibold font-title">텍스트바 설정</h2>
 				<div className="section-wrap mt-6">
 					{/* Banner Text Input */}
 					<div className="section-box flex items-center mt-4">
@@ -520,7 +520,7 @@ export default function NoticeSettingClient() {
 
 			{/* Editor Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">공지사항 설정</h2>
+				<h2 className="text-[20px] font-semibold font-title">공지사항 설정</h2>
 
 				<div className="section-wrap mt-6">
 					{editor && (

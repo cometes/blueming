@@ -1,7 +1,7 @@
-	/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,10 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
+import AssetGrid from "@/components/asset/AssetGrid";
+import { listStickerAssets } from "@/queries/stickerAssets";
+import type { StickerAsset } from "@/types/stickerBoard";
 
 type ImageField = "favicon" | "shareImage" | "logoImage";
 
@@ -49,6 +53,7 @@ interface ImageUploadSectionProps {
 	imageSrc?: string;
 	onFileSelect: (file: File) => void;
 	onClearClick: () => void;
+	onOpenPicker?: () => void;
 	isUploading?: boolean;
 }
 
@@ -58,6 +63,7 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 	imageSrc,
 	onFileSelect,
 	onClearClick,
+	onOpenPicker,
 	isUploading = false,
 }) => (
 	<div className="section-box flex items-center mt-4">
@@ -70,42 +76,71 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 			)}
 		</div>
 		<div className="flex items-center gap-3">
-			<label
-				className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
-					isUploading ? "opacity-60 pointer-events-none" : ""
-				}`}
-			>
-				{imageSrc ? (
-					<img
-						src={imageSrc}
-						alt={title}
-						className="w-full h-full object-contain"
-					/>
-				) : (
-					<>
-						<ImagePlus
-							size={ICON_SIZE}
-							color={ICON_COLOR}
-							absoluteStrokeWidth={true}
+			{onOpenPicker ? (
+				<button
+					type="button"
+					onClick={onOpenPicker}
+					className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
+						isUploading ? "opacity-60 pointer-events-none" : ""
+					}`}
+				>
+					{imageSrc ? (
+						<img
+							src={imageSrc}
+							alt={title}
+							className="w-full h-full object-contain"
 						/>
-						<span className="text-xs text-gray-500 dark:text-gray-400">
-							{UPLOAD_TEXT}
-						</span>
-					</>
-				)}
-				<input
-					type="file"
-					accept="image/*"
-					className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-					onChange={(event) => {
-						const file = event.target.files?.[0];
-						if (file) {
-							onFileSelect(file);
-						}
-						event.target.value = "";
-					}}
-				/>
-			</label>
+					) : (
+						<>
+							<ImagePlus
+								size={ICON_SIZE}
+								color={ICON_COLOR}
+								absoluteStrokeWidth={true}
+							/>
+							<span className="text-xs text-gray-500 dark:text-gray-400">
+								{UPLOAD_TEXT}
+							</span>
+						</>
+					)}
+				</button>
+			) : (
+				<label
+					className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
+						isUploading ? "opacity-60 pointer-events-none" : ""
+					}`}
+				>
+					{imageSrc ? (
+						<img
+							src={imageSrc}
+							alt={title}
+							className="w-full h-full object-contain"
+						/>
+					) : (
+						<>
+							<ImagePlus
+								size={ICON_SIZE}
+								color={ICON_COLOR}
+								absoluteStrokeWidth={true}
+							/>
+							<span className="text-xs text-gray-500 dark:text-gray-400">
+								{UPLOAD_TEXT}
+							</span>
+						</>
+					)}
+					<input
+						type="file"
+						accept="image/*"
+						className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+						onChange={(event) => {
+							const file = event.target.files?.[0];
+							if (file) {
+								onFileSelect(file);
+							}
+							event.target.value = "";
+						}}
+					/>
+				</label>
+			)}
 			{imageSrc ? (
 				<Button
 					type="button"
@@ -152,6 +187,15 @@ export default function GeneralSettingClient() {
 
 	const [showResetDialog, setShowResetDialog] = useState(false);
 	const { uploadFile, state: uploadState } = useFileUpload();
+	const [activeImageField, setActiveImageField] = useState<ImageField | null>(null);
+	const [dialogThumbnail, setDialogThumbnail] = useState("");
+	const [imageSource, setImageSource] = useState<
+		"file" | "asset" | "existing" | null
+	>(null);
+	const [assets, setAssets] = useState<StickerAsset[]>([]);
+	const [assetsLoading, setAssetsLoading] = useState(false);
+	const [assetsError, setAssetsError] = useState<string | null>(null);
+	const [assetSearchQuery, setAssetSearchQuery] = useState("");
 
 	// 업로드 대기 중인 이미지들을 저장
 	const [pendingImages, setPendingImages] = useState<
@@ -196,6 +240,21 @@ export default function GeneralSettingClient() {
 			[field]: { file, previewUrl },
 		}));
 	};
+
+	const refreshAssets = useCallback(async () => {
+		try {
+			setAssetsLoading(true);
+			setAssetsError(null);
+			const list = await listStickerAssets("all");
+			setAssets(list);
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : "에셋을 불러오지 못했습니다.";
+			setAssetsError(message);
+		} finally {
+			setAssetsLoading(false);
+		}
+	}, []);
 
 	// 이미지 비우기 (로컬 미리보기 또는 서버 이미지)
 	const handleImageClear = (field: ImageField) => {
@@ -245,11 +304,59 @@ export default function GeneralSettingClient() {
 			await handleSave(updatedSetting);
 		} catch (error) {
 			const message =
-				error instanceof Error
-					? error.message
-					: "저장에 실패했습니다.";
+				error instanceof Error ? error.message : "저장에 실패했습니다.";
 			toast.error(message);
 		}
+	};
+
+	useEffect(() => {
+		if (!activeImageField) return;
+		void refreshAssets();
+	}, [activeImageField, refreshAssets]);
+
+	const handleOpenImageDialog = (field: ImageField) => {
+		const pending = pendingImages[field]?.previewUrl;
+		const currentValue = generalSetting[field] || "";
+		const current = pending || currentValue || "";
+		setDialogThumbnail(current);
+		if (pending) {
+			setImageSource("file");
+		} else if (currentValue) {
+			setImageSource("existing");
+		} else {
+			setImageSource(null);
+		}
+		setActiveImageField(field);
+	};
+
+	const handleImageFileSelect = (file: File, previewUrl: string) => {
+		if (!activeImageField) return;
+		if (pendingImages[activeImageField]) {
+			URL.revokeObjectURL(pendingImages[activeImageField]!.previewUrl);
+		}
+		setPendingImages((prev) => ({
+			...prev,
+			[activeImageField]: { file, previewUrl },
+		}));
+		setDialogThumbnail(previewUrl);
+		setImageSource("file");
+	};
+
+	const handleSelectAsset = (asset: StickerAsset) => {
+		setDialogThumbnail(asset.url);
+		setImageSource("asset");
+	};
+
+	const handleImageDialogConfirm = (selectedUrl: string) => {
+		if (!activeImageField) return;
+		if (imageSource === "asset" && selectedUrl) {
+			if (pendingImages[activeImageField]) {
+				URL.revokeObjectURL(pendingImages[activeImageField]!.previewUrl);
+			}
+			setPendingImages((prev) => ({ ...prev, [activeImageField]: null }));
+			handleImageUpload(activeImageField, selectedUrl);
+		}
+		setActiveImageField(null);
 	};
 
 	const handleResetConfirm = () => {
@@ -286,11 +393,47 @@ export default function GeneralSettingClient() {
 			onSubmit={handleSubmit(onSubmit)}
 			className="space-y-8"
 		>
-			{/* Temporary: ImageUploadModal will be created later */}
+			<ImageUploadDialog
+				isOpen={activeImageField !== null}
+				onOpenChange={(open) => {
+					if (!open) {
+						setActiveImageField(null);
+						setAssetSearchQuery("");
+					}
+				}}
+				thumbnail={dialogThumbnail}
+				setThumbnail={setDialogThumbnail}
+				onUpload={handleImageDialogConfirm}
+				uploadMode="deferred"
+				onFileSelect={handleImageFileSelect}
+				rightContent={
+					<div>
+						<div className="text-xs font-semibold text-main-text mb-2">
+							에셋 목록
+						</div>
+						<AssetGrid
+							assets={assets}
+							loading={assetsLoading}
+							error={assetsError}
+							emptyMessage="에셋이 없습니다."
+							emptySearchMessage="검색 결과가 없습니다."
+							selectedUrl={dialogThumbnail}
+							onSelect={handleSelectAsset}
+							enableSearch={true}
+							searchQuery={assetSearchQuery}
+							onSearchChange={setAssetSearchQuery}
+							aspectClassName="aspect-square"
+							imageClassName="w-full h-full object-contain"
+							gridTemplateColumns="repeat(4, minmax(0, 1fr))"
+							className="gap-1.5"
+						/>
+					</div>
+				}
+			/>
 
 			{/* 홈페이지 설정 Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">홈페이지 설정</h2>
+				<h2 className="text-[20px] font-semibold font-title">홈페이지 설정</h2>
 				<div className="section-wrap mt-6">
 					{/* 홈페이지 타이틀 */}
 					<div className="section-box flex items-center mt-4">
@@ -353,6 +496,7 @@ export default function GeneralSettingClient() {
 						}
 						onFileSelect={(file) => handleFileSelect("favicon", file)}
 						onClearClick={() => handleImageClear("favicon")}
+						onOpenPicker={() => handleOpenImageDialog("favicon")}
 						isUploading={uploadState.loading}
 					/>
 
@@ -365,6 +509,7 @@ export default function GeneralSettingClient() {
 						}
 						onFileSelect={(file) => handleFileSelect("shareImage", file)}
 						onClearClick={() => handleImageClear("shareImage")}
+						onOpenPicker={() => handleOpenImageDialog("shareImage")}
 						isUploading={uploadState.loading}
 					/>
 
@@ -418,7 +563,7 @@ export default function GeneralSettingClient() {
 
 			{/* 로고 Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">로고</h2>
+				<h2 className="text-[20px] font-semibold font-title">로고</h2>
 				<div className="section-wrap mt-6">
 					{/* 로고 타입 */}
 					<div className="section-box flex items-center mt-4">
@@ -447,6 +592,7 @@ export default function GeneralSettingClient() {
 							}
 							onFileSelect={(file) => handleFileSelect("logoImage", file)}
 							onClearClick={() => handleImageClear("logoImage")}
+							onOpenPicker={() => handleOpenImageDialog("logoImage")}
 							isUploading={uploadState.loading}
 						/>
 					)}
@@ -494,7 +640,7 @@ export default function GeneralSettingClient() {
 					초기화하기
 				</Button>
 
-			{/* 저장 버튼은 헤더로 이동 */}
+				{/* 저장 버튼은 헤더로 이동 */}
 			</div>
 
 			<Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
@@ -528,7 +674,6 @@ export default function GeneralSettingClient() {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
-
 		</form>
 	);
 }

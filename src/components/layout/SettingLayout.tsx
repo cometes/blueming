@@ -205,7 +205,7 @@ export default function SettingLayout({
 						<div className="px-5 py-3 border-b border-card-bg flex items-center justify-between">
 							<div>
 								<div className="flex items-center gap-3">
-									<p className="text-2xl font-bold text-main-text">{title}</p>
+									<p className="text-2xl font-bold text-main-text font-title">{title}</p>
 									<Badge
 										variant="outline"
 										className={cn(
