@@ -91,6 +91,8 @@ interface ImageWidgetSettings {
 interface WeatherClockSettings {
 	enabled: boolean;
 	city: string;
+	backgroundImage?: string;
+	backgroundImageCity?: string;
 }
 
 // Menu Types

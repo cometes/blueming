@@ -28,6 +28,9 @@ const ImageWidgetSettingClient = dynamic(
 const WeatherClockSettingClient = dynamic(
 	() => import("./weatherClock/WeatherClockSettingClient")
 );
+const AccountSettingClient = dynamic(
+	() => import("./account/AccountSettingClient")
+);
 const AssetSettingClient = dynamic(() => import("./asset/AssetSettingClient"));
 
 type SettingSection = {
@@ -155,6 +158,13 @@ export default function SettingClient({ initialSection }: SettingClientProps) {
 			{
 				title: "관리",
 				items: [
+					{
+						id: "account",
+						label: "계정 관리",
+						title: "계정 관리",
+						desc: "AI 연동 키를 관리할 수 있습니다.",
+						Component: AccountSettingClient,
+					},
 					{
 						id: "asset",
 						label: "에셋 관리",

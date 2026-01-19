@@ -130,8 +130,8 @@ export default function WidgetStickerBoard() {
 	return (
 		<div className="widget-wrapper w-full h-full">
 			{/* NOTE: 메인 페이지에서는 \"위젯 자체 = 캔버스\". 12x12 내부 캔버스 생성/센터링을 하지 않습니다. */}
-			<div className="relative w-full h-full overflow-visible rounded-card border border-card bg-card-bg">
-				<div className="relative w-full h-full bg-white/90 overflow-visible">
+			<div className="relative w-full h-full">
+				<div className="relative w-full h-full">
 					{visible.length > 0 ? (
 						visible.map((component) => renderSticker(component))
 					) : (
