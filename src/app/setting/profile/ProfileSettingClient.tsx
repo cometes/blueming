@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/dialog";
 import { extensions } from "@/components/editor/TiptapEditor";
 import SimpleTiptapToolbar from "@/components/tiptap/SimpleTiptapToolbar";
+import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
+import AssetGrid from "@/components/asset/AssetGrid";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
@@ -28,6 +30,8 @@ import {
 } from "@/queries/set/setSettingsProfile";
 import { convertSlateToHTML, isSlateFormat } from "@/lib/slate-to-tiptap";
 import { useFileUpload } from "@/hooks/useFileUpload";
+import { listStickerAssets } from "@/queries/stickerAssets";
+import type { StickerAsset } from "@/types/stickerBoard";
 
 const ICON_SIZE = 28;
 const ICON_COLOR = "#9BA2A8";
@@ -45,7 +49,7 @@ type ImageField = "headerImage" | "profileImage";
 interface ImageUploadSectionProps {
 	title: string;
 	imageSrc?: string;
-	onFileSelect: (file: File) => void;
+	onOpenPicker: () => void;
 	onClearClick: () => void;
 	isUploading?: boolean;
 }
@@ -53,7 +57,7 @@ interface ImageUploadSectionProps {
 const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 	title,
 	imageSrc,
-	onFileSelect,
+	onOpenPicker,
 	onClearClick,
 	isUploading = false,
 }) => (
@@ -62,63 +66,53 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 			<h3 className="font-medium text-sub-text">{title}</h3>
 		</div>
 		<div className="flex items-center gap-3">
-			{imageSrc ? (
-				<>
-					<div className="w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden">
-						<img
-							src={imageSrc}
-							alt={title}
-							className="w-full h-full object-contain"
+			<button
+				type="button"
+				onClick={onOpenPicker}
+				className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
+					isUploading ? "opacity-60 pointer-events-none" : ""
+				}`}
+			>
+				{imageSrc ? (
+					<img
+						src={imageSrc}
+						alt={title}
+						className="w-full h-full object-contain"
+					/>
+				) : (
+					<>
+						<ImagePlus
+							size={ICON_SIZE}
+							color={ICON_COLOR}
+							absoluteStrokeWidth={true}
 						/>
-					</div>
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={onClearClick}
-						className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+						<span className="text-xs text-gray-500 dark:text-gray-400">
+							{UPLOAD_TEXT}
+						</span>
+					</>
+				)}
+			</button>
+			{imageSrc ? (
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					onClick={onClearClick}
+					className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+					style={{
+						transition: "all 0.3s ease-in-out",
+					}}
+				>
+					<Trash2
+						size={14}
+						className="mr-2"
 						style={{
 							transition: "all 0.3s ease-in-out",
 						}}
-					>
-						<Trash2
-							size={14}
-							className="mr-2"
-							style={{
-								transition: "all 0.3s ease-in-out",
-							}}
-						/>
-						비우기
-					</Button>
-				</>
-			) : (
-				<label
-					className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
-						isUploading ? "opacity-60 pointer-events-none" : ""
-					}`}
-				>
-					<ImagePlus
-						size={ICON_SIZE}
-						color={ICON_COLOR}
-						absoluteStrokeWidth={true}
 					/>
-					<span className="text-xs text-gray-500 dark:text-gray-400">
-						{UPLOAD_TEXT}
-					</span>
-					<input
-						type="file"
-						accept="image/*"
-						className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-						onChange={(event) => {
-							const file = event.target.files?.[0];
-							if (file) {
-								onFileSelect(file);
-							}
-							event.target.value = "";
-						}}
-					/>
-				</label>
-			)}
+					비우기
+				</Button>
+			) : null}
 		</div>
 	</div>
 );
@@ -139,6 +133,14 @@ export default function ProfileSettingClient() {
 	const [showResetDialog, setShowResetDialog] = useState(false);
 	const [isSyncing, setIsSyncing] = useState(true);
 	const [editorContent, setEditorContent] = useState("<p></p>");
+	const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+	const [currentImageField, setCurrentImageField] = useState<ImageField | null>(
+		null
+	);
+	const [imageThumbnail, setImageThumbnail] = useState("");
+	const [imageSource, setImageSource] = useState<
+		"file" | "asset" | "existing" | null
+	>(null);
 	const [pendingImages, setPendingImages] = useState<
 		Record<ImageField, { file: File; previewUrl: string } | null>
 	>({
@@ -146,6 +148,10 @@ export default function ProfileSettingClient() {
 		profileImage: null,
 	});
 	const hasPendingImages = Object.values(pendingImages).some((img) => img);
+	const [assets, setAssets] = useState<StickerAsset[]>([]);
+	const [assetsLoading, setAssetsLoading] = useState(false);
+	const [assetsError, setAssetsError] = useState<string | null>(null);
+	const [assetSearchQuery, setAssetSearchQuery] = useState("");
 
 	// Initialize Tiptap editor
 	const editor = useEditor({
@@ -286,14 +292,6 @@ export default function ProfileSettingClient() {
 		[]
 	);
 
-	const handleFileSelect = useCallback((field: ImageField, file: File) => {
-		const previewUrl = URL.createObjectURL(file);
-		setPendingImages((prev) => ({
-			...prev,
-			[field]: { file, previewUrl },
-		}));
-	}, []);
-
 	const handleClearImage = useCallback(
 		(field: ImageField) => {
 			setPendingImages((prev) => {
@@ -310,6 +308,75 @@ export default function ProfileSettingClient() {
 		},
 		[]
 	);
+
+	const refreshAssets = useCallback(async () => {
+		try {
+			setAssetsLoading(true);
+			setAssetsError(null);
+			const list = await listStickerAssets("all");
+			setAssets(list.filter((asset) => asset.url));
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : "에셋을 불러오지 못했습니다.";
+			setAssetsError(message);
+		} finally {
+			setAssetsLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (!isImageDialogOpen) return;
+		void refreshAssets();
+	}, [isImageDialogOpen, refreshAssets]);
+
+	const handleOpenImageDialog = (field: ImageField) => {
+		setCurrentImageField(field);
+		const pending = pendingImages[field]?.previewUrl;
+		const current = pending || profileData[field] || "";
+		setImageThumbnail(current);
+		if (pending) {
+			setImageSource("file");
+		} else if (profileData[field]) {
+			setImageSource("existing");
+		} else {
+			setImageSource(null);
+		}
+		setIsImageDialogOpen(true);
+	};
+
+	const handleDialogFileSelect = (file: File, previewUrl: string) => {
+		if (!currentImageField) return;
+		const pending = pendingImages[currentImageField];
+		if (pending) {
+			URL.revokeObjectURL(pending.previewUrl);
+		}
+		setPendingImages((prev) => ({
+			...prev,
+			[currentImageField]: { file, previewUrl },
+		}));
+		setImageThumbnail(previewUrl);
+		setImageSource("file");
+	};
+
+	const handleSelectAsset = (asset: StickerAsset) => {
+		setImageThumbnail(asset.url);
+		setImageSource("asset");
+	};
+
+	const handleDialogConfirm = (selectedUrl: string) => {
+		if (currentImageField && imageSource === "asset" && selectedUrl) {
+			const pending = pendingImages[currentImageField];
+			if (pending) {
+				URL.revokeObjectURL(pending.previewUrl);
+			}
+			setPendingImages((prev) => ({ ...prev, [currentImageField]: null }));
+			setProfileData((prev) => ({
+				...prev,
+				[currentImageField]: selectedUrl,
+			}));
+		}
+		setIsImageDialogOpen(false);
+	};
 
 	const handleSave = useCallback(async () => {
 		try {
@@ -399,6 +466,43 @@ export default function ProfileSettingClient() {
 
 	return (
 		<>
+			<ImageUploadDialog
+				isOpen={isImageDialogOpen}
+				onOpenChange={(open) => {
+					setIsImageDialogOpen(open);
+					if (!open) {
+						setAssetSearchQuery("");
+					}
+				}}
+				thumbnail={imageThumbnail}
+				setThumbnail={setImageThumbnail}
+				onUpload={handleDialogConfirm}
+				uploadMode="deferred"
+				onFileSelect={handleDialogFileSelect}
+				rightContent={
+					<div>
+						<div className="text-xs font-semibold text-main-text mb-2">
+							에셋 목록
+						</div>
+						<AssetGrid
+							assets={assets}
+							loading={assetsLoading}
+							error={assetsError}
+							emptyMessage="에셋이 없습니다."
+							emptySearchMessage="검색 결과가 없습니다."
+							selectedUrl={imageThumbnail}
+							onSelect={handleSelectAsset}
+							enableSearch={true}
+							searchQuery={assetSearchQuery}
+							onSearchChange={setAssetSearchQuery}
+							aspectClassName="aspect-square"
+							imageClassName="w-full h-full object-contain"
+							gridTemplateColumns="repeat(4, minmax(0, 1fr))"
+							className="gap-1.5"
+						/>
+					</div>
+				}
+			/>
 			<form
 				id="setting-form-profile"
 				onSubmit={(e) => {
@@ -409,7 +513,7 @@ export default function ProfileSettingClient() {
 			>
 				{/* Profile Settings Section */}
 				<section>
-					<h2 className="text-[20px] font-semibold">프로필 설정</h2>
+					<h2 className="text-[20px] font-semibold font-title">프로필 설정</h2>
 					<div className="section-wrap mt-6">
 						{/* Header Image */}
 						<ImageUploadSection
@@ -418,7 +522,7 @@ export default function ProfileSettingClient() {
 								pendingImages.headerImage?.previewUrl ||
 								profileData.headerImage
 							}
-							onFileSelect={(file) => handleFileSelect("headerImage", file)}
+							onOpenPicker={() => handleOpenImageDialog("headerImage")}
 							onClearClick={() => handleClearImage("headerImage")}
 							isUploading={uploadState.loading}
 						/>
@@ -430,7 +534,7 @@ export default function ProfileSettingClient() {
 								pendingImages.profileImage?.previewUrl ||
 								profileData.profileImage
 							}
-							onFileSelect={(file) => handleFileSelect("profileImage", file)}
+							onOpenPicker={() => handleOpenImageDialog("profileImage")}
 							onClearClick={() => handleClearImage("profileImage")}
 							isUploading={uploadState.loading}
 						/>

@@ -97,13 +97,14 @@ export const useFileUpload = (options?: FileUploadOptions): UseFileUploadReturn 
       }
 
       const data = await response.json();
+      const url = data.file?.url || data.files?.[0]?.url;
       
-      if (!data.file?.url) {
+      if (!url) {
         throw new Error("서버에서 올바른 응답을 받지 못했습니다.");
       }
 
       setState({ loading: false, error: null });
-      return data.file.url;
+      return url;
     } catch (error) {
       const errorMessage = error instanceof Error 
         ? error.message 

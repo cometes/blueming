@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
 	Plus,
 	ImagePlus,
@@ -35,11 +35,15 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import MenuAddModal from "@/components/modal/MenuAddModal";
+import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import { DragDropContext, Droppable } from "@hello-pangea/dnd";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import AssetGrid from "@/components/asset/AssetGrid";
+import { listStickerAssets } from "@/queries/stickerAssets";
+import type { StickerAsset } from "@/types/stickerBoard";
 
 const INPUT_HEIGHT = "h-9";
 const ICON_SIZE = 28;
@@ -53,7 +57,11 @@ interface PendingImage {
 	previewUrl: string;
 }
 
-type ImageFieldType = "logo" | "background" | "iconBarLogo" | "iconBarBackground";
+type ImageFieldType =
+	| "logo"
+	| "background"
+	| "iconBarLogo"
+	| "iconBarBackground";
 
 interface ImageUploadSectionProps {
 	title: string;
@@ -61,6 +69,7 @@ interface ImageUploadSectionProps {
 	imageSrc?: string;
 	onFileSelect: (file: File) => void;
 	onClearClick: () => void;
+	onOpenPicker?: () => void;
 	isUploading?: boolean;
 }
 
@@ -70,6 +79,7 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 	imageSrc,
 	onFileSelect,
 	onClearClick,
+	onOpenPicker,
 	isUploading = false,
 }) => (
 	<div className="section-box flex items-center mt-4">
@@ -82,42 +92,71 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 			)}
 		</div>
 		<div className="flex items-center gap-3">
-			<label
-				className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
-					isUploading ? "opacity-60 pointer-events-none" : ""
-				}`}
-			>
-				{imageSrc ? (
-					<img
-						src={imageSrc}
-						alt={title}
-						className="w-full h-full object-contain"
-					/>
-				) : (
-					<>
-						<ImagePlus
-							size={ICON_SIZE}
-							color={ICON_COLOR}
-							absoluteStrokeWidth={true}
+			{onOpenPicker ? (
+				<button
+					type="button"
+					onClick={onOpenPicker}
+					className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
+						isUploading ? "opacity-60 pointer-events-none" : ""
+					}`}
+				>
+					{imageSrc ? (
+						<img
+							src={imageSrc}
+							alt={title}
+							className="w-full h-full object-contain"
 						/>
-						<span className="text-xs text-gray-500 dark:text-gray-400">
-							{UPLOAD_TEXT}
-						</span>
-					</>
-				)}
-				<input
-					type="file"
-					accept="image/*"
-					className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-					onChange={(event) => {
-						const file = event.target.files?.[0];
-						if (file) {
-							onFileSelect(file);
-						}
-						event.target.value = "";
-					}}
-				/>
-			</label>
+					) : (
+						<>
+							<ImagePlus
+								size={ICON_SIZE}
+								color={ICON_COLOR}
+								absoluteStrokeWidth={true}
+							/>
+							<span className="text-xs text-gray-500 dark:text-gray-400">
+								{UPLOAD_TEXT}
+							</span>
+						</>
+					)}
+				</button>
+			) : (
+				<label
+					className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
+						isUploading ? "opacity-60 pointer-events-none" : ""
+					}`}
+				>
+					{imageSrc ? (
+						<img
+							src={imageSrc}
+							alt={title}
+							className="w-full h-full object-contain"
+						/>
+					) : (
+						<>
+							<ImagePlus
+								size={ICON_SIZE}
+								color={ICON_COLOR}
+								absoluteStrokeWidth={true}
+							/>
+							<span className="text-xs text-gray-500 dark:text-gray-400">
+								{UPLOAD_TEXT}
+							</span>
+						</>
+					)}
+					<input
+						type="file"
+						accept="image/*"
+						className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+						onChange={(event) => {
+							const file = event.target.files?.[0];
+							if (file) {
+								onFileSelect(file);
+							}
+							event.target.value = "";
+						}}
+					/>
+				</label>
+			)}
 			{imageSrc && (
 				<Button
 					type="button"
@@ -177,7 +216,21 @@ export default function MenuSettingClient() {
 		iconBarBackground: null,
 	});
 
-	const hasPendingImages = Object.values(pendingImages).some((img) => img !== null);
+	// 이미지 업로드 다이얼로그 상태
+	const [activeImageField, setActiveImageField] =
+		useState<ImageFieldType | null>(null);
+	const [dialogThumbnail, setDialogThumbnail] = useState("");
+	const [imageSource, setImageSource] = useState<
+		"file" | "asset" | "existing" | null
+	>(null);
+	const [assets, setAssets] = useState<StickerAsset[]>([]);
+	const [assetsLoading, setAssetsLoading] = useState(false);
+	const [assetsError, setAssetsError] = useState<string | null>(null);
+	const [assetSearchQuery, setAssetSearchQuery] = useState("");
+
+	const hasPendingImages = Object.values(pendingImages).some(
+		(img) => img !== null
+	);
 
 	useSettingStatus("menu", isDirty || hasPendingImages ? "dirty" : "saved");
 	useSettingHeaderAction(
@@ -275,6 +328,107 @@ export default function MenuSettingClient() {
 		}
 	};
 
+	// 에셋 목록 로드
+	const refreshAssets = useCallback(async () => {
+		try {
+			setAssetsLoading(true);
+			setAssetsError(null);
+			const list = await listStickerAssets("all");
+			setAssets(list);
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : "에셋을 불러오지 못했습니다.";
+			setAssetsError(message);
+		} finally {
+			setAssetsLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (!activeImageField) return;
+		void refreshAssets();
+	}, [activeImageField, refreshAssets]);
+
+	// 이미지 다이얼로그 열기
+	const handleOpenImageDialog = (field: ImageFieldType) => {
+		const pendingPreview = pendingImages[field]?.previewUrl || "";
+		let currentValue = "";
+
+		switch (field) {
+			case "logo":
+				currentValue = menuDesign.logoImage || "";
+				break;
+			case "background":
+				currentValue = menuDesign.backgroundImage || "";
+				break;
+			case "iconBarLogo":
+				currentValue = menuDesign.iconBarLogoImage || "";
+				break;
+			case "iconBarBackground":
+				currentValue = menuDesign.iconBarBackgroundImage || "";
+				break;
+		}
+
+		const current = pendingPreview || currentValue || "";
+		setDialogThumbnail(current);
+		if (pendingPreview) {
+			setImageSource("file");
+		} else if (currentValue) {
+			setImageSource("existing");
+		} else {
+			setImageSource(null);
+		}
+		setActiveImageField(field);
+	};
+
+	// 다이얼로그에서 파일 선택
+	const handleImageFileSelect = (file: File, previewUrl: string) => {
+		if (!activeImageField) return;
+		if (pendingImages[activeImageField]) {
+			URL.revokeObjectURL(pendingImages[activeImageField]!.previewUrl);
+		}
+		setPendingImages((prev) => ({
+			...prev,
+			[activeImageField]: { file, previewUrl },
+		}));
+		setDialogThumbnail(previewUrl);
+		setImageSource("file");
+	};
+
+	// 에셋 선택
+	const handleSelectAsset = (asset: StickerAsset) => {
+		setDialogThumbnail(asset.url);
+		setImageSource("asset");
+	};
+
+	// 다이얼로그 확인
+	const handleImageDialogConfirm = (selectedUrl: string) => {
+		if (!activeImageField) return;
+
+		if (imageSource === "asset" && selectedUrl) {
+			if (pendingImages[activeImageField]) {
+				URL.revokeObjectURL(pendingImages[activeImageField]!.previewUrl);
+			}
+			setPendingImages((prev) => ({ ...prev, [activeImageField]: null }));
+
+			switch (activeImageField) {
+				case "logo":
+					updateMenuSetting("logo.image", selectedUrl);
+					break;
+				case "background":
+					updateMenuSetting("background.image", selectedUrl);
+					break;
+				case "iconBarLogo":
+					updateMenuSetting("iconbar.logo.image", selectedUrl);
+					break;
+				case "iconBarBackground":
+					updateMenuSetting("iconbar.background.image", selectedUrl);
+					break;
+			}
+		}
+		setActiveImageField(null);
+	};
+
 	// cleanup: 컴포넌트 언마운트 시 blob URL 정리
 	useEffect(() => {
 		return () => {
@@ -292,6 +446,43 @@ export default function MenuSettingClient() {
 				onAddMenu={handleAddMenu}
 				boardArr={boardArr}
 				cancelModal={() => setIsAddModalOpen(false)}
+			/>
+
+			<ImageUploadDialog
+				isOpen={activeImageField !== null}
+				onOpenChange={(open) => {
+					if (!open) {
+						setActiveImageField(null);
+						setAssetSearchQuery("");
+					}
+				}}
+				thumbnail={dialogThumbnail}
+				setThumbnail={setDialogThumbnail}
+				onUpload={handleImageDialogConfirm}
+				uploadMode="deferred"
+				onFileSelect={handleImageFileSelect}
+				rightContent={
+					<div>
+						<div className="text-xs font-semibold text-main-text mb-2">
+							에셋 목록
+						</div>
+						<AssetGrid
+							assets={assets}
+							loading={assetsLoading}
+							error={assetsError}
+							emptyMessage="에셋이 없습니다."
+							emptySearchMessage="검색 결과가 없습니다."
+							selectedUrl={dialogThumbnail}
+							onSelect={handleSelectAsset}
+							enableSearch
+							searchQuery={assetSearchQuery}
+							onSearchChange={setAssetSearchQuery}
+							gridTemplateColumns="repeat(4, minmax(0, 1fr))"
+							aspectClassName="aspect-square"
+							imageClassName="w-full h-full object-contain"
+						/>
+					</div>
+				}
 			/>
 
 			<form
@@ -355,7 +546,7 @@ export default function MenuSettingClient() {
 			>
 				{/* 메뉴 디자인 Section */}
 				<section>
-					<h2 className="text-[20px] font-semibold">메뉴 디자인</h2>
+					<h2 className="text-[20px] font-semibold font-title">메뉴 디자인</h2>
 					<div className="section-wrap mt-6">
 						<div className="section-box flex items-center mt-4">
 							<div className="text-box w-[220px]">
@@ -506,6 +697,7 @@ export default function MenuSettingClient() {
 										}
 										onFileSelect={(file) => handleFileSelect("logo", file)}
 										onClearClick={() => handleImageClear("logo")}
+										onOpenPicker={() => handleOpenImageDialog("logo")}
 										isUploading={uploadState.loading}
 									/>
 								)}
@@ -563,8 +755,11 @@ export default function MenuSettingClient() {
 											pendingImages.background?.previewUrl ||
 											menuDesign.backgroundImage
 										}
-										onFileSelect={(file) => handleFileSelect("background", file)}
+										onFileSelect={(file) =>
+											handleFileSelect("background", file)
+										}
 										onClearClick={() => handleImageClear("background")}
+										onOpenPicker={() => handleOpenImageDialog("background")}
 										isUploading={uploadState.loading}
 									/>
 								)}
@@ -605,6 +800,7 @@ export default function MenuSettingClient() {
 											handleFileSelect("iconBarLogo", file)
 										}
 										onClearClick={() => handleImageClear("iconBarLogo")}
+										onOpenPicker={() => handleOpenImageDialog("iconBarLogo")}
 										isUploading={uploadState.loading}
 									/>
 								)}
@@ -665,6 +861,9 @@ export default function MenuSettingClient() {
 											handleFileSelect("iconBarBackground", file)
 										}
 										onClearClick={() => handleImageClear("iconBarBackground")}
+										onOpenPicker={() =>
+											handleOpenImageDialog("iconBarBackground")
+										}
 										isUploading={uploadState.loading}
 									/>
 								)}
@@ -678,7 +877,7 @@ export default function MenuSettingClient() {
 				{/* 메뉴 설정 Section */}
 				<section>
 					<div className="flex items-center justify-between mb-2">
-						<h2 className="text-[20px] font-semibold">메뉴 설정</h2>
+						<h2 className="text-[20px] font-semibold font-title">메뉴 설정</h2>
 						<Button
 							type="button"
 							onClick={() => setIsAddModalOpen(true)}
@@ -963,7 +1162,7 @@ export default function MenuSettingClient() {
 								</div>
 
 								<div className="flex justify-center">
-									<Button size="sm" className="opacity-80">
+									<Button type="button" size="sm" className="opacity-80">
 										로그인
 									</Button>
 								</div>

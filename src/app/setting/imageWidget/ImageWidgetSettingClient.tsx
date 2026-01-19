@@ -11,6 +11,10 @@ import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
 import { setSettingsMainImageWidget } from "@/queries/set/setSettingsMainImageWidget";
 import { useFileUpload } from "@/hooks/useFileUpload";
+import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
+import AssetGrid from "@/components/asset/AssetGrid";
+import { listStickerAssets } from "@/queries/stickerAssets";
+import type { StickerAsset } from "@/types/stickerBoard";
 
 const MAX_SLOTS = 4;
 const DEFAULT_FIT: "cover" | "contain" = "cover";
@@ -47,6 +51,16 @@ export default function ImageWidgetSettingClient() {
 	const [images, setImages] = useState<string[]>(initialImages);
 	const [fits, setFits] = useState<Array<"cover" | "contain">>(initialFits);
 	const [isSaving, setIsSaving] = useState(false);
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const [activeSlot, setActiveSlot] = useState<number | null>(null);
+	const [thumbnail, setThumbnail] = useState("");
+	const [imageSource, setImageSource] = useState<
+		"file" | "asset" | "existing" | null
+	>(null);
+	const [assets, setAssets] = useState<StickerAsset[]>([]);
+	const [assetsLoading, setAssetsLoading] = useState(false);
+	const [assetsError, setAssetsError] = useState<string | null>(null);
+	const [assetSearchQuery, setAssetSearchQuery] = useState("");
 	const [pendingImages, setPendingImages] = useState<
 		Array<{ file: File; previewUrl: string } | null>
 	>(() => Array.from({ length: MAX_SLOTS }, () => null));
@@ -86,6 +100,21 @@ export default function ImageWidgetSettingClient() {
 
 	useSettingStatus("imageWidget", isDirty || hasPendingImages ? "dirty" : "saved");
 
+	const handleOpenDialog = (index: number) => {
+		setActiveSlot(index);
+		const pending = pendingImages[index]?.previewUrl;
+		const current = pending || images[index] || "";
+		setThumbnail(current);
+		if (pending) {
+			setImageSource("file");
+		} else if (images[index]) {
+			setImageSource("existing");
+		} else {
+			setImageSource(null);
+		}
+		setIsDialogOpen(true);
+	};
+
 	const handleRemove = useCallback((index: number) => {
 		setPendingImages((prev) => {
 			const next = [...prev];
@@ -103,18 +132,67 @@ export default function ImageWidgetSettingClient() {
 		});
 	}, []);
 
-	const handleFileSelect = useCallback((index: number, file: File) => {
-		const previewUrl = URL.createObjectURL(file);
+	const handleDialogFileSelect = (file: File, previewUrl: string) => {
+		if (activeSlot === null) return;
+		const pending = pendingImages[activeSlot];
+		if (pending) {
+			URL.revokeObjectURL(pending.previewUrl);
+		}
 		setPendingImages((prev) => {
 			const next = [...prev];
-			const existing = next[index];
-			if (existing) {
-				URL.revokeObjectURL(existing.previewUrl);
-			}
-			next[index] = { file, previewUrl };
+			next[activeSlot] = { file, previewUrl };
 			return next;
 		});
+		setThumbnail(previewUrl);
+		setImageSource("file");
+	};
+
+	const handleDialogConfirm = (selectedUrl: string) => {
+		if (activeSlot !== null && imageSource === "asset" && selectedUrl) {
+			const pending = pendingImages[activeSlot];
+			if (pending) {
+				URL.revokeObjectURL(pending.previewUrl);
+			}
+			setPendingImages((prev) => {
+				const next = [...prev];
+				next[activeSlot] = null;
+				return next;
+			});
+			setImages((prev) => {
+				const next = normalizeImages(prev);
+				next[activeSlot] = selectedUrl;
+				return next;
+			});
+		}
+		setIsDialogOpen(false);
+		setActiveSlot(null);
+		setImageSource(null);
+	};
+
+	const refreshAssets = useCallback(async () => {
+		try {
+			setAssetsLoading(true);
+			setAssetsError(null);
+			const list = await listStickerAssets("all");
+			setAssets(list.filter((asset) => asset.url));
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : "에셋을 불러오지 못했습니다.";
+			setAssetsError(message);
+		} finally {
+			setAssetsLoading(false);
+		}
 	}, []);
+
+	useEffect(() => {
+		if (!isDialogOpen) return;
+		void refreshAssets();
+	}, [isDialogOpen, refreshAssets]);
+
+	const handleSelectAsset = (asset: StickerAsset) => {
+		setThumbnail(asset.url);
+		setImageSource("asset");
+	};
 
 	const handleSave = useCallback(async () => {
 		try {
@@ -169,8 +247,48 @@ export default function ImageWidgetSettingClient() {
 
 	return (
 		<section className="space-y-6">
+			<ImageUploadDialog
+				isOpen={isDialogOpen}
+				onOpenChange={(open) => {
+					setIsDialogOpen(open);
+					if (!open) {
+						setActiveSlot(null);
+						setThumbnail("");
+						setImageSource(null);
+						setAssetSearchQuery("");
+					}
+				}}
+				thumbnail={thumbnail}
+				setThumbnail={setThumbnail}
+				onUpload={handleDialogConfirm}
+				uploadMode="deferred"
+				onFileSelect={handleDialogFileSelect}
+				rightContent={
+					<div>
+						<div className="text-xs font-semibold text-main-text mb-2">
+							에셋 목록
+						</div>
+						<AssetGrid
+							assets={assets}
+							loading={assetsLoading}
+							error={assetsError}
+							emptyMessage="에셋이 없습니다."
+							emptySearchMessage="검색 결과가 없습니다."
+							selectedUrl={thumbnail}
+							onSelect={handleSelectAsset}
+							enableSearch={true}
+							searchQuery={assetSearchQuery}
+							onSearchChange={setAssetSearchQuery}
+							aspectClassName="aspect-square"
+							imageClassName="w-full h-full object-contain"
+							gridTemplateColumns="repeat(4, minmax(0, 1fr))"
+							className="gap-1.5"
+						/>
+					</div>
+				}
+			/>
 			<div>
-				<h2 className="text-[20px] font-semibold">이미지 위젯 설정</h2>
+				<h2 className="text-[20px] font-semibold font-title">이미지 위젯 설정</h2>
 				<p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
 					최대 4개의 이미지 위젯을 관리합니다. 그리드 박스를 클릭하면 이미지를
 					업로드할 수 있습니다.
@@ -195,7 +313,12 @@ export default function ImageWidgetSettingClient() {
 							className="rounded-card border border-card bg-card-bg/60 backdrop-blur-card overflow-hidden self-start"
 						>
 							<div className="bg-card-bg">
-								<label className="relative w-full aspect-[4/3] flex items-center justify-center text-xs text-muted-foreground cursor-pointer">
+								<button
+									type="button"
+									className="relative w-full aspect-[4/3] flex items-center justify-center text-xs text-muted-foreground cursor-pointer"
+									onClick={() => handleOpenDialog(index)}
+									disabled={uploadState.loading || isSaving}
+								>
 									{pendingImages[index]?.previewUrl || image ? (
 										<img
 											src={pendingImages[index]?.previewUrl || image}
@@ -209,20 +332,7 @@ export default function ImageWidgetSettingClient() {
 									) : (
 										<span>클릭해서 업로드</span>
 									)}
-									<input
-										type="file"
-										accept="image/*"
-										className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-										disabled={uploadState.loading || isSaving}
-										onChange={(event) => {
-											const file = event.target.files?.[0];
-											if (file) {
-												handleFileSelect(index, file);
-											}
-											event.target.value = "";
-										}}
-									/>
-								</label>
+								</button>
 							</div>
 							{pendingImages[index]?.previewUrl || image ? (
 								<div className="px-2 py-2 flex items-center justify-between gap-2">

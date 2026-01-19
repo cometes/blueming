@@ -2,7 +2,8 @@
 "use client";
 
 import { useState } from "react";
-import { ImagePlus, Upload } from "lucide-react";
+import type { ReactNode } from "react";
+import { ImagePlus, Upload, Search } from "lucide-react";
 import { toast } from "sonner";
 import { getAuthHeader } from "@/queries/getAuthHeader";
 import {
@@ -14,6 +15,8 @@ import {
 	DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ImageUploadDialogProps {
 	isOpen: boolean;
@@ -23,6 +26,10 @@ interface ImageUploadDialogProps {
 	onUpload: (url: string) => void;
 	uploadMode?: "immediate" | "deferred";
 	onFileSelect?: (file: File, previewUrl: string) => void;
+	rightContent?: ReactNode;
+	enableAssetSearch?: boolean;
+	assetSearchQuery?: string;
+	onAssetSearchChange?: (query: string) => void;
 }
 
 export default function ImageUploadDialog({
@@ -33,8 +40,28 @@ export default function ImageUploadDialog({
 	onUpload,
 	uploadMode = "immediate",
 	onFileSelect,
+	rightContent,
+	enableAssetSearch = false,
+	assetSearchQuery = "",
+	onAssetSearchChange,
 }: ImageUploadDialogProps) {
 	const [isUploading, setIsUploading] = useState(false);
+	const [internalSearchQuery, setInternalSearchQuery] = useState("");
+
+	const isControlledSearch = typeof onAssetSearchChange === "function";
+	const searchQuery = enableAssetSearch
+		? isControlledSearch
+			? assetSearchQuery ?? ""
+			: internalSearchQuery
+		: "";
+
+	const handleSearchChange = (value: string) => {
+		if (onAssetSearchChange) {
+			onAssetSearchChange(value);
+		} else {
+			setInternalSearchQuery(value);
+		}
+	};
 
 	const handleFileUpload = async (
 		event: React.ChangeEvent<HTMLInputElement>
@@ -98,7 +125,7 @@ export default function ImageUploadDialog({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-md bg-card-bg border-card rounded-card">
+			<DialogContent className="bg-card-bg border-card rounded-card backdrop-blur-card max-w-xl sm:max-w-xl w-full">
 				<DialogHeader>
 					<DialogTitle className="text-[20px] font-semibold">
 						이미지 업로드
@@ -107,38 +134,67 @@ export default function ImageUploadDialog({
 						이미지를 선택하고 업로드해 주세요.
 					</DialogDescription>
 				</DialogHeader>
-				<div className="w-full max-w-sm mx-auto">
-					<div className="relative w-full aspect-[4/3] min-h-[150px]">
-						{thumbnail ? (
-							<img
-								src={thumbnail}
-								alt="Preview"
-								className="absolute inset-0 w-full h-full object-cover rounded-card border-card"
-							/>
-						) : (
-							<div className="absolute inset-0 w-full h-full border-2 border-dashed border-card rounded-card flex flex-col items-center justify-center bg-card-bg">
-								<ImagePlus
-									size={28}
-									className="text-sub-text mb-2"
-									absoluteStrokeWidth={true}
+				<div className="grid grid-cols-2 gap-4">
+					<div>
+						<div className="text-xs font-semibold text-main-text mb-2">
+							파일 업로드
+						</div>
+						<div className="relative w-full aspect-video">
+							{thumbnail ? (
+								<img
+									src={thumbnail}
+									alt="Preview"
+									className="absolute inset-0 w-full h-full object-contain rounded-card border-card"
 								/>
-								<p className="text-sm text-sub-text">Upload Image</p>
-							</div>
-						)}
-						<input
-							type="file"
-							accept="image/*"
-							onChange={handleFileUpload}
-							disabled={isUploading}
-							className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-						/>
+							) : (
+								<div className="absolute inset-0 w-full h-full border-2 border-dashed border-card rounded-card flex flex-col items-center justify-center bg-card-bg">
+									<ImagePlus
+										size={28}
+										className="text-sub-text mb-2"
+										absoluteStrokeWidth={true}
+									/>
+									<p className="text-sm text-sub-text">Upload Image</p>
+								</div>
+							)}
+							<input
+								type="file"
+								accept="image/*"
+								onChange={handleFileUpload}
+								disabled={isUploading}
+								className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+							/>
+						</div>
 					</div>
+					{rightContent ? (
+						<div className="min-w-0 flex flex-col">
+							{enableAssetSearch && (
+								<div className="mb-3">
+									<div className="relative">
+										<Search
+											size={16}
+											className="absolute left-3 top-1/2 -translate-y-1/2 text-sub-text"
+										/>
+										<Input
+											type="text"
+											placeholder="에셋 검색..."
+											value={searchQuery}
+											onChange={(e) => handleSearchChange(e.target.value)}
+											className="pl-9 rounded-card border-card bg-card-bg"
+										/>
+									</div>
+								</div>
+							)}
+							<ScrollArea className="flex-1 max-h-[400px]">
+								<div className="pr-4">{rightContent}</div>
+							</ScrollArea>
+						</div>
+					) : null}
 				</div>
 
 				<DialogFooter className="gap-2 sm:gap-3">
 					<Button
 						type="button"
-						variant="outline"
+						variant="ghost"
 						onClick={() => onOpenChange(false)}
 					>
 						취소

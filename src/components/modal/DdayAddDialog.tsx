@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { format } from "date-fns";
 import { ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,9 @@ import {
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { toast } from "sonner";
 import type { DdayData } from "@/queries/set/setSettingsMainDday";
+import { listStickerAssets } from "@/queries/stickerAssets";
+import type { StickerAsset } from "@/types/stickerBoard";
+import AssetGrid from "@/components/asset/AssetGrid";
 
 interface DdayAddDialogProps {
 	isOpen: boolean;
@@ -42,6 +45,24 @@ export default function DdayAddDialog({
 	const [dateError, setDateError] = useState("");
 	const [addToWidget, setAddToWidget] = useState(false);
 	const { uploadFile, state: uploadState } = useFileUpload();
+	const [assets, setAssets] = useState<StickerAsset[]>([]);
+	const [assetsLoading, setAssetsLoading] = useState(false);
+	const [assetsError, setAssetsError] = useState<string | null>(null);
+
+	const refreshAssets = useCallback(async () => {
+		try {
+			setAssetsLoading(true);
+			setAssetsError(null);
+			const list = await listStickerAssets("all");
+			setAssets(list.filter((asset) => asset.url));
+		} catch (err) {
+			const msg =
+				err instanceof Error ? err.message : "에셋을 불러오지 못했습니다.";
+			setAssetsError(msg);
+		} finally {
+			setAssetsLoading(false);
+		}
+	}, []);
 
 	const parseYYYYMMDD = (value: string) => {
 		if (value.length !== 8) return null;
@@ -131,7 +152,6 @@ export default function DdayAddDialog({
 		} catch {
 			toast.error("이미지 업로드에 실패했습니다.");
 		}
-
 	};
 
 	useEffect(() => {
@@ -150,12 +170,25 @@ export default function DdayAddDialog({
 	}, [isOpen, pendingImage]);
 
 	useEffect(() => {
+		if (!isOpen) return;
+		void refreshAssets();
+	}, [isOpen, refreshAssets]);
+
+	useEffect(() => {
 		return () => {
 			if (pendingImage) {
 				URL.revokeObjectURL(pendingImage.previewUrl);
 			}
 		};
 	}, [pendingImage]);
+
+	const handleSelectAsset = (asset: StickerAsset) => {
+		if (pendingImage) {
+			URL.revokeObjectURL(pendingImage.previewUrl);
+			setPendingImage(null);
+		}
+		setThumbnail(asset.url);
+	};
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -167,15 +200,15 @@ export default function DdayAddDialog({
 					<DialogTitle className="text-[20px] font-semibold">
 						디데이 추가하기
 					</DialogTitle>
-					<DialogDescription className="text-sm text-sub-text">
-						디데이 정보를 입력하고 위젯 추가 여부를 선택하세요.
-					</DialogDescription>
 				</DialogHeader>
 
 				<div className="grid gap-4 md:grid-cols-[240px_minmax(0,1fr)]">
 					{/* Left: Image Upload */}
 					<div className="w-full">
-						<div className="w-full aspect-[4/3] rounded-card border-card overflow-hidden bg-card-bg">
+						<Label className="text-xs font-semibold text-sub-text mb-2">
+							파일 업로드
+						</Label>
+						<div className="w-full aspect-video rounded-card border-card overflow-hidden bg-card-bg">
 							{thumbnail ? (
 								<img
 									src={thumbnail}
@@ -195,6 +228,22 @@ export default function DdayAddDialog({
 									/>
 								</label>
 							)}
+						</div>
+
+						<div className="flex items-center space-x-2 mt-3">
+							<Checkbox
+								id="add-to-widget"
+								checked={addToWidget}
+								onCheckedChange={(checked) =>
+									setAddToWidget(checked as boolean)
+								}
+							/>
+							<Label
+								htmlFor="add-to-widget"
+								className="cursor-pointer text-sm text-sub-text"
+							>
+								위젯에 추가
+							</Label>
 						</div>
 					</div>
 
@@ -234,26 +283,26 @@ export default function DdayAddDialog({
 							) : null}
 						</div>
 
-						<div className="flex items-center space-x-2">
-							<Checkbox
-								id="add-to-widget"
-								checked={addToWidget}
-								onCheckedChange={(checked) =>
-									setAddToWidget(checked as boolean)
-								}
+						<div>
+							<div className="text-xs font-semibold text-sub-text mb-2">
+								에셋 목록
+							</div>
+							<AssetGrid
+								assets={assets}
+								loading={assetsLoading}
+								error={assetsError}
+								selectedUrl={thumbnail}
+								onSelect={handleSelectAsset}
+								aspectClassName="aspect-square"
+								imageClassName="w-full h-full object-contain"
+								gridTemplateColumns="repeat(4, minmax(0, 1fr))"
 							/>
-							<Label
-								htmlFor="add-to-widget"
-								className="cursor-pointer text-sm text-sub-text"
-							>
-								위젯에 추가
-							</Label>
 						</div>
 					</div>
 				</div>
 
 				<DialogFooter className="gap-2 sm:gap-3">
-					<Button variant="outline" onClick={() => onOpenChange(false)}>
+					<Button variant="ghost" onClick={() => onOpenChange(false)}>
 						취소
 					</Button>
 					<Button onClick={handleAdd} disabled={uploadState.loading}>

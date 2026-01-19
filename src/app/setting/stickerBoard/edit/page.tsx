@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { toast } from "sonner";
+import { onAuthStateChanged } from "firebase/auth";
 import type {
 	StickerBoardComponent,
 	StickerBoardImageComponent,
@@ -49,6 +50,7 @@ import type {
 	StickerAssetTab,
 } from "@/types/stickerBoard";
 import { STICKER_ASSET_DND_MIME } from "@/types/stickerBoard";
+import { auth } from "@/lib/Firebase";
 import {
 	createStickerAssetFromFile,
 	deleteStickerAsset,
@@ -111,6 +113,7 @@ export default function StickerBoardEditPage() {
 	const [assets, setAssets] = useState<StickerAsset[]>([]);
 	const [assetsLoading, setAssetsLoading] = useState(false);
 	const [assetsError, setAssetsError] = useState<string | null>(null);
+	const [authReady, setAuthReady] = useState(false);
 	const clipboardRef = useRef<StickerBoardComponent | null>(null);
 	const selectedIdRef = useRef<number | null>(null);
 	const selectedIdsRef = useRef<Set<number>>(new Set());
@@ -600,6 +603,13 @@ export default function StickerBoardEditPage() {
 		setAssetsLoading(true);
 		setAssetsError(null);
 		try {
+			if (!auth.currentUser) {
+				if (!authReady) {
+					setAssetsLoading(false);
+					return;
+				}
+				throw new Error("로그인이 필요합니다.");
+			}
 			const list = await listStickerAssets(tab);
 			setAssets(list.filter((a) => a.url));
 		} catch (e) {
@@ -611,6 +621,13 @@ export default function StickerBoardEditPage() {
 			setAssetsLoading(false);
 		}
 	};
+
+	useEffect(() => {
+		const unsubscribe = onAuthStateChanged(auth, () => {
+			setAuthReady(true);
+		});
+		return () => unsubscribe();
+	}, []);
 
 	const measureTextStickerPx = (opts: {
 		text: string;
@@ -951,9 +968,10 @@ export default function StickerBoardEditPage() {
 
 	// Load assets for asset panel
 	useEffect(() => {
+		if (!authReady || !auth.currentUser) return;
 		void refreshAssets(assetTab);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [assetTab]);
+	}, [assetTab, authReady]);
 
 	// Load percent-based stickers from the single `components` field
 	useEffect(() => {
@@ -2009,7 +2027,7 @@ export default function StickerBoardEditPage() {
 			<div className="mx-auto w-full max-w-[1400px] px-6 py-10">
 				<header className="mb-6 flex items-end justify-between gap-6">
 					<div>
-						<h1 className="text-2xl font-semibold">스티커보드 편집</h1>
+						<h1 className="text-2xl font-semibold font-title">스티커보드 편집</h1>
 
 						{editingGroup && (
 							<div className="mt-3 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs text-blue-700">
@@ -3453,8 +3471,9 @@ export default function StickerBoardEditPage() {
 										(tab) => (
 											<TabsContent key={tab} value={tab} className="mt-3">
 												{assetsLoading ? (
-													<div className="py-6 text-center text-xs text-gray-400">
-														불러오는 중...
+													<div className="py-6 flex flex-col items-center justify-center text-xs text-gray-400">
+														<div className="h-6 w-6 animate-spin rounded-full border-2 border-solid border-card border-r-transparent" />
+														<div className="mt-2">불러오는 중...</div>
 													</div>
 												) : assetsError ? (
 													<div className="py-3 text-xs text-red-500">

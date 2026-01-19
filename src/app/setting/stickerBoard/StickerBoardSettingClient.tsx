@@ -180,7 +180,7 @@ export default function StickerBoardSettingClient() {
 		<section className="space-y-6">
 			<div className="flex items-start justify-between gap-4">
 				<div>
-					<h2 className="text-[20px] font-semibold">스티커보드 설정</h2>
+					<h2 className="text-[20px] font-semibold font-title">스티커보드 설정</h2>
 					<p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
 						스티커보드 미리보기
 					</p>
