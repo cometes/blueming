@@ -29,7 +29,8 @@ export default function WidgetSlide() {
 		<div className="widget-wrapper">
 			<div className="absolute top-0 left-0 w-full h-full">
 				<button
-					className="prev flex items-center justify-center absolute top-1/2 -translate-y-1/2 left-5 z-40 shadow-[0_0_5px_0.5px_rgba(212,212,212,0.3)] w-14 h-14 rounded-full text-gray-100/30 cursor-pointer transition-all duration-200 ease-in bg-transparent border-0 hover:text-gray-800 hover:bg-gray-50/60"
+					className="prev flex items-center justify-center absolute top-1/2 -translate-y-1/2 left-5 z-40 shadow-[0_0_5px_0.5px_rgba(212,212,212,0.3)] w-14 h-14 rounded-full text-gray-100/30 cursor-pointer bg-transparent border-0 hover:text-gray-800 hover:bg-gray-50/60"
+					style={{ transition: "all 200ms ease-in" }}
 					onClick={previous}
 				>
 					<ChevronLeft />
@@ -55,7 +56,8 @@ export default function WidgetSlide() {
 					))}
 				</SliderComponent>
 				<button
-					className="next flex items-center justify-center absolute top-1/2 -translate-y-1/2 right-5 z-40 shadow-[0_0_5px_0.5px_rgba(212,212,212,0.3)] w-14 h-14 rounded-full text-gray-100/30 cursor-pointer transition-all duration-200 ease-in bg-transparent border-0 hover:text-gray-800 hover:bg-gray-50/60"
+					className="next flex items-center justify-center absolute top-1/2 -translate-y-1/2 right-5 z-40 shadow-[0_0_5px_0.5px_rgba(212,212,212,0.3)] w-14 h-14 rounded-full text-gray-100/30 cursor-pointer bg-transparent border-0 hover:text-gray-800 hover:bg-gray-50/60"
+					style={{ transition: "all 200ms ease-in" }}
 					onClick={next}
 				>
 					<ChevronRight />

@@ -128,7 +128,7 @@ export default function AssetGrid({
 					)}
 					style={{
 						...(gridTemplateColumns ? { gridTemplateColumns } : {}),
-						maxHeight: "100px",
+						maxHeight: "120px",
 					}}
 				>
 					{filteredAssets.map((asset) => {

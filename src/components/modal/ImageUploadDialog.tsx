@@ -125,7 +125,7 @@ export default function ImageUploadDialog({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
-			<DialogContent className="bg-card-bg border-card rounded-card backdrop-blur-card max-w-xl sm:max-w-xl w-full">
+			<DialogContent className="bg-card-bg border-card rounded-card backdrop-blur-card max-w-2xl sm:max-w-2xl w-full">
 				<DialogHeader>
 					<DialogTitle className="text-[20px] font-semibold">
 						이미지 업로드
