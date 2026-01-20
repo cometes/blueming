@@ -19,6 +19,12 @@ import { useAdmin } from "@/hooks/auth/UseAdmin";
 import { cn } from "@/lib/utils";
 import MenuAuthButton from "@/components/common/MenuAuthButton";
 import Image from "next/image";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // =============================================================================
 // TYPES
@@ -498,7 +504,8 @@ export default function WidgetMenu() {
 				className="menu-iconbar h-dvh flex flex-col items-center shrink-0 sticky top-0 overflow-visible"
 				style={iconBarStyle}
 			>
-				<nav className="w-full h-full flex flex-col items-center py-6 overflow-visible gap-4 justify-center">
+				<TooltipProvider delayDuration={150}>
+					<nav className="w-full h-full flex flex-col items-center py-6 overflow-visible gap-4 justify-center">
 					<div className="w-full flex items-center justify-center mb-6">
 						{renderIconBarLogo()}
 					</div>
@@ -506,35 +513,34 @@ export default function WidgetMenu() {
 					<ul className="flex flex-col items-center gap-3">
 						{filteredMenuItems.map((item) => (
 							<li key={item.uniqueId} className="relative">
-								<div className="relative group">
-									{item.iconImage ? (
-										<button
-											type="button"
-											onClick={handleMenuClick(item)}
-											className="w-10 h-10 flex items-center justify-center leading-none"
-										>
-											<img
-												src={item.iconImage}
-												alt={item.name}
-												className="block w-10 h-10 object-contain"
-											/>
-										</button>
-									) : (
-										<button
-											type="button"
-											onClick={handleMenuClick(item)}
-											className="w-10 h-10 rounded-full bg-card-bg/60 border border-card flex items-center justify-center leading-none"
-										>
-											{getMenuIcon(item.category)}
-										</button>
-									)}
-									<span
-										className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-card bg-card-bg px-2 py-1 text-xs text-sub-text opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0"
-										style={{ transition: "all 300ms ease" }}
-									>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										{item.iconImage ? (
+											<button
+												type="button"
+												onClick={handleMenuClick(item)}
+												className="w-10 h-10 flex items-center justify-center leading-none"
+											>
+												<img
+													src={item.iconImage}
+													alt={item.name}
+													className="block w-10 h-10 object-contain"
+												/>
+											</button>
+										) : (
+											<button
+												type="button"
+												onClick={handleMenuClick(item)}
+												className="w-10 h-10 rounded-full bg-card-bg/60 border border-card flex items-center justify-center leading-none"
+											>
+												{getMenuIcon(item.category)}
+											</button>
+										)}
+									</TooltipTrigger>
+									<TooltipContent side="right" align="center">
 										{item.name}
-									</span>
-								</div>
+									</TooltipContent>
+								</Tooltip>
 								{item.category === "폴더" && item.subMenus?.length ? (
 									<ul
 										className="flex flex-col items-center gap-2 overflow-hidden"
@@ -550,33 +556,32 @@ export default function WidgetMenu() {
 												typeof subMenu === "string" ? subMenu : subMenu.name;
 											return (
 												<li key={`${item.uniqueId}-sub-${idx}`}>
-													<div className="relative group">
-														<button
-															type="button"
-															onClick={() => {
-																const path =
-																	BOARD_ROUTES[
-																		name as keyof typeof BOARD_ROUTES
-																	];
-																if (path) {
-																	setOpenFolders((prev) => ({
-																		...prev,
-																		[item.uniqueId]: false,
-																	}));
-																	router.push(path);
-																}
-															}}
-															className="w-8 h-8 rounded-full bg-card-bg/60 border border-card flex items-center justify-center"
-														>
-															{getMenuIcon(name)}
-														</button>
-														<span
-															className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-card bg-card-bg px-2 py-1 text-xs text-sub-text opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0"
-															style={{ transition: "all 300ms ease" }}
-														>
+													<Tooltip>
+														<TooltipTrigger asChild>
+															<button
+																type="button"
+																onClick={() => {
+																	const path =
+																		BOARD_ROUTES[
+																			name as keyof typeof BOARD_ROUTES
+																		];
+																	if (path) {
+																		setOpenFolders((prev) => ({
+																			...prev,
+																			[item.uniqueId]: false,
+																		}));
+																		router.push(path);
+																	}
+																}}
+																className="w-8 h-8 rounded-full bg-card-bg/60 border border-card flex items-center justify-center"
+															>
+																{getMenuIcon(name)}
+															</button>
+														</TooltipTrigger>
+														<TooltipContent side="right" align="center">
 															{name}
-														</span>
-													</div>
+														</TooltipContent>
+													</Tooltip>
 												</li>
 											);
 										})}
@@ -618,6 +623,7 @@ export default function WidgetMenu() {
 						<MenuAuthButton variant="iconbar" className="opacity-80" />
 					</div>
 				</nav>
+				</TooltipProvider>
 			</aside>
 		</>
 	);
