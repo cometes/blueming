@@ -1,4 +1,5 @@
 import { apiClient } from "@/queries/apiClient";
+import { CACHE_POLICY } from "@/queries/cachePolicy";
 
 interface FetchLibraryListParams {
 	page?: number;
@@ -15,7 +16,20 @@ interface FetchLibraryListOptions {
 
 const listCache = new Map<string, { data: unknown; timestamp: number }>();
 const sharedCache = new Map<string, { data: unknown; timestamp: number }>();
-const defaultStaleTimeMs = 30_000;
+const defaultStaleTimeMs = CACHE_POLICY.libraryStaleMs;
+
+const getSharedCache = (cacheKey: string, staleTimeMs: number) => {
+	const cached = sharedCache.get(cacheKey);
+	if (!cached) return undefined;
+	if (Date.now() - cached.timestamp < staleTimeMs) {
+		return cached.data;
+	}
+	return undefined;
+};
+
+const setSharedCache = (cacheKey: string, data: unknown) => {
+	sharedCache.set(cacheKey, { data, timestamp: Date.now() });
+};
 
 const buildListCacheKey = (params: FetchLibraryListParams) => {
 	const entries = Object.entries(params)
@@ -77,16 +91,16 @@ export const fetchLibraryList = async (
 export const fetchLibrarySeries = async () => {
 	const cacheKey = "library:series";
 	const useCache = typeof window !== "undefined";
-	const cached = useCache ? sharedCache.get(cacheKey) : undefined;
-	if (cached && Date.now() - cached.timestamp < defaultStaleTimeMs) {
-		return { data: cached.data };
+	const cached = useCache ? getSharedCache(cacheKey, defaultStaleTimeMs) : undefined;
+	if (cached) {
+		return { data: cached };
 	}
 
 	const result = await apiClient.get("/library/series");
 
 	const data = result.data;
 	if (useCache) {
-		sharedCache.set(cacheKey, { data, timestamp: Date.now() });
+		setSharedCache(cacheKey, data);
 	}
 
 	return {
@@ -101,16 +115,16 @@ export async function fetchLibraryDetail(
 	const cacheKey = `library:detail:${id}`;
 	const useCache = options.useCache !== false && typeof window !== "undefined";
 	const staleTimeMs = options.staleTimeMs ?? defaultStaleTimeMs;
-	const cached = useCache ? sharedCache.get(cacheKey) : undefined;
-	if (cached && Date.now() - cached.timestamp < staleTimeMs) {
-		return { data: cached.data };
+	const cached = useCache ? getSharedCache(cacheKey, staleTimeMs) : undefined;
+	if (cached) {
+		return { data: cached };
 	}
 
 	const request = await apiClient.get(`/library/detail/${id}`);
 
 	const data = request.data;
 	if (useCache) {
-		sharedCache.set(cacheKey, { data, timestamp: Date.now() });
+		setSharedCache(cacheKey, data);
 	}
 
 	return {
@@ -125,16 +139,16 @@ export const fetchLibrarySeriesList = async (
 	const cacheKey = `library:series:${series}`;
 	const useCache = options.useCache !== false && typeof window !== "undefined";
 	const staleTimeMs = options.staleTimeMs ?? defaultStaleTimeMs;
-	const cached = useCache ? sharedCache.get(cacheKey) : undefined;
-	if (cached && Date.now() - cached.timestamp < staleTimeMs) {
-		return { data: cached.data };
+	const cached = useCache ? getSharedCache(cacheKey, staleTimeMs) : undefined;
+	if (cached) {
+		return { data: cached };
 	}
 
 	const result = await apiClient.get(`/library/series/${series}`);
 
 	const data = result.data;
 	if (useCache) {
-		sharedCache.set(cacheKey, { data, timestamp: Date.now() });
+		setSharedCache(cacheKey, data);
 	}
 
 	return {
@@ -146,16 +160,16 @@ export const fetchLibraryTags = async (options: FetchLibraryListOptions = {}) =>
 	const cacheKey = "library:tags";
 	const useCache = options.useCache !== false && typeof window !== "undefined";
 	const staleTimeMs = options.staleTimeMs ?? defaultStaleTimeMs;
-	const cached = useCache ? sharedCache.get(cacheKey) : undefined;
-	if (cached && Date.now() - cached.timestamp < staleTimeMs) {
-		return { data: cached.data };
+	const cached = useCache ? getSharedCache(cacheKey, staleTimeMs) : undefined;
+	if (cached) {
+		return { data: cached };
 	}
 
 	const result = await apiClient.get("/library/tags");
 
 	const data = result.data;
 	if (useCache) {
-		sharedCache.set(cacheKey, { data, timestamp: Date.now() });
+		setSharedCache(cacheKey, data);
 	}
 
 	return {

@@ -3,8 +3,11 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSettings } from "@/contexts/SettingsContext";
 import { getWeather, type WeatherData } from "@/queries/getWeather";
+import { CACHE_POLICY } from "@/queries/cachePolicy";
 import WeatherIcon from "@/components/weather/WeatherIcon";
 import { MapPin } from "lucide-react";
+
+const WEATHER_REFRESH_MS = CACHE_POLICY.weatherStaleMs;
 
 export default function WidgetWeatherClock() {
     const { main } = useSettings();
@@ -31,7 +34,7 @@ export default function WidgetWeatherClock() {
             try {
                 setIsLoading(true);
                 setError(null);
-                const data = await getWeather(city);
+                const data = await getWeather(city, { staleTimeMs: WEATHER_REFRESH_MS });
                 if (!isActive || currentId !== requestId) return;
                 setWeather(data);
             } catch (err) {
@@ -47,10 +50,30 @@ export default function WidgetWeatherClock() {
         };
 
         fetchWeatherData();
-        const interval = setInterval(fetchWeatherData, 10 * 60 * 1000);
+        let interval: ReturnType<typeof setInterval> | undefined;
+		if (document.visibilityState === "visible") {
+			interval = setInterval(fetchWeatherData, WEATHER_REFRESH_MS);
+		}
+		const handleVisibilityChange = () => {
+			if (document.visibilityState === "visible") {
+				fetchWeatherData();
+				if (!interval) {
+					interval = setInterval(fetchWeatherData, WEATHER_REFRESH_MS);
+				}
+				return;
+			}
+			if (interval) {
+				clearInterval(interval);
+				interval = undefined;
+			}
+		};
+		document.addEventListener("visibilitychange", handleVisibilityChange);
         return () => {
             isActive = false;
-            clearInterval(interval);
+			document.removeEventListener("visibilitychange", handleVisibilityChange);
+			if (interval) {
+				clearInterval(interval);
+			}
         };
     }, [city, enabled]);
 
@@ -64,8 +87,30 @@ export default function WidgetWeatherClock() {
 			setCurrentTime(localTime);
 		};
         updateTime();
-        const interval = setInterval(updateTime, 1000);
-        return () => clearInterval(interval);
+		let interval: ReturnType<typeof setInterval> | undefined;
+		if (document.visibilityState === "visible") {
+			interval = setInterval(updateTime, 1000);
+		}
+		const handleVisibilityChange = () => {
+			if (document.visibilityState === "visible") {
+				updateTime();
+				if (!interval) {
+					interval = setInterval(updateTime, 1000);
+				}
+				return;
+			}
+			if (interval) {
+				clearInterval(interval);
+				interval = undefined;
+			}
+		};
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+        return () => {
+			document.removeEventListener("visibilitychange", handleVisibilityChange);
+			if (interval) {
+				clearInterval(interval);
+			}
+		};
     }, [enabled, weather]);
 
     const formattedDate = useMemo(() => {

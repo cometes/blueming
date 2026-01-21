@@ -1,3 +1,5 @@
+import { CACHE_POLICY } from "@/queries/cachePolicy";
+
 export interface WeatherData {
 	city: string;
 	temperature: number;
@@ -8,7 +10,34 @@ export interface WeatherData {
 	timezone: number; // UTC offset in seconds
 }
 
-export const getWeather = async (city: string): Promise<WeatherData> => {
+interface WeatherCacheEntry {
+	data: WeatherData;
+	timestamp: number;
+}
+
+interface WeatherOptions {
+	staleTimeMs?: number;
+	useCache?: boolean;
+}
+
+const weatherCache = new Map<string, WeatherCacheEntry>();
+const defaultWeatherStaleMs = CACHE_POLICY.weatherStaleMs;
+
+export const getWeather = async (
+	city: string,
+	options: WeatherOptions = {}
+): Promise<WeatherData> => {
+	const useCache = options.useCache !== false && typeof window !== "undefined";
+	const staleTimeMs = options.staleTimeMs ?? defaultWeatherStaleMs;
+	const cacheKey = city.toLowerCase();
+
+	if (useCache) {
+		const cached = weatherCache.get(cacheKey);
+		if (cached && Date.now() - cached.timestamp < staleTimeMs) {
+			return cached.data;
+		}
+	}
+
 	const response = await fetch(
 		`https://api-w5buphcleq-du.a.run.app/weather/${encodeURIComponent(city)}`,
 		{
@@ -25,5 +54,9 @@ export const getWeather = async (city: string): Promise<WeatherData> => {
 	}
 
 	const data = await response.json();
-	return data as WeatherData;
+	const typedData = data as WeatherData;
+	if (useCache) {
+		weatherCache.set(cacheKey, { data: typedData, timestamp: Date.now() });
+	}
+	return typedData;
 };
