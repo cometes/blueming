@@ -1,8 +1,9 @@
+import { cache } from "react";
 import { API_BASE } from "@/queries/apiClient";
 
 const defaultRevalidateSeconds = 60;
 
-export const fetchLibrarySeriesServer = async () => {
+export const fetchLibrarySeriesServer = cache(async () => {
 	const response = await fetch(`${API_BASE}/library/series`, {
 		next: { revalidate: defaultRevalidateSeconds },
 	});
@@ -11,9 +12,9 @@ export const fetchLibrarySeriesServer = async () => {
 	}
 	const data = await response.json();
 	return { data };
-};
+});
 
-export const fetchLibraryTagsServer = async () => {
+export const fetchLibraryTagsServer = cache(async () => {
 	const response = await fetch(`${API_BASE}/library/tags`, {
 		next: { revalidate: defaultRevalidateSeconds },
 	});
@@ -22,7 +23,7 @@ export const fetchLibraryTagsServer = async () => {
 	}
 	const data = await response.json();
 	return { data };
-};
+});
 
 export const fetchLibraryDetailServer = async (id: string | string[]) => {
 	const response = await fetch(`${API_BASE}/library/detail/${id}`, {
@@ -35,7 +36,7 @@ export const fetchLibraryDetailServer = async (id: string | string[]) => {
 	return { data };
 };
 
-export const fetchLibrarySeriesListServer = async (
+export const fetchLibrarySeriesListServer = cache(async (
 	series: string | string[]
 ) => {
 	const response = await fetch(`${API_BASE}/library/series/${series}`, {
@@ -46,4 +47,4 @@ export const fetchLibrarySeriesListServer = async (
 	}
 	const data = await response.json();
 	return { data };
-};
+});
