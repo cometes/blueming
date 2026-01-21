@@ -1,19 +1,42 @@
 "use client";
 
-import WidgetProfile from "@/components/widgets/WidgetProfile";
-import WidgetDday from "@/components/widgets/WidgetDday";
-import WidgetMarquee from "@/components/widgets/WidgetMarquee";
-import WidgetNotice from "@/components/widgets/WidgetNotice";
-import WidgetSlide from "@/components/widgets/WidgetSlide";
-import WidgetLatestPosts from "@/components/widgets/WidgetLatestPosts";
-import WidgetStickerBoard from "@/components/widgets/WidgetStickerBoard";
-import WidgetImage from "@/components/widgets/WidgetImage";
-import WidgetWeatherClock from "@/components/widgets/WidgetWeatherClock";
+import dynamic from "next/dynamic";
 import { useSettings } from "@/contexts/SettingsContext";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useMobile } from "@/hooks/use-mobile";
 
 type WidgetType = string;
+
+const WidgetProfile = dynamic(() => import("@/components/widgets/WidgetProfile"), {
+	ssr: false,
+});
+const WidgetDday = dynamic(() => import("@/components/widgets/WidgetDday"), {
+	ssr: false,
+});
+const WidgetMarquee = dynamic(() => import("@/components/widgets/WidgetMarquee"), {
+	ssr: false,
+});
+const WidgetNotice = dynamic(() => import("@/components/widgets/WidgetNotice"), {
+	ssr: false,
+});
+const WidgetSlide = dynamic(() => import("@/components/widgets/WidgetSlide"), {
+	ssr: false,
+});
+const WidgetLatestPosts = dynamic(
+	() => import("@/components/widgets/WidgetLatestPosts"),
+	{ ssr: false }
+);
+const WidgetStickerBoard = dynamic(
+	() => import("@/components/widgets/WidgetStickerBoard"),
+	{ ssr: false }
+);
+const WidgetImage = dynamic(() => import("@/components/widgets/WidgetImage"), {
+	ssr: false,
+});
+const WidgetWeatherClock = dynamic(
+	() => import("@/components/widgets/WidgetWeatherClock"),
+	{ ssr: false }
+);
 
 const IMAGE_WIDGET_IDS = [
 	"이미지 위젯 1",
@@ -27,17 +50,31 @@ export default function Home() {
 	const isMobile = useMobile();
 	const customLayout = main?.customLayout;
 	const legacyWidgets = (customLayout as { widgets?: Array<{ id: string }> })?.widgets;
-	const layout = isMobile
-		? customLayout?.mobileLayout || customLayout?.layout || []
-		: customLayout?.layout || [];
-	const widgetList = isMobile
-		? customLayout?.mobileWidgets ||
-		  customLayout?.desktopWidgets ||
-		  legacyWidgets ||
-		  []
-		: customLayout?.desktopWidgets || legacyWidgets || [];
-	const activeWidgetIds = new Set(widgetList.map((widget) => widget.id));
-	const activeLayout = layout.filter((item) => activeWidgetIds.has(item.i));
+	const layout = useMemo(
+		() =>
+			isMobile
+				? customLayout?.mobileLayout || customLayout?.layout || []
+				: customLayout?.layout || [],
+		[customLayout, isMobile]
+	);
+	const widgetList = useMemo(
+		() =>
+			isMobile
+				? customLayout?.mobileWidgets ||
+				  customLayout?.desktopWidgets ||
+				  legacyWidgets ||
+				  []
+				: customLayout?.desktopWidgets || legacyWidgets || [],
+		[customLayout, isMobile, legacyWidgets]
+	);
+	const activeWidgetIds = useMemo(
+		() => new Set(widgetList.map((widget) => widget.id)),
+		[widgetList]
+	);
+	const activeLayout = useMemo(
+		() => layout.filter((item) => activeWidgetIds.has(item.i)),
+		[activeWidgetIds, layout]
+	);
 
 	const renderWidget = useCallback((widgetType: WidgetType) => {
 		const imageWidgetIndex = IMAGE_WIDGET_IDS.indexOf(widgetType);

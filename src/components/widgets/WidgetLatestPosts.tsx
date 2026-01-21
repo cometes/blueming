@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { fetchLibraryList } from "@/queries/fetch/fetchLibrary";
+import { CACHE_POLICY } from "@/queries/cachePolicy";
 import { dateConvert } from "@/lib/date";
 import Link from "next/link";
 
@@ -17,6 +18,7 @@ const MAX_ITEMS = 5;
 const ROW_HEIGHT = 28;
 const HEADER_HEIGHT = 28;
 const PADDING_Y = 24;
+const LATEST_POSTS_CACHE_MS = CACHE_POLICY.latestPostsStaleMs;
 
 const useContainerHeight = (ref: React.RefObject<HTMLDivElement>) => {
 	const [height, setHeight] = useState(0);
@@ -56,6 +58,9 @@ export default function WidgetLatestPosts() {
 					page: 1,
 					limit: MAX_ITEMS,
 					sort: "latest",
+				}, {
+					staleTimeMs: LATEST_POSTS_CACHE_MS,
+					useCache: true,
 				});
 				if (!isActive) return;
 				const nextItems = Array.isArray(data?.items) ? data.items : [];
