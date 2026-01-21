@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,24 @@ import { Separator } from "@/components/ui/separator";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { ColorPalettePreview } from "@/components/ui/color-palette-preview";
 import RadioItem from "@/components/items/RadioItem";
-import { useModal } from "@/hooks/useModal";
 import { useSettingGeneral } from "@/hooks/useSettingGeneral";
-import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
+import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
+import { Save } from "lucide-react";
+import { useFileUpload } from "@/hooks/useFileUpload";
+import { toast } from "sonner";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
+import AssetGrid from "@/components/asset/AssetGrid";
+import { listStickerAssets } from "@/queries/stickerAssets";
+import type { StickerAsset } from "@/types/stickerBoard";
 
 type ImageField = "favicon" | "shareImage" | "logoImage";
 
@@ -27,20 +41,30 @@ const PLACEHOLDERS = {
 
 const UPLOAD_TEXT = "Upload Image";
 
+// 로컬 이미지 미리보기를 위한 타입
+interface PendingImage {
+	file: File;
+	previewUrl: string;
+}
+
 interface ImageUploadSectionProps {
 	title: string;
 	description?: string;
 	imageSrc?: string;
-	onImageClick: () => void;
+	onFileSelect: (file: File) => void;
 	onClearClick: () => void;
+	onOpenPicker?: () => void;
+	isUploading?: boolean;
 }
 
 const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 	title,
 	description,
 	imageSrc,
-	onImageClick,
+	onFileSelect,
 	onClearClick,
+	onOpenPicker,
+	isUploading = false,
 }) => (
 	<div className="section-box flex items-center mt-4">
 		<div className="text-box w-[220px]">
@@ -52,50 +76,92 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 			)}
 		</div>
 		<div className="flex items-center gap-3">
-			{imageSrc ? (
-				<>
-					<div className="w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden">
+			{onOpenPicker ? (
+				<button
+					type="button"
+					onClick={onOpenPicker}
+					className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
+						isUploading ? "opacity-60 pointer-events-none" : ""
+					}`}
+				>
+					{imageSrc ? (
 						<img
 							src={imageSrc}
 							alt={title}
 							className="w-full h-full object-contain"
 						/>
-					</div>
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={onClearClick}
-						className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+					) : (
+						<>
+							<ImagePlus
+								size={ICON_SIZE}
+								color={ICON_COLOR}
+								absoluteStrokeWidth={true}
+							/>
+							<span className="text-xs text-gray-500 dark:text-gray-400">
+								{UPLOAD_TEXT}
+							</span>
+						</>
+					)}
+				</button>
+			) : (
+				<label
+					className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
+						isUploading ? "opacity-60 pointer-events-none" : ""
+					}`}
+				>
+					{imageSrc ? (
+						<img
+							src={imageSrc}
+							alt={title}
+							className="w-full h-full object-contain"
+						/>
+					) : (
+						<>
+							<ImagePlus
+								size={ICON_SIZE}
+								color={ICON_COLOR}
+								absoluteStrokeWidth={true}
+							/>
+							<span className="text-xs text-gray-500 dark:text-gray-400">
+								{UPLOAD_TEXT}
+							</span>
+						</>
+					)}
+					<input
+						type="file"
+						accept="image/*"
+						className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+						onChange={(event) => {
+							const file = event.target.files?.[0];
+							if (file) {
+								onFileSelect(file);
+							}
+							event.target.value = "";
+						}}
+					/>
+				</label>
+			)}
+			{imageSrc ? (
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					onClick={onClearClick}
+					className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+					style={{
+						transition: "all 0.3s ease-in-out",
+					}}
+				>
+					<Trash2
+						size={14}
+						className="mr-2"
 						style={{
 							transition: "all 0.3s ease-in-out",
 						}}
-					>
-						<Trash2
-							size={14}
-							className="mr-2"
-							style={{
-								transition: "all 0.3s ease-in-out",
-							}}
-						/>
-						비우기
-					</Button>
-				</>
-			) : (
-				<div
-					onClick={onImageClick}
-					className="w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors"
-				>
-					<ImagePlus
-						size={ICON_SIZE}
-						color={ICON_COLOR}
-						absoluteStrokeWidth={true}
 					/>
-					<span className="text-xs text-gray-500 dark:text-gray-400">
-						{UPLOAD_TEXT}
-					</span>
-				</div>
-			)}
+					비우기
+				</Button>
+			) : null}
 		</div>
 	</div>
 );
@@ -116,51 +182,258 @@ export default function GeneralSettingClient() {
 		handleClearImage,
 		handleReset,
 		handleSave,
-		bgThumbnail,
-		setBgThumnail,
 		isDirty,
 	} = useSettingGeneral();
 
-	const { showModal, isModalOpen, setIsModalOpen } = useModal();
-	const [showResetConfirm, setShowResetConfirm] = useState(false);
+	const [showResetDialog, setShowResetDialog] = useState(false);
+	const { uploadFile, state: uploadState } = useFileUpload();
+	const [activeImageField, setActiveImageField] = useState<ImageField | null>(null);
+	const [dialogThumbnail, setDialogThumbnail] = useState("");
+	const [imageSource, setImageSource] = useState<
+		"file" | "asset" | "existing" | null
+	>(null);
+	const [assets, setAssets] = useState<StickerAsset[]>([]);
+	const [assetsLoading, setAssetsLoading] = useState(false);
+	const [assetsError, setAssetsError] = useState<string | null>(null);
+	const [assetSearchQuery, setAssetSearchQuery] = useState("");
 
-	const [currentImageField, setCurrentImageField] = useState<ImageField | null>(
-		null
+	// 업로드 대기 중인 이미지들을 저장
+	const [pendingImages, setPendingImages] = useState<
+		Record<ImageField, PendingImage | null>
+	>({
+		favicon: null,
+		shareImage: null,
+		logoImage: null,
+	});
+
+	// pending 이미지가 있는지 체크
+	const hasPendingImages =
+		pendingImages.favicon !== null ||
+		pendingImages.shareImage !== null ||
+		pendingImages.logoImage !== null;
+
+	useSettingStatus("general", isDirty || hasPendingImages ? "dirty" : "saved");
+	useSettingHeaderAction(
+		<Button
+			type="submit"
+			form="setting-form-general"
+			variant="ghost"
+			size="icon"
+			disabled={(!isDirty && !hasPendingImages) || uploadState.loading}
+			aria-label="저장하기"
+			title="저장하기"
+			className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+			style={{
+				transition: "all 0.3s ease-in-out",
+			}}
+		>
+			<Save size={16} />
+		</Button>,
+		[isDirty, hasPendingImages, uploadState.loading]
 	);
-	useSettingStatus("general", isDirty ? "dirty" : "saved");
 
-	const openImageModal = (field: ImageField) => {
-		setCurrentImageField(field);
-		if (generalSetting[field]) {
-			setBgThumnail(generalSetting[field]);
-		} else {
-			setBgThumnail("");
+	// 파일 선택 시 로컬 미리보기만 표시
+	const handleFileSelect = (field: ImageField, file: File) => {
+		const previewUrl = URL.createObjectURL(file);
+		setPendingImages((prev) => ({
+			...prev,
+			[field]: { file, previewUrl },
+		}));
+	};
+
+	const refreshAssets = useCallback(async () => {
+		try {
+			setAssetsLoading(true);
+			setAssetsError(null);
+			const list = await listStickerAssets("all");
+			setAssets(list);
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : "에셋을 불러오지 못했습니다.";
+			setAssetsError(message);
+		} finally {
+			setAssetsLoading(false);
 		}
-		showModal();
+	}, []);
+
+	// 이미지 비우기 (로컬 미리보기 또는 서버 이미지)
+	const handleImageClear = (field: ImageField) => {
+		// pending 이미지가 있으면 URL 해제
+		if (pendingImages[field]) {
+			URL.revokeObjectURL(pendingImages[field]!.previewUrl);
+			setPendingImages((prev) => ({
+				...prev,
+				[field]: null,
+			}));
+		}
+		// 서버 이미지 제거
+		handleClearImage(field);
 	};
 
-	const handleImageUploadConfirm = (url: string) => {
-		if (!currentImageField) return;
-		handleImageUpload(currentImageField, url);
-		setIsModalOpen(false);
+	// 저장 버튼 클릭 시 실행
+	const onSubmit = async () => {
+		try {
+			// 1. pending 이미지들을 먼저 업로드
+			const uploadedUrls: Partial<Record<ImageField, string>> = {};
+
+			for (const field of Object.keys(pendingImages) as ImageField[]) {
+				const pending = pendingImages[field];
+				if (pending) {
+					const url = await uploadFile(pending.file);
+					uploadedUrls[field] = url;
+					// 업로드된 URL을 즉시 반영
+					handleImageUpload(field, url);
+					// blob URL 해제
+					URL.revokeObjectURL(pending.previewUrl);
+				}
+			}
+
+			// pending 이미지 초기화
+			setPendingImages({
+				favicon: null,
+				shareImage: null,
+				logoImage: null,
+			});
+
+			// 2. 업로드된 이미지 URL을 포함하여 제네럴 세팅 저장
+			const updatedSetting = {
+				...generalSetting,
+				...uploadedUrls,
+			};
+
+			await handleSave(updatedSetting);
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : "저장에 실패했습니다.";
+			toast.error(message);
+		}
 	};
 
-	const onSubmit = () => {
-		handleSave();
+	useEffect(() => {
+		if (!activeImageField) return;
+		void refreshAssets();
+	}, [activeImageField, refreshAssets]);
+
+	const handleOpenImageDialog = (field: ImageField) => {
+		const pending = pendingImages[field]?.previewUrl;
+		const currentValue = generalSetting[field] || "";
+		const current = pending || currentValue || "";
+		setDialogThumbnail(current);
+		if (pending) {
+			setImageSource("file");
+		} else if (currentValue) {
+			setImageSource("existing");
+		} else {
+			setImageSource(null);
+		}
+		setActiveImageField(field);
 	};
 
-	const confirmReset = () => {
+	const handleImageFileSelect = (file: File, previewUrl: string) => {
+		if (!activeImageField) return;
+		if (pendingImages[activeImageField]) {
+			URL.revokeObjectURL(pendingImages[activeImageField]!.previewUrl);
+		}
+		setPendingImages((prev) => ({
+			...prev,
+			[activeImageField]: { file, previewUrl },
+		}));
+		setDialogThumbnail(previewUrl);
+		setImageSource("file");
+	};
+
+	const handleSelectAsset = (asset: StickerAsset) => {
+		setDialogThumbnail(asset.url);
+		setImageSource("asset");
+	};
+
+	const handleImageDialogConfirm = (selectedUrl: string) => {
+		if (!activeImageField) return;
+		if (imageSource === "asset" && selectedUrl) {
+			if (pendingImages[activeImageField]) {
+				URL.revokeObjectURL(pendingImages[activeImageField]!.previewUrl);
+			}
+			setPendingImages((prev) => ({ ...prev, [activeImageField]: null }));
+			handleImageUpload(activeImageField, selectedUrl);
+		}
+		setActiveImageField(null);
+	};
+
+	const handleResetConfirm = () => {
+		// pending 이미지 URL 정리
+		Object.values(pendingImages).forEach((pending) => {
+			if (pending) {
+				URL.revokeObjectURL(pending.previewUrl);
+			}
+		});
+		setPendingImages({
+			favicon: null,
+			shareImage: null,
+			logoImage: null,
+		});
+
 		handleReset();
-		setShowResetConfirm(false);
+		setShowResetDialog(false);
 	};
+
+	// 컴포넌트 언마운트 시 blob URL 정리
+	useEffect(() => {
+		return () => {
+			Object.values(pendingImages).forEach((pending) => {
+				if (pending) {
+					URL.revokeObjectURL(pending.previewUrl);
+				}
+			});
+		};
+	}, [pendingImages]);
 
 	return (
-		<form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-			{/* Temporary: ImageUploadModal will be created later */}
+		<form
+			id="setting-form-general"
+			onSubmit={handleSubmit(onSubmit)}
+			className="space-y-8"
+		>
+			<ImageUploadDialog
+				isOpen={activeImageField !== null}
+				onOpenChange={(open) => {
+					if (!open) {
+						setActiveImageField(null);
+						setAssetSearchQuery("");
+					}
+				}}
+				thumbnail={dialogThumbnail}
+				setThumbnail={setDialogThumbnail}
+				onUpload={handleImageDialogConfirm}
+				uploadMode="deferred"
+				onFileSelect={handleImageFileSelect}
+				rightContent={
+					<div>
+						<div className="text-xs font-semibold text-main-text mb-2">
+							에셋 목록
+						</div>
+						<AssetGrid
+							assets={assets}
+							loading={assetsLoading}
+							error={assetsError}
+							emptyMessage="에셋이 없습니다."
+							emptySearchMessage="검색 결과가 없습니다."
+							selectedUrl={dialogThumbnail}
+							onSelect={handleSelectAsset}
+							enableSearch={true}
+							searchQuery={assetSearchQuery}
+							onSearchChange={setAssetSearchQuery}
+							aspectClassName="aspect-square"
+							imageClassName="w-full h-full object-contain"
+							gridTemplateColumns="repeat(4, minmax(0, 1fr))"
+							className="gap-1.5"
+						/>
+					</div>
+				}
+			/>
 
 			{/* 홈페이지 설정 Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">홈페이지 설정</h2>
+				<h2 className="text-[20px] font-semibold font-title">홈페이지 설정</h2>
 				<div className="section-wrap mt-6">
 					{/* 홈페이지 타이틀 */}
 					<div className="section-box flex items-center mt-4">
@@ -218,18 +491,26 @@ export default function GeneralSettingClient() {
 					<ImageUploadSection
 						title="파비콘 (32x32)"
 						description="브라우저 옆에 띄우는 작은 아이콘"
-						imageSrc={generalSetting.favicon}
-						onImageClick={() => openImageModal("favicon")}
-						onClearClick={() => handleClearImage("favicon")}
+						imageSrc={
+							pendingImages.favicon?.previewUrl || generalSetting.favicon
+						}
+						onFileSelect={(file) => handleFileSelect("favicon", file)}
+						onClearClick={() => handleImageClear("favicon")}
+						onOpenPicker={() => handleOpenImageDialog("favicon")}
+						isUploading={uploadState.loading}
 					/>
 
 					{/* URL 공유 이미지 */}
 					<ImageUploadSection
 						title="URL 공유 이미지"
 						description="1200 * 630 권장"
-						imageSrc={generalSetting.shareImage}
-						onImageClick={() => openImageModal("shareImage")}
-						onClearClick={() => handleClearImage("shareImage")}
+						imageSrc={
+							pendingImages.shareImage?.previewUrl || generalSetting.shareImage
+						}
+						onFileSelect={(file) => handleFileSelect("shareImage", file)}
+						onClearClick={() => handleImageClear("shareImage")}
+						onOpenPicker={() => handleOpenImageDialog("shareImage")}
+						isUploading={uploadState.loading}
 					/>
 
 					{/* 메인 컬러 */}
@@ -282,7 +563,7 @@ export default function GeneralSettingClient() {
 
 			{/* 로고 Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">로고</h2>
+				<h2 className="text-[20px] font-semibold font-title">로고</h2>
 				<div className="section-wrap mt-6">
 					{/* 로고 타입 */}
 					<div className="section-box flex items-center mt-4">
@@ -306,9 +587,13 @@ export default function GeneralSettingClient() {
 						<ImageUploadSection
 							title="홈페이지 로고"
 							description="홈페이지의 대표 로고를 커스텀 할 수 있습니다."
-							imageSrc={generalSetting.logoImage}
-							onImageClick={() => openImageModal("logoImage")}
-							onClearClick={() => handleClearImage("logoImage")}
+							imageSrc={
+								pendingImages.logoImage?.previewUrl || generalSetting.logoImage
+							}
+							onFileSelect={(file) => handleFileSelect("logoImage", file)}
+							onClearClick={() => handleImageClear("logoImage")}
+							onOpenPicker={() => handleOpenImageDialog("logoImage")}
+							isUploading={uploadState.loading}
 						/>
 					)}
 
@@ -344,51 +629,51 @@ export default function GeneralSettingClient() {
 
 			{/* Submit Buttons */}
 			<div className="flex justify-end gap-3 pt-6">
-				{/* Simple Reset Confirmation */}
-				{showResetConfirm ? (
-					<div className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-						<span className="text-sm text-red-700 dark:text-red-300">
-							정말 초기화할까요?
-						</span>
-						<Button
-							type="button"
-							variant="destructive"
-							size="sm"
-							onClick={confirmReset}
-						>
-							O
-						</Button>
+				<Button
+					type="button"
+					onClick={() => setShowResetDialog(true)}
+					className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
+					style={{
+						transition: "all 0.3s ease-in-out",
+					}}
+				>
+					초기화하기
+				</Button>
+
+				{/* 저장 버튼은 헤더로 이동 */}
+			</div>
+
+			<Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+				<DialogContent className="rounded-card border-card bg-card-bg backdrop-blur-sm">
+					<DialogHeader>
+						<DialogTitle>일반 설정 초기화</DialogTitle>
+						<DialogDescription>
+							정말 일반 설정을 초기화할까요? 모든 설정이 기본값으로 돌아갑니다.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
 						<Button
 							type="button"
 							variant="outline"
-							size="sm"
-							onClick={() => setShowResetConfirm(false)}
+							onClick={() => setShowResetDialog(false)}
+							className="rounded-card border-card bg-card-bg"
 						>
-							X
+							취소
 						</Button>
-					</div>
-				) : (
-					<Button
-						type="button"
-						variant="destructive"
-						onClick={() => setShowResetConfirm(true)}
-					>
-						초기화하기
-					</Button>
-				)}
-
-				<Button type="submit" disabled={!isDirty}>
-					저장하기
-				</Button>
-			</div>
-
-			<ImageUploadDialog
-				isOpen={isModalOpen}
-				onOpenChange={setIsModalOpen}
-				thumbnail={bgThumbnail}
-				setThumbnail={setBgThumnail}
-				onUpload={handleImageUploadConfirm}
-			/>
+						<Button
+							type="button"
+							variant="destructive"
+							onClick={handleResetConfirm}
+							className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
+							style={{
+								transition: "all 0.3s ease-in-out",
+							}}
+						>
+							초기화
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</form>
 	);
 }

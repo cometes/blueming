@@ -310,6 +310,43 @@ body {
 		border-style: solid;
 		backdrop-filter: blur(var(--widget-blur));
 	}
+	
+	/* 보더 이미지 코너만 적용 */
+	.widget-wrapper[data-border-image-type="corner"] {
+		position: relative;
+	}
+	
+	.widget-wrapper[data-border-image-type="corner"]::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 30px;
+		height: 30px;
+		background-image: var(--widget-corner-image);
+		background-size: contain;
+		background-repeat: no-repeat;
+		background-position: top left;
+		pointer-events: none;
+		z-index: 10;
+	}
+	
+	.widget-wrapper[data-border-image-type="corner"]::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		right: 0;
+		width: 30px;
+		height: 30px;
+		background-image: var(--widget-corner-image);
+		background-size: contain;
+		background-repeat: no-repeat;
+		background-position: top right;
+		pointer-events: none;
+		z-index: 10;
+	}
+	
+	/* 하단 코너는 별도 요소로 추가 필요 (CSS만으로는 제한적) */
 	.card-wrapper {
 		/* @apply; */
 		background: var(--card-bg);
@@ -442,7 +479,7 @@ body {
 
 	/* Backdrop blur utilities */
 	.backdrop-blur-card {
-		backdrop-filter: blur(var(--widget-blur));
+		backdrop-filter: blur(var(--card-blur));
 	}
 	.backdrop-blur-widget {
 		backdrop-filter: blur(var(--size-widget-blur));
@@ -474,7 +511,7 @@ body {
 .menu-iconbar {
 	display: none;
 }
-@media (max-width: 1024px) {
+@media (max-width: 1000px) {
 	.menu-desktop {
 		display: none;
 	}
@@ -707,6 +744,30 @@ body {
 	background-color: var(--widget-border-color) !important;
 }
 
+/* MenuAddModal 스크롤바 스타일 */
+.menu-modal-scroll {
+	scrollbar-width: thin;
+	scrollbar-color: var(--widget-border-color) transparent;
+}
+
+.menu-modal-scroll::-webkit-scrollbar {
+	width: 8px;
+}
+
+.menu-modal-scroll::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.menu-modal-scroll::-webkit-scrollbar-thumb {
+	background-color: var(--widget-border-color);
+	border-radius: 4px;
+}
+
+.menu-modal-scroll::-webkit-scrollbar-thumb:hover {
+	background-color: var(--widget-border-color);
+	opacity: 0.8;
+}
+
 @theme inline {
 	--animate-marquee: marquee var(--duration) infinite linear;
 	--animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
@@ -923,7 +984,7 @@ body {
 	left: 50%;
 	margin: -1.025em 0 0 -1.0125em;
 	color: #fff;
-	list-height: 1em;
+	line-height: 1em;
 	opacity: 0.2;
 	animation: spin 8s linear infinite reverse;
 }

@@ -201,9 +201,10 @@ export const useSettingGeneral = () => {
   }, [reset, updateGeneral, refreshSettings]);
 
   // Save settings
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (nextSetting?: typeof generalSetting) => {
     try {
-      const response = await setSettingsGeneralGeneral(generalSetting);
+      const payload = nextSetting ?? generalSetting;
+      const response = await setSettingsGeneralGeneral(payload);
       updateGeneral(response.general);
       await refreshSettings?.({ broadcast: true });
       
@@ -216,8 +217,10 @@ export const useSettingGeneral = () => {
       channel.close();
       
       toast.success("저장되었습니다.");
+      return true;
     } catch {
       toast.error("저장에 실패했습니다.");
+      return false;
     }
   }, [generalSetting, updateGeneral, refreshSettings]);
 

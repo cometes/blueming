@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import AdminRoute from "@/components/common/AdminRoute";
 import SettingLayout from "@/components/layout/SettingLayout";
 import { SettingStatusProvider } from "@/contexts/SettingStatusContext";
+import { SettingHeaderActionProvider } from "@/contexts/SettingHeaderActionContext";
 
 const GeneralSettingClient = dynamic(() => import("./general/GeneralSettingClient"));
 const DesignSettingClient = dynamic(() => import("./design/DesignSettingClient"));
@@ -27,6 +28,10 @@ const ImageWidgetSettingClient = dynamic(
 const WeatherClockSettingClient = dynamic(
 	() => import("./weatherClock/WeatherClockSettingClient")
 );
+const AccountSettingClient = dynamic(
+	() => import("./account/AccountSettingClient")
+);
+const AssetSettingClient = dynamic(() => import("./asset/AssetSettingClient"));
 
 type SettingSection = {
 	id: string;
@@ -134,25 +139,44 @@ export default function SettingClient({ initialSection }: SettingClientProps) {
 						desc: "메인 페이지 스티커보드를 설정할 수 있습니다.",
 						Component: StickerBoardSettingClient,
 					},
-				{
-					id: "imageWidget",
-					label: "이미지 위젯 설정",
-					title: "이미지 위젯 설정",
-					desc: "메인 페이지 이미지 위젯을 설정할 수 있습니다.",
-					Component: ImageWidgetSettingClient,
-				},
-				{
-					id: "weatherClock",
-					label: "날씨&시계 설정",
-					title: "날씨&시계 설정",
-					desc: "메인 페이지 날씨&시계 위젯을 설정할 수 있습니다.",
-					Component: WeatherClockSettingClient,
-				},
-			],
-		},
-	],
-	[]
-);
+					{
+						id: "imageWidget",
+						label: "이미지 위젯 설정",
+						title: "이미지 위젯 설정",
+						desc: "메인 페이지 이미지 위젯을 설정할 수 있습니다.",
+						Component: ImageWidgetSettingClient,
+					},
+					{
+						id: "weatherClock",
+						label: "날씨&시계 설정",
+						title: "날씨&시계 설정",
+						desc: "메인 페이지 날씨&시계 위젯을 설정할 수 있습니다.",
+						Component: WeatherClockSettingClient,
+					},
+				],
+			},
+			{
+				title: "관리",
+				items: [
+					{
+						id: "account",
+						label: "계정 관리",
+						title: "계정 관리",
+						desc: "AI 연동 키를 관리할 수 있습니다.",
+						Component: AccountSettingClient,
+					},
+					{
+						id: "asset",
+						label: "에셋 관리",
+						title: "에셋 관리",
+						desc: "이미지 및 파일 에셋을 관리할 수 있습니다.",
+						Component: AssetSettingClient,
+					},
+				],
+			},
+		],
+		[]
+	);
 
 	const allSections = useMemo(
 		() => settingGroups.flatMap((group) => group.items),
@@ -208,16 +232,18 @@ export default function SettingClient({ initialSection }: SettingClientProps) {
 	return (
 		<AdminRoute>
 			<SettingStatusProvider>
-				<SettingLayout
-					sidebarGroups={sidebarGroups}
-					activeSection={activeSection}
-					onSectionChange={handleSectionChange}
-					title={currentSection?.title || ""}
-					description={currentSection?.desc || ""}
-				>
-					{currentSection ? <currentSection.Component /> : null}
-				</SettingLayout>
+				<SettingHeaderActionProvider>
+					<SettingLayout
+						sidebarGroups={sidebarGroups}
+						activeSection={activeSection}
+						onSectionChange={handleSectionChange}
+						title={currentSection?.title || ""}
+						description={currentSection?.desc || ""}
+					>
+						{currentSection ? <currentSection.Component /> : null}
+					</SettingLayout>
+				</SettingHeaderActionProvider>
 			</SettingStatusProvider>
-		</AdminRoute>
+			</AdminRoute>
 	);
 }

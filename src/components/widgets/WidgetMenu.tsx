@@ -19,6 +19,12 @@ import { useAdmin } from "@/hooks/auth/UseAdmin";
 import { cn } from "@/lib/utils";
 import MenuAuthButton from "@/components/common/MenuAuthButton";
 import Image from "next/image";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // =============================================================================
 // TYPES
@@ -94,7 +100,7 @@ export default function WidgetMenu() {
 			방명록: "/guestbook",
 			설정: "/setting",
 		}),
-		[]
+		[],
 	);
 
 	// -------------------------------------------------------------------------
@@ -118,11 +124,16 @@ export default function WidgetMenu() {
 				return { backgroundColor };
 			}
 			if (bgType === "이미지" && backgroundImage) {
-				return { backgroundImage: `url('${backgroundImage}')` };
+				return {
+					backgroundImage: `url('${backgroundImage}')`,
+					backgroundSize: "contain",
+					backgroundRepeat: "no-repeat",
+					backgroundPosition: "center",
+				};
 			}
 			return {};
 		},
-		[]
+		[],
 	);
 
 	const getItemBackgroundStyle = useCallback((image?: string) => {
@@ -155,12 +166,12 @@ export default function WidgetMenu() {
 	// Design settings
 	const design: MenuDesign = useMemo(
 		() => menuData.design || {},
-		[menuData.design]
+		[menuData.design],
 	);
 
 	const textAlignClass = useMemo(
 		() => getTextAlignClass(design?.textAlign || ""),
-		[design?.textAlign, getTextAlignClass]
+		[design?.textAlign, getTextAlignClass],
 	);
 
 	const menuListMinHeight = useMemo(() => {
@@ -177,14 +188,14 @@ export default function WidgetMenu() {
 			getBackgroundStyle(
 				design?.bgType || "",
 				design?.backgroundColor,
-				design?.backgroundImage
+				design?.backgroundImage,
 			),
 		[
 			design?.bgType,
 			design?.backgroundColor,
 			design?.backgroundImage,
 			getBackgroundStyle,
-		]
+		],
 	);
 
 	const iconBarStyle = useMemo(
@@ -204,7 +215,7 @@ export default function WidgetMenu() {
 			design?.iconBarBgType,
 			design?.iconBarBackgroundColor,
 			design?.iconBarBackgroundImage,
-		]
+		],
 	);
 
 	// -------------------------------------------------------------------------
@@ -234,7 +245,7 @@ export default function WidgetMenu() {
 				}
 			}
 		},
-		[router, toggleFolder, BOARD_ROUTES]
+		[router, toggleFolder, BOARD_ROUTES],
 	);
 
 	// -------------------------------------------------------------------------
@@ -242,13 +253,34 @@ export default function WidgetMenu() {
 	// -------------------------------------------------------------------------
 
 	const renderLogo = () => {
-		if (design?.logoType !== "이미지" || !design?.logoImage) return null;
+		type MenuDesignWithLogo = typeof design & {
+			logoText?: string;
+			logoImage?: string;
+		};
+		const designWithLogo = design as MenuDesignWithLogo;
+
+		if (design?.logoType === "텍스트" && designWithLogo?.logoText) {
+			return (
+				<div
+					className="text-center mb-4 font-bold text-2xl min-[1200px]:text-4xl px-2 min-[1200px]:px-4 w-50 h-20 flex items-center justify-center break-keep transition-[font-size,padding] duration-300"
+					style={{
+						color: design.fontColor,
+						fontFamily: "var(--font-title)",
+					}}
+				>
+					{designWithLogo.logoText}
+				</div>
+			);
+		}
+
+		if (design?.logoType !== "이미지" || !designWithLogo?.logoImage)
+			return null;
 
 		return (
-			<div className="max-w-[200px] aspect-square">
+			<div className="max-w-[120px] min-[1200px]:max-w-[200px] aspect-square transition-[max-width] duration-300 mx-auto">
 				<Image
 					className="w-full h-full block object-cover object-center"
-					src={design.logoImage}
+					src={designWithLogo.logoImage}
 					alt="Logo"
 					width={200}
 					height={200}
@@ -323,17 +355,20 @@ export default function WidgetMenu() {
 							key={`${item.uniqueId}-sub-${index}`}
 							className={cn(
 								"list-none w-full min-h-9 flex flex-col items-center",
-								textAlignClass
+								textAlignClass,
 							)}
 						>
 							<a
 								className={cn(
-									"text-sm min-h-9 w-full px-7 flex items-center cursor-pointer",
-									"transition-opacity duration-300 bg-no-repeat bg-contain bg-center",
-									"hover:opacity-80",
-									textAlignClass
+									"text-xs min-[1200px]:text-sm min-h-9 w-full px-3 min-[1200px]:px-7 flex items-center cursor-pointer",
+									"bg-no-repeat bg-contain bg-center",
+									"hover:opacity-80 transition-[opacity,padding,font-size] duration-300",
+									textAlignClass,
 								)}
-								style={getItemBackgroundStyle(subMenuImage)}
+								style={{
+									...getItemBackgroundStyle(subMenuImage),
+									transition: "opacity 300ms ease, padding 300ms ease",
+								}}
 								onClick={() => {
 									setOpenFolders((prev) => ({
 										...prev,
@@ -355,23 +390,22 @@ export default function WidgetMenu() {
 		return (
 			<li
 				key={item.uniqueId}
-				className={cn(
-					"w-full flex flex-col overflow-hidden transition-all duration-300 ease-in-out",
-					textAlignClass
-				)}
+				className={cn("w-full flex flex-col overflow-hidden", textAlignClass)}
+				style={{ transition: "all 300ms ease-in-out" }}
 			>
 				{/* Main Menu Item */}
 				<a
 					onClick={handleMenuClick(item)}
 					className={cn(
-						"cursor-pointer font-medium min-h-10 w-full px-7 flex items-center",
-						"bg-no-repeat bg-contain bg-center hover:opacity-80 transition-opacity",
+						"cursor-pointer font-medium text-sm min-[1200px]:text-base min-h-10 w-full px-3 min-[1200px]:px-7 flex items-center",
+						"bg-no-repeat bg-contain bg-center hover:opacity-80 transition-[opacity,padding,font-size] duration-300",
 						openFolders[item.uniqueId] && "open",
-						textAlignClass
+						textAlignClass,
 					)}
 					style={{
 						...getItemBackgroundStyle(item.image),
 						color: design?.fontColor,
+						transition: "opacity 300ms ease, padding 300ms ease",
 					}}
 				>
 					{!item.image && item.name}
@@ -391,9 +425,9 @@ export default function WidgetMenu() {
 					type="button"
 					className={cn(
 						"w-9 h-9 rounded-full flex items-center justify-center cursor-pointer",
-						"transition-all duration-300 ease-in-out",
-						"hover:bg-gray-50/60 hover:animate-jingle"
+						"hover:bg-theme-primary/60 hover:animate-jingle",
 					)}
+					style={{ transition: "all 300ms ease-in-out" }}
 					aria-label="알림"
 				>
 					<Bell size={20} color={design?.fontColor || "#333"} />
@@ -404,8 +438,9 @@ export default function WidgetMenu() {
 					type="button"
 					className={cn(
 						"w-9 h-9 rounded-full flex items-center justify-center cursor-pointer",
-						"transition-all duration-300 ease-in-out hover:bg-gray-50/60"
+						"hover:bg-theme-primary/60",
 					)}
+					style={{ transition: "all 300ms ease-in-out" }}
 					aria-label="음악"
 				>
 					<div className="flex items-end justify-center w-4 h-4">
@@ -436,25 +471,22 @@ export default function WidgetMenu() {
 		<>
 			<aside
 				className={cn(
-					"menu-desktop min-w-[200px] h-[calc(100vh-48px)] flex flex-col items-center justify-center shrink-0 sticky top-0",
+					"menu-desktop w-[160px] min-[1200px]:w-[200px] min-w-[160px] h-dvh flex flex-col items-center justify-center shrink-0 sticky top-0",
+					"transition-[width] duration-300 ease-in-out",
 					design?.bgType === "없음" && "bg-transparent",
-					"bg-center"
+					"bg-center",
 				)}
 				style={asideBackgroundStyle}
 			>
-				<nav className="w-full h-full flex flex-col justify-center">
+				<nav
+					className="w-full h-full flex flex-col justify-center"
+					style={{ fontFamily: "var(--font-title)" }}
+				>
 					{/* Logo */}
 					{renderLogo()}
 
 					{/* Menu Items */}
-					<ul
-						className="flex flex-col gap-2.5 list-none mt-2"
-						style={{
-							minHeight: menuListMinHeight
-								? `${menuListMinHeight}px`
-								: undefined,
-						}}
-					>
+					<ul className="flex flex-col gap-1.5 min-[1200px]:gap-2.5 list-none mt-2 min-h-40">
 						{filteredMenuItems.map(renderMenuItem)}
 					</ul>
 
@@ -469,123 +501,129 @@ export default function WidgetMenu() {
 			</aside>
 
 			<aside
-				className="menu-iconbar h-[calc(100vh-48px)] flex flex-col items-center shrink-0 sticky top-0 overflow-visible"
+				className="menu-iconbar h-dvh flex flex-col items-center shrink-0 sticky top-0 overflow-visible"
 				style={iconBarStyle}
 			>
-				<nav className="w-full h-full flex flex-col items-center py-6 overflow-visible gap-4 justify-center">
-					<div className="w-full flex items-center justify-center mb-6">
-						{renderIconBarLogo()}
-					</div>
+				<TooltipProvider delayDuration={150}>
+					<nav className="w-full h-full flex flex-col items-center py-6 overflow-visible gap-4 justify-center">
+						<div className="w-full flex items-center justify-center mb-6">
+							{renderIconBarLogo()}
+						</div>
 
-					<ul className="flex flex-col items-center gap-3">
-						{filteredMenuItems.map((item) => (
-							<li key={item.uniqueId} className="relative">
-								<div className="relative group">
-									{item.iconImage ? (
-										<button
-											type="button"
-											onClick={handleMenuClick(item)}
-											className="w-10 h-10 flex items-center justify-center leading-none"
+						<ul className="flex flex-col items-center gap-3">
+							{filteredMenuItems.map((item) => (
+								<li key={item.uniqueId} className="relative">
+									<Tooltip>
+										<TooltipTrigger asChild>
+											{item.iconImage ? (
+												<button
+													type="button"
+													onClick={handleMenuClick(item)}
+													className="w-10 h-10 flex items-center justify-center leading-none"
+												>
+													<img
+														src={item.iconImage}
+														alt={item.name}
+														className="block w-10 h-10 object-contain"
+													/>
+												</button>
+											) : (
+												<button
+													type="button"
+													onClick={handleMenuClick(item)}
+													className="w-10 h-10 rounded-full bg-card-bg/60 border border-card flex items-center justify-center leading-none"
+												>
+													{getMenuIcon(item.category)}
+												</button>
+											)}
+										</TooltipTrigger>
+										<TooltipContent side="right" align="center">
+											{item.name}
+										</TooltipContent>
+									</Tooltip>
+									{item.category === "폴더" && item.subMenus?.length ? (
+										<ul
+											className="flex flex-col items-center gap-2 overflow-hidden"
+											style={{
+												marginTop: openFolders[item.uniqueId] ? "8px" : "0px",
+												maxHeight: openFolders[item.uniqueId] ? "160px" : "0px",
+												opacity: openFolders[item.uniqueId] ? 1 : 0,
+												transition: "max-height 300ms ease, opacity 300ms ease",
+											}}
 										>
-											<img
-												src={item.iconImage}
-												alt={item.name}
-												className="block w-10 h-10 object-contain"
-											/>
-										</button>
-									) : (
-										<button
-											type="button"
-											onClick={handleMenuClick(item)}
-											className="w-10 h-10 rounded-full bg-card-bg/60 border border-card flex items-center justify-center leading-none"
-										>
-											{getMenuIcon(item.category)}
-										</button>
-									)}
-									<span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-card bg-card-bg px-2 py-1 text-xs text-sub-text opacity-0 translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0">
-										{item.name}
-									</span>
+											{item.subMenus.map((subMenu, idx) => {
+												const name =
+													typeof subMenu === "string" ? subMenu : subMenu.name;
+												return (
+													<li key={`${item.uniqueId}-sub-${idx}`}>
+														<Tooltip>
+															<TooltipTrigger asChild>
+																<button
+																	type="button"
+																	onClick={() => {
+																		const path =
+																			BOARD_ROUTES[
+																				name as keyof typeof BOARD_ROUTES
+																			];
+																		if (path) {
+																			setOpenFolders((prev) => ({
+																				...prev,
+																				[item.uniqueId]: false,
+																			}));
+																			router.push(path);
+																		}
+																	}}
+																	className="w-8 h-8 rounded-full bg-card-bg/60 border border-card flex items-center justify-center"
+																>
+																	{getMenuIcon(name)}
+																</button>
+															</TooltipTrigger>
+															<TooltipContent side="right" align="center">
+																{name}
+															</TooltipContent>
+														</Tooltip>
+													</li>
+												);
+											})}
+										</ul>
+									) : null}
+								</li>
+							))}
+						</ul>
+
+						<div className="flex flex-col items-center gap-3">
+							<button
+								type="button"
+								className="w-10 h-10 rounded-full bg-card-bg/60 border border-card flex items-center justify-center opacity-80"
+								aria-label="알림"
+							>
+								<Bell size={18} className="text-sub-text" />
+							</button>
+							<button
+								type="button"
+								className="w-10 h-10 rounded-full bg-card-bg/60 border border-card flex items-center justify-center opacity-80"
+								aria-label="음악"
+							>
+								<div className="flex items-end justify-center w-4 h-4">
+									{[0, 0.1, 0.2, 0.3, 0.4].map((delay, index) => (
+										<span
+											key={index}
+											style={{
+												display: "block",
+												width: "1px",
+												background: design?.fontColor || "#333333",
+												margin: "0 1px",
+												height: ["6px", "8px", "10px", "13px", "15px"][index],
+												animation: `musicBar 1.2s ease infinite ${delay}s`,
+											}}
+										/>
+									))}
 								</div>
-								{item.category === "폴더" && item.subMenus?.length ? (
-									<ul
-										className="flex flex-col items-center gap-2 overflow-hidden"
-										style={{
-											marginTop: openFolders[item.uniqueId] ? "8px" : "0px",
-											maxHeight: openFolders[item.uniqueId] ? "160px" : "0px",
-											opacity: openFolders[item.uniqueId] ? 1 : 0,
-											transition: "max-height 300ms ease, opacity 300ms ease",
-										}}
-									>
-										{item.subMenus.map((subMenu, idx) => {
-											const name =
-												typeof subMenu === "string" ? subMenu : subMenu.name;
-											return (
-												<li key={`${item.uniqueId}-sub-${idx}`}>
-													<div className="relative group">
-														<button
-															type="button"
-															onClick={() => {
-																const path =
-																	BOARD_ROUTES[
-																		name as keyof typeof BOARD_ROUTES
-																	];
-																if (path) {
-																	setOpenFolders((prev) => ({
-																		...prev,
-																		[item.uniqueId]: false,
-																	}));
-																	router.push(path);
-																}
-															}}
-															className="w-8 h-8 rounded-full bg-card-bg/60 border border-card flex items-center justify-center"
-														>
-															{getMenuIcon(name)}
-														</button>
-														<span className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-card bg-card-bg px-2 py-1 text-xs text-sub-text opacity-0 translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0">
-															{name}
-														</span>
-													</div>
-												</li>
-											);
-										})}
-									</ul>
-								) : null}
-							</li>
-						))}
-					</ul>
-
-					<div className="flex flex-col items-center gap-3">
-						<button
-							type="button"
-							className="w-10 h-10 rounded-full bg-card-bg/60 border border-card flex items-center justify-center opacity-80"
-							aria-label="알림"
-						>
-							<Bell size={18} className="text-sub-text" />
-						</button>
-						<button
-							type="button"
-							className="w-10 h-10 rounded-full bg-card-bg/60 border border-card flex items-center justify-center opacity-80"
-							aria-label="음악"
-						>
-							<div className="flex items-end justify-center w-4 h-4">
-								{[0, 0.1, 0.2, 0.3, 0.4].map((delay, index) => (
-									<span
-										key={index}
-										style={{
-											display: "block",
-											width: "1px",
-											background: design?.fontColor || "#333333",
-											margin: "0 1px",
-											height: ["6px", "8px", "10px", "13px", "15px"][index],
-											animation: `musicBar 1.2s ease infinite ${delay}s`,
-										}}
-									/>
-								))}
-							</div>
-						</button>
-						<MenuAuthButton variant="iconbar" className="opacity-80" />
-					</div>
-				</nav>
+							</button>
+							<MenuAuthButton variant="iconbar" className="opacity-80" />
+						</div>
+					</nav>
+				</TooltipProvider>
 			</aside>
 		</>
 	);

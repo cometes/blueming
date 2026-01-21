@@ -334,7 +334,7 @@ export default function DetailClient({ detailData }) {
 							<Button
 								variant="default"
 								onClick={onClickMoveToPage(listPath)}
-								className="mt-4"
+								className="mt-10"
 							>
 								목록으로
 							</Button>
@@ -343,7 +343,7 @@ export default function DetailClient({ detailData }) {
 				) : (
 					<div>
 						<div>
-							<Button onClick={onClickMoveToPage(listPath)}>목록으로</Button>
+							<Button onClick={onClickMoveToPage(listPath)} className="mt-10">목록으로</Button>
 						</div>
 						<div className="TitleWrap mt-15">
 							<h1 className="Title text-3xl text-main-text font-bold tracking-normal">

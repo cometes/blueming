@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { DragDropContext, Droppable, type DropResult } from "@hello-pangea/dnd";
-import { Plus } from "lucide-react";
+import { Plus, Save } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
+import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
 import DdayItem from "@/components/items/DdayItem";
 import DdayAddDialog from "@/components/modal/DdayAddDialog";
 import {
@@ -40,6 +41,24 @@ export default function DdaySettingClient() {
 		return JSON.stringify(ddayList) !== JSON.stringify(baseline);
 	}, [ddayList, settings.main?.dday, isSyncing]);
 	useSettingStatus("dday", isDirty ? "dirty" : "saved");
+	useSettingHeaderAction(
+		<Button
+			type="submit"
+			form="setting-form-dday"
+			variant="ghost"
+			size="icon"
+			disabled={!isDirty}
+			aria-label="저장하기"
+			title="저장하기"
+			className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+			style={{
+				transition: "all 0.3s ease-in-out",
+			}}
+		>
+			<Save size={16} />
+		</Button>,
+		[isDirty]
+	);
 
 	// Load from settings
 	useEffect(() => {
@@ -158,9 +177,9 @@ export default function DdaySettingClient() {
 				onAdd={handleAddDday}
 			/>
 
-			<form onSubmit={handleSave} className="space-y-8">
+			<form id="setting-form-dday" onSubmit={handleSave} className="space-y-8">
 				<section>
-					<h2 className="text-[20px] font-semibold">디데이 설정</h2>
+					<h2 className="text-[20px] font-semibold font-title">디데이 설정</h2>
 					<p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
 						디데이를 설정합니다. 드래그 앤 드롭으로 순서를 변경할 수 있습니다.
 						최대 {MAX_DDAY}개까지 추가 가능합니다.
@@ -210,20 +229,21 @@ export default function DdaySettingClient() {
 				<div className="flex justify-end gap-3 pt-6">
 					<Button
 						type="button"
-						variant="destructive"
 						onClick={() => setShowResetDialog(true)}
+						className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
+						style={{
+							transition: "all 0.3s ease-in-out",
+						}}
 					>
 						초기화하기
 					</Button>
-					<Button type="submit" disabled={!isDirty}>
-						저장하기
-					</Button>
+					{/* 저장 버튼은 헤더로 이동 */}
 				</div>
 			</form>
 
 			{/* Reset Dialog */}
 			<Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-				<DialogContent>
+				<DialogContent className="rounded-card border-card bg-card-bg backdrop-blur-sm">
 					<DialogHeader>
 						<DialogTitle>디데이 초기화</DialogTitle>
 						<DialogDescription>
@@ -232,12 +252,22 @@ export default function DdaySettingClient() {
 					</DialogHeader>
 					<DialogFooter>
 						<Button
+							type="button"
 							variant="outline"
 							onClick={() => setShowResetDialog(false)}
+							className="rounded-card border-card bg-card-bg"
 						>
 							취소
 						</Button>
-						<Button variant="destructive" onClick={handleReset}>
+						<Button
+							type="button"
+							variant="destructive"
+							onClick={handleReset}
+							className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
+							style={{
+								transition: "all 0.3s ease-in-out",
+							}}
+						>
 							초기화
 						</Button>
 					</DialogFooter>

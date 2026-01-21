@@ -50,8 +50,19 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 			setIsLoading(true);
 
 			// general.theme이 존재하면 로컬에서 로드, 없으면 API에서 로드
-			if (general?.theme && Array.isArray(general.theme)) {
-				setThemes(general.theme);
+			if (general?.theme) {
+				if (Array.isArray(general.theme)) {
+					setThemes(general.theme);
+				} else if (typeof general.theme === 'object' && general.theme !== null && 'value' in general.theme) {
+					const themeValue = (general.theme as { value: unknown }).value;
+					if (Array.isArray(themeValue)) {
+						setThemes(themeValue);
+					} else {
+						setThemes([]);
+					}
+				} else {
+					setThemes([]);
+				}
 			} else {
 				const response = await getSettingsTheme();
 

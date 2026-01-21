@@ -359,7 +359,7 @@ export default function WidgetMenu() {
 
 				{/* Login Button */}
 				<div className="flex justify-center">
-					<Button>로그인</Button>
+					<Button type="button">로그인</Button>
 				</div>
 			</nav>
 		</aside>

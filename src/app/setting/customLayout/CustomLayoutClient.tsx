@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { OctagonMinusIcon, Save } from "lucide-react";
 import {
 	Select,
 	SelectContent,
@@ -22,11 +23,15 @@ import {
 import { GridContainer } from "@/components/setting/customLayout/GridContainer";
 import { DraggableWidget } from "@/components/setting/customLayout/DraggableWidget";
 import { WidgetList } from "@/components/setting/customLayout/WidgetList";
-import { useCollisionDetection, LayoutItem } from "@/components/setting/customLayout/useCollisionDetection";
+import {
+	useCollisionDetection,
+	LayoutItem,
+} from "@/components/setting/customLayout/useCollisionDetection";
 import { GridPosition } from "@/components/setting/customLayout/useGridSnap";
 import { setCustomLayout } from "@/queries/set/setCustomLayout";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
+import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
 
 interface Widget {
 	id: string;
@@ -60,7 +65,7 @@ const widgetOptions = [
 	{ label: "프로필", value: "프로필" },
 	{ label: "디데이", value: "디데이" },
 	{ label: "최신글", value: "최신글" },
-	{ label: "뮤직플레이어", value: "뮤직플레이어" },
+	{ label: "스티커보드", value: "스티커보드" },
 	{ label: "날씨&시계", value: "날씨&시계" },
 	{ label: "이미지 위젯 1", value: "이미지 위젯 1" },
 	{ label: "이미지 위젯 2", value: "이미지 위젯 2" },
@@ -102,9 +107,7 @@ export default function CustomLayoutClient() {
 	const [desktopUsedColors, setDesktopUsedColors] = useState<string[]>([]);
 	const [mobileUsedColors, setMobileUsedColors] = useState<string[]>([]);
 	const [showClearDialog, setShowClearDialog] = useState(false);
-	const [layoutMode, setLayoutMode] = useState<"desktop" | "mobile">(
-		"desktop"
-	);
+	const [layoutMode, setLayoutMode] = useState<"desktop" | "mobile">("desktop");
 	const [isSyncing, setIsSyncing] = useState(true);
 
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -173,7 +176,9 @@ export default function CustomLayoutClient() {
 			setMobileLayout(customLayout.mobileLayout || []);
 			setDesktopWidgets(customLayout.desktopWidgets || legacyWidgets || []);
 			setMobileWidgets(customLayout.mobileWidgets || []);
-			setDesktopUsedColors(customLayout.desktopUsedColors || legacyUsedColors || []);
+			setDesktopUsedColors(
+				customLayout.desktopUsedColors || legacyUsedColors || []
+			);
 			setMobileUsedColors(customLayout.mobileUsedColors || []);
 		}
 		setIsSyncing(false);
@@ -366,7 +371,6 @@ export default function CustomLayoutClient() {
 		[isDesktopMode]
 	);
 
-
 	// Save layout
 	const handleSaveLayout = useCallback(async () => {
 		try {
@@ -426,6 +430,25 @@ export default function CustomLayoutClient() {
 		refreshSettings,
 	]);
 
+	useSettingHeaderAction(
+		<Button
+			type="button"
+			variant="ghost"
+			size="icon"
+			onClick={handleSaveLayout}
+			disabled={!isDirty}
+			aria-label="저장하기"
+			title="저장하기"
+			className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+			style={{
+				transition: "all 0.3s ease-in-out",
+			}}
+		>
+			<Save size={16} />
+		</Button>,
+		[handleSaveLayout, isDirty]
+	);
+
 	// Clear layout
 	const handleClearLayout = useCallback(async () => {
 		try {
@@ -464,14 +487,18 @@ export default function CustomLayoutClient() {
 	return (
 		<div className="space-y-8">
 			<section>
-				<h2 className="text-[20px] font-semibold">커스텀 레이아웃 편집</h2>
+				<h2 className="text-[20px] font-semibold font-title">커스텀 레이아웃 편집</h2>
 				<div className="section-wrap mt-6">
 					<div className="rounded-card border-card bg-card-bg p-6 backdrop-blur-sm">
 						<ul className="space-y-1 text-sm text-sub-text">
 							<li>• 위젯을 선택하고 추가하세요.</li>
 							<li>• 드래그로 위치를 변경하고 크기를 조정할 수 있습니다.</li>
-							<li>• 충분한 공간이 확보되어야 새로운 위젯을 추가할 수 있습니다.</li>
-							<li>• 데스크톱/모바일 레이아웃을 전환해 각각 배치할 수 있습니다.</li>
+							<li>
+								• 충분한 공간이 확보되어야 새로운 위젯을 추가할 수 있습니다.
+							</li>
+							<li>
+								• 데스크톱/모바일 레이아웃을 전환해 각각 배치할 수 있습니다.
+							</li>
 						</ul>
 					</div>
 				</div>
@@ -480,7 +507,7 @@ export default function CustomLayoutClient() {
 			<Separator className="my-12" />
 
 			<section>
-				<h2 className="text-[20px] font-semibold">위젯 추가</h2>
+				<h2 className="text-[20px] font-semibold font-title">위젯 추가</h2>
 				<div className="section-wrap mt-6">
 					<div className="section-box flex items-center mt-4">
 						<div className="text-box w-[220px] pr-5">
@@ -513,7 +540,7 @@ export default function CustomLayoutClient() {
 			<Separator className="my-12" />
 
 			<section>
-				<h2 className="text-[20px] font-semibold">레이아웃 편집</h2>
+				<h2 className="text-[20px] font-semibold font-title">레이아웃 편집</h2>
 				<div className="section-wrap mt-6">
 					<div className="section-box flex items-center mt-4">
 						<div className="text-box w-[220px] pr-5">
@@ -555,7 +582,9 @@ export default function CustomLayoutClient() {
 							<GridContainer
 								ref={containerRef}
 								showGrid={true}
-								columns={isDesktopMode ? desktopGrid.columns : mobileGrid.columns}
+								columns={
+									isDesktopMode ? desktopGrid.columns : mobileGrid.columns
+								}
 								rows={isDesktopMode ? desktopGrid.rows : mobileGrid.rows}
 								aspectRatio={isDesktopMode ? "5 / 4" : "2 / 3"}
 								maxHeight={isDesktopMode ? undefined : "600px"}
@@ -581,13 +610,9 @@ export default function CustomLayoutClient() {
 											containerRef={containerRef}
 											onPositionChange={handlePositionChange}
 											columns={
-												isDesktopMode
-													? desktopGrid.columns
-													: mobileGrid.columns
+												isDesktopMode ? desktopGrid.columns : mobileGrid.columns
 											}
-											rows={
-												isDesktopMode ? desktopGrid.rows : mobileGrid.rows
-											}
+											rows={isDesktopMode ? desktopGrid.rows : mobileGrid.rows}
 										/>
 									);
 								})}
@@ -601,18 +626,21 @@ export default function CustomLayoutClient() {
 
 			<div className="flex justify-end gap-3 pt-6">
 				<Button
-					variant="destructive"
+					type="button"
 					onClick={() => setShowClearDialog(true)}
+					className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
+					style={{
+						transition: "all 0.3s ease-in-out",
+					}}
 				>
+					<OctagonMinusIcon size={16} />
 					초기화하기
 				</Button>
-				<Button onClick={handleSaveLayout} disabled={!isDirty}>
-					저장하기
-				</Button>
+				{/* 저장 버튼은 헤더로 이동 */}
 			</div>
 
 			<Dialog open={showClearDialog} onOpenChange={setShowClearDialog}>
-				<DialogContent>
+				<DialogContent className="rounded-card border-card bg-card-bg backdrop-blur-sm">
 					<DialogHeader>
 						<DialogTitle>레이아웃 초기화</DialogTitle>
 						<DialogDescription>
@@ -621,12 +649,14 @@ export default function CustomLayoutClient() {
 					</DialogHeader>
 					<DialogFooter>
 						<Button
-							variant="outline"
-							onClick={() => setShowClearDialog(false)}
+							type="button"
+							variant="destructive"
+							onClick={handleClearLayout}
+							className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
+							style={{
+								transition: "all 0.3s ease-in-out",
+							}}
 						>
-							취소
-						</Button>
-						<Button variant="destructive" onClick={handleClearLayout}>
 							초기화
 						</Button>
 					</DialogFooter>
