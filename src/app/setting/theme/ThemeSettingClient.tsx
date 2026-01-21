@@ -5,6 +5,11 @@ import { Download, Trash2, Upload as UploadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 import { useThemes } from "@/contexts/ThemesContext";
 import { dateConvert } from "@/lib/date";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
@@ -126,17 +131,14 @@ export default function ThemeSettingClient() {
 		}
 	};
 
-	const handleImport = async (
-		event: React.ChangeEvent<HTMLInputElement>
-	) => {
+	const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
 		if (!file) return;
 
 		try {
 			const text = await file.text();
 			await importTheme(text);
-		} catch {
-		}
+		} catch {}
 
 		// Reset input
 		if (fileInputRef.current) {
@@ -184,25 +186,20 @@ export default function ThemeSettingClient() {
 		} else if (item.general?.design?.background?.color) {
 			bgStyle.backgroundColor = item.general.design.background.color;
 		} else {
-			bgStyle.background =
-				"linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+			bgStyle.background = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
 		}
 
 		return (
 			<div
 				key={item.id}
-				className="rounded-card border-card bg-card-bg overflow-hidden hover:border-card-active transition-colors"
+				className="rounded-card border-card bg-card-bg overflow-hidden hover:border-card-active"
+				style={{ transition: "border-color 300ms ease" }}
 			>
-				<div
-					className="h-32 w-full relative"
-					style={bgStyle}
-				>
+				<div className="h-32 w-full relative" style={bgStyle}>
 					<div className="absolute inset-0 bg-black/10"></div>
 				</div>
 				<div className="p-4">
-					<h3 className="font-semibold text-base mb-1 truncate">
-						{item.name}
-					</h3>
+					<h3 className="font-semibold text-base mb-1 truncate">{item.name}</h3>
 					<p className="text-xs text-sub-text mb-4">
 						{dateConvert(item.createdAt)}
 					</p>
@@ -214,55 +211,64 @@ export default function ThemeSettingClient() {
 							onClick={() => handleExport(item.id)}
 							title="테마 내보내기"
 							className="flex-1 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+							style={{ transition: "all 300ms ease" }}
 						>
 							<Download size={ICON_SIZE} className="mr-1" />
 							내보내기
 						</Button>
 
-						{showDeleteConfirm === item.id ? (
-							<div className="flex gap-1 flex-1">
-								<Button
-									type="button"
-									variant="destructive"
-									size="sm"
-									onClick={() => handleRemove(item.id)}
-									disabled={removing === item.id}
-									className="flex-1"
-								>
-									{removing === item.id ? "삭제 중..." : "O"}
-								</Button>
+						<Popover
+							open={showDeleteConfirm === item.id}
+							onOpenChange={(open) =>
+								setShowDeleteConfirm(open ? item.id : null)
+							}
+						>
+							<PopoverTrigger asChild>
 								<Button
 									type="button"
 									variant="outline"
 									size="sm"
-									onClick={() => setShowDeleteConfirm(null)}
-									className="flex-1"
+									title="테마 삭제"
+									className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10 backdrop-blur-card"
+									style={{ transition: "all 300ms ease" }}
 								>
-									X
+									<Trash2 size={ICON_SIZE} />
 								</Button>
-							</div>
-						) : (
-							<Button
-								type="button"
-								variant="outline"
-								size="sm"
-								onClick={() => setShowDeleteConfirm(item.id)}
-								title="테마 삭제"
-								className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+							</PopoverTrigger>
+							<PopoverContent
+								className="w-auto p-4 rounded-card border-card bg-card-bg backdrop-blur-card"
+								align="center"
 							>
-								<Trash2 size={ICON_SIZE} />
-							</Button>
-						)}
+								<div className="flex flex-col gap-3">
+									<p className="text-sm text-main-text font-medium">
+										정말 삭제하시겠습니까?
+									</p>
+									<Button
+										type="button"
+										variant="destructive"
+										size="sm"
+										onClick={() => handleRemove(item.id)}
+										disabled={removing === item.id}
+										className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10 flex items-center justify-center gap-2"
+										style={{
+											transition: "all 0.3s ease-in-out",
+										}}
+									>
+										<Trash2 size={ICON_SIZE} />
+										{removing === item.id ? "삭제 중..." : "삭제"}
+									</Button>
+								</div>
+							</PopoverContent>
+						</Popover>
 					</div>
 					<Button
 						type="button"
 						onClick={() => handleApply(item.id)}
 						disabled={applying === item.id}
 						className="w-full mt-2"
+						variant="default"
 					>
-						{applying === item.id
-							? BUTTON_TEXTS.APPLYING
-							: BUTTON_TEXTS.APPLY}
+						{applying === item.id ? BUTTON_TEXTS.APPLYING : BUTTON_TEXTS.APPLY}
 					</Button>
 				</div>
 			</div>
@@ -273,7 +279,7 @@ export default function ThemeSettingClient() {
 		<div className="space-y-8">
 			{/* 테마 저장 Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">
+				<h2 className="text-[20px] font-semibold font-title">
 					{SECTION_TEXTS.SAVE_TITLE}
 				</h2>
 				<p className="text-sm text-sub-text mt-1">
@@ -295,7 +301,7 @@ export default function ThemeSettingClient() {
 								{SECTION_TEXTS.CURRENT_SAVE}
 							</h3>
 						</div>
-						<div className="flex items-center gap-3 flex-1">
+						<div className="flex items-center gap-3 ">
 							<Input
 								placeholder={PLACEHOLDERS.THEME_NAME}
 								value={name}
@@ -340,6 +346,7 @@ export default function ThemeSettingClient() {
 								variant="outline"
 								onClick={() => fileInputRef.current?.click()}
 								className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+								style={{ transition: "all 300ms ease" }}
 							>
 								<UploadIcon size={14} className="mr-2" />
 								{BUTTON_TEXTS.IMPORT}
@@ -353,7 +360,7 @@ export default function ThemeSettingClient() {
 
 			{/* 테마 목록 Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">
+				<h2 className="text-[20px] font-semibold font-title">
 					{SECTION_TEXTS.LIST_TITLE}
 				</h2>
 				<div className="section-wrap mt-6">
@@ -362,7 +369,7 @@ export default function ThemeSettingClient() {
 					) : themes?.length === 0 ? (
 						renderEmptyState()
 					) : (
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 							{themes?.map(renderThemeCard)}
 						</div>
 					)}

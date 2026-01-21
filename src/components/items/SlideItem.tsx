@@ -96,7 +96,9 @@ export default function SlideItem({
 										</Label>
 									</div>
 									<Button
-										variant="destructive"
+										variant="default"
+										className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10 backdrop-blur-card"
+										style={{ transition: "all 300ms ease" }}
 										size="sm"
 										onClick={() => setShowDeleteDialog(true)}
 									>

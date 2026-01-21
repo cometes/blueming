@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import WidgetMenu from "../widgets/WidgetMenu";
 import BackgroundEffect from "../effects/BackgroundEffect";
@@ -16,8 +17,36 @@ export default function Layout({ children }: LayoutProps) {
 	const router = useRouter();
 	const { general } = useSettings();
 
+	// 파비콘 동적 변경
+	useEffect(() => {
+		const favicon = general?.general?.favicon;
+		if (favicon) {
+			// 기존 파비콘 링크 제거
+			const existingFavicon = document.querySelector('link[rel="icon"]');
+			if (existingFavicon) {
+				existingFavicon.remove();
+			}
+
+			// 새 파비콘 링크 추가
+			const link = document.createElement("link");
+			link.rel = "icon";
+			link.type = "image/png";
+			link.href = favicon;
+			document.head.appendChild(link);
+		}
+	}, [general?.general?.favicon]);
+
+	// 타이틀 동적 변경
+	useEffect(() => {
+		const title = general?.general?.title;
+		if (title) {
+			document.title = title;
+		}
+	}, [general?.general?.title]);
+
 	const isMainPage = pathname === "/";
 	const isStickerBoardEditPage = pathname === "/setting/stickerBoard/edit";
+	const isMenuRightAligned = general?.menu?.design?.align === "오른쪽";
 
 	// 기본 레이아웃 구조를 사용하지 않을 페이지들 (메인 페이지 포함)
 	const customLayoutPages = [""];
@@ -90,20 +119,35 @@ export default function Layout({ children }: LayoutProps) {
 				<header
 					className={cn(
 						"flex justify-between items-center px-6 py-0 w-full h-12",
-						"sticky top-0 left-0 border-b border-card-bg z-50",
+						"fixed top-0 left-0 border-b border-card-bg z-50",
 						"backdrop-blur-sm",
 						isHeaderVisible ? "translate-y-0" : "-translate-y-full"
 					)}
 					style={{ transition: "transform 300ms ease-in-out" }}
 				>
-					<h1
-						onClick={() => {
-							router.push("/");
-						}}
-						className="text-lg cursor-pointer font-title font-bold tracking-normal"
-					>
-						{general?.general.logoText}
-					</h1>
+					{general?.general.logoType !== "없음" && (
+						<div
+							onClick={() => {
+								router.push("/");
+							}}
+							className="cursor-pointer flex items-center"
+						>
+							{general?.general.logoType === "이미지" &&
+							general?.general.logoImage ? (
+								<Image
+									src={general.general.logoImage}
+									alt="로고"
+									width={120}
+									height={48}
+									className="h-12 max-h-12 w-auto object-contain"
+								/>
+							) : (
+								<h1 className="text-lg font-title font-bold tracking-normal">
+									{general?.general.logoText}
+								</h1>
+							)}
+						</div>
+					)}
 				</header>
 			)}
 
@@ -113,13 +157,14 @@ export default function Layout({ children }: LayoutProps) {
 					isStickerBoardEditPage
 						? "max-w-none px-0 h-auto"
 						: isMainPage
-							? "max-w-7xl px-5 h-dvh"
-							: "max-w-5xl px-5 h-auto"
+						? "max-w-7xl px-5 h-dvh"
+						: "max-w-5xl px-5 h-auto"
 				)}
 			>
-				<div className="w-full h-calc(100vh-48px) flex items-start justify-center gap-6 relative z-10">
-					{!shouldHideMenu && <WidgetMenu />}
+				<div className="w-full h-dvh flex items-start justify-center gap-6 relative z-10">
+					{!shouldHideMenu && !isMenuRightAligned && <WidgetMenu />}
 					{children}
+					{!shouldHideMenu && isMenuRightAligned && <WidgetMenu />}
 				</div>
 			</div>
 			<BackgroundEffect />

@@ -23,6 +23,8 @@ import { extensions } from "@/components/editor/TiptapEditor";
 import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
+import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
+import { Save } from "lucide-react";
 import { setSettingsNotice } from "@/queries/set/setSettingsNotice";
 
 const CANVAS_RATIO_BASE = 12;
@@ -237,6 +239,24 @@ export default function NoticeSettingClient() {
 	]);
 
 	useSettingStatus("notice", isDirty ? "dirty" : "saved");
+	useSettingHeaderAction(
+		<Button
+			type="submit"
+			form="setting-form-notice"
+			variant="ghost"
+			size="icon"
+			disabled={!isDirty}
+			aria-label="저장하기"
+			title="저장하기"
+			className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+			style={{
+				transition: "all 0.3s ease-in-out",
+			}}
+		>
+			<Save size={16} />
+		</Button>,
+		[isDirty]
+	);
 
 	// Load layout ratio
 	useEffect(() => {
@@ -367,6 +387,7 @@ export default function NoticeSettingClient() {
 
 	return (
 		<form
+			id="setting-form-notice"
 			onSubmit={(e) => {
 				e.preventDefault();
 				handleSave();
@@ -375,7 +396,7 @@ export default function NoticeSettingClient() {
 		>
 			{/* Textbar Settings Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">텍스트바 설정</h2>
+				<h2 className="text-[20px] font-semibold font-title">텍스트바 설정</h2>
 				<div className="section-wrap mt-6">
 					{/* Banner Text Input */}
 					<div className="section-box flex items-center mt-4">
@@ -499,7 +520,7 @@ export default function NoticeSettingClient() {
 
 			{/* Editor Section */}
 			<section>
-				<h2 className="text-[20px] font-semibold">공지사항 설정</h2>
+				<h2 className="text-[20px] font-semibold font-title">공지사항 설정</h2>
 
 				<div className="section-wrap mt-6">
 					{editor && (
@@ -541,19 +562,20 @@ export default function NoticeSettingClient() {
 			<div className="flex justify-end gap-3 pt-6">
 				<Button
 					type="button"
-					variant="destructive"
 					onClick={() => setShowResetDialog(true)}
+					className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
+					style={{
+						transition: "all 0.3s ease-in-out",
+					}}
 				>
 					초기화하기
 				</Button>
-				<Button type="submit" disabled={!isDirty}>
-					저장하기
-				</Button>
+				{/* 저장 버튼은 헤더로 이동 */}
 			</div>
 
 			{/* Reset Confirmation Dialog */}
 			<Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
-				<DialogContent>
+				<DialogContent className="rounded-card border-card bg-card-bg backdrop-blur-sm">
 					<DialogHeader>
 						<DialogTitle>공지사항 초기화</DialogTitle>
 						<DialogDescription>
@@ -561,10 +583,23 @@ export default function NoticeSettingClient() {
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter>
-						<Button variant="outline" onClick={() => setShowResetDialog(false)}>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setShowResetDialog(false)}
+							className="rounded-card border-card bg-card-bg"
+						>
 							취소
 						</Button>
-						<Button variant="destructive" onClick={handleReset}>
+						<Button
+							type="button"
+							variant="destructive"
+							onClick={handleReset}
+							className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
+							style={{
+								transition: "all 0.3s ease-in-out",
+							}}
+						>
 							초기화
 						</Button>
 					</DialogFooter>

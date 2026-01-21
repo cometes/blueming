@@ -99,7 +99,7 @@ export default function PhotoBoardClient() {
 					className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
 				>
 					<Plus size={16} />
-					+ 새 글쓰기
+					새 글쓰기
 				</Button>
 			</header>
 
