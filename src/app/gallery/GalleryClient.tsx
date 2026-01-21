@@ -6,7 +6,6 @@ import { dummyGalleryImages, type GalleryImage } from "./dummyData";
 export default function GalleryClient() {
 	const handleImageClick = (image: GalleryImage) => {
 		// 추후 모달이나 상세 페이지로 이동 가능
-		console.log("Selected image:", image);
 	};
 
 	return (

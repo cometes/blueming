@@ -31,6 +31,7 @@ import "@/components/tiptap-node/image-node/image-node.scss";
 import "@/components/tiptap-node/image-upload-node/image-upload-node.scss";
 import "@/components/tiptap-node/youtube-node/youtube-node.scss";
 
+// Shared Tiptap extensions configuration
 export const extensions = [
 	StarterKit.configure({
 		bulletList: false,
