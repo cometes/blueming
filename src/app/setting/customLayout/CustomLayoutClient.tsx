@@ -65,7 +65,7 @@ const widgetOptions = [
 	{ label: "프로필", value: "프로필" },
 	{ label: "디데이", value: "디데이" },
 	{ label: "최신글", value: "최신글" },
-	{ label: "뮤직플레이어", value: "뮤직플레이어" },
+	{ label: "스티커보드", value: "스티커보드" },
 	{ label: "날씨&시계", value: "날씨&시계" },
 	{ label: "이미지 위젯 1", value: "이미지 위젯 1" },
 	{ label: "이미지 위젯 2", value: "이미지 위젯 2" },
