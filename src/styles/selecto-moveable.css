@@ -1,0 +1,53 @@
+/* ==========================================
+   Selecto & Moveable Styles
+   스티커보드 드래그 선택 및 이동/리사이즈 스타일
+   ========================================== */
+
+/* ==========================================
+   Selecto Selection Box
+   ========================================== */
+
+.selecto-selection {
+	border: 1px solid rgba(59, 130, 246, 0.8);
+	background: rgba(59, 130, 246, 0.15);
+}
+
+/* ==========================================
+   Moveable Control Box
+   ========================================== */
+
+.moveable-control-box {
+	position: absolute;
+	box-sizing: border-box;
+}
+
+.moveable-line {
+	position: absolute;
+	background: rgba(59, 130, 246, 0.8);
+	transform-origin: 0 0;
+}
+
+.moveable-line.moveable-direction {
+	width: 1px;
+	height: 100%;
+}
+
+.moveable-control {
+	position: absolute;
+	width: 8px;
+	height: 8px;
+	border-radius: 2px;
+	border: 1px solid rgba(59, 130, 246, 0.9);
+	background: #ffffff;
+	box-sizing: border-box;
+}
+
+.moveable-rotation {
+	position: absolute;
+	width: 10px;
+	height: 10px;
+	border-radius: 9999px;
+	border: 1px solid rgba(59, 130, 246, 0.9);
+	background: #ffffff;
+	box-sizing: border-box;
+}

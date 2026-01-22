@@ -1,10 +1,18 @@
+/* ==========================================
+   Imports
+   ========================================== */
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "react-datepicker/dist/react-datepicker.css";
 @import "../styles/_variables.scss";
 @import "../styles/_keyframe-animations.scss";
+@import "../styles/vendor-overrides.css";
+@import "../styles/weather-icons.css";
+@import "../styles/selecto-moveable.css";
 
-/* 커스텀 폰트 정의 */
+/* ==========================================
+   Custom Fonts
+   ========================================== */
 @font-face {
 	font-family: "Chosunilbo";
 	src: url("https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/Chosunilbo_myungjo.woff")
@@ -13,7 +21,9 @@
 	font-style: normal;
 }
 
-/* 기본 CSS 변수 값 (FOUC 방지) */
+/* ==========================================
+   Root CSS Variables (FOUC 방지용 기본값)
+   ========================================== */
 :root {
 	/* 기본 색상 */
 	--primary-color: #007bff;
@@ -49,7 +59,9 @@
 	--card-blur: 4px;
 }
 
-/* 글로벌 스타일 */
+/* ==========================================
+   Global Body Styles
+   ========================================== */
 body {
 	font-family: var(--font-body);
 	letter-spacing: -0.03em;
@@ -63,54 +75,14 @@ body {
 	transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* react-datepicker overrides */
-.react-datepicker {
-	background: var(--card-bg);
-	border: var(--border-card);
-	border-radius: var(--radius-card);
-	font-family: var(--font-body);
-}
-
-.react-datepicker__header {
-	background: var(--card-bg);
-	border-bottom: var(--border-card);
-}
-
-.react-datepicker__current-month,
-.react-datepicker__day-name,
-.react-datepicker__day,
-.react-datepicker__time-name {
-	color: var(--color-sub);
-}
-
-.react-datepicker__day {
-	border-radius: var(--radius-card);
-}
-
-.react-datepicker__day:hover {
-	background: color-mix(in srgb, var(--primary-color) 15%, transparent);
-}
-
-.react-datepicker__day--selected,
-.react-datepicker__day--keyboard-selected {
-	background: var(--primary-color);
-	color: #ffffff;
-}
-
-.react-datepicker__day--today {
-	border: var(--border-card);
-}
-
-.react-datepicker__triangle {
-	display: none;
-}
-
-.react-datepicker-popper {
-	z-index: 50;
-}
-
+/* ==========================================
+   Tailwind Dark Mode Variant
+   ========================================== */
 @custom-variant dark (&:is(.dark *));
 
+/* ==========================================
+   Tailwind @theme Configuration
+   ========================================== */
 @theme {
 	/* shadcn/ui 기본 색상 - CSS 변수 참조 */
 	--color-background: var(--background);
@@ -196,6 +168,9 @@ body {
 	--animate-music-bar: musicBar 1.2s ease infinite;
 }
 
+/* ==========================================
+   shadcn/ui Color Variables (Light Mode)
+   ========================================== */
 :root {
 	--radius: 0.625rem;
 	--background: oklch(1 0 0);
@@ -231,6 +206,9 @@ body {
 	--sidebar-ring: oklch(0.707 0.022 261.325);
 }
 
+/* ==========================================
+   shadcn/ui Color Variables (Dark Mode)
+   ========================================== */
 .dark {
 	--background: oklch(0.13 0.028 261.692);
 	--foreground: oklch(0.985 0.002 247.839);
@@ -265,7 +243,9 @@ body {
 	--sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
-/* 애니메이션 키프레임 정의 */
+/* ==========================================
+   Keyframe Animations
+   ========================================== */
 @keyframes jingle {
 	0%,
 	100% {
@@ -300,6 +280,9 @@ body {
 	}
 }
 
+/* ==========================================
+   @layer components - Widget & Card Wrappers
+   ========================================== */
 @layer components {
 	.widget-wrapper {
 		@apply w-full h-full relative overflow-hidden bg-clip-padding;
@@ -310,14 +293,14 @@ body {
 		border-style: solid;
 		backdrop-filter: blur(var(--widget-blur));
 	}
-	
+
 	/* 보더 이미지 코너만 적용 */
 	.widget-wrapper[data-border-image-type="corner"] {
 		position: relative;
 	}
-	
+
 	.widget-wrapper[data-border-image-type="corner"]::before {
-		content: '';
+		content: "";
 		position: absolute;
 		top: 0;
 		left: 0;
@@ -330,9 +313,9 @@ body {
 		pointer-events: none;
 		z-index: 10;
 	}
-	
+
 	.widget-wrapper[data-border-image-type="corner"]::after {
-		content: '';
+		content: "";
 		position: absolute;
 		top: 0;
 		right: 0;
@@ -345,7 +328,7 @@ body {
 		pointer-events: none;
 		z-index: 10;
 	}
-	
+
 	/* 하단 코너는 별도 요소로 추가 필요 (CSS만으로는 제한적) */
 	.card-wrapper {
 		/* @apply; */
@@ -363,6 +346,7 @@ body {
 		}
 	}
 
+	/* Marquee Vertical */
 	.marquee-vertical-track {
 		display: flex;
 		flex-direction: column;
@@ -397,6 +381,9 @@ body {
 	}
 }
 
+/* ==========================================
+   @layer utilities - Custom Utility Classes
+   ========================================== */
 @layer utilities {
 	/* Border utilities */
 	.border-widget {
@@ -499,12 +486,9 @@ body {
 	}
 }
 
-/* Slick Slider 커스텀 스타일 */
-.custom-slider {
-	height: 100%;
-}
-
-/* Menu responsive toggle */
+/* ==========================================
+   Menu Responsive Toggle
+   ========================================== */
 .menu-desktop {
 	display: flex;
 }
@@ -520,254 +504,9 @@ body {
 	}
 }
 
-.custom-slider .slick-list,
-.custom-slider .slick-track {
-	height: 100%;
-}
-
-.custom-slider .slick-slide > div {
-	height: 100%;
-}
-
-/* React Colorful 커스텀 스타일 */
-.react-colorful {
-	width: 100% !important;
-	height: 200px !important;
-}
-
-.react-colorful__saturation {
-	border-radius: 8px 8px 0 0;
-}
-
-.react-colorful__hue,
-.react-colorful__alpha {
-	height: 24px;
-	border-radius: 0 0 8px 8px;
-}
-
-.react-colorful__pointer {
-	width: 18px;
-	height: 18px;
-}
-
-.react-colorful__interactive {
-	border-radius: 8px;
-}
-
-/* Tiptap Image 스타일 - 드래그 차단, 리사이징/align 허용 */
-.tiptap-image-resizable {
-	cursor: default !important;
-	-webkit-user-drag: none !important;
-	user-select: none !important;
-}
-
-/* 이미지 요소 자체는 드래그 차단 */
-.tiptap-image-resizable img {
-	-webkit-user-drag: none !important;
-	user-drag: none !important;
-	pointer-events: none !important;
-}
-
-/* 리사이즈 핸들과 컨트롤 버튼은 상호작용 가능 */
-.tiptap-image-resizable .resize-trigger,
-.tiptap-image-resizable button,
-.tiptap-image-resizable [class*="align"],
-.tiptap-image-resizable [class*="control"] {
-	pointer-events: auto !important;
-}
-
-/* Tiptap Editor 기본 스타일 */
-.tiptap.ProseMirror {
-	font-size: 16px;
-	line-height: 1.6;
-	--tt-cursor-color: var(--color-theme-primary);
-	--tt-selected-node-outline: var(--color-theme-primary);
-}
-
-.rich-text-viewer img {
-	max-width: 100%;
-	height: auto;
-	display: block;
-}
-
-.rich-text-viewer iframe {
-	width: 100%;
-	min-height: 260px;
-	border: 0;
-}
-
-.rich-text-viewer ul {
-	list-style: disc;
-	padding-left: 1.25rem;
-	margin: 0.5rem 0;
-}
-
-.rich-text-viewer blockquote {
-	border-left: 4px solid var(--color-card-border, #d1d5db);
-	padding-left: 1rem;
-	margin: 1rem 0;
-	color: var(--color-sub-text, #6b7280);
-}
-
-/* Tiptap Toolbar 버튼 아이콘 색상 */
-.tiptap-button {
-	cursor: pointer;
-	--tt-button-default-icon-color: var(--color-main) !important;
-	--tt-button-hover-icon-color: var(--color-theme-primary) !important;
-	--tt-button-active-icon-color: var(--color-theme-primary) !important;
-	--tt-button-hover-bg-color: transparent !important;
-
-	--tt-button-default-bg-color: transparent;
-	--tt-button-hover-bg-color: transparent;
-	--tt-button-active-bg-color: transparent;
-	--tt-button-active-bg-color-emphasized: transparent;
-	--tt-button-active-bg-color-subdued: transparent;
-	--tt-button-active-hover-bg-color: transparent;
-	--tt-button-active-hover-bg-color-emphasized: transparent;
-	--tt-button-active-hover-bg-color-subdued: transparent;
-	--tt-button-disabled-bg-color: transparent;
-	background-color: transparent !important;
-	--tt-button-disabled-icon-color: #333 !important;
-}
-
-.tiptap-button:hover {
-	background-color: color-mix(
-		in srgb,
-		var(--color-card-bg) 40%,
-		transparent
-	) !important;
-}
-
-.tiptap-button:active,
-.tiptap-button[data-active-state="on"] {
-	background-color: color-mix(
-		in srgb,
-		var(--color-card-bg) 40%,
-		transparent
-	) !important;
-}
-
-.tiptap-dropdown-menu {
-	--tt-popover-border: var(--card-border-width) var(--card-border-style)
-		var(--card-border-color);
-	--tt-popover-bg-color: var(--color-card-bg) !important;
-	--tt-popover-text-color: var(--color-main-text) !important;
-	--tt-popover-label: var(--color-main-text) !important;
-	backdrop-filter: blur(var(--card-blur)) !important;
-
-	button {
-		color: var(--color-main-text);
-	}
-
-	button:hover {
-		color: var(--color-theme-primary);
-	}
-
-	button[aria-pressed="true"] .tiptap-button-text {
-		color: var(--color-theme-primary);
-	}
-}
-
-.tiptap-popover {
-	--tt-popover-border: var(--card-border-width) var(--card-border-style)
-		var(--card-border-color);
-	--tt-popover-bg-color: var(--color-card-bg) !important;
-	--tt-popover-text-color: var(--color-main-text) !important;
-	--tt-popover-label: var(--color-main-text) !important;
-	backdrop-filter: blur(var(--card-blur)) !important;
-
-	button {
-		color: var(--color-main-text);
-	}
-
-	button:hover {
-		color: var(--color-theme-primary);
-	}
-
-	button[aria-pressed="true"] .tiptap-button-text {
-		color: var(--color-theme-primary);
-	}
-}
-
-.sketch-picker input {
-	border: 1px solid var(--card-border-color) !important;
-	border-radius: 6px !important;
-	box-shadow: none !important;
-	background-color: var(--color-card-bg) !important;
-	color: var(--color-main-text) !important;
-}
-
-.sketch-picker {
-	background: var(--color-card-bg) !important;
-	border: 1px solid var(--card-border-color) !important;
-	border-radius: var(--card-border-radius) !important;
-	box-shadow: none !important;
-	backdrop-filter: var(--size-card-blur) !important;
-}
-
-.sketch-picker input:focus {
-	border-color: var(--color-theme-primary) !important;
-	outline: none !important;
-	box-shadow: 0 0 0 1px var(--color-theme-primary) !important;
-}
-
-.sketch-picker label {
-	color: #666 !important;
-}
-
-.sketch-picker .flexbox-fix {
-	border-top: none !important;
-}
-
-.tiptap-image-upload-dragger {
-	background: var(--color-card-bg) !important;
-	border: 1px solid var(--card-border-color) !important;
-	border-radius: var(--card-border-radius) !important;
-	box-shadow: none !important;
-	backdrop-filter: var(--size-card-blur) !important;
-}
-
-.tiptap-image-upload .tiptap-image-upload-dropzone-rect-primary {
-	color: var(--card-border-color) !important;
-}
-
-.tiptap-image-upload-text {
-	color: var(--color-sub-text) !important;
-}
-
-.tiptap-image-upload-icon-container {
-	background-color: var(--color-theme-primary) !important;
-}
-
-/* ScrollArea thumb 색상을 위젯 보더 색으로 */
-[data-radix-scroll-area-thumb] {
-	background-color: var(--widget-border-color) !important;
-}
-
-/* MenuAddModal 스크롤바 스타일 */
-.menu-modal-scroll {
-	scrollbar-width: thin;
-	scrollbar-color: var(--widget-border-color) transparent;
-}
-
-.menu-modal-scroll::-webkit-scrollbar {
-	width: 8px;
-}
-
-.menu-modal-scroll::-webkit-scrollbar-track {
-	background: transparent;
-}
-
-.menu-modal-scroll::-webkit-scrollbar-thumb {
-	background-color: var(--widget-border-color);
-	border-radius: 4px;
-}
-
-.menu-modal-scroll::-webkit-scrollbar-thumb:hover {
-	background-color: var(--widget-border-color);
-	opacity: 0.8;
-}
-
+/* ==========================================
+   Marquee Animation (inline theme)
+   ========================================== */
 @theme inline {
 	--animate-marquee: marquee var(--duration) infinite linear;
 	--animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
@@ -789,6 +528,9 @@ body {
 	}
 }
 
+/* ==========================================
+   @layer base - Global Defaults
+   ========================================== */
 @layer base {
 	* {
 		@apply border-border outline-ring/50;
@@ -796,316 +538,4 @@ body {
 	body {
 		@apply bg-background text-foreground;
 	}
-}
-
-.icon {
-	position: relative;
-	display: inline-block;
-	width: 12em;
-	height: 10em;
-	font-size: var(--weather-icon-size, 1em);
-}
-
-.cloud {
-	position: absolute;
-	z-index: 1;
-	top: 50%;
-	left: 50%;
-	width: 3.6875em;
-	height: 3.6875em;
-	margin: -1.84375em;
-	background: currentColor;
-	border-radius: 50%;
-	box-shadow: -2.1875em 0.6875em 0 -0.6875em, 2.0625em 0.9375em 0 -0.9375em,
-		0 0 0 0.375em #fff, -2.1875em 0.6875em 0 -0.3125em #fff,
-		2.0625em 0.9375em 0 -0.5625em #fff;
-}
-.cloud:after {
-	content: "";
-	position: absolute;
-	bottom: 0;
-	left: -0.5em;
-	display: block;
-	width: 4.5625em;
-	height: 1em;
-	background: currentColor;
-	box-shadow: 0 0.4375em 0 -0.0625em #fff;
-}
-.cloud:nth-child(2) {
-	z-index: 0;
-	background: #fff;
-	box-shadow: -2.1875em 0.6875em 0 -0.6875em #fff,
-		2.0625em 0.9375em 0 -0.9375em #fff, 0 0 0 0.375em #fff,
-		-2.1875em 0.6875em 0 -0.3125em #fff, 2.0625em 0.9375em 0 -0.5625em #fff;
-	opacity: 0.3;
-	transform: scale(0.5) translate(6em, -3em);
-	animation: cloud 4s linear infinite;
-}
-.cloud:nth-child(2):after {
-	background: #fff;
-}
-
-.sun {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	width: 2.5em;
-	height: 2.5em;
-	margin: -1.25em;
-	background: currentColor;
-	border-radius: 50%;
-	box-shadow: 0 0 0 0.375em #fff;
-	animation: spin 12s infinite linear;
-}
-.rays {
-	position: absolute;
-	top: -2em;
-	left: 50%;
-	display: block;
-	width: 0.375em;
-	height: 1.125em;
-	margin-left: -0.1875em;
-	background: #fff;
-	border-radius: 0.25em;
-	box-shadow: 0 5.375em #fff;
-}
-.rays:before,
-.rays:after {
-	content: "";
-	position: absolute;
-	top: 0em;
-	left: 0em;
-	display: block;
-	width: 0.375em;
-	height: 1.125em;
-	transform: rotate(60deg);
-	transform-origin: 50% 3.25em;
-	background: #fff;
-	border-radius: 0.25em;
-	box-shadow: 0 5.375em #fff;
-}
-.rays:before {
-	transform: rotate(120deg);
-}
-.cloud + .sun {
-	margin: -2em 1em;
-}
-
-.rain,
-.lightning,
-.snow {
-	position: absolute;
-	z-index: 2;
-	top: 50%;
-	left: 50%;
-	width: 3.75em;
-	height: 3.75em;
-	margin: 0.375em 0 0 -2em;
-	background: currentColor;
-}
-
-.rain:after {
-	content: "";
-	position: absolute;
-	z-index: 2;
-	top: 50%;
-	left: 50%;
-	width: 1.125em;
-	height: 1.125em;
-	margin: -1em 0 0 -0.25em;
-	background: #0cf;
-	border-radius: 100% 0 60% 50% / 60% 0 100% 50%;
-	box-shadow: 0.625em 0.875em 0 -0.125em rgba(255, 255, 255, 0.2),
-		-0.875em 1.125em 0 -0.125em rgba(255, 255, 255, 0.2),
-		-1.375em -0.125em 0 rgba(255, 255, 255, 0.2);
-	transform: rotate(-28deg);
-	animation: rain 3s linear infinite;
-}
-
-.bolt {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	margin: -0.25em 0 0 -0.125em;
-	color: #fff;
-	opacity: 0.3;
-	animation: lightning 2s linear infinite;
-}
-.bolt:nth-child(2) {
-	width: 0.5em;
-	height: 0.25em;
-	margin: -1.75em 0 0 -1.875em;
-	transform: translate(2.5em, 2.25em);
-	opacity: 0.2;
-	animation: lightning 1.5s linear infinite;
-}
-.bolt:before,
-.bolt:after {
-	content: "";
-	position: absolute;
-	z-index: 2;
-	top: 50%;
-	left: 50%;
-	margin: -1.625em 0 0 -1.0125em;
-	border-top: 1.25em solid transparent;
-	border-right: 0.75em solid;
-	border-bottom: 0.75em solid;
-	border-left: 0.5em solid transparent;
-	transform: skewX(-10deg);
-}
-.bolt:after {
-	margin: -0.25em 0 0 -0.25em;
-	border-top: 0.75em solid;
-	border-right: 0.5em solid transparent;
-	border-bottom: 1.25em solid transparent;
-	border-left: 0.75em solid;
-	transform: skewX(-10deg);
-}
-.bolt:nth-child(2):before {
-	margin: -0.75em 0 0 -0.5em;
-	border-top: 0.625em solid transparent;
-	border-right: 0.375em solid;
-	border-bottom: 0.375em solid;
-	border-left: 0.25em solid transparent;
-}
-.bolt:nth-child(2):after {
-	margin: -0.125em 0 0 -0.125em;
-	border-top: 0.375em solid;
-	border-right: 0.25em solid transparent;
-	border-bottom: 0.625em solid transparent;
-	border-left: 0.375em solid;
-}
-
-.flake:before,
-.flake:after {
-	content: "\2744";
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	margin: -1.025em 0 0 -1.0125em;
-	color: #fff;
-	line-height: 1em;
-	opacity: 0.2;
-	animation: spin 8s linear infinite reverse;
-}
-.flake:after {
-	margin: 0.125em 0 0 -1em;
-	font-size: 1.5em;
-	opacity: 0.4;
-	animation: spin 14s linear infinite;
-}
-.flake:nth-child(2):before {
-	margin: -0.5em 0 0 0.25em;
-	font-size: 1.25em;
-	opacity: 0.2;
-	animation: spin 10s linear infinite;
-}
-.flake:nth-child(2):after {
-	margin: 0.375em 0 0 0.125em;
-	font-size: 2em;
-	opacity: 0.4;
-	animation: spin 16s linear infinite reverse;
-}
-
-@keyframes spin {
-	100% {
-		transform: rotate(360deg);
-	}
-}
-
-@keyframes cloud {
-	0% {
-		opacity: 0;
-	}
-	50% {
-		opacity: 0.3;
-	}
-	100% {
-		opacity: 0;
-		transform: scale(0.5) translate(-200%, -3em);
-	}
-}
-
-@keyframes rain {
-	0% {
-		background: #0cf;
-		box-shadow: 0.625em 0.875em 0 -0.125em rgba(255, 255, 255, 0.2),
-			-0.875em 1.125em 0 -0.125em rgba(255, 255, 255, 0.2),
-			-1.375em -0.125em 0 #0cf;
-	}
-	25% {
-		box-shadow: 0.625em 0.875em 0 -0.125em rgba(255, 255, 255, 0.2),
-			-0.875em 1.125em 0 -0.125em #0cf,
-			-1.375em -0.125em 0 rgba(255, 255, 255, 0.2);
-	}
-	50% {
-		background: rgba(255, 255, 255, 0.3);
-		box-shadow: 0.625em 0.875em 0 -0.125em #0cf,
-			-0.875em 1.125em 0 -0.125em rgba(255, 255, 255, 0.2),
-			-1.375em -0.125em 0 rgba(255, 255, 255, 0.2);
-	}
-	100% {
-		box-shadow: 0.625em 0.875em 0 -0.125em rgba(255, 255, 255, 0.2),
-			-0.875em 1.125em 0 -0.125em rgba(255, 255, 255, 0.2),
-			-1.375em -0.125em 0 #0cf;
-	}
-}
-
-@keyframes lightning {
-	45% {
-		color: #fff;
-		background: #fff;
-		opacity: 0.2;
-	}
-	50% {
-		color: #0cf;
-		background: #0cf;
-		opacity: 1;
-	}
-	55% {
-		color: #fff;
-		background: #fff;
-		opacity: 0.2;
-	}
-}
-
-.selecto-selection {
-	border: 1px solid rgba(59, 130, 246, 0.8);
-	background: rgba(59, 130, 246, 0.15);
-}
-
-.moveable-control-box {
-	position: absolute;
-	box-sizing: border-box;
-}
-
-.moveable-line {
-	position: absolute;
-	background: rgba(59, 130, 246, 0.8);
-	transform-origin: 0 0;
-}
-
-.moveable-line.moveable-direction {
-	width: 1px;
-	height: 100%;
-}
-
-.moveable-control {
-	position: absolute;
-	width: 8px;
-	height: 8px;
-	border-radius: 2px;
-	border: 1px solid rgba(59, 130, 246, 0.9);
-	background: #ffffff;
-	box-sizing: border-box;
-}
-
-.moveable-rotation {
-	position: absolute;
-	width: 10px;
-	height: 10px;
-	border-radius: 9999px;
-	border: 1px solid rgba(59, 130, 246, 0.9);
-	background: #ffffff;
-	box-sizing: border-box;
 }
