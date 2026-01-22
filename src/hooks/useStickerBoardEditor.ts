@@ -36,7 +36,6 @@ const presentRef = useRef<StickerBoardComponent[]>([]);
 const [selectedId, setSelectedId] = useState<number | null>(null);
 const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
-const [groupRotatePreviewDeg, setGroupRotatePreviewDeg] = useState(0);
 const [uploadThumbnail, setUploadThumbnail] = useState("");
 const [editingGroupId, setEditingGroupId] = useState<number | null>(null);
 const [expandedGroupIds, setExpandedGroupIds] = useState<Set<number>>(
@@ -66,109 +65,7 @@ const interactionHistoryBaseRef = useRef<StickerBoardComponent[] | null>(
 const isRestoringHistoryRef = useRef(false);
 const boundsRef = useRef<HTMLDivElement>(null);
 const canvasRef = useRef<HTMLDivElement>(null);
-const dragRef = useRef<{
-	id: number;
-	startClientX: number;
-	startClientY: number;
-	startXPct: number;
-	startYPct: number;
-	widthPct: number;
-	heightPct: number;
-} | null>(null);
-const groupDragRef = useRef<{
-	startClientX: number;
-	startClientY: number;
-	items: Array<{
-		id: number;
-		startXPct: number;
-		startYPct: number;
-		widthPct: number;
-		heightPct: number;
-	}>;
-} | null>(null);
-const groupTransformRef = useRef<
-	| {
-			kind: "resize";
-			groupId: string;
-			groupRotationDeg: number;
-			startCenterXPct: number;
-			startCenterYPct: number;
-			anchorLocalX: number;
-			anchorLocalY: number;
-			startMinLocalX: number;
-			startMinLocalY: number;
-			startMaxLocalX: number;
-			startMaxLocalY: number;
-			handle: "nw" | "ne" | "sw" | "se";
-			startClientX: number;
-			startClientY: number;
-			items: Array<{
-				id: number;
-				startCenterLocalX: number;
-				startCenterLocalY: number;
-				startWidthPct: number;
-				startHeightPct: number;
-			}>;
-	  }
-	| {
-			kind: "rotate";
-			groupId: string;
-			startGroupRotationDeg: number;
-			startMinX: number;
-			startMinY: number;
-			startW: number;
-			startH: number;
-			centerXPct: number;
-			centerYPct: number;
-			centerClientX: number;
-			centerClientY: number;
-			startAngleDeg: number;
-			items: Array<{
-				id: number;
-				startCenterXPct: number;
-				startCenterYPct: number;
-				startWidthPct: number;
-				startHeightPct: number;
-				startRotationDeg: number;
-			}>;
-	  }
-	| null
->(null);
-const transformRef = useRef<
-	| {
-			kind: "resize";
-			id: number;
-			handle: "nw" | "ne" | "sw" | "se";
-			startClientX: number;
-			startClientY: number;
-			startXPct: number;
-			startYPct: number;
-			startWidthPct: number;
-			startHeightPct: number;
-			lockAspectRatio: boolean;
-	  }
-	| {
-			kind: "rotate";
-			id: number;
-			centerClientX: number;
-			centerClientY: number;
-			startAngleDeg: number;
-			startRotationDeg: number;
-	  }
-	| null
->(null);
-const marqueeRef = useRef<{
-	startClientX: number;
-	startClientY: number;
-	startXPct: number;
-	startYPct: number;
-} | null>(null);
-const [marquee, setMarquee] = useState<{
-	xPct: number;
-	yPct: number;
-	widthPct: number;
-	heightPct: number;
-} | null>(null);
+const moveableInteractionRef = useRef(false);
 
 const clampStickerToEditorBounds = (
 	sticker: Pick<
@@ -693,8 +590,14 @@ const addImageStickerAt = async (opts: {
 	const applyAspect = (w?: number, h?: number) => {
 		if (!w || !h) return;
 		if (w <= 0 || h <= 0) return;
+		const canvas = canvasRef.current;
+		const rect = canvas?.getBoundingClientRect();
+		const canvasRatio =
+			rect && rect.width > 0 && rect.height > 0
+				? rect.width / rect.height
+				: 1;
 		const aspect = h / w; // h / w
-		heightPct = widthPct * aspect;
+		heightPct = widthPct * aspect * canvasRatio;
 
 		// Keep within reasonable bounds (avoid huge stickers by default)
 		const maxSizePct = 60;
@@ -1105,7 +1008,7 @@ useEffect(() => {
 		prevDraftRef.current = cloneDraft(componentsDraft);
 		return;
 	}
-	if (dragRef.current || transformRef.current) {
+	if (moveableInteractionRef.current) {
 		prevDraftRef.current = cloneDraft(componentsDraft);
 		return;
 	}
@@ -1359,439 +1262,7 @@ useEffect(() => {
 	};
 }, [selectedId]);
 
-// Drag handlers (percent-based)
-useEffect(() => {
-	const handleMove = (e: PointerEvent) => {
-		const marqueeState = marqueeRef.current;
-		if (marqueeState) {
-			const canvas = canvasRef.current;
-			if (!canvas) return;
-			const rect = canvas.getBoundingClientRect();
-			if (rect.width <= 0 || rect.height <= 0) return;
-			const currXPct = ((e.clientX - rect.left) / rect.width) * 100;
-			const currYPct = ((e.clientY - rect.top) / rect.height) * 100;
-			const x1 = marqueeState.startXPct;
-			const y1 = marqueeState.startYPct;
-			const x2 = currXPct;
-			const y2 = currYPct;
-			const left = Math.min(x1, x2);
-			const top = Math.min(y1, y2);
-			const width = Math.abs(x2 - x1);
-			const height = Math.abs(y2 - y1);
-			setMarquee({
-				xPct: left,
-				yPct: top,
-				widthPct: width,
-				heightPct: height,
-			});
-			return;
-		}
-
-		const groupDrag = groupDragRef.current;
-		if (groupDrag) {
-			const canvas = canvasRef.current;
-			if (!canvas) return;
-			const rect = canvas.getBoundingClientRect();
-			if (rect.width <= 0 || rect.height <= 0) return;
-
-			const dxPct = ((e.clientX - groupDrag.startClientX) / rect.width) * 100;
-			const dyPct =
-				((e.clientY - groupDrag.startClientY) / rect.height) * 100;
-
-			setComponentsDraft((prev) =>
-				prev.map((c) => {
-					const item = groupDrag.items.find((it) => it.id === c.id);
-					if (!item) return c;
-					const next = clampStickerToEditorBounds({
-						xPct: item.startXPct + dxPct,
-						yPct: item.startYPct + dyPct,
-						widthPct: item.widthPct,
-						heightPct: item.heightPct,
-					});
-					return { ...c, ...next };
-				})
-			);
-			return;
-		}
-
-		const groupTransform = groupTransformRef.current;
-		if (groupTransform) {
-			const canvas = canvasRef.current;
-			if (!canvas) return;
-			const rect = canvas.getBoundingClientRect();
-			if (rect.width <= 0 || rect.height <= 0) return;
-
-			if (groupTransform.kind === "resize") {
-				const dxWorld =
-					((e.clientX - groupTransform.startClientX) / rect.width) * 100;
-				const dyWorld =
-					((e.clientY - groupTransform.startClientY) / rect.height) * 100;
-				const rad = (groupTransform.groupRotationDeg * Math.PI) / 180;
-				const cos = Math.cos(rad);
-				const sin = Math.sin(rad);
-				// world -> local (rotate -theta)
-				const dxLocal = dxWorld * cos + dyWorld * sin;
-				const dyLocal = -dxWorld * sin + dyWorld * cos;
-
-				let minLx = groupTransform.startMinLocalX;
-				let minLy = groupTransform.startMinLocalY;
-				let maxLx = groupTransform.startMaxLocalX;
-				let maxLy = groupTransform.startMaxLocalY;
-
-				switch (groupTransform.handle) {
-					case "nw":
-						minLx = groupTransform.startMinLocalX + dxLocal;
-						minLy = groupTransform.startMinLocalY + dyLocal;
-						break;
-					case "ne":
-						maxLx = groupTransform.startMaxLocalX + dxLocal;
-						minLy = groupTransform.startMinLocalY + dyLocal;
-						break;
-					case "sw":
-						minLx = groupTransform.startMinLocalX + dxLocal;
-						maxLy = groupTransform.startMaxLocalY + dyLocal;
-						break;
-					case "se":
-						maxLx = groupTransform.startMaxLocalX + dxLocal;
-						maxLy = groupTransform.startMaxLocalY + dyLocal;
-						break;
-				}
-
-				const MIN_SIZE_PCT = 2;
-				const startW =
-					groupTransform.startMaxLocalX - groupTransform.startMinLocalX;
-				const startH =
-					groupTransform.startMaxLocalY - groupTransform.startMinLocalY;
-				const newW = Math.max(MIN_SIZE_PCT, maxLx - minLx);
-				const newH = Math.max(MIN_SIZE_PCT, maxLy - minLy);
-
-				// keep anchor corner fixed in local space
-				const sx = newW / Math.max(0.0001, startW);
-				const sy = newH / Math.max(0.0001, startH);
-
-				const shiftCenterLocalX = groupTransform.anchorLocalX * (1 - sx);
-				const shiftCenterLocalY = groupTransform.anchorLocalY * (1 - sy);
-				const shiftCenterWorldX =
-					shiftCenterLocalX * cos - shiftCenterLocalY * sin;
-				const shiftCenterWorldY =
-					shiftCenterLocalX * sin + shiftCenterLocalY * cos;
-				const newCenterX = groupTransform.startCenterXPct + shiftCenterWorldX;
-				const newCenterY = groupTransform.startCenterYPct + shiftCenterWorldY;
-
-				setComponentsDraft((prev) =>
-					prev.map((c) => {
-						const it = groupTransform.items.find((x) => x.id === c.id);
-						if (!it) return c;
-						// scale sticker center in local space around anchor
-						const newCenterLocalX =
-							groupTransform.anchorLocalX +
-							(it.startCenterLocalX - groupTransform.anchorLocalX) * sx;
-						const newCenterLocalY =
-							groupTransform.anchorLocalY +
-							(it.startCenterLocalY - groupTransform.anchorLocalY) * sy;
-						const newCenterWorldX =
-							newCenterX + (newCenterLocalX * cos - newCenterLocalY * sin);
-						const newCenterWorldY =
-							newCenterY + (newCenterLocalX * sin + newCenterLocalY * cos);
-						const widthPct = it.startWidthPct * sx;
-						const heightPct = it.startHeightPct * sy;
-						const next = clampStickerToEditorBounds({
-							xPct: newCenterWorldX - widthPct / 2,
-							yPct: newCenterWorldY - heightPct / 2,
-							widthPct,
-							heightPct,
-						});
-						return {
-							...c,
-							...next,
-							groupCenterXPct: newCenterX,
-							groupCenterYPct: newCenterY,
-							groupRotationDeg: groupTransform.groupRotationDeg,
-						};
-					})
-				);
-				return;
-			}
-
-			if (groupTransform.kind === "rotate") {
-				const angleDeg =
-					(Math.atan2(
-						e.clientY - groupTransform.centerClientY,
-						e.clientX - groupTransform.centerClientX
-					) *
-						180) /
-					Math.PI;
-				const deltaDeg = angleDeg - groupTransform.startAngleDeg;
-				setGroupRotatePreviewDeg(deltaDeg);
-				const rad = (deltaDeg * Math.PI) / 180;
-				const cos = Math.cos(rad);
-				const sin = Math.sin(rad);
-
-				setComponentsDraft((prev) =>
-					prev.map((c) => {
-						const it = groupTransform.items.find((x) => x.id === c.id);
-						if (!it) return c;
-
-						const dx = it.startCenterXPct - groupTransform.centerXPct;
-						const dy = it.startCenterYPct - groupTransform.centerYPct;
-						const rx = dx * cos - dy * sin;
-						const ry = dx * sin + dy * cos;
-						const nextCenterX = groupTransform.centerXPct + rx;
-						const nextCenterY = groupTransform.centerYPct + ry;
-
-						const next = clampStickerToEditorBounds({
-							xPct: nextCenterX - it.startWidthPct / 2,
-							yPct: nextCenterY - it.startHeightPct / 2,
-							widthPct: it.startWidthPct,
-							heightPct: it.startHeightPct,
-						});
-						return {
-							...c,
-							...next,
-							rotation: it.startRotationDeg + deltaDeg,
-							groupRotationDeg:
-								groupTransform.startGroupRotationDeg + deltaDeg,
-							groupCenterXPct: groupTransform.centerXPct,
-							groupCenterYPct: groupTransform.centerYPct,
-						};
-					})
-				);
-				return;
-			}
-		}
-
-		const transform = transformRef.current;
-		if (transform) {
-			const canvas = canvasRef.current;
-			if (!canvas) return;
-			const rect = canvas.getBoundingClientRect();
-			if (rect.width <= 0 || rect.height <= 0) return;
-
-			if (transform.kind === "resize") {
-				const dxPct =
-					((e.clientX - transform.startClientX) / rect.width) * 100;
-				const dyPct =
-					((e.clientY - transform.startClientY) / rect.height) * 100;
-
-				let xPct = transform.startXPct;
-				let yPct = transform.startYPct;
-				let widthPct = transform.startWidthPct;
-				let heightPct = transform.startHeightPct;
-
-				switch (transform.handle) {
-					case "nw":
-						xPct = transform.startXPct + dxPct;
-						yPct = transform.startYPct + dyPct;
-						widthPct = transform.startWidthPct - dxPct;
-						heightPct = transform.startHeightPct - dyPct;
-						break;
-					case "ne":
-						yPct = transform.startYPct + dyPct;
-						widthPct = transform.startWidthPct + dxPct;
-						heightPct = transform.startHeightPct - dyPct;
-						break;
-					case "sw":
-						xPct = transform.startXPct + dxPct;
-						widthPct = transform.startWidthPct - dxPct;
-						heightPct = transform.startHeightPct + dyPct;
-						break;
-					case "se":
-						widthPct = transform.startWidthPct + dxPct;
-						heightPct = transform.startHeightPct + dyPct;
-						break;
-				}
-
-				const MIN_SIZE_PCT = 2;
-				widthPct = Math.max(MIN_SIZE_PCT, widthPct);
-				heightPct = Math.max(MIN_SIZE_PCT, heightPct);
-
-				if (transform.lockAspectRatio) {
-					const aspect =
-						transform.startHeightPct /
-						Math.max(0.0001, transform.startWidthPct);
-					const byWidth = widthPct * aspect;
-					// const byHeight = heightPct;
-
-					// Use the dimension that changed more as the driver.
-					const widthDelta = Math.abs(widthPct - transform.startWidthPct);
-					const heightDelta = Math.abs(heightPct - transform.startHeightPct);
-
-					if (widthDelta >= heightDelta) {
-						heightPct = Math.max(MIN_SIZE_PCT, byWidth);
-					} else {
-						widthPct = Math.max(
-							MIN_SIZE_PCT,
-							heightPct / Math.max(0.0001, aspect)
-						);
-					}
-
-					// Re-anchor based on handle after enforcing aspect ratio.
-					if (transform.handle === "nw") {
-						xPct = transform.startXPct + (transform.startWidthPct - widthPct);
-						yPct =
-							transform.startYPct + (transform.startHeightPct - heightPct);
-					}
-					if (transform.handle === "ne") {
-						yPct =
-							transform.startYPct + (transform.startHeightPct - heightPct);
-					}
-					if (transform.handle === "sw") {
-						xPct = transform.startXPct + (transform.startWidthPct - widthPct);
-					}
-				}
-
-				setComponentsDraft((prev) =>
-					prev.map((c) =>
-						c.id === transform.id
-							? {
-									...c,
-									...clampStickerToEditorBounds({
-										xPct,
-										yPct,
-										widthPct,
-										heightPct,
-									}),
-							  }
-							: c
-					)
-				);
-				return;
-			}
-
-			if (transform.kind === "rotate") {
-				const angleDeg =
-					(Math.atan2(
-						e.clientY - transform.centerClientY,
-						e.clientX - transform.centerClientX
-					) *
-						180) /
-					Math.PI;
-				const delta = angleDeg - transform.startAngleDeg;
-				const nextRotation = transform.startRotationDeg + delta;
-				setComponentsDraft((prev) =>
-					prev.map((c) =>
-						c.id === transform.id ? { ...c, rotation: nextRotation } : c
-					)
-				);
-				return;
-			}
-		}
-
-		const drag = dragRef.current;
-		if (!drag) return;
-		const canvas = canvasRef.current;
-		if (!canvas) return;
-		const rect = canvas.getBoundingClientRect();
-		if (rect.width <= 0 || rect.height <= 0) return;
-
-		const dxPct = ((e.clientX - drag.startClientX) / rect.width) * 100;
-		const dyPct = ((e.clientY - drag.startClientY) / rect.height) * 100;
-
-		setComponentsDraft((prev) =>
-			prev.map((c) => {
-				if (c.id !== drag.id) return c;
-				const next = clampStickerToEditorBounds({
-					xPct: drag.startXPct + dxPct,
-					yPct: drag.startYPct + dyPct,
-					widthPct: drag.widthPct,
-					heightPct: drag.heightPct,
-				});
-				return { ...c, ...next };
-			})
-		);
-	};
-
-	const handleUp = () => {
-		if (marqueeRef.current) {
-			const box = marquee;
-			marqueeRef.current = null;
-			setMarquee(null);
-			if (!box) return;
-
-			// finalize selection: any sticker intersecting the marquee box
-			const next = new Set<number>(selectedIdsRef.current);
-			const x1 = box.xPct;
-			const y1 = box.yPct;
-			const x2 = box.xPct + box.widthPct;
-			const y2 = box.yPct + box.heightPct;
-
-			const intersects = (c: PctSticker) => {
-				const cx1 = c.xPct;
-				const cy1 = c.yPct;
-				const cx2 = c.xPct + c.widthPct;
-				const cy2 = c.yPct + c.heightPct;
-				return cx1 <= x2 && cx2 >= x1 && cy1 <= y2 && cy2 >= y1;
-			};
-
-			const hit = componentsDraft
-				.filter(isPctSticker)
-				.filter((c) => c.isVisible !== false)
-				.filter(intersects)
-				.sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0)); // top-most first
-
-			hit.forEach((c) => next.add(c.id));
-			const primary = hit.length
-				? hit[0].id
-				: next.size
-				? Array.from(next)[0]
-				: null;
-			setSelection(next, primary);
-			return;
-		}
-
-		if (transformRef.current) {
-			transformRef.current = null;
-			const base = interactionHistoryBaseRef.current;
-			interactionHistoryBaseRef.current = null;
-			if (
-				base &&
-				JSON.stringify(base) !== JSON.stringify(presentRef.current)
-			) {
-				commitHistoryBase(base);
-			}
-			return;
-		}
-		if (groupTransformRef.current) {
-			groupTransformRef.current = null;
-			setGroupRotatePreviewDeg(0);
-			const base = interactionHistoryBaseRef.current;
-			interactionHistoryBaseRef.current = null;
-			if (
-				base &&
-				JSON.stringify(base) !== JSON.stringify(presentRef.current)
-			) {
-				commitHistoryBase(base);
-			}
-			return;
-		}
-		if (groupDragRef.current) {
-			groupDragRef.current = null;
-			const base = interactionHistoryBaseRef.current;
-			interactionHistoryBaseRef.current = null;
-			if (
-				base &&
-				JSON.stringify(base) !== JSON.stringify(presentRef.current)
-			) {
-				commitHistoryBase(base);
-			}
-			return;
-		}
-		if (!dragRef.current) return;
-		dragRef.current = null;
-		const base = interactionHistoryBaseRef.current;
-		interactionHistoryBaseRef.current = null;
-		if (base && JSON.stringify(base) !== JSON.stringify(presentRef.current)) {
-			commitHistoryBase(base);
-		}
-	};
-
-	window.addEventListener("pointermove", handleMove);
-	window.addEventListener("pointerup", handleUp);
-	return () => {
-		window.removeEventListener("pointermove", handleMove);
-		window.removeEventListener("pointerup", handleUp);
-	};
-}, []);
+// Drag/resize/rotate interactions are handled by react-moveable in the canvas.
 
 	return {
 		state: {
@@ -1799,7 +1270,6 @@ useEffect(() => {
 			selectedId,
 			selectedIds,
 			isImageDialogOpen,
-			groupRotatePreviewDeg,
 			uploadThumbnail,
 			editingGroupId,
 			expandedGroupIds,
@@ -1811,7 +1281,6 @@ useEffect(() => {
 			assetsLoading,
 			assetsError,
 			authReady,
-			marquee,
 		},
 		refs: {
 			presentRef,
@@ -1821,14 +1290,10 @@ useEffect(() => {
 			pendingHistoryBaseRef,
 			prevDraftRef,
 			interactionHistoryBaseRef,
+			moveableInteractionRef,
 			isRestoringHistoryRef,
 			boundsRef,
 			canvasRef,
-			dragRef,
-			groupDragRef,
-			groupTransformRef,
-			transformRef,
-			marqueeRef,
 			autosizeRafRef,
 			autosizePendingRef,
 			clipboardRef,
@@ -1838,7 +1303,6 @@ useEffect(() => {
 			setSelectedId,
 			setSelectedIds,
 			setIsImageDialogOpen,
-			setGroupRotatePreviewDeg,
 			setUploadThumbnail,
 			setEditingGroupId,
 			setExpandedGroupIds,
@@ -1849,7 +1313,6 @@ useEffect(() => {
 			setAssets,
 			setAssetsLoading,
 			setAssetsError,
-			setMarquee,
 			updateComponent,
 			deleteSticker,
 			toggleVisibility,

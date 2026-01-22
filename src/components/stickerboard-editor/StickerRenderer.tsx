@@ -18,9 +18,10 @@ export function StickerRenderer({
 
 	return (
 		<div
-			className="absolute"
+			className="absolute sticker-item"
 			data-sticker-id={component.id}
 			data-sticker-root="true"
+			data-sticker-locked={isLocked ? "true" : "false"}
 			style={{
 				left: `${component.xPct}%`,
 				top: `${component.yPct}%`,
