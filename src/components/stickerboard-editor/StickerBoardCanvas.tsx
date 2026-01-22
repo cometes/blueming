@@ -1,6 +1,10 @@
 "use client";
 
+import { useEffect, useMemo, useRef, useState } from "react";
+import Moveable from "react-moveable";
+import Selecto from "react-selecto";
 import { useStickerBoardEditorContext } from "@/contexts/StickerBoardEditorContext";
+import { isPctSticker } from "@/lib/stickerboard-utils";
 import { STICKER_ASSET_DND_MIME } from "@/types/stickerBoard";
 import { StickerRenderer } from "@/components/stickerboard-editor/StickerRenderer";
 
@@ -12,19 +16,231 @@ export function StickerBoardCanvas({
     ratio: { w: number; h: number } | null;
 }) {
     const {
-        state: { marquee },
-        refs: { boundsRef, canvasRef, marqueeRef, presentRef },
+        state: { componentsDraft, selectedId, selectedIds },
+        refs: {
+            boundsRef,
+            canvasRef,
+            presentRef,
+            interactionHistoryBaseRef,
+            moveableInteractionRef,
+        },
         actions: {
             setSelection,
-            setMarquee,
             addImageStickerAt,
             cloneDraft,
+            setComponentsDraft,
+            clampStickerToEditorBounds,
+            commitHistoryBase,
         },
         computed: { visibleDraft },
     } = useStickerBoardEditorContext();
+    const moveableRef = useRef<Moveable>(null);
+    const interactionStartRef = useRef(
+        new Map<
+            number,
+            {
+                xPct: number;
+                yPct: number;
+                widthPct: number;
+                heightPct: number;
+                rotation: number;
+                isLocked: boolean;
+                lockAspectRatio: boolean;
+            }
+        >()
+    );
+    const resizePreviewRef = useRef(
+        new Map<
+            number,
+            { xPct: number; yPct: number; widthPct: number; heightPct: number }
+        >()
+    );
+    const [moveableTargets, setMoveableTargets] = useState<HTMLElement[]>([]);
+
+    const selectionIds = useMemo(() => {
+        if (selectedIds.size > 0) return Array.from(selectedIds);
+        return selectedId ? [selectedId] : [];
+    }, [selectedId, selectedIds]);
+
+    const selectedComponents = useMemo(
+        () => componentsDraft.filter((c) => selectionIds.includes(c.id)),
+        [componentsDraft, selectionIds]
+    );
+
+    const isSelectionLocked =
+        selectedComponents.length > 0 &&
+        selectedComponents.every((c) => c.isLocked === true);
+
+    const keepRatio =
+        selectedComponents.length === 1 &&
+        selectedComponents[0].lockAspectRatio === true;
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) {
+            setMoveableTargets([]);
+            return;
+        }
+        const targets = selectionIds
+            .map((id) =>
+                canvas.querySelector<HTMLElement>(`[data-sticker-id="${id}"]`)
+            )
+            .filter((el): el is HTMLElement => Boolean(el))
+            .filter((el) => el.getAttribute("data-sticker-locked") !== "true");
+        setMoveableTargets(targets);
+    }, [canvasRef, componentsDraft, selectionIds]);
+
+    useEffect(() => {
+        const moveable = moveableRef.current;
+        if (!moveable) return;
+        const raf = window.requestAnimationFrame(() => {
+            moveable.updateRect();
+        });
+        return () => window.cancelAnimationFrame(raf);
+    }, [componentsDraft, selectionIds]);
+
+    const getCanvasRect = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return null;
+        const rect = canvas.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) return null;
+        return rect;
+    };
+
+    const startMoveableInteraction = (ids: number[]) => {
+        if (!interactionHistoryBaseRef.current) {
+            interactionHistoryBaseRef.current = cloneDraft(presentRef.current);
+        }
+        moveableInteractionRef.current = true;
+        const startMap = new Map<
+            number,
+            {
+                xPct: number;
+                yPct: number;
+                widthPct: number;
+                heightPct: number;
+                rotation: number;
+                isLocked: boolean;
+                lockAspectRatio: boolean;
+            }
+        >();
+        ids.forEach((id) => {
+            const item = presentRef.current.find((c) => c.id === id);
+            if (!item || !isPctSticker(item)) return;
+            startMap.set(id, {
+                xPct: item.xPct,
+                yPct: item.yPct,
+                widthPct: item.widthPct,
+                heightPct: item.heightPct,
+                rotation: item.rotation ?? 0,
+                isLocked: item.isLocked === true,
+                lockAspectRatio: item.lockAspectRatio === true,
+            });
+        });
+        interactionStartRef.current = startMap;
+    };
+
+    const endMoveableInteraction = () => {
+        const base = interactionHistoryBaseRef.current;
+        interactionHistoryBaseRef.current = null;
+        moveableInteractionRef.current = false;
+        interactionStartRef.current = new Map();
+        if (base && JSON.stringify(base) !== JSON.stringify(presentRef.current)) {
+            commitHistoryBase(base);
+        }
+    };
+
+    const applyDrag = (id: number, delta: [number, number]) => {
+        const rect = getCanvasRect();
+        const start = interactionStartRef.current.get(id);
+        if (!rect || !start || start.isLocked) return;
+        const dxPct = (delta[0] / rect.width) * 100;
+        const dyPct = (delta[1] / rect.height) * 100;
+        const next = clampStickerToEditorBounds({
+            xPct: start.xPct + dxPct,
+            yPct: start.yPct + dyPct,
+            widthPct: start.widthPct,
+            heightPct: start.heightPct,
+        });
+        setComponentsDraft((prev) =>
+            prev.map((c) => (c.id === id ? { ...c, ...next } : c))
+        );
+    };
+
+    const previewResize = (
+        id: number,
+        target: HTMLElement,
+        sizePx: { width: number; height: number },
+        delta: [number, number]
+    ) => {
+        const rect = getCanvasRect();
+        const start = interactionStartRef.current.get(id);
+        if (!rect || !start || start.isLocked) return;
+        const widthPct = (sizePx.width / rect.width) * 100;
+        const heightPct = (sizePx.height / rect.height) * 100;
+        const dxPct = (delta[0] / rect.width) * 100;
+        const dyPct = (delta[1] / rect.height) * 100;
+        const next = {
+            xPct: start.xPct + dxPct,
+            yPct: start.yPct + dyPct,
+            widthPct,
+            heightPct,
+        };
+        resizePreviewRef.current.set(id, next);
+        target.style.left = `${next.xPct}%`;
+        target.style.top = `${next.yPct}%`;
+        target.style.width = `${next.widthPct}%`;
+        target.style.height = `${next.heightPct}%`;
+    };
+
+    const commitResize = (ids: number[]) => {
+        if (ids.length === 0) return;
+        const updates = new Map<
+            number,
+            { xPct: number; yPct: number; widthPct: number; heightPct: number }
+        >();
+        ids.forEach((id) => {
+            const next = resizePreviewRef.current.get(id);
+            if (next) updates.set(id, next);
+        });
+        if (updates.size === 0) return;
+        setComponentsDraft((prev) =>
+            prev.map((c) => {
+                const next = updates.get(c.id);
+                if (!next) return c;
+                const clamped = clampStickerToEditorBounds(next);
+                return { ...c, ...clamped };
+            })
+        );
+        ids.forEach((id) => resizePreviewRef.current.delete(id));
+    };
+
+    const applyRotate = (
+        id: number,
+        deltaDeg: number,
+        delta: [number, number]
+    ) => {
+        const rect = getCanvasRect();
+        const start = interactionStartRef.current.get(id);
+        if (!rect || !start || start.isLocked) return;
+        const dxPct = (delta[0] / rect.width) * 100;
+        const dyPct = (delta[1] / rect.height) * 100;
+        const nextRotation = start.rotation + deltaDeg;
+        const next = clampStickerToEditorBounds({
+            xPct: start.xPct + dxPct,
+            yPct: start.yPct + dyPct,
+            widthPct: start.widthPct,
+            heightPct: start.heightPct,
+        });
+        setComponentsDraft((prev) =>
+            prev.map((c) =>
+                c.id === id ? { ...c, ...next, rotation: nextRotation } : c
+            )
+        );
+    };
 
     return (
-        <div className="rounded-card border border-card bg-card-bg/60 p-4 backdrop-blur-card">
+        <div className="rounded-card border border-card bg-card-bg/60 p-4">
             <div className="text-sm font-semibold text-main-text">캔버스</div>
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 고정 폭 768px 캔버스 영역
@@ -33,38 +249,7 @@ export function StickerBoardCanvas({
                 ref={boundsRef}
                 className="mt-4 w-full overflow-hidden rounded-card border border-card bg-card-bg p-2"
             >
-                <div
-                    className="relative grid grid-cols-12 grid-rows-12 aspect-[5/4] w-full overflow-visible"
-                    onPointerDown={(e) => {
-                        const canvas = canvasRef.current;
-                        if (!canvas) {
-                            setSelection(new Set(), null);
-                            return;
-                        }
-                        if ((e.target as HTMLElement)?.closest?.('[data-sticker-root="true"]'))
-                            return;
-
-                        const rect = canvas.getBoundingClientRect();
-                        if (rect.width <= 0 || rect.height <= 0) {
-                            setSelection(new Set(), null);
-                            return;
-                        }
-
-                        const xPct = ((e.clientX - rect.left) / rect.width) * 100;
-                        const yPct = ((e.clientY - rect.top) / rect.height) * 100;
-                        marqueeRef.current = {
-                            startClientX: e.clientX,
-                            startClientY: e.clientY,
-                            startXPct: xPct,
-                            startYPct: yPct,
-                        };
-                        setMarquee({ xPct, yPct, widthPct: 0, heightPct: 0 });
-
-                        if (!e.shiftKey) {
-                            setSelection(new Set(), null);
-                        }
-                    }}
-                >
+                <div className="relative grid grid-cols-12 grid-rows-12 aspect-[5/4] w-full overflow-visible">
                     <div
                         className="absolute inset-0 pointer-events-none"
                         style={{
@@ -76,7 +261,7 @@ export function StickerBoardCanvas({
 
                     {ratio ? (
                         <div
-                            className="relative bg-widget-bg backdrop-blur-widget rounded-widget border-widget overflow-visible shadow-[0_10px_25px_rgba(0,0,0,0.08)]"
+                            className="relative bg-widget-bg rounded-widget border-widget overflow-visible shadow-[0_10px_25px_rgba(0,0,0,0.08)] stickerboard-canvas"
                             style={{
                                 gridColumn: (() => {
                                     const span = Math.max(1, Math.min(GRID_BASE, ratio.w || 1));
@@ -121,19 +306,206 @@ export function StickerBoardCanvas({
                                 });
                             }}
                         >
-                            {marquee && (
-                                <div
-                                    className="absolute border border-blue-400/80 bg-blue-400/15"
-                                    style={{
-                                        left: `${marquee.xPct}%`,
-                                        top: `${marquee.yPct}%`,
-                                        width: `${marquee.widthPct}%`,
-                                        height: `${marquee.heightPct}%`,
-                                        pointerEvents: "none",
-                                        zIndex: 9999,
-                                    }}
-                                />
-                            )}
+                            <Selecto
+                                dragContainer=".stickerboard-canvas"
+                                selectableTargets={[".sticker-item"]}
+                                selectByClick
+                                selectFromInside={false}
+                                toggleContinueSelect="shift"
+                                hitRate={0}
+                                onDragStart={(e) => {
+                                    const moveable = moveableRef.current;
+                                    const target = e.inputEvent.target as HTMLElement | null;
+                                    if (!target) return;
+                                    if (
+                                        moveable?.isMoveableElement(target) ||
+                                        target.closest(".moveable-control-box")
+                                    ) {
+                                        e.stop();
+                                    }
+                                }}
+                                onSelect={(e) => {
+                                    const next = new Set<number>();
+                                    e.selected.forEach((el) => {
+                                        const id = Number(el.getAttribute("data-sticker-id"));
+                                        if (Number.isNaN(id)) return;
+                                        next.add(id);
+                                    });
+                                    const added = e.added[e.added.length - 1];
+                                    const primaryId = added
+                                        ? Number(added.getAttribute("data-sticker-id"))
+                                        : next.size
+                                        ? Array.from(next)[0]
+                                        : null;
+                                    setSelection(next, Number.isNaN(primaryId) ? null : primaryId);
+                                }}
+                            />
+                            <Moveable
+                                ref={moveableRef}
+                                target={
+                                    moveableTargets.length === 1 ? moveableTargets[0] : null
+                                }
+                                targets={
+                                    moveableTargets.length > 1 ? moveableTargets : undefined
+                                }
+                                origin={false}
+                                draggable={!isSelectionLocked && moveableTargets.length > 0}
+                                resizable={!isSelectionLocked && moveableTargets.length > 0}
+                                rotatable={!isSelectionLocked && moveableTargets.length > 0}
+                                keepRatio={keepRatio}
+                                throttleDrag={0}
+                                throttleResize={0}
+                                throttleRotate={0}
+                                minWidth={10}
+                                minHeight={10}
+                                onDragStart={(e) => {
+                                    const id = Number(
+                                        (e.target as HTMLElement).getAttribute("data-sticker-id")
+                                    );
+                                    if (Number.isNaN(id)) return;
+                                    if (selectedIds.size !== 1 || !selectedIds.has(id)) {
+                                        setSelection(new Set([id]), id);
+                                    }
+                                    startMoveableInteraction([id]);
+                                }}
+                                onDrag={(e) => {
+                                    const id = Number(
+                                        (e.target as HTMLElement).getAttribute("data-sticker-id")
+                                    );
+                                    if (Number.isNaN(id)) return;
+                                    applyDrag(id, e.beforeTranslate);
+                                }}
+                                onDragEnd={endMoveableInteraction}
+                                onDragGroupStart={(e) => {
+                                    const ids = e.targets
+                                        .map((t) =>
+                                            Number(t.getAttribute("data-sticker-id"))
+                                        )
+                                        .filter((id) => !Number.isNaN(id));
+                                    if (ids.length === 0) return;
+                                    startMoveableInteraction(ids);
+                                }}
+                                onDragGroup={(e) => {
+                                    e.events.forEach((ev) => {
+                                        const id = Number(
+                                            (ev.target as HTMLElement).getAttribute(
+                                                "data-sticker-id"
+                                            )
+                                        );
+                                        if (Number.isNaN(id)) return;
+                                        applyDrag(id, ev.beforeTranslate);
+                                    });
+                                }}
+                                onDragGroupEnd={endMoveableInteraction}
+                                onResizeStart={(e) => {
+                                    const id = Number(
+                                        (e.target as HTMLElement).getAttribute("data-sticker-id")
+                                    );
+                                    if (Number.isNaN(id)) return;
+                                    if (selectedIds.size !== 1 || !selectedIds.has(id)) {
+                                        setSelection(new Set([id]), id);
+                                    }
+                                    startMoveableInteraction([id]);
+                                }}
+                                onResize={(e) => {
+                                    const id = Number(
+                                        (e.target as HTMLElement).getAttribute("data-sticker-id")
+                                    );
+                                    if (Number.isNaN(id)) return;
+                                    previewResize(
+                                        id,
+                                        e.target as HTMLElement,
+                                        { width: e.width, height: e.height },
+                                        e.drag.beforeTranslate
+                                    );
+                                }}
+                                onResizeEnd={(e) => {
+                                    const id = Number(
+                                        (e.target as HTMLElement).getAttribute("data-sticker-id")
+                                    );
+                                    if (!Number.isNaN(id)) {
+                                        commitResize([id]);
+                                    }
+                                    endMoveableInteraction();
+                                }}
+                                onResizeGroupStart={(e) => {
+                                    const ids = e.targets
+                                        .map((t) =>
+                                            Number(t.getAttribute("data-sticker-id"))
+                                        )
+                                        .filter((id) => !Number.isNaN(id));
+                                    if (ids.length === 0) return;
+                                    startMoveableInteraction(ids);
+                                }}
+                                onResizeGroup={(e) => {
+                                    e.events.forEach((ev) => {
+                                        const id = Number(
+                                            (ev.target as HTMLElement).getAttribute(
+                                                "data-sticker-id"
+                                            )
+                                        );
+                                        if (Number.isNaN(id)) return;
+                                        previewResize(
+                                            id,
+                                            ev.target as HTMLElement,
+                                            { width: ev.width, height: ev.height },
+                                            ev.drag.beforeTranslate
+                                        );
+                                    });
+                                }}
+                                onResizeGroupEnd={(e) => {
+                                    const ids = e.targets
+                                        .map((t) =>
+                                            Number(t.getAttribute("data-sticker-id"))
+                                        )
+                                        .filter((id) => !Number.isNaN(id));
+                                    commitResize(ids);
+                                    endMoveableInteraction();
+                                }}
+                                onRotateStart={(e) => {
+                                    const id = Number(
+                                        (e.target as HTMLElement).getAttribute("data-sticker-id")
+                                    );
+                                    if (Number.isNaN(id)) return;
+                                    if (selectedIds.size !== 1 || !selectedIds.has(id)) {
+                                        setSelection(new Set([id]), id);
+                                    }
+                                    startMoveableInteraction([id]);
+                                }}
+                                onRotate={(e) => {
+                                    const id = Number(
+                                        (e.target as HTMLElement).getAttribute("data-sticker-id")
+                                    );
+                                    if (Number.isNaN(id)) return;
+                                    const delta = e.beforeRotate;
+                                    const dragDelta = e.drag?.beforeTranslate ?? [0, 0];
+                                    applyRotate(id, delta, dragDelta);
+                                }}
+                                onRotateEnd={endMoveableInteraction}
+                                onRotateGroupStart={(e) => {
+                                    const ids = e.targets
+                                        .map((t) =>
+                                            Number(t.getAttribute("data-sticker-id"))
+                                        )
+                                        .filter((id) => !Number.isNaN(id));
+                                    if (ids.length === 0) return;
+                                    startMoveableInteraction(ids);
+                                }}
+                                onRotateGroup={(e) => {
+                                    e.events.forEach((ev) => {
+                                        const id = Number(
+                                            (ev.target as HTMLElement).getAttribute(
+                                                "data-sticker-id"
+                                            )
+                                        );
+                                        if (Number.isNaN(id)) return;
+                                        const delta = ev.beforeRotate;
+                                        const dragDelta = ev.drag?.beforeTranslate ?? [0, 0];
+                                        applyRotate(id, delta, dragDelta);
+                                    });
+                                }}
+                                onRotateGroupEnd={endMoveableInteraction}
+                            />
                             {visibleDraft.length > 0 ? (
                                 visibleDraft.map((component) => (
                                     <StickerRenderer key={component.id} component={component} />
