@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -43,12 +45,10 @@ export function StickerBoardPropertiesPanel() {
 		<>
 			{selectedComponent && (
 				<div className="mt-4 space-y-2">
-					<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-						효과
-					</div>
+					<div className="text-xs font-medium text-gray-600">효과</div>
 					<div className="grid grid-cols-2 gap-3">
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
+							<div className="text-xs font-medium text-gray-600">
 								불투명도(%)
 							</div>
 							<Input
@@ -72,9 +72,7 @@ export function StickerBoardPropertiesPanel() {
 						</div>
 
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								블렌드
-							</div>
+							<div className="text-xs font-medium text-gray-600">블렌드</div>
 							<div className="mt-2">
 								<Select
 									value={selectedComponent.blendMode ?? "normal"}
@@ -113,73 +111,74 @@ export function StickerBoardPropertiesPanel() {
 						</div>
 					</div>
 
-					<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-						스티커 정렬
-					</div>
-					<div className="grid grid-cols-3 gap-2">
-						<Button
-							type="button"
-							variant="outline"
-							className="h-9 px-0"
-							disabled={selectedComponent.isLocked === true}
-							onClick={() => alignSelectedSticker("left")}
-							title="왼쪽 정렬"
-						>
-							<AlignStartVertical className="h-4 w-4" />
-						</Button>
-						<Button
-							type="button"
-							variant="outline"
-							className="h-9 px-0"
-							disabled={selectedComponent.isLocked === true}
-							onClick={() => alignSelectedSticker("hcenter")}
-							title="가로 가운데 정렬"
-						>
-							<AlignCenterVertical className="h-4 w-4" />
-						</Button>
-						<Button
-							type="button"
-							variant="outline"
-							className="h-9 px-0"
-							disabled={selectedComponent.isLocked === true}
-							onClick={() => alignSelectedSticker("right")}
-							title="오른쪽 정렬"
-						>
-							<AlignEndVertical className="h-4 w-4" />
-						</Button>
-					</div>
-					<div className="grid grid-cols-3 gap-2">
-						<Button
-							type="button"
-							variant="outline"
-							className="h-9 px-0"
-							disabled={selectedComponent.isLocked === true}
-							onClick={() => alignSelectedSticker("top")}
-							title="위 정렬"
-						>
-							<AlignStartHorizontal className="h-4 w-4" />
-						</Button>
-						<Button
-							type="button"
-							variant="outline"
-							className="h-9 px-0"
-							disabled={selectedComponent.isLocked === true}
-							onClick={() => alignSelectedSticker("vcenter")}
-							title="세로 가운데 정렬"
-						>
-							<AlignCenterHorizontal className="h-4 w-4" />
-						</Button>
-						<Button
-							type="button"
-							variant="outline"
-							className="h-9 px-0"
-							disabled={selectedComponent.isLocked === true}
-							onClick={() => alignSelectedSticker("bottom")}
-							title="아래 정렬"
-						>
-							<AlignEndHorizontal className="h-4 w-4" />
-						</Button>
-					</div>
+					<div className="text-xs font-medium text-gray-600">스티커 정렬</div>
+					<ButtonGroup className="flex w-full items-center justify-between gap-2">
+						<ButtonGroup className="flex-1 justify-center rounded-md border border-stone-700 bg-stone-800 overflow-hidden divide-x divide-stone-700">
+							<Button
+								type="button"
+								variant="ghost"
+								className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700"
+								disabled={selectedComponent.isLocked === true}
+								onClick={() => alignSelectedSticker("left")}
+								title="왼쪽 정렬"
+							>
+								<AlignStartVertical className="h-4 w-4" />
+							</Button>
+							<Button
+								type="button"
+								variant="ghost"
+								className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700"
+								disabled={selectedComponent.isLocked === true}
+								onClick={() => alignSelectedSticker("hcenter")}
+								title="가로 가운데 정렬"
+							>
+								<AlignCenterVertical className="h-4 w-4" />
+							</Button>
+							<Button
+								type="button"
+								variant="ghost"
+								className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700 focus:z-10"
+								disabled={selectedComponent.isLocked === true}
+								onClick={() => alignSelectedSticker("right")}
+								title="오른쪽 정렬"
+							>
+								<AlignEndVertical className="h-4 w-4" />
+							</Button>
+						</ButtonGroup>
+
+						<ButtonGroup className="flex-1 justify-center rounded-md border border-stone-700 bg-stone-800 overflow-hidden divide-x divide-stone-700">
+							<Button
+								type="button"
+								variant="ghost"
+								className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700"
+								disabled={selectedComponent.isLocked === true}
+								onClick={() => alignSelectedSticker("top")}
+								title="위 정렬"
+							>
+								<AlignStartHorizontal className="h-4 w-4" />
+							</Button>
+							<Button
+								type="button"
+								variant="ghost"
+								className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700"
+								disabled={selectedComponent.isLocked === true}
+								onClick={() => alignSelectedSticker("vcenter")}
+								title="세로 가운데 정렬"
+							>
+								<AlignCenterHorizontal className="h-4 w-4" />
+							</Button>
+							<Button
+								type="button"
+								variant="ghost"
+								className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700"
+								disabled={selectedComponent.isLocked === true}
+								onClick={() => alignSelectedSticker("bottom")}
+								title="아래 정렬"
+							>
+								<AlignEndHorizontal className="h-4 w-4" />
+							</Button>
+						</ButtonGroup>
+					</ButtonGroup>
 				</div>
 			)}
 
@@ -212,7 +211,7 @@ export function StickerBoardPropertiesPanel() {
 						</div>
 
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
+							<div className="text-xs font-medium text-gray-600">
 								최대 폭(px)
 							</div>
 							<Input
@@ -221,7 +220,9 @@ export function StickerBoardPropertiesPanel() {
 								min={80}
 								max={800}
 								step={10}
-								value={selectedComponent.maxWidthPx ?? DEFAULT_TEXT_MAX_WIDTH_PX}
+								value={
+									selectedComponent.maxWidthPx ?? DEFAULT_TEXT_MAX_WIDTH_PX
+								}
 								disabled={
 									selectedComponent.isLocked === true ||
 									selectedComponent.autoSize === false
@@ -248,9 +249,7 @@ export function StickerBoardPropertiesPanel() {
 					</div>
 
 					<div className="flex items-center justify-between gap-3 rounded-md border border-card bg-card-bg px-3 py-2">
-						<div className="text-xs font-medium text-gray-700 dark:text-gray-200">
-							비율 고정
-						</div>
+						<div className="text-xs font-medium text-gray-700">비율 고정</div>
 						<input
 							type="checkbox"
 							checked={selectedComponent.lockAspectRatio === true}
@@ -267,9 +266,7 @@ export function StickerBoardPropertiesPanel() {
 
 					<div className="grid grid-cols-2 gap-3">
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								글자색
-							</div>
+							<div className="text-xs font-medium text-gray-600">글자색</div>
 							<Input
 								className="mt-2"
 								type="color"
@@ -289,7 +286,7 @@ export function StickerBoardPropertiesPanel() {
 						</div>
 
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
+							<div className="text-xs font-medium text-gray-600">
 								폰트 크기(px)
 							</div>
 							<Input
@@ -321,9 +318,7 @@ export function StickerBoardPropertiesPanel() {
 
 					<div className="grid grid-cols-2 gap-3">
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								굵기
-							</div>
+							<div className="text-xs font-medium text-gray-600">굵기</div>
 							<div className="mt-2">
 								<Select
 									value={String(selectedComponent.style?.fontWeight ?? 400)}
@@ -363,9 +358,7 @@ export function StickerBoardPropertiesPanel() {
 						</div>
 
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								정렬
-							</div>
+							<div className="text-xs font-medium text-gray-600">정렬</div>
 							<div className="mt-2">
 								<Select
 									value={selectedComponent.style?.textAlign ?? "left"}
@@ -400,9 +393,7 @@ export function StickerBoardPropertiesPanel() {
 
 					<div className="grid grid-cols-2 gap-3">
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								회전(°)
-							</div>
+							<div className="text-xs font-medium text-gray-600">회전(°)</div>
 							<Input
 								className="mt-2"
 								type="number"
@@ -419,9 +410,7 @@ export function StickerBoardPropertiesPanel() {
 							/>
 						</div>
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								투명도(%)
-							</div>
+							<div className="text-xs font-medium text-gray-600">투명도(%)</div>
 							<Input
 								className="mt-2"
 								type="number"
@@ -445,9 +434,7 @@ export function StickerBoardPropertiesPanel() {
 
 					<div className="grid grid-cols-2 gap-3">
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								X(%)
-							</div>
+							<div className="text-xs font-medium text-gray-600">X(%)</div>
 							<Input
 								className="mt-2"
 								type="number"
@@ -469,9 +456,7 @@ export function StickerBoardPropertiesPanel() {
 							/>
 						</div>
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								Y(%)
-							</div>
+							<div className="text-xs font-medium text-gray-600">Y(%)</div>
 							<Input
 								className="mt-2"
 								type="number"
@@ -496,9 +481,7 @@ export function StickerBoardPropertiesPanel() {
 
 					<div className="grid grid-cols-2 gap-3">
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								가로(%)
-							</div>
+							<div className="text-xs font-medium text-gray-600">가로(%)</div>
 							<Input
 								className="mt-2"
 								type="number"
@@ -535,9 +518,7 @@ export function StickerBoardPropertiesPanel() {
 							/>
 						</div>
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								세로(%)
-							</div>
+							<div className="text-xs font-medium text-gray-600">세로(%)</div>
 							<Input
 								className="mt-2"
 								type="number"
@@ -560,7 +541,7 @@ export function StickerBoardPropertiesPanel() {
 												prev.heightPct / Math.max(0.0001, prev.widthPct);
 											widthPct = Math.max(
 												MIN,
-												heightPct / Math.max(0.0001, aspect)
+												heightPct / Math.max(0.0001, aspect),
 											);
 										}
 										return {
@@ -583,15 +564,12 @@ export function StickerBoardPropertiesPanel() {
 			{selectedImageComponent && (
 				<div className="mt-4 space-y-4">
 					<div className="flex items-center justify-between gap-3 rounded-md border border-card bg-card-bg px-3 py-2">
-						<div className="text-xs font-medium text-gray-700 dark:text-gray-200">
-							비율 고정
-						</div>
-						<input
-							type="checkbox"
+						<div className="text-xs font-medium text-gray-700">비율 고정</div>
+						<Checkbox
 							checked={selectedImageComponent.lockAspectRatio === true}
 							disabled={selectedImageComponent.isLocked === true}
-							onChange={(e) => {
-								const next = e.target.checked;
+							onCheckedChange={(checked) => {
+								const next = checked === true;
 								updateComponent(selectedImageComponent.id, (prev) => ({
 									...prev,
 									lockAspectRatio: next,
@@ -602,9 +580,7 @@ export function StickerBoardPropertiesPanel() {
 
 					<div className="grid grid-cols-2 gap-3">
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								맞춤
-							</div>
+							<div className="text-xs font-medium text-gray-600">맞춤</div>
 							<div className="mt-2">
 								<Select
 									value={selectedImageComponent.imageFit ?? "contain"}
@@ -631,49 +607,45 @@ export function StickerBoardPropertiesPanel() {
 						</div>
 
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								뒤집기
-							</div>
-							<div className="mt-2 flex items-center gap-2">
-								<Button
-									type="button"
-									variant="outline"
-									size="icon"
-									className="flex-1"
-									disabled={selectedImageComponent.isLocked === true}
-									onClick={() => {
-										updateComponent(selectedImageComponent.id, (prev) => ({
-											...prev,
-											flipX: !(prev.flipX === true),
-										}));
-								}}
-								>
-									<FlipHorizontal2 className="h-4 w-4" />
-								</Button>
-								<Button
-									type="button"
-									variant="outline"
-									size="icon"
-									className="flex-1"
-									disabled={selectedImageComponent.isLocked === true}
-									onClick={() => {
-										updateComponent(selectedImageComponent.id, (prev) => ({
-											...prev,
-											flipY: !(prev.flipY === true),
-										}));
-								}}
-								>
-									<FlipVertical2 className="h-4 w-4" />
-								</Button>
+							<div className="text-xs font-medium text-gray-600">뒤집기</div>
+							<div className="mt-2">
+								<ButtonGroup className="flex-1 justify-center rounded-md border border-stone-700 bg-stone-800 overflow-hidden divide-x divide-stone-700">
+									<Button
+										type="button"
+										variant="ghost"
+										className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700"
+										disabled={selectedImageComponent.isLocked === true}
+										onClick={() => {
+											updateComponent(selectedImageComponent.id, (prev) => ({
+												...prev,
+												flipX: !(prev.flipX === true),
+											}));
+										}}
+									>
+										<FlipHorizontal2 className="h-4 w-4" />
+									</Button>
+									<Button
+										type="button"
+										variant="ghost"
+										className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700 focus:z-10"
+										disabled={selectedImageComponent.isLocked === true}
+										onClick={() => {
+											updateComponent(selectedImageComponent.id, (prev) => ({
+												...prev,
+												flipY: !(prev.flipY === true),
+											}));
+										}}
+									>
+										<FlipVertical2 className="h-4 w-4" />
+									</Button>
+								</ButtonGroup>
 							</div>
 						</div>
 					</div>
 
 					<div className="grid grid-cols-2 gap-3">
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								X(%)
-							</div>
+							<div className="text-xs font-medium text-gray-600">X(%)</div>
 							<Input
 								className="mt-2"
 								type="number"
@@ -695,9 +667,7 @@ export function StickerBoardPropertiesPanel() {
 							/>
 						</div>
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								Y(%)
-							</div>
+							<div className="text-xs font-medium text-gray-600">Y(%)</div>
 							<Input
 								className="mt-2"
 								type="number"
@@ -722,9 +692,7 @@ export function StickerBoardPropertiesPanel() {
 
 					<div className="grid grid-cols-2 gap-3">
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								가로(%)
-							</div>
+							<div className="text-xs font-medium text-gray-600">가로(%)</div>
 							<Input
 								className="mt-2"
 								type="number"
@@ -761,9 +729,7 @@ export function StickerBoardPropertiesPanel() {
 							/>
 						</div>
 						<div>
-							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-								세로(%)
-							</div>
+							<div className="text-xs font-medium text-gray-600">세로(%)</div>
 							<Input
 								className="mt-2"
 								type="number"
@@ -786,7 +752,7 @@ export function StickerBoardPropertiesPanel() {
 												prev.heightPct / Math.max(0.0001, prev.widthPct);
 											widthPct = Math.max(
 												MIN,
-												heightPct / Math.max(0.0001, aspect)
+												heightPct / Math.max(0.0001, aspect),
 											);
 										}
 										return {

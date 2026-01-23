@@ -12,9 +12,13 @@ import { PanelTopOpen, Search, X } from "lucide-react";
 export function StickerBoardAssetsPanel({
 	containerClassName = "mt-4",
 	compactTrigger = false,
+	triggerClassName,
+	triggerVariant = "outline",
 }: {
 	containerClassName?: string;
 	compactTrigger?: boolean;
+	triggerClassName?: string;
+	triggerVariant?: React.ComponentProps<typeof Button>["variant"];
 }) {
 	const {
 		state: { assets, assetsLoading, assetsError },
@@ -150,9 +154,14 @@ export function StickerBoardAssetsPanel({
 		<div className={containerClassName}>
 			<Button
 				type="button"
-				variant="outline"
+				variant={triggerVariant}
 				size={compactTrigger ? "icon" : "sm"}
-				className={compactTrigger ? "h-8 w-8" : undefined}
+				className={[
+					compactTrigger ? "h-8 w-8" : undefined,
+					triggerClassName,
+				]
+					.filter(Boolean)
+					.join(" ")}
 				onClick={() => setIsOpen((prev) => !prev)}
 				aria-label={isOpen ? "이미지 에셋 닫기" : "이미지 에셋 열기"}
 				title={isOpen ? "이미지 에셋 닫기" : "이미지 에셋 열기"}
