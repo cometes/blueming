@@ -6,7 +6,8 @@ import { Rnd } from "react-rnd";
 import { useStickerBoardEditorContext } from "@/contexts/StickerBoardEditorContext";
 import { STICKER_ASSET_DND_MIME } from "@/types/stickerBoard";
 import { Button } from "@/components/ui/button";
-import { PanelTopOpen } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { PanelTopOpen, Search, X } from "lucide-react";
 
 export function StickerBoardAssetsPanel({
 	containerClassName = "mt-4",
@@ -58,18 +59,19 @@ export function StickerBoardAssetsPanel({
 				<button
 					type="button"
 					onClick={() => setIsOpen(false)}
-					className="rounded px-2 py-0.5 text-[11px] text-gray-600 hover:text-gray-900"
+					className="rounded p-1 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+					aria-label="닫기"
 				>
-					닫기
+					<X className="h-4 w-4" />
 				</button>
 			</div>
 			<div className="mt-3">
-				<input
+				<Input
 					type="search"
 					value={query}
 					onChange={(e) => setQuery(e.target.value)}
 					placeholder="에셋 검색"
-					className="w-full rounded-md border border-card bg-background/40 px-2 py-1 text-xs text-gray-700 placeholder:text-gray-400 outline-none focus:border-card-active"
+					startIcon={Search}
 				/>
 			</div>
 
@@ -86,11 +88,14 @@ export function StickerBoardAssetsPanel({
 						에셋이 없습니다.
 					</div>
 				) : (
-					<div className="grid grid-cols-3 gap-2">
+					<div
+						className="grid gap-1.5"
+						style={{ gridTemplateColumns: "repeat(auto-fill, minmax(54px, 1fr))" }}
+					>
 						{filteredAssets.map((asset) => (
 							<div
 								key={asset.id}
-								className="relative group rounded-md border border-card bg-background/30 overflow-hidden"
+								className="relative group rounded-card border border-card bg-background/30 overflow-hidden"
 							>
 								<button
 									type="button"
@@ -123,7 +128,8 @@ export function StickerBoardAssetsPanel({
 											historyBase: base,
 										});
 									}}
-									title="클릭: 가운데 추가 / 드래그: 캔버스에 드롭"
+									title={asset.name ?? "이미지 에셋"}
+									aria-label={asset.name ?? "이미지 에셋"}
 								>
 									{/* eslint-disable-next-line @next/next/no-img-element */}
 									<img
@@ -146,6 +152,7 @@ export function StickerBoardAssetsPanel({
 				type="button"
 				variant="outline"
 				size={compactTrigger ? "icon" : "sm"}
+				className={compactTrigger ? "h-8 w-8" : undefined}
 				onClick={() => setIsOpen((prev) => !prev)}
 				aria-label={isOpen ? "이미지 에셋 닫기" : "이미지 에셋 열기"}
 				title={isOpen ? "이미지 에셋 닫기" : "이미지 에셋 열기"}

@@ -7,6 +7,9 @@ import { useStickerBoardEditorContext } from "@/contexts/StickerBoardEditorConte
 import { isPctSticker } from "@/lib/stickerboard-utils";
 import { STICKER_ASSET_DND_MIME } from "@/types/stickerBoard";
 import { StickerRenderer } from "@/components/stickerboard-editor/StickerRenderer";
+import { StickerBoardAssetsPanel } from "@/components/stickerboard-editor/StickerBoardAssetsPanel";
+import { Button } from "@/components/ui/button";
+import { ImagePlus, Type } from "lucide-react";
 
 const GRID_BASE = 12;
 
@@ -16,7 +19,7 @@ export function StickerBoardCanvas({
     ratio: { w: number; h: number } | null;
 }) {
     const {
-        state: { componentsDraft, selectedId, selectedIds },
+        state: { componentsDraft, selectedId, selectedIds, isTextInsertMode },
         refs: {
             boundsRef,
             canvasRef,
@@ -31,6 +34,11 @@ export function StickerBoardCanvas({
             setComponentsDraft,
             clampStickerToEditorBounds,
             commitHistoryBase,
+            setIsTextInsertMode,
+            setIsImageDialogOpen,
+            addTextStickerAt,
+            updateComponent,
+            requestAutoSize,
         },
         computed: { visibleDraft },
     } = useStickerBoardEditorContext();
@@ -60,6 +68,21 @@ export function StickerBoardCanvas({
         new Map<number, { xPct: number; yPct: number; rotation: number }>()
     );
     const [moveableTargets, setMoveableTargets] = useState<HTMLElement[]>([]);
+    const [textDraft, setTextDraft] = useState<{
+        mode: "insert" | "edit";
+        id?: number;
+        text: string;
+        xPct: number;
+        yPct: number;
+        widthPct?: number;  // 편집 모드에서 사용
+        heightPct?: number; // 편집 모드에서 사용
+        widthPx: number;    // 삽입 모드에서 사용
+        fontSize: number;
+        textColor: string;
+        textAlign: "left" | "center" | "right";
+        backgroundColor?: string;
+    } | null>(null);
+    const textDraftRef = useRef<HTMLDivElement | null>(null);
 
     const selectionIds = useMemo(() => {
         if (selectedIds.size > 0) return Array.from(selectedIds);
@@ -102,6 +125,35 @@ export function StickerBoardCanvas({
         });
         return () => window.cancelAnimationFrame(raf);
     }, [componentsDraft, selectionIds]);
+
+    useEffect(() => {
+        if (!isTextInsertMode) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                setIsTextInsertMode(false);
+            }
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [isTextInsertMode, setIsTextInsertMode]);
+
+    useEffect(() => {
+        const el = textDraftRef.current;
+        if (!el) return;
+        el.focus();
+        // 커서를 텍스트 끝으로 이동
+        const range = document.createRange();
+        const selection = window.getSelection();
+        if (el.childNodes.length > 0) {
+            const lastNode = el.childNodes[el.childNodes.length - 1];
+            range.setStartAfter(lastNode);
+        } else {
+            range.setStart(el, 0);
+        }
+        range.collapse(true);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+    }, [textDraft]);
 
     const getCanvasRect = () => {
         const canvas = canvasRef.current;
@@ -297,12 +349,121 @@ export function StickerBoardCanvas({
         ids.forEach((id) => rotatePreviewRef.current.delete(id));
     };
 
+    const openTextDraftAt = (xPct: number, yPct: number, text = "") => {
+        const rect = getCanvasRect();
+        const widthPx = rect ? Math.min(240, rect.width * 0.5) : 240;
+        const maxXPct =
+            rect && rect.width > 0
+                ? Math.max(0, 100 - (widthPx / rect.width) * 100)
+                : 100;
+        const xClamped = Math.min(Math.max(0, xPct), maxXPct);
+        setTextDraft({
+            mode: "insert",
+            text,
+            xPct: xClamped,
+            yPct: Math.max(0, Math.min(100, yPct)),
+            widthPx,
+            fontSize: 14,
+            textColor: "#1f2937",
+            textAlign: "left",
+        });
+    };
+
+    const openTextDraftForEdit = (component: (typeof componentsDraft)[number]) => {
+        if (component.type !== "text") return;
+        const rect = getCanvasRect();
+        const widthPx = rect ? (component.widthPct / 100) * rect.width : 240;
+        setTextDraft({
+            mode: "edit",
+            id: component.id,
+            text: component.text ?? "",
+            xPct: component.xPct,
+            yPct: component.yPct,
+            widthPct: component.widthPct,
+            heightPct: component.heightPct,
+            widthPx,
+            fontSize: component.style?.fontSize ?? 14,
+            textColor: component.style?.textColor ?? "#1f2937",
+            textAlign: component.style?.textAlign ?? "left",
+            backgroundColor: component.style?.backgroundColor,
+        });
+    };
+
+    const cancelTextDraft = () => {
+        setTextDraft(null);
+    };
+
+    const commitTextDraft = () => {
+        if (!textDraft) return;
+        const text = textDraft.text.replace(/\s+$/u, "");
+        if (!text.trim()) {
+            cancelTextDraft();
+            return;
+        }
+        if (textDraft.mode === "insert") {
+            const base = cloneDraft(presentRef.current);
+            addTextStickerAt({
+                text,
+                xPct: textDraft.xPct,
+                yPct: textDraft.yPct,
+                historyBase: base,
+            });
+        } else if (textDraft.mode === "edit" && textDraft.id) {
+            updateComponent(textDraft.id, (prev) => {
+                if (prev.type !== "text") return prev;
+                const next = {
+                    ...prev,
+                    text,
+                    style: {
+                        ...(prev.style ?? {}),
+                        textAlign: textDraft.textAlign,
+                        textColor: textDraft.textColor,
+                        fontSize: textDraft.fontSize,
+                    },
+                };
+                if (next.autoSize !== false) requestAutoSize(next);
+                return next;
+            });
+        }
+        setIsTextInsertMode(false);
+        cancelTextDraft();
+    };
+
     return (
 		<div className="rounded-card border border-card bg-card-bg/60 p-4 blur-proxy">
-            <div className="text-sm font-semibold text-main-text">캔버스</div>
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                고정 폭 768px 캔버스 영역
-            </p>
+            <div className="flex items-center justify-between">
+                <div>
+                    <div className="text-sm font-semibold text-main-text">캔버스</div>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        고정 폭 768px 캔버스 영역
+                    </p>
+                </div>
+                <div className="flex items-center gap-1">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setIsImageDialogOpen(true)}
+                        aria-label="이미지 스티커 추가"
+                        title="이미지 스티커 추가"
+                    >
+                        <ImagePlus className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setIsTextInsertMode(true)}
+                        aria-label="텍스트 스티커 추가"
+                        title="텍스트 스티커 추가"
+                    >
+                        <Type className="h-4 w-4" />
+                    </Button>
+                    <StickerBoardAssetsPanel containerClassName="" compactTrigger />
+                </div>
+            </div>
             <div
                 ref={boundsRef}
                 className="mt-4 w-full overflow-hidden rounded-card border border-card bg-card-bg p-2"
@@ -333,6 +494,25 @@ export function StickerBoardCanvas({
                                 })(),
                             }}
                             ref={canvasRef}
+                            onPointerDown={(e) => {
+                                if (!isTextInsertMode) return;
+                                if (
+                                    (e.target as HTMLElement)?.closest?.(
+                                        '[data-sticker-root="true"]'
+                                    )
+                                ) {
+                                    return;
+                                }
+                                const rect = canvasRef.current?.getBoundingClientRect();
+                                if (!rect || rect.width <= 0 || rect.height <= 0) return;
+                                const xPct = ((e.clientX - rect.left) / rect.width) * 100;
+                                const yPct = ((e.clientY - rect.top) / rect.height) * 100;
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setIsTextInsertMode(false);
+                                setSelection(new Set(), null);
+                                openTextDraftAt(xPct, yPct);
+                            }}
                             onDragOver={(e) => {
                                 e.preventDefault();
                                 e.dataTransfer.dropEffect = "copy";
@@ -611,9 +791,70 @@ export function StickerBoardCanvas({
                                     endMoveableInteraction();
                                 }}
                             />
+                            {textDraft && (
+                                <div
+                                    ref={textDraftRef}
+                                    contentEditable
+                                    suppressContentEditableWarning
+                                    onInput={(e) => {
+                                        const text = (e.target as HTMLDivElement).innerText;
+                                        setTextDraft((prev) =>
+                                            prev ? { ...prev, text } : prev
+                                        );
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                                            e.preventDefault();
+                                            commitTextDraft();
+                                        }
+                                        if (e.key === "Escape") {
+                                            e.preventDefault();
+                                            cancelTextDraft();
+                                        }
+                                    }}
+                                    onBlur={() => {
+                                        commitTextDraft();
+                                    }}
+                                    className={[
+                                        "absolute z-40 outline-none whitespace-pre-wrap break-words",
+                                        textDraft.mode === "edit" ? "ring-2 ring-blue-500 ring-offset-0 rounded-md" : "",
+                                    ].join(" ")}
+                                    style={textDraft.mode === "edit" && textDraft.widthPct !== undefined ? {
+                                        // 편집 모드: 기존 스티커 위치/크기에 맞춤
+                                        left: `${textDraft.xPct}%`,
+                                        top: `${textDraft.yPct}%`,
+                                        width: `${textDraft.widthPct}%`,
+                                        minHeight: textDraft.heightPct ? `${textDraft.heightPct}%` : undefined,
+                                        color: textDraft.textColor,
+                                        fontSize: `${textDraft.fontSize}px`,
+                                        textAlign: textDraft.textAlign,
+                                        backgroundColor: textDraft.backgroundColor ?? "transparent",
+                                        padding: "4px",
+                                        caretColor: textDraft.textColor,
+                                    } : {
+                                        // 삽입 모드: 커서만 보이고 배경 없음
+                                        left: `${textDraft.xPct}%`,
+                                        top: `${textDraft.yPct}%`,
+                                        minWidth: "2px",
+                                        maxWidth: `${textDraft.widthPx}px`,
+                                        color: textDraft.textColor,
+                                        fontSize: `${textDraft.fontSize}px`,
+                                        textAlign: textDraft.textAlign,
+                                        backgroundColor: "transparent",
+                                        caretColor: "#3b82f6",
+                                    }}
+                                >
+                                    {textDraft.mode === "edit" ? textDraft.text : ""}
+                                </div>
+                            )}
                             {visibleDraft.length > 0 ? (
                                 visibleDraft.map((component) => (
-                                    <StickerRenderer key={component.id} component={component} />
+                                    <StickerRenderer
+                                        key={component.id}
+                                        component={component}
+                                        onDoubleClick={() => openTextDraftForEdit(component)}
+                                        isEditing={textDraft?.mode === "edit" && textDraft?.id === component.id}
+                                    />
                                 ))
                             ) : (
                                 <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">

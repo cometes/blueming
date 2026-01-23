@@ -36,6 +36,7 @@ const presentRef = useRef<StickerBoardComponent[]>([]);
 const [selectedId, setSelectedId] = useState<number | null>(null);
 const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+const [isTextInsertMode, setIsTextInsertMode] = useState(false);
 const [uploadThumbnail, setUploadThumbnail] = useState("");
 const [editingGroupId, setEditingGroupId] = useState<number | null>(null);
 const [expandedGroupIds, setExpandedGroupIds] = useState<Set<number>>(
@@ -506,9 +507,16 @@ const getNextZIndex = useMemo(() => {
 	return maxZ + 1;
 }, [componentsDraft]);
 
-const addTextSticker = () => {
+const addTextStickerAt = (opts?: {
+	text?: string;
+	xPct?: number;
+	yPct?: number;
+	centerXPct?: number;
+	centerYPct?: number;
+	historyBase?: StickerBoardComponent[] | null;
+}) => {
 	const id = Date.now();
-	const text = "새 스티커";
+	const text = opts?.text?.trim() ? opts.text : "새 스티커";
 	const fontSize = 14;
 	const paddingPx = DEFAULT_TEXT_PADDING;
 	const maxWidthPx = DEFAULT_TEXT_MAX_WIDTH_PX;
@@ -534,9 +542,13 @@ const addTextSticker = () => {
 
 	const widthPct = measured?.widthPct ?? 18;
 	const heightPct = measured?.heightPct ?? 10;
+	const hasExplicitPosition =
+		typeof opts?.xPct === "number" && typeof opts?.yPct === "number";
+	const centerX = opts?.centerXPct ?? 50;
+	const centerY = opts?.centerYPct ?? 50;
 	const base = clampStickerToEditorBounds({
-		xPct: 50 - widthPct / 2,
-		yPct: 50 - heightPct / 2,
+		xPct: hasExplicitPosition ? opts!.xPct! : centerX - widthPct / 2,
+		yPct: hasExplicitPosition ? opts!.yPct! : centerY - heightPct / 2,
 		widthPct,
 		heightPct,
 	});
@@ -566,6 +578,11 @@ const addTextSticker = () => {
 	};
 	setComponentsDraft((prev) => [...prev, newSticker]);
 	setSelectedId(id);
+	if (opts?.historyBase) commitHistoryBase(opts.historyBase);
+};
+
+const addTextSticker = () => {
+	addTextStickerAt();
 };
 
 const addImageSticker = async (url: string) => {
@@ -1272,6 +1289,7 @@ useEffect(() => {
 			selectedId,
 			selectedIds,
 			isImageDialogOpen,
+			isTextInsertMode,
 			uploadThumbnail,
 			editingGroupId,
 			expandedGroupIds,
@@ -1305,6 +1323,7 @@ useEffect(() => {
 			setSelectedId,
 			setSelectedIds,
 			setIsImageDialogOpen,
+			setIsTextInsertMode,
 			setUploadThumbnail,
 			setEditingGroupId,
 			setExpandedGroupIds,
@@ -1321,6 +1340,7 @@ useEffect(() => {
 			toggleLock,
 			reorderLayersByIndex,
 			addTextSticker,
+			addTextStickerAt,
 			addImageSticker,
 			addImageStickerAt,
 			refreshAssets,

@@ -24,18 +24,14 @@ import {
 	AlignEndVertical,
 	AlignStartHorizontal,
 	AlignStartVertical,
-	ImagePlus,
-	Type,
+	FlipHorizontal2,
+	FlipVertical2,
 } from "lucide-react";
-import { StickerBoardAssetsPanel } from "@/components/stickerboard-editor/StickerBoardAssetsPanel";
 
 export function StickerBoardPropertiesPanel() {
 	const {
 		computed: { selectedComponent, selectedImageComponent },
 		actions: {
-			setIsImageDialogOpen,
-			setImageReplaceTargetId,
-			addTextSticker,
 			updateComponent,
 			requestAutoSize,
 			alignSelectedSticker,
@@ -45,35 +41,6 @@ export function StickerBoardPropertiesPanel() {
 
 	return (
 		<>
-			<div className="mt-4 flex items-center gap-2">
-				<Button
-					type="button"
-					variant="outline"
-					size="icon"
-					onClick={() => setIsImageDialogOpen(true)}
-					aria-label="이미지 스티커 추가"
-					title="이미지 스티커 추가"
-				>
-					<ImagePlus className="h-4 w-4" />
-				</Button>
-				<Button
-					type="button"
-					variant="outline"
-					size="icon"
-					onClick={addTextSticker}
-					aria-label="텍스트 스티커 추가"
-					title="텍스트 스티커 추가"
-				>
-					<Type className="h-4 w-4" />
-				</Button>
-				<StickerBoardAssetsPanel containerClassName="" compactTrigger />
-			</div>
-			<div className="mt-4 rounded-md border border-dashed border-gray-300/70 bg-background/40 p-3 text-xs text-gray-400">
-				{selectedComponent
-					? `선택됨: #${selectedComponent.id} (${selectedComponent.type})`
-					: "선택된 스티커가 없습니다."}
-			</div>
-
 			{selectedComponent && (
 				<div className="mt-4 space-y-2">
 					<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
@@ -297,28 +264,6 @@ export function StickerBoardPropertiesPanel() {
 							}}
 						/>
 					</div>
-					<div>
-						<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-							텍스트
-						</div>
-						<textarea
-							className="mt-2 w-full min-h-[120px] rounded-card border border-card bg-card-bg px-3 py-2 text-sm focus-visible:outline-none focus-visible:border-theme-primary focus-visible:ring-1 focus-visible:ring-theme-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
-							value={selectedComponent.text ?? ""}
-							disabled={selectedComponent.isLocked === true}
-							onChange={(e) => {
-								const nextText = e.target.value;
-								updateComponent(selectedComponent.id, (prev) => {
-									if (!isTextSticker(prev)) return prev;
-									const next = { ...prev, text: nextText };
-									// live autosize
-									if (next.autoSize !== false) {
-										requestAutoSize(next);
-									}
-									return next;
-								});
-							}}
-						/>
-					</div>
 
 					<div className="grid grid-cols-2 gap-3">
 						<div>
@@ -379,30 +324,42 @@ export function StickerBoardPropertiesPanel() {
 							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
 								굵기
 							</div>
-							<Input
-								className="mt-2"
-								type="number"
-								min={100}
-								max={900}
-								step={100}
-								value={selectedComponent.style?.fontWeight ?? 400}
-								disabled={selectedComponent.isLocked === true}
-								onChange={(e) => {
-									const weight = Number(e.target.value || 0);
-									updateComponent(selectedComponent.id, (prev) => {
-										if (!isTextSticker(prev)) return prev;
-										const next: StickerBoardTextComponent = {
-											...prev,
-											style: {
-												...(prev.style ?? {}),
-												fontWeight: Number.isFinite(weight) ? weight : 400,
-											},
-										};
-										if (next.autoSize !== false) requestAutoSize(next);
-										return next;
-									});
-								}}
-							/>
+							<div className="mt-2">
+								<Select
+									value={String(selectedComponent.style?.fontWeight ?? 400)}
+									onValueChange={(value) => {
+										const weight = Number(value);
+										updateComponent(selectedComponent.id, (prev) => {
+											if (!isTextSticker(prev)) return prev;
+											const next: StickerBoardTextComponent = {
+												...prev,
+												style: {
+													...(prev.style ?? {}),
+													fontWeight: weight,
+												},
+											};
+											if (next.autoSize !== false) requestAutoSize(next);
+											return next;
+										});
+									}}
+									disabled={selectedComponent.isLocked === true}
+								>
+									<SelectTrigger>
+										<SelectValue placeholder="굵기" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="100">Thin</SelectItem>
+										<SelectItem value="200">Extra Light</SelectItem>
+										<SelectItem value="300">Light</SelectItem>
+										<SelectItem value="400">Regular</SelectItem>
+										<SelectItem value="500">Medium</SelectItem>
+										<SelectItem value="600">Semi Bold</SelectItem>
+										<SelectItem value="700">Bold</SelectItem>
+										<SelectItem value="800">Extra Bold</SelectItem>
+										<SelectItem value="900">Black</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
 						</div>
 
 						<div>
@@ -643,27 +600,6 @@ export function StickerBoardPropertiesPanel() {
 						/>
 					</div>
 
-					<div>
-						<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
-							이미지
-						</div>
-						<div className="mt-2 flex items-center gap-2">
-							<Button
-								type="button"
-								variant="outline"
-								className="flex-1 justify-start"
-								disabled={selectedImageComponent.isLocked === true}
-								onClick={() => {
-									setImageReplaceTargetId(selectedImageComponent.id);
-									setIsImageDialogOpen(true);
-								}}
-							>
-								<ImagePlus className="h-4 w-4 mr-2" />
-								이미지 교체
-							</Button>
-						</div>
-					</div>
-
 					<div className="grid grid-cols-2 gap-3">
 						<div>
 							<div className="text-xs font-medium text-gray-600 dark:text-gray-300">
@@ -702,6 +638,7 @@ export function StickerBoardPropertiesPanel() {
 								<Button
 									type="button"
 									variant="outline"
+									size="icon"
 									className="flex-1"
 									disabled={selectedImageComponent.isLocked === true}
 									onClick={() => {
@@ -711,11 +648,12 @@ export function StickerBoardPropertiesPanel() {
 										}));
 								}}
 								>
-									X
+									<FlipHorizontal2 className="h-4 w-4" />
 								</Button>
 								<Button
 									type="button"
 									variant="outline"
+									size="icon"
 									className="flex-1"
 									disabled={selectedImageComponent.isLocked === true}
 									onClick={() => {
@@ -725,7 +663,7 @@ export function StickerBoardPropertiesPanel() {
 										}));
 								}}
 								>
-									Y
+									<FlipVertical2 className="h-4 w-4" />
 								</Button>
 							</div>
 						</div>
