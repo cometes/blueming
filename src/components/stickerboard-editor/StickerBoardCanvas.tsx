@@ -20,10 +20,17 @@ export function StickerBoardCanvas({
 	ratio: { w: number; h: number } | null;
 }) {
 	const {
-		state: { componentsDraft, selectedId, selectedIds, isTextInsertMode },
+		state: {
+			componentsDraft,
+			selectedId,
+			selectedIds,
+			isTextInsertMode,
+			isImageDialogOpen,
+		},
 		refs: {
 			boundsRef,
 			canvasRef,
+			setCanvasRef,
 			presentRef,
 			interactionHistoryBaseRef,
 			moveableInteractionRef,
@@ -455,8 +462,11 @@ export function StickerBoardCanvas({
 						type="button"
 						variant="ghost"
 						size="icon"
-						className="h-8 w-8 rounded-none hover:bg-stone-700"
-						onClick={() => setIsImageDialogOpen(true)}
+						className={[
+							"h-8 w-8 rounded-none hover:bg-stone-700",
+							isImageDialogOpen ? "bg-stone-700 text-white" : "",
+						].join(" ")}
+						onClick={() => setIsImageDialogOpen((prev) => !prev)}
 						aria-label="이미지 스티커 추가"
 						title="이미지 스티커 추가"
 					>
@@ -466,8 +476,11 @@ export function StickerBoardCanvas({
 						type="button"
 						variant="ghost"
 						size="icon"
-						className="h-8 w-8 rounded-none hover:bg-stone-700"
-						onClick={() => setIsTextInsertMode(true)}
+						className={[
+							"h-8 w-8 rounded-none hover:bg-stone-700",
+							isTextInsertMode ? "bg-stone-700 text-white" : "",
+						].join(" ")}
+						onClick={() => setIsTextInsertMode((prev) => !prev)}
 						aria-label="텍스트 스티커 추가"
 						title="텍스트 스티커 추가"
 					>
@@ -510,7 +523,7 @@ export function StickerBoardCanvas({
 									return `${start} / span ${span}`;
 								})(),
 							}}
-							ref={canvasRef}
+							ref={setCanvasRef}
 							onPointerDown={(e) => {
 								if (!isTextInsertMode) return;
 								if (
@@ -821,35 +834,35 @@ export function StickerBoardCanvas({
 									].join(" ")}
 									style={
 										textDraft.mode === "edit" &&
-										textDraft.widthPct !== undefined
+											textDraft.widthPct !== undefined
 											? {
-													// 편집 모드: 기존 스티커 위치/크기에 맞춤
-													left: `${textDraft.xPct}%`,
-													top: `${textDraft.yPct}%`,
-													width: `${textDraft.widthPct}%`,
-													minHeight: textDraft.heightPct
-														? `${textDraft.heightPct}%`
-														: undefined,
-													color: textDraft.textColor,
-													fontSize: `${textDraft.fontSize}px`,
-													textAlign: textDraft.textAlign,
-													backgroundColor:
-														textDraft.backgroundColor ?? "transparent",
-													padding: "4px",
-													caretColor: textDraft.textColor,
-												}
+												// 편집 모드: 기존 스티커 위치/크기에 맞춤
+												left: `${textDraft.xPct}%`,
+												top: `${textDraft.yPct}%`,
+												width: `${textDraft.widthPct}%`,
+												minHeight: textDraft.heightPct
+													? `${textDraft.heightPct}%`
+													: undefined,
+												color: textDraft.textColor,
+												fontSize: `${textDraft.fontSize}px`,
+												textAlign: textDraft.textAlign,
+												backgroundColor:
+													textDraft.backgroundColor ?? "transparent",
+												padding: "4px",
+												caretColor: textDraft.textColor,
+											}
 											: {
-													// 삽입 모드: 커서만 보이고 배경 없음
-													left: `${textDraft.xPct}%`,
-													top: `${textDraft.yPct}%`,
-													minWidth: "2px",
-													maxWidth: `${textDraft.widthPx}px`,
-													color: textDraft.textColor,
-													fontSize: `${textDraft.fontSize}px`,
-													textAlign: textDraft.textAlign,
-													backgroundColor: "transparent",
-													caretColor: "#3b82f6",
-												}
+												// 삽입 모드: 커서만 보이고 배경 없음
+												left: `${textDraft.xPct}%`,
+												top: `${textDraft.yPct}%`,
+												minWidth: "2px",
+												maxWidth: `${textDraft.widthPx}px`,
+												color: textDraft.textColor,
+												fontSize: `${textDraft.fontSize}px`,
+												textAlign: textDraft.textAlign,
+												backgroundColor: "transparent",
+												caretColor: "#3b82f6",
+											}
 									}
 								>
 									{textDraft.mode === "edit" ? textDraft.text : ""}

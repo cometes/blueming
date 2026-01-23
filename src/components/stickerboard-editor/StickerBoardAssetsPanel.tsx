@@ -209,6 +209,7 @@ export function StickerBoardAssetsPanel({
 				size={compactTrigger ? "icon" : "sm"}
 				className={[
 					compactTrigger ? "h-8 w-8" : undefined,
+					isOpen ? "bg-stone-700 text-white" : undefined,
 					triggerClassName,
 				]
 					.filter(Boolean)
