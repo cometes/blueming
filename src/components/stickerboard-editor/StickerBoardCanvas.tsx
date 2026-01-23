@@ -439,7 +439,7 @@ export function StickerBoardCanvas({
 	};
 
 	return (
-		<div className="rounded-card border-card bg-card p-4">
+		<div className="rounded-card border-card bg-card blur-proxy p-4">
 			<div className="flex items-center justify-between">
 				<div>
 					<div className="text-sm font-semibold text-main-text">캔버스</div>

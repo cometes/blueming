@@ -125,7 +125,12 @@ export default function ImageUploadDialog({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
-			<DialogContent className="bg-card-bg border-card rounded-card backdrop-blur-card max-w-2xl sm:max-w-2xl w-full">
+			<DialogContent
+				className={[
+					"bg-card-bg border-card rounded-card backdrop-blur-card w-full",
+					rightContent ? "max-w-2xl sm:max-w-2xl" : "max-w-md sm:max-w-md",
+				].join(" ")}
+			>
 				<DialogHeader>
 					<DialogTitle className="text-[20px] font-semibold">
 						이미지 업로드
@@ -134,7 +139,12 @@ export default function ImageUploadDialog({
 						이미지를 선택하고 업로드해 주세요.
 					</DialogDescription>
 				</DialogHeader>
-				<div className="grid grid-cols-2 gap-4">
+				<div
+					className={[
+						"grid gap-4",
+						rightContent ? "grid-cols-2" : "grid-cols-1",
+					].join(" ")}
+				>
 					<div>
 						<div className="text-xs font-semibold text-main-text mb-2">
 							파일 업로드
