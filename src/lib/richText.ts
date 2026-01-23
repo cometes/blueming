@@ -1,5 +1,5 @@
 import { generateHTML } from "@tiptap/html";
-import { extensions } from "@/components/editor/TiptapEditor";
+import { extensions as tiptapExtensions } from "@/components/editor/TiptapEditor";
 
 type RichTextNode = {
 	type?: string;
@@ -145,7 +145,7 @@ export const renderRichText = (content: unknown): string => {
 			if (isTiptapDoc(parsed)) {
 				return generateHTML(
 					parsed as Record<string, unknown>,
-					extensions
+					tiptapExtensions
 				);
 			}
 		} catch {

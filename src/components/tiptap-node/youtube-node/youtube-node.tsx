@@ -4,6 +4,14 @@ import { Node } from "@tiptap/core"
 import { ReactNodeViewRenderer } from "@tiptap/react"
 import { YoutubeNodeView } from "@/components/tiptap-extension/youtube-node-view"
 
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    youtube: {
+      setYoutubeVideo: (options: { src: string; width?: number; height?: number }) => ReturnType
+    }
+  }
+}
+
 export const CustomYoutubeNode = Node.create({
   name: "youtube",
   group: "block",

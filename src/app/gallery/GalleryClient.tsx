@@ -4,7 +4,8 @@ import GalleryGrid from "./components/GalleryGrid";
 import { dummyGalleryImages, type GalleryImage } from "./dummyData";
 
 export default function GalleryClient() {
-	const handleImageClick = (image: GalleryImage) => {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	const handleImageClick = (_image: GalleryImage) => {
 		// 추후 모달이나 상세 페이지로 이동 가능
 	};
 

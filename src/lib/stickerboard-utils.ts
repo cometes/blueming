@@ -20,7 +20,7 @@ export const isGroupSticker = (
 ): component is StickerBoardGroupComponent =>
 	(component as StickerBoardGroupComponent).type === "group";
 
-type PctSticker = Extract<StickerBoardComponent, { xPct: number }>;
+export type PctSticker = Extract<StickerBoardComponent, { xPct: number }>;
 
 export const isPctSticker = (
 	component: StickerBoardComponent

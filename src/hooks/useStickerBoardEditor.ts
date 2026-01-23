@@ -11,6 +11,7 @@ import {
 	isPctSticker,
 	isTextSticker,
 	normalizeStickerSize,
+	type PctSticker,
 } from "@/lib/stickerboard-utils";
 import { auth } from "@/lib/Firebase";
 import {
@@ -54,6 +55,7 @@ const [assets, setAssets] = useState<StickerAsset[]>([]);
 const [assetsLoading, setAssetsLoading] = useState(false);
 const [assetsError, setAssetsError] = useState<string | null>(null);
 const [authReady, setAuthReady] = useState(false);
+const [isMoveableInteracting, setIsMoveableInteracting] = useState(false);
 const clipboardRef = useRef<StickerBoardComponent | null>(null);
 const selectedIdRef = useRef<number | null>(null);
 const selectedIdsRef = useRef<Set<number>>(new Set());
@@ -1301,6 +1303,7 @@ useEffect(() => {
 			assetsLoading,
 			assetsError,
 			authReady,
+			isMoveableInteracting,
 		},
 		refs: {
 			presentRef,
@@ -1334,6 +1337,7 @@ useEffect(() => {
 			setAssets,
 			setAssetsLoading,
 			setAssetsError,
+			setIsMoveableInteracting,
 			updateComponent,
 			deleteSticker,
 			toggleVisibility,

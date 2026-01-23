@@ -40,6 +40,7 @@ export function StickerBoardCanvas({
 			addTextStickerAt,
 			updateComponent,
 			requestAutoSize,
+			setIsMoveableInteracting,
 		},
 		computed: { visibleDraft },
 	} = useStickerBoardEditorContext();
@@ -170,6 +171,7 @@ export function StickerBoardCanvas({
 		if (!interactionHistoryBaseRef.current) {
 			interactionHistoryBaseRef.current = cloneDraft(presentRef.current);
 		}
+		setIsMoveableInteracting(true);
 		moveableInteractionRef.current = true;
 		const startMap = new Map<
 			number,
@@ -203,6 +205,7 @@ export function StickerBoardCanvas({
 		const base = interactionHistoryBaseRef.current;
 		interactionHistoryBaseRef.current = null;
 		moveableInteractionRef.current = false;
+		setIsMoveableInteracting(false);
 		interactionStartRef.current = new Map();
 		dragPreviewRef.current = new Map();
 		rotatePreviewRef.current = new Map();
@@ -616,8 +619,6 @@ export function StickerBoardCanvas({
 								throttleDrag={0}
 								throttleResize={0}
 								throttleRotate={0}
-								minWidth={10}
-								minHeight={10}
 								onDragStart={(e) => {
 									const id = Number(
 										(e.target as HTMLElement).getAttribute("data-sticker-id"),
@@ -633,7 +634,7 @@ export function StickerBoardCanvas({
 										(e.target as HTMLElement).getAttribute("data-sticker-id"),
 									);
 									if (Number.isNaN(id)) return;
-									previewDrag(id, e.target as HTMLElement, e.beforeTranslate);
+									previewDrag(id, e.target as HTMLElement, e.beforeTranslate as [number, number]);
 								}}
 								onDragEnd={(e) => {
 									const id = Number(
@@ -662,7 +663,7 @@ export function StickerBoardCanvas({
 										previewDrag(
 											id,
 											ev.target as HTMLElement,
-											ev.beforeTranslate,
+											ev.beforeTranslate as [number, number],
 										);
 									});
 								}}
@@ -692,7 +693,7 @@ export function StickerBoardCanvas({
 										id,
 										e.target as HTMLElement,
 										{ width: e.width, height: e.height },
-										e.drag.beforeTranslate,
+										e.drag.beforeTranslate as [number, number],
 									);
 								}}
 								onResizeEnd={(e) => {
@@ -723,7 +724,7 @@ export function StickerBoardCanvas({
 											id,
 											ev.target as HTMLElement,
 											{ width: ev.width, height: ev.height },
-											ev.drag.beforeTranslate,
+											ev.drag.beforeTranslate as [number, number],
 										);
 									});
 								}}
@@ -750,7 +751,7 @@ export function StickerBoardCanvas({
 									);
 									if (Number.isNaN(id)) return;
 									const delta = e.beforeRotate;
-									const dragDelta = e.drag?.beforeTranslate ?? [0, 0];
+									const dragDelta = (e.drag?.beforeTranslate ?? [0, 0]) as [number, number];
 									applyRotate(id, e.target as HTMLElement, delta, dragDelta);
 								}}
 								onRotateEnd={(e) => {
@@ -778,7 +779,7 @@ export function StickerBoardCanvas({
 										);
 										if (Number.isNaN(id)) return;
 										const delta = ev.beforeRotate;
-										const dragDelta = ev.drag?.beforeTranslate ?? [0, 0];
+										const dragDelta = (ev.drag?.beforeTranslate ?? [0, 0]) as [number, number];
 										applyRotate(id, ev.target as HTMLElement, delta, dragDelta);
 									});
 								}}

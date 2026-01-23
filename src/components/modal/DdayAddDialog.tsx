@@ -14,7 +14,6 @@ import {
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
-	DialogDescription,
 } from "@/components/ui/dialog";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { toast } from "sonner";
