@@ -1,94 +1,83 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ImagePlus, MoveLeft, X } from "lucide-react";
+import { ImagePlus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth/store";
 import { type PhotoBoardPost } from "@/data/photoboard";
 import {
+	createPhotoboardPost,
+	updatePhotoboardPost,
+	uploadPhotoboardImage,
+} from "@/queries/photoboard";
+import {
 	Dialog,
 	DialogContent,
-	DialogDescription,
+	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 interface PhotoboardCreateModalProps {
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
-	onCreate: (post: PhotoBoardPost) => void;
+	onSubmit: (post: PhotoBoardPost) => void;
+	mode?: "create" | "edit";
+	post?: PhotoBoardPost | null;
 }
 
-type ComposerStep = "select" | "crop" | "details";
-
 const getInitial = (value: string) => value.trim().charAt(0).toUpperCase();
-const normalizeTag = (value: string) => value.trim().replace(/^#/, "");
 
 export default function PhotoboardCreateModal({
 	isOpen,
 	onOpenChange,
-	onCreate,
+	onSubmit,
+	mode = "create",
+	post = null,
 }: PhotoboardCreateModalProps) {
 	const { user, isAuthenticated } = useAuthStore();
-	const [step, setStep] = useState<ComposerStep>("select");
-	const [rawImageUrl, setRawImageUrl] = useState("");
-	const [croppedImageUrl, setCroppedImageUrl] = useState("");
-	const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
-	const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 });
+	const [imageUrl, setImageUrl] = useState("");
+	const [imageFile, setImageFile] = useState<File | null>(null);
 	const [captionInput, setCaptionInput] = useState("");
-	const [tagInput, setTagInput] = useState("");
-	const [tags, setTags] = useState<string[]>([]);
 	const [isDragging, setIsDragging] = useState(false);
-	const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-	const [dragOrigin, setDragOrigin] = useState({ x: 0, y: 0 });
-	const [cropBoxSize, setCropBoxSize] = useState(0);
 	const [isProcessing, setIsProcessing] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
-	const cropBoxRef = useRef<HTMLDivElement | null>(null);
 
 	const displayName = user?.displayName || "게스트";
 	const avatarUrl = user?.photoURL || "";
+	const isEditMode = mode === "edit";
+
+	useEffect(() => {
+		if (!isOpen) {
+			resetComposer();
+			return;
+		}
+
+		if (isEditMode && post) {
+			setCaptionInput(post.caption);
+			setImageUrl(post.imageUrl);
+			setImageFile(null);
+		}
+	}, [isOpen, isEditMode, post]);
 
 	useEffect(() => {
 		return () => {
-			if (rawImageUrl.startsWith("blob:")) {
-				URL.revokeObjectURL(rawImageUrl);
+			if (imageUrl.startsWith("blob:")) {
+				URL.revokeObjectURL(imageUrl);
 			}
 		};
-	}, [rawImageUrl]);
-
-	useEffect(() => {
-		if (!isOpen) return;
-		const updateSize = () => {
-			if (!cropBoxRef.current) return;
-			setCropBoxSize(cropBoxRef.current.clientWidth);
-		};
-		updateSize();
-		window.addEventListener("resize", updateSize);
-		return () => window.removeEventListener("resize", updateSize);
-	}, [isOpen, step]);
-
-	useEffect(() => {
-		if (!cropBoxSize || !imageSize.width) return;
-		setCropOffset({ x: 0, y: 0 });
-	}, [cropBoxSize, imageSize]);
+	}, [imageUrl]);
 
 	const resetComposer = () => {
-		setStep("select");
 		setCaptionInput("");
-		setTagInput("");
-		setTags([]);
-		setCroppedImageUrl("");
-		setImageSize({ width: 0, height: 0 });
-		setCropOffset({ x: 0, y: 0 });
 		setIsDragging(false);
 		setIsProcessing(false);
-		if (rawImageUrl.startsWith("blob:")) {
-			URL.revokeObjectURL(rawImageUrl);
+		setImageFile(null);
+		if (imageUrl.startsWith("blob:")) {
+			URL.revokeObjectURL(imageUrl);
 		}
-		setRawImageUrl("");
+		setImageUrl("");
 		if (fileInputRef.current) {
 			fileInputRef.current.value = "";
 		}
@@ -97,301 +86,179 @@ export default function PhotoboardCreateModal({
 	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
 		if (!file) return;
-		if (rawImageUrl.startsWith("blob:")) {
-			URL.revokeObjectURL(rawImageUrl);
+		if (!file.type.startsWith("image/")) {
+			toast.error("이미지 파일만 업로드할 수 있어요.");
+			return;
+		}
+
+		if (imageUrl.startsWith("blob:")) {
+			URL.revokeObjectURL(imageUrl);
 		}
 		const previewUrl = URL.createObjectURL(file);
-		setRawImageUrl(previewUrl);
-		setCroppedImageUrl("");
-		setStep("select");
-		const img = new Image();
-		img.onload = () => {
-			setImageSize({ width: img.naturalWidth, height: img.naturalHeight });
-		};
-		img.src = previewUrl;
+		setImageUrl(previewUrl);
+		setImageFile(file);
 	};
 
-	const getRenderMetrics = () => {
-		if (!cropBoxSize || !imageSize.width || !imageSize.height) return null;
-		const scale = Math.max(
-			cropBoxSize / imageSize.width,
-			cropBoxSize / imageSize.height
-		);
-		const renderWidth = imageSize.width * scale;
-		const renderHeight = imageSize.height * scale;
-		const maxOffsetX = Math.max(0, (renderWidth - cropBoxSize) / 2);
-		const maxOffsetY = Math.max(0, (renderHeight - cropBoxSize) / 2);
-		return { scale, renderWidth, renderHeight, maxOffsetX, maxOffsetY };
-	};
-
-	const clampOffset = (next: { x: number; y: number }) => {
-		const metrics = getRenderMetrics();
-		if (!metrics) return { x: 0, y: 0 };
-		return {
-			x: Math.min(metrics.maxOffsetX, Math.max(-metrics.maxOffsetX, next.x)),
-			y: Math.min(metrics.maxOffsetY, Math.max(-metrics.maxOffsetY, next.y)),
-		};
-	};
-
-	const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-		if (step !== "crop") return;
-		setIsDragging(true);
-		setDragStart({ x: event.clientX, y: event.clientY });
-		setDragOrigin(cropOffset);
-		event.currentTarget.setPointerCapture(event.pointerId);
-	};
-
-	const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-		if (!isDragging) return;
-		const deltaX = event.clientX - dragStart.x;
-		const deltaY = event.clientY - dragStart.y;
-		setCropOffset(clampOffset({ x: dragOrigin.x + deltaX, y: dragOrigin.y + deltaY }));
-	};
-
-	const handlePointerEnd = (event: React.PointerEvent<HTMLDivElement>) => {
-		if (!isDragging) return;
+	const handleDrop = (event: React.DragEvent) => {
+		event.preventDefault();
 		setIsDragging(false);
-		event.currentTarget.releasePointerCapture(event.pointerId);
-	};
-
-	const handleAddTag = (value: string) => {
-		const normalized = normalizeTag(value);
-		if (!normalized) return;
-		if (tags.includes(normalized)) return;
-		if (tags.length >= 5) {
-			toast.error("태그는 최대 5개까지 추가할 수 있어요.");
-			return;
-		}
-		setTags((prev) => [...prev, normalized]);
-		setTagInput("");
-	};
-
-	const handleRemoveTag = (value: string) => {
-		setTags((prev) => prev.filter((tag) => tag !== value));
-	};
-
-	const generateCroppedImage = async () => {
-		const metrics = getRenderMetrics();
-		if (!metrics || !rawImageUrl) return "";
-		const outputSize = 1080;
-		const ratio = outputSize / cropBoxSize;
-		const canvas = document.createElement("canvas");
-		canvas.width = outputSize;
-		canvas.height = outputSize;
-		const ctx = canvas.getContext("2d");
-		if (!ctx) return "";
-
-		const img = new Image();
-		img.src = rawImageUrl;
-		await img.decode();
-		const renderWidth = metrics.renderWidth * ratio;
-		const renderHeight = metrics.renderHeight * ratio;
-		const drawX = (outputSize - renderWidth) / 2 + cropOffset.x * ratio;
-		const drawY = (outputSize - renderHeight) / 2 + cropOffset.y * ratio;
-		ctx.drawImage(img, drawX, drawY, renderWidth, renderHeight);
-		return canvas.toDataURL("image/jpeg", 0.9);
-	};
-
-	const handleNextStep = async () => {
-		if (step === "select") {
-			if (!rawImageUrl) {
-				toast.error("이미지를 선택해주세요.");
-				return;
+		const file = event.dataTransfer.files?.[0];
+		if (file && file.type.startsWith("image/")) {
+			if (imageUrl.startsWith("blob:")) {
+				URL.revokeObjectURL(imageUrl);
 			}
-			setStep("crop");
-			return;
-		}
-		if (step === "crop") {
-			setIsProcessing(true);
-			try {
-				const cropped = await generateCroppedImage();
-				if (!cropped) {
-					toast.error("이미지 편집에 실패했어요.");
-					return;
-				}
-				setCroppedImageUrl(cropped);
-				setStep("details");
-			} finally {
-				setIsProcessing(false);
-			}
+			const previewUrl = URL.createObjectURL(file);
+			setImageUrl(previewUrl);
+			setImageFile(file);
+		} else if (file) {
+			toast.error("이미지 파일만 업로드할 수 있어요.");
 		}
 	};
 
-	const handleBackStep = () => {
-		if (step === "details") {
-			setStep("crop");
+	const handleSubmit = async () => {
+		if (isEditMode && !post) {
+			toast.error("수정할 게시글을 찾지 못했습니다.");
 			return;
 		}
-		if (step === "crop") {
-			setStep("select");
-			return;
-		}
-		onOpenChange(false);
-	};
 
-	const handleCreatePost = () => {
 		const trimmedCaption = captionInput.trim();
-		const finalImageUrl = croppedImageUrl || rawImageUrl;
-		if (!finalImageUrl || !trimmedCaption) {
-			toast.error("이미지와 본문을 입력해주세요.");
+
+		if (!trimmedCaption) {
+			toast.error("본문을 입력해주세요.");
 			return;
 		}
 		if (!isAuthenticated || !user) {
 			toast.error("로그인 후 게시할 수 있어요.");
 			return;
 		}
-		const newPost: PhotoBoardPost = {
-			id: `pb-${Date.now()}`,
-			author: {
-				id: user.uid,
-				name: displayName,
-				avatarUrl,
-			},
-			createdAt: new Date().toISOString(),
-			imageUrl: finalImageUrl,
-			caption: trimmedCaption,
-			likeCount: 0,
-			tags,
-		};
-		onCreate(newPost);
-		resetComposer();
-		onOpenChange(false);
+		if (!isEditMode && !imageFile) {
+			toast.error("이미지를 업로드해주세요.");
+			return;
+		}
+		if (isEditMode && !imageUrl) {
+			toast.error("이미지를 입력해주세요.");
+			return;
+		}
+
+		setIsProcessing(true);
+
+		// Extract tags from caption
+		let finalTags: string[] = [];
+		const extracted = trimmedCaption.match(/#[^\s#]+/g);
+		if (extracted) {
+			finalTags = extracted.map((t) => t.slice(1));
+		}
+
+		try {
+			let finalImageUrl = imageUrl;
+
+			if (!isEditMode && imageFile) {
+				finalImageUrl = await uploadPhotoboardImage(imageFile);
+			}
+			if (isEditMode && imageFile) {
+				finalImageUrl = await uploadPhotoboardImage(imageFile);
+			}
+
+			const payload = {
+				caption: trimmedCaption,
+				imageUrl: finalImageUrl,
+				tags: finalTags,
+			};
+
+			const resultPost = isEditMode && post
+				? await updatePhotoboardPost(post.id, payload)
+				: await createPhotoboardPost(payload);
+
+			onSubmit(resultPost);
+			onOpenChange(false);
+		} catch (error) {
+			const fallback = isEditMode
+				? "게시물 수정에 실패했습니다."
+				: "게시물 생성에 실패했습니다.";
+			const message = error instanceof Error ? error.message : fallback;
+			toast.error(message);
+		} finally {
+			setIsProcessing(false);
+		}
 	};
 
-	const metrics = getRenderMetrics();
-	const isShareDisabled =
-		!croppedImageUrl || !captionInput.trim() || !isAuthenticated || isProcessing;
-	const isNextDisabled =
-		step === "select"
-			? !rawImageUrl || isProcessing
-			: !rawImageUrl || !metrics || isProcessing;
-
 	return (
-		<Dialog
-			open={isOpen}
-			onOpenChange={(open) => {
-				onOpenChange(open);
-				if (!open) resetComposer();
-			}}
-		>
-			<DialogContent className="max-w-5xl w-[94vw] bg-card-bg border-card rounded-card p-0 overflow-hidden">
-				<div className="flex items-center justify-between border-b border-card px-4 py-3">
-					<button
-						type="button"
-						onClick={handleBackStep}
-						className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-card"
-						aria-label="뒤로가기"
+		<Dialog open={isOpen} onOpenChange={onOpenChange}>
+			<DialogContent className="max-w-3xl md:max-w-3xl w-full bg-card border-card rounded-card backdrop-blur-card p-0 overflow-hidden text-main-text gap-0">
+				<DialogHeader className="p-4 border-b border-card-border">
+				<DialogTitle className="text-[20px] font-semibold">
+					{isEditMode ? "게시물 수정" : "새 게시물"}
+				</DialogTitle>
+				</DialogHeader>
+				<div className="flex">
+					{/* Left Column: Image Upload/Preview */}
+					<div
+						className={cn(
+							"w-full md:w-[60%] aspect-square flex items-center justify-center relative transition-colors border-r border-card-border",
+							isDragging && "bg-theme-primary/10",
+						)}
+						onDragOver={(e) => {
+							e.preventDefault();
+							setIsDragging(true);
+						}}
+						onDragLeave={() => setIsDragging(false)}
+						onDrop={handleDrop}
 					>
-						<MoveLeft size={18} />
-					</button>
-					<DialogTitle className="text-sm font-semibold text-main-text">
-						{step === "crop" ? "자르기" : "새 게시물 만들기"}
-					</DialogTitle>
-					{step === "details" ? (
-						<button
-							type="button"
-							onClick={handleCreatePost}
-							disabled={isShareDisabled}
-							className={cn(
-								"text-sm font-semibold",
-								isShareDisabled
-									? "text-sub-text cursor-not-allowed"
-									: "text-theme-primary hover:opacity-80"
-							)}
-						>
-							공유하기
-						</button>
-					) : (
-						<button
-							type="button"
-							onClick={handleNextStep}
-							disabled={isNextDisabled}
-							className={cn(
-								"text-sm font-semibold",
-								isNextDisabled
-									? "text-sub-text cursor-not-allowed"
-									: "text-theme-primary hover:opacity-80"
-							)}
-						>
-							다음
-						</button>
-					)}
-				</div>
-				<DialogDescription className="sr-only">
-					포토보드에 새 게시물을 작성합니다.
-				</DialogDescription>
-
-				{step === "select" && (
-					<div className="flex h-[70vh] min-h-[420px] items-center justify-center bg-card-bg p-6">
-						<div className="w-full max-w-[520px] aspect-square border border-dashed border-card text-sub-text rounded-card flex flex-col items-center justify-center gap-4 bg-card">
-							<ImagePlus size={42} className="text-sub-text" />
-							<p className="text-sm text-sub-text">
-								사진과 동영상을 여기에 끌어다 놓으세요
-							</p>
-							<label className="px-4 py-2 rounded-full bg-theme-primary text-white text-sm cursor-pointer">
-								컴퓨터에서 선택
-								<input
-									ref={fileInputRef}
-									type="file"
-									accept="image/*"
-									onChange={handleImageChange}
-									className="hidden"
-								/>
-							</label>
-						</div>
-					</div>
-				)}
-
-				{step === "crop" && (
-					<div className="flex h-[70vh] min-h-[420px] items-center justify-center bg-card-bg p-6">
-						<div
-							ref={cropBoxRef}
-							className="relative w-full max-w-[520px] aspect-square rounded-card overflow-hidden border border-card bg-black"
-							onPointerDown={handlePointerDown}
-							onPointerMove={handlePointerMove}
-							onPointerUp={handlePointerEnd}
-							onPointerCancel={handlePointerEnd}
-							style={{ cursor: isDragging ? "grabbing" : "grab" }}
-						>
-							{rawImageUrl && metrics ? (
+						{imageUrl ? (
+							<div className="relative w-full h-full flex items-center justify-center group API-image-container">
 								<img
-									src={rawImageUrl}
-									alt="편집할 이미지"
-									className="absolute left-1/2 top-1/2 select-none"
-									style={{
-										width: `${metrics.renderWidth}px`,
-										height: `${metrics.renderHeight}px`,
-										transform: `translate(calc(-50% + ${cropOffset.x}px), calc(-50% + ${cropOffset.y}px))`,
-									}}
-									draggable={false}
-								/>
-							) : (
-								<div className="absolute inset-0 flex items-center justify-center text-sm text-sub-text">
-									이미지를 불러오는 중...
-								</div>
-							)}
-							<div className="absolute inset-0 border border-white/40 pointer-events-none" />
-							<div className="absolute left-3 bottom-3 text-xs text-white/80 bg-black/50 px-2 py-1 rounded-full">
-								드래그해서 위치를 조정하세요
-							</div>
-						</div>
-					</div>
-				)}
-
-				{step === "details" && (
-					<div className="grid h-[70vh] min-h-[420px] md:grid-cols-[1.4fr_1fr]">
-						<div className="flex items-center justify-center bg-card-bg p-6">
-							<div className="relative w-full max-w-[520px] aspect-square rounded-card overflow-hidden border border-card">
-								<img
-									src={croppedImageUrl}
-									alt="편집된 이미지"
+									src={imageUrl}
+									alt="Preview"
 									className="w-full h-full object-cover"
 								/>
+								<button
+									onClick={() => {
+										setImageUrl("");
+										setImageFile(null);
+									}}
+									className="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+									title="이미지 제거"
+								>
+									<X size={20} />
+								</button>
 							</div>
-						</div>
-						<div className="border-l border-card bg-card p-6 flex flex-col gap-6">
+						) : (
+							<div className="flex flex-col items-center gap-4 p-8 text-center">
+								<div className="w-16 h-16 rounded-full bg-card flex items-center justify-center border border-card">
+									<ImagePlus size={32} className="text-sub-text" />
+								</div>
+								<div>
+									<h3 className="text-lg font-semibold">사진 업로드</h3>
+									<p className="text-sm text-sub-text mt-1">
+										여기에 이미지를 끌어다 놓거나 선택하세요
+									</p>
+								</div>
+								<label className="mt-2">
+									<Button
+										variant="default"
+										className="cursor-pointer"
+										onClick={() => fileInputRef.current?.click()}
+									>
+										컴퓨터에서 선택
+									</Button>
+									<input
+										ref={fileInputRef}
+										type="file"
+										accept="image/*"
+										onChange={handleImageChange}
+										className="hidden"
+									/>
+								</label>
+							</div>
+						)}
+					</div>
+
+					{/* Right Column: Details & Post */}
+					<div className="w-full md:w-[40%] flex flex-col h-full">
+						<div className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto">
+							{/* User Profile */}
 							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-full overflow-hidden border border-card bg-card-bg flex items-center justify-center">
+								<div className="w-8 h-8 rounded-full overflow-hidden">
 									{avatarUrl ? (
 										<img
 											src={avatarUrl}
@@ -399,88 +266,49 @@ export default function PhotoboardCreateModal({
 											className="w-full h-full object-cover"
 										/>
 									) : (
-										<span className="text-sm font-semibold text-sub-text">
+										<div className="w-full h-full flex items-center justify-center text-xs font-medium">
 											{getInitial(displayName)}
-										</span>
+										</div>
 									)}
 								</div>
-								<div>
-									<p className="text-sm font-semibold text-main-text">
-										{displayName}
-									</p>
-									<p className="text-xs text-sub-text">
-										오늘의 기록을 남겨주세요.
-									</p>
-								</div>
+								<span className="text-sm font-semibold">{displayName}</span>
 							</div>
-							<div className="flex-1 space-y-2">
-								<p className="text-sm font-semibold text-main-text">본문</p>
+
+							{/* Caption Input */}
+							<div className="flex-1">
 								<textarea
 									value={captionInput}
-									onChange={(event) => setCaptionInput(event.target.value)}
-									placeholder="오늘의 순간을 기록해보세요."
-									className="resize-none w-full border border-card rounded-card outline-none bg-card-bg text-main-text placeholder:text-sub-text text-sm h-44 p-3"
+									onChange={(e) => setCaptionInput(e.target.value)}
+									placeholder="문구를 입력하세요..."
+									className="w-full h-full min-h-[200px] resize-none bg-transparent border-none outline-none text-sm leading-relaxed placeholder:text-sub-text"
+									maxLength={2200}
 								/>
-								<div className="text-right text-xs text-sub-text">
-									{captionInput.length}/200
-								</div>
 							</div>
-							<div className="space-y-3">
-								<p className="text-sm font-semibold text-main-text">태그</p>
-								<div className="flex items-center gap-2">
-									<Input
-										value={tagInput}
-										onChange={(event) => setTagInput(event.target.value)}
-										onKeyDown={(event) => {
-											if (event.key === "Enter") {
-												event.preventDefault();
-												handleAddTag(tagInput);
-											}
-										}}
-										placeholder="태그를 입력하고 Enter"
-										className="bg-card-bg border-card rounded-card"
-									/>
-									<Button
-										type="button"
-										variant="outline"
-										onClick={() => handleAddTag(tagInput)}
-									>
-										추가
-									</Button>
-								</div>
-								<div className="flex flex-wrap gap-2">
-									{tags.length ? (
-										tags.map((tag) => (
-											<span
-												key={tag}
-												className="flex items-center gap-1 text-xs text-theme-primary bg-theme-primary/10 px-2 py-1 rounded-full"
-											>
-												#{tag}
-												<button
-													type="button"
-													onClick={() => handleRemoveTag(tag)}
-													className="text-theme-primary/70 hover:text-theme-primary"
-													aria-label={`${tag} 태그 삭제`}
-												>
-													<X size={12} />
-												</button>
-											</span>
-										))
-									) : (
-										<span className="text-xs text-sub-text">
-											태그를 추가해보세요.
-										</span>
-									)}
-								</div>
-							</div>
-							{!isAuthenticated && (
-								<p className="text-xs text-sub-text">
-									로그인 후 게시할 수 있어요.
-								</p>
-							)}
+						</div>
+
+						{/* Footer */}
+						<div className="p-4 border-t border-card-border flex items-center justify-between">
+							<span className="text-xs text-sub-text">
+								{captionInput.length.toLocaleString()} / 2,200
+							</span>
+							<Button
+								onClick={handleSubmit}
+								disabled={
+									!captionInput.trim() ||
+									isProcessing ||
+									(!isEditMode && !imageFile) ||
+									(isEditMode && !imageUrl)
+								}
+							>
+								{isProcessing ? (
+									<Loader2 size={16} className="animate-spin" />
+								) : (
+									isEditMode ? "저장" : "게시"
+								)}
+							</Button>
 						</div>
 					</div>
-				)}
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

@@ -236,11 +236,17 @@ interface MainSettings {
 	stickerBoard?: StickerBoardSettings;
 	imageWidget?: ImageWidgetSettings;
 	weatherClock?: WeatherClockSettings;
+	photoboard?: PhotoboardSettings;
 }
 
 interface LibrarySettings {
 	layoutType: "list" | "listWithImage";
 	postsPerPage: number;
+	postsPerRow: number;
+	writePermission: "admin" | "member";
+}
+
+interface PhotoboardSettings {
 	postsPerRow: number;
 	writePermission: "admin" | "member";
 }
@@ -292,6 +298,7 @@ export type {
 	SettingsContextType,
 	MainSettings,
 	LibrarySettings,
+	PhotoboardSettings,
 	CustomLayout,
 	LayoutItem,
 	WidgetItem,
