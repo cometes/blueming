@@ -17,16 +17,19 @@ const dynamicWidget = (importer: any, isAsyncData = false) =>
 			const mod = await importer();
 			const Component = mod.default;
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			return (props: any) => {
+			function WrappedWidget(props: any) {
 				useEffect(() => {
 					// If not async (static), we are ready as soon as mounted
 					if (!isAsyncData && props.onReady) {
 						props.onReady();
 					}
+					// eslint-disable-next-line react-hooks/exhaustive-deps
 				}, []);
 				// If async, the component itself must call onReady
 				return <Component {...props} />;
-			};
+			}
+			WrappedWidget.displayName = `DynamicWidget(${Component.displayName || Component.name || "Unknown"})`;
+			return WrappedWidget;
 		},
 		{
 			ssr: false,
@@ -73,7 +76,6 @@ export default function Home() {
 	const { main } = useSettings();
 	const isMobile = useMobile();
 	const customLayout = main?.customLayout;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const legacyWidgets = (customLayout as { widgets?: Array<{ id: string }> })
 		?.widgets;
 	const layout = useMemo(
