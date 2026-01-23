@@ -8,8 +8,8 @@
    ========================================== */
 
 .selecto-selection {
-	border: 1px solid rgba(59, 130, 246, 0.8);
-	background: rgba(59, 130, 246, 0.15);
+	border: 1px solid var(--primary-color, #007bff);
+	background: color-mix(in srgb, var(--primary-color, #007bff) 15%, transparent);
 }
 
 /* ==========================================
@@ -23,7 +23,7 @@
 
 .moveable-line {
 	position: absolute;
-	background: rgba(59, 130, 246, 0.8);
+	background: var(--primary-color, #007bff) !important;
 	transform-origin: 0 0;
 }
 
@@ -37,8 +37,8 @@
 	width: 8px;
 	height: 8px;
 	border-radius: 2px;
-	border: 1px solid rgba(59, 130, 246, 0.9);
-	background: #ffffff;
+	border: 1px solid var(--primary-color, #007bff) !important;
+	background: #ffffff !important;
 	box-sizing: border-box;
 }
 
@@ -47,7 +47,7 @@
 	width: 10px;
 	height: 10px;
 	border-radius: 9999px;
-	border: 1px solid rgba(59, 130, 246, 0.9);
-	background: #ffffff;
+	border: 1px solid var(--primary-color, #007bff) !important;
+	background: #ffffff !important;
 	box-sizing: border-box;
 }
