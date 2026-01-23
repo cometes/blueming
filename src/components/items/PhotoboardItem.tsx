@@ -41,6 +41,7 @@ interface PhotoboardItemProps {
 	onShare: () => void;
 	onEdit: () => void;
 	onDelete: () => void;
+	onClick: () => void;
 }
 
 const getInitial = (value: string) => value.trim().charAt(0).toUpperCase();
@@ -63,6 +64,7 @@ export default function PhotoboardItem({
 	onShare,
 	onEdit,
 	onDelete,
+	onClick,
 }: PhotoboardItemProps) {
 	const caption = post.caption;
 	const showMore = shouldTruncate(caption);
@@ -141,7 +143,10 @@ export default function PhotoboardItem({
 				) : null}
 			</div>
 
-			<div className="relative w-full bg-card-bg overflow-hidden">
+			<div
+				className="relative w-full bg-card-bg overflow-hidden cursor-pointer group"
+				onClick={onClick}
+			>
 				<div
 					className={cn(
 						"absolute inset-0 bg-card animate-pulse transition-opacity",

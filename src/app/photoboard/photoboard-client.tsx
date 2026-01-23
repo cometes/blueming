@@ -18,6 +18,7 @@ import { setSettingsMainPhotoboard } from "@/queries/set/setSettingsMainPhotoboa
 import { useAuthStore } from "@/store/auth/store";
 import { useAdmin } from "@/hooks/auth/UseAdmin";
 import PhotoboardItem from "@/components/items/PhotoboardItem";
+import PhotoboardDetailModal from "@/components/modal/PhotoboardDetailModal";
 
 const formatAbsoluteDate = (iso: string) => {
 	const date = new Date(iso);
@@ -67,6 +68,7 @@ export default function PhotoBoardClient() {
 	const [isEditOpen, setIsEditOpen] = useState(false);
 	const [searchInput, setSearchInput] = useState("");
 	const [appliedQuery, setAppliedQuery] = useState("");
+	const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
 	const defaultPhotoboardSettings = useMemo(
 		() => ({
@@ -177,6 +179,37 @@ export default function PhotoBoardClient() {
 		});
 	}, [posts, normalizedQuery]);
 
+	// Detail Modal Handlers
+	const handlePostClick = (post: PhotoBoardPost) => {
+		setSelectedPostId(post.id);
+		// Add hash to URL for sharing/navigation support if desired, but for now just state
+		// window.history.pushState(null, "", `#${post.id}`);
+	};
+
+	const handleCloseDetail = () => {
+		setSelectedPostId(null);
+		// window.history.pushState(null, "", " ");
+	};
+
+	const selectedPostIndex = useMemo(() => {
+		if (!selectedPostId) return -1;
+		return filteredPosts.findIndex(p => p.id === selectedPostId);
+	}, [selectedPostId, filteredPosts]);
+
+	const selectedPost = selectedPostIndex >= 0 ? filteredPosts[selectedPostIndex] : null;
+
+	const handleNextPost = () => {
+		if (selectedPostIndex >= 0 && selectedPostIndex < filteredPosts.length - 1) {
+			setSelectedPostId(filteredPosts[selectedPostIndex + 1].id);
+		}
+	};
+
+	const handlePrevPost = () => {
+		if (selectedPostIndex > 0) {
+			setSelectedPostId(filteredPosts[selectedPostIndex - 1].id);
+		}
+	};
+
 	const handleDeletePost = async (post: PhotoBoardPost) => {
 		const confirmed = window.confirm(
 			"게시글을 삭제할까요? 이 작업은 되돌릴 수 없어요."
@@ -226,9 +259,9 @@ export default function PhotoBoardClient() {
 							onEndIconClick={
 								searchInput
 									? () => {
-											setSearchInput("");
-											setAppliedQuery("");
-										}
+										setSearchInput("");
+										setAppliedQuery("");
+									}
 									: undefined
 							}
 							endIconAriaLabel="검색어 지우기"
@@ -379,6 +412,7 @@ export default function PhotoBoardClient() {
 									setIsEditOpen(true);
 								}}
 								onDelete={() => handleDeletePost(post)}
+								onClick={() => handlePostClick(post)}
 							/>
 						);
 					})}
@@ -412,6 +446,15 @@ export default function PhotoBoardClient() {
 					setEditTarget(updatedPost);
 					toast.success("게시물이 수정되었습니다.");
 				}}
+			/>
+			<PhotoboardDetailModal
+				post={selectedPost}
+				isOpen={!!selectedPostId}
+				onClose={handleCloseDetail}
+				onNext={handleNextPost}
+				onPrev={handlePrevPost}
+				hasNext={selectedPostIndex >= 0 && selectedPostIndex < filteredPosts.length - 1}
+				hasPrev={selectedPostIndex > 0}
 			/>
 		</div>
 	);
