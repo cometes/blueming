@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,6 +34,7 @@ import {
 export function StickerBoardPropertiesPanel() {
 	const {
 		computed: { selectedComponent, selectedImageComponent },
+		refs: { canvasRef, moveableInteractionRef },
 		actions: {
 			updateComponent,
 			requestAutoSize,
@@ -40,6 +42,219 @@ export function StickerBoardPropertiesPanel() {
 			clampStickerToEditorBounds,
 		},
 	} = useStickerBoardEditorContext();
+	const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+	const [pxDraft, setPxDraft] = useState({
+		id: null as number | null,
+		x: "",
+		y: "",
+		width: "",
+		height: "",
+	});
+	const editingFieldRef = useRef<null | "x" | "y" | "width" | "height">(null);
+
+	useEffect(() => {
+		const canvas = canvasRef.current;
+		if (!canvas) return;
+		const updateSize = () => {
+			const rect = canvas.getBoundingClientRect();
+			setCanvasSize({
+				width: Math.max(0, rect.width),
+				height: Math.max(0, rect.height),
+			});
+		};
+		updateSize();
+		const observer = new ResizeObserver(updateSize);
+		observer.observe(canvas);
+		return () => observer.disconnect();
+	}, [canvasRef]);
+
+	const toPx = useMemo(
+		() => (pct: number, total: number) =>
+			total > 0 ? Math.round((pct / 100) * total) : 0,
+		[]
+	);
+	const toPct = useMemo(
+		() => (px: number, total: number) => (total > 0 ? (px / total) * 100 : 0),
+		[]
+	);
+	const syncPxDraft = useCallback(
+		(component: typeof selectedComponent) => {
+			if (!component) {
+				setPxDraft({ id: null, x: "", y: "", width: "", height: "" });
+				return;
+			}
+			setPxDraft({
+				id: component.id,
+				x: String(toPx(component.xPct, canvasSize.width)),
+				y: String(toPx(component.yPct, canvasSize.height)),
+				width: String(toPx(component.widthPct, canvasSize.width)),
+				height: String(toPx(component.heightPct, canvasSize.height)),
+			});
+		},
+		[canvasSize.height, canvasSize.width, toPx]
+	);
+	const getDraftValue = useCallback(
+		(componentId: number | null, field: "x" | "y" | "width" | "height") => {
+			if (componentId !== null && pxDraft.id === componentId) {
+				return pxDraft[field];
+			}
+			return "";
+		},
+		[pxDraft]
+	);
+
+	useEffect(() => {
+		if (editingFieldRef.current) return;
+		syncPxDraft(selectedComponent);
+	}, [selectedComponent, canvasSize, syncPxDraft]);
+
+	const applyPxUpdate = useCallback(
+		(
+			componentId: number,
+			field: "x" | "y" | "width" | "height",
+			rawValue: string
+		) => {
+			const value = Number(rawValue);
+			updateComponent(componentId, (prev) => {
+				if (!Number.isFinite(value)) return prev;
+				if (field === "x") {
+					const xPct = toPct(value, canvasSize.width);
+					return {
+						...prev,
+						...clampStickerToEditorBounds({
+							xPct,
+							yPct: prev.yPct,
+							widthPct: prev.widthPct,
+							heightPct: prev.heightPct,
+						}),
+					};
+				}
+				if (field === "y") {
+					const yPct = toPct(value, canvasSize.height);
+					return {
+						...prev,
+						...clampStickerToEditorBounds({
+							xPct: prev.xPct,
+							yPct,
+							widthPct: prev.widthPct,
+							heightPct: prev.heightPct,
+						}),
+					};
+				}
+
+				if (field === "width") {
+					const MIN = 2;
+					let widthPct = toPct(value, canvasSize.width);
+					widthPct = Math.max(MIN, widthPct);
+					let heightPct = prev.heightPct;
+					if (prev.lockAspectRatio === true) {
+						const aspect = prev.heightPct / Math.max(0.0001, prev.widthPct);
+						heightPct = Math.max(MIN, widthPct * aspect);
+					}
+					return {
+						...prev,
+						...clampStickerToEditorBounds({
+							xPct: prev.xPct,
+							yPct: prev.yPct,
+							widthPct,
+							heightPct,
+						}),
+					};
+				}
+
+				const MIN = 2;
+				let heightPct = toPct(value, canvasSize.height);
+				heightPct = Math.max(MIN, heightPct);
+				let widthPct = prev.widthPct;
+				if (prev.lockAspectRatio === true) {
+					const aspect = prev.heightPct / Math.max(0.0001, prev.widthPct);
+					widthPct = Math.max(MIN, heightPct / Math.max(0.0001, aspect));
+				}
+				return {
+					...prev,
+					...clampStickerToEditorBounds({
+						xPct: prev.xPct,
+						yPct: prev.yPct,
+						widthPct,
+						heightPct,
+					}),
+				};
+			});
+		},
+		[canvasSize, clampStickerToEditorBounds, toPct, updateComponent]
+	);
+
+	useEffect(() => {
+		let rafId = 0;
+		const tick = () => {
+			const component = selectedComponent;
+			if (!component || editingFieldRef.current) {
+				rafId = requestAnimationFrame(tick);
+				return;
+			}
+			if (moveableInteractionRef.current) {
+				const canvas = canvasRef.current;
+				const target = canvas
+					? (canvas.querySelector(
+							`[data-sticker-id="${component.id}"]`,
+						) as HTMLElement | null)
+					: null;
+				if (target) {
+					const leftPct = parseFloat(target.style.left || "");
+					const topPct = parseFloat(target.style.top || "");
+					const widthPct = parseFloat(target.style.width || "");
+					const heightPct = parseFloat(target.style.height || "");
+					const next = {
+						x: String(
+							toPx(
+								Number.isFinite(leftPct) ? leftPct : component.xPct,
+								canvasSize.width,
+							),
+						),
+						y: String(
+							toPx(
+								Number.isFinite(topPct) ? topPct : component.yPct,
+								canvasSize.height,
+							),
+						),
+						width: String(
+							toPx(
+								Number.isFinite(widthPct) ? widthPct : component.widthPct,
+								canvasSize.width,
+							),
+						),
+						height: String(
+							toPx(
+								Number.isFinite(heightPct) ? heightPct : component.heightPct,
+								canvasSize.height,
+							),
+						),
+					};
+					setPxDraft((prev) => {
+						if (
+							prev.id === component.id &&
+							prev.x === next.x &&
+							prev.y === next.y &&
+							prev.width === next.width &&
+							prev.height === next.height
+						) {
+							return prev;
+						}
+						return {
+							id: component.id,
+							x: next.x,
+							y: next.y,
+							width: next.width,
+							height: next.height,
+						};
+					});
+				}
+			}
+			rafId = requestAnimationFrame(tick);
+		};
+		rafId = requestAnimationFrame(tick);
+		return () => cancelAnimationFrame(rafId);
+	}, [canvasRef, canvasSize, moveableInteractionRef, selectedComponent, toPx]);
 
 	return (
 		<>
@@ -434,46 +649,80 @@ export function StickerBoardPropertiesPanel() {
 
 					<div className="grid grid-cols-2 gap-3">
 						<div>
-							<div className="text-xs font-medium text-gray-600">X(%)</div>
+							<div className="text-xs font-medium text-gray-600">X(px)</div>
 							<Input
 								className="mt-2"
 								type="number"
-								step={0.5}
-								value={selectedComponent.xPct}
+								step={1}
+								value={getDraftValue(selectedComponent.id, "x")}
 								disabled={selectedComponent.isLocked === true}
+								onFocus={() => {
+									editingFieldRef.current = "x";
+								}}
 								onChange={(e) => {
-									const xPct = Number(e.target.value || 0);
-									updateComponent(selectedComponent.id, (prev) => {
-										const next = clampStickerToEditorBounds({
-											xPct: Number.isFinite(xPct) ? xPct : prev.xPct,
-											yPct: prev.yPct,
-											widthPct: prev.widthPct,
-											heightPct: prev.heightPct,
-										});
-										return { ...prev, ...next };
-									});
+									const value = e.target.value;
+									setPxDraft((prev) => ({
+										...prev,
+										id: selectedComponent.id,
+										x: value,
+									}));
+								}}
+								onBlur={() => {
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedComponent.id,
+										"x",
+										getDraftValue(selectedComponent.id, "x")
+									);
+								}}
+								onKeyDown={(e) => {
+									if (e.key !== "Enter") return;
+									e.preventDefault();
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedComponent.id,
+										"x",
+										getDraftValue(selectedComponent.id, "x")
+									);
 								}}
 							/>
 						</div>
 						<div>
-							<div className="text-xs font-medium text-gray-600">Y(%)</div>
+							<div className="text-xs font-medium text-gray-600">Y(px)</div>
 							<Input
 								className="mt-2"
 								type="number"
-								step={0.5}
-								value={selectedComponent.yPct}
+								step={1}
+								value={getDraftValue(selectedComponent.id, "y")}
 								disabled={selectedComponent.isLocked === true}
+								onFocus={() => {
+									editingFieldRef.current = "y";
+								}}
 								onChange={(e) => {
-									const yPct = Number(e.target.value || 0);
-									updateComponent(selectedComponent.id, (prev) => {
-										const next = clampStickerToEditorBounds({
-											xPct: prev.xPct,
-											yPct: Number.isFinite(yPct) ? yPct : prev.yPct,
-											widthPct: prev.widthPct,
-											heightPct: prev.heightPct,
-										});
-										return { ...prev, ...next };
-									});
+									const value = e.target.value;
+									setPxDraft((prev) => ({
+										...prev,
+										id: selectedComponent.id,
+										y: value,
+									}));
+								}}
+								onBlur={() => {
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedComponent.id,
+										"y",
+										getDraftValue(selectedComponent.id, "y")
+									);
+								}}
+								onKeyDown={(e) => {
+									if (e.key !== "Enter") return;
+									e.preventDefault();
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedComponent.id,
+										"y",
+										getDraftValue(selectedComponent.id, "y")
+									);
 								}}
 							/>
 						</div>
@@ -481,79 +730,84 @@ export function StickerBoardPropertiesPanel() {
 
 					<div className="grid grid-cols-2 gap-3">
 						<div>
-							<div className="text-xs font-medium text-gray-600">가로(%)</div>
+							<div className="text-xs font-medium text-gray-600">가로(px)</div>
 							<Input
 								className="mt-2"
 								type="number"
 								min={2}
-								max={100}
-								step={0.5}
-								value={selectedComponent.widthPct}
+								max={Math.max(0, Math.round(canvasSize.width))}
+								step={1}
+								value={getDraftValue(selectedComponent.id, "width")}
 								disabled={selectedComponent.isLocked === true}
+								onFocus={() => {
+									editingFieldRef.current = "width";
+								}}
 								onChange={(e) => {
-									const widthPctRaw = Number(e.target.value || 0);
-									updateComponent(selectedComponent.id, (prev) => {
-										const MIN = 2;
-										let widthPct = Number.isFinite(widthPctRaw)
-											? widthPctRaw
-											: prev.widthPct;
-										widthPct = Math.max(MIN, widthPct);
-										let heightPct = prev.heightPct;
-										if (prev.lockAspectRatio === true) {
-											const aspect =
-												prev.heightPct / Math.max(0.0001, prev.widthPct);
-											heightPct = Math.max(MIN, widthPct * aspect);
-										}
-										return {
-											...prev,
-											...clampStickerToEditorBounds({
-												xPct: prev.xPct,
-												yPct: prev.yPct,
-												widthPct,
-												heightPct,
-											}),
-										};
-									});
+									const value = e.target.value;
+									setPxDraft((prev) => ({
+										...prev,
+										id: selectedComponent.id,
+										width: value,
+									}));
+								}}
+								onBlur={() => {
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedComponent.id,
+										"width",
+										getDraftValue(selectedComponent.id, "width")
+									);
+								}}
+								onKeyDown={(e) => {
+									if (e.key !== "Enter") return;
+									e.preventDefault();
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedComponent.id,
+										"width",
+										getDraftValue(selectedComponent.id, "width")
+									);
 								}}
 							/>
 						</div>
 						<div>
-							<div className="text-xs font-medium text-gray-600">세로(%)</div>
+							<div className="text-xs font-medium text-gray-600">세로(px)</div>
 							<Input
 								className="mt-2"
 								type="number"
 								min={2}
-								max={100}
-								step={0.5}
-								value={selectedComponent.heightPct}
+								max={Math.max(0, Math.round(canvasSize.height))}
+								step={1}
+								value={getDraftValue(selectedComponent.id, "height")}
 								disabled={selectedComponent.isLocked === true}
+								onFocus={() => {
+									editingFieldRef.current = "height";
+								}}
 								onChange={(e) => {
-									const heightPctRaw = Number(e.target.value || 0);
-									updateComponent(selectedComponent.id, (prev) => {
-										const MIN = 2;
-										let heightPct = Number.isFinite(heightPctRaw)
-											? heightPctRaw
-											: prev.heightPct;
-										heightPct = Math.max(MIN, heightPct);
-										let widthPct = prev.widthPct;
-										if (prev.lockAspectRatio === true) {
-											const aspect =
-												prev.heightPct / Math.max(0.0001, prev.widthPct);
-											widthPct = Math.max(
-												MIN,
-												heightPct / Math.max(0.0001, aspect),
-											);
-										}
-										return {
-											...prev,
-											...clampStickerToEditorBounds({
-												xPct: prev.xPct,
-												yPct: prev.yPct,
-												widthPct,
-												heightPct,
-											}),
-										};
-									});
+									const value = e.target.value;
+									setPxDraft((prev) => ({
+										...prev,
+										id: selectedComponent.id,
+										height: value,
+									}));
+								}}
+								onBlur={() => {
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedComponent.id,
+										"height",
+										getDraftValue(selectedComponent.id, "height")
+									);
+								}}
+								onKeyDown={(e) => {
+									if (e.key !== "Enter") return;
+									e.preventDefault();
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedComponent.id,
+										"height",
+										getDraftValue(selectedComponent.id, "height")
+									);
 								}}
 							/>
 						</div>
@@ -645,46 +899,80 @@ export function StickerBoardPropertiesPanel() {
 
 					<div className="grid grid-cols-2 gap-3">
 						<div>
-							<div className="text-xs font-medium text-gray-600">X(%)</div>
+							<div className="text-xs font-medium text-gray-600">X(px)</div>
 							<Input
 								className="mt-2"
 								type="number"
-								step={0.5}
-								value={selectedImageComponent.xPct}
+								step={1}
+								value={getDraftValue(selectedImageComponent.id, "x")}
 								disabled={selectedImageComponent.isLocked === true}
+								onFocus={() => {
+									editingFieldRef.current = "x";
+								}}
 								onChange={(e) => {
-									const xPct = Number(e.target.value || 0);
-									updateComponent(selectedImageComponent.id, (prev) => {
-										const next = clampStickerToEditorBounds({
-											xPct: Number.isFinite(xPct) ? xPct : prev.xPct,
-											yPct: prev.yPct,
-											widthPct: prev.widthPct,
-											heightPct: prev.heightPct,
-										});
-										return { ...prev, ...next };
-									});
+									const value = e.target.value;
+									setPxDraft((prev) => ({
+										...prev,
+										id: selectedImageComponent.id,
+										x: value,
+									}));
+								}}
+								onBlur={() => {
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedImageComponent.id,
+										"x",
+										getDraftValue(selectedImageComponent.id, "x")
+									);
+								}}
+								onKeyDown={(e) => {
+									if (e.key !== "Enter") return;
+									e.preventDefault();
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedImageComponent.id,
+										"x",
+										getDraftValue(selectedImageComponent.id, "x")
+									);
 								}}
 							/>
 						</div>
 						<div>
-							<div className="text-xs font-medium text-gray-600">Y(%)</div>
+							<div className="text-xs font-medium text-gray-600">Y(px)</div>
 							<Input
 								className="mt-2"
 								type="number"
-								step={0.5}
-								value={selectedImageComponent.yPct}
+								step={1}
+								value={getDraftValue(selectedImageComponent.id, "y")}
 								disabled={selectedImageComponent.isLocked === true}
+								onFocus={() => {
+									editingFieldRef.current = "y";
+								}}
 								onChange={(e) => {
-									const yPct = Number(e.target.value || 0);
-									updateComponent(selectedImageComponent.id, (prev) => {
-										const next = clampStickerToEditorBounds({
-											xPct: prev.xPct,
-											yPct: Number.isFinite(yPct) ? yPct : prev.yPct,
-											widthPct: prev.widthPct,
-											heightPct: prev.heightPct,
-										});
-										return { ...prev, ...next };
-									});
+									const value = e.target.value;
+									setPxDraft((prev) => ({
+										...prev,
+										id: selectedImageComponent.id,
+										y: value,
+									}));
+								}}
+								onBlur={() => {
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedImageComponent.id,
+										"y",
+										getDraftValue(selectedImageComponent.id, "y")
+									);
+								}}
+								onKeyDown={(e) => {
+									if (e.key !== "Enter") return;
+									e.preventDefault();
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedImageComponent.id,
+										"y",
+										getDraftValue(selectedImageComponent.id, "y")
+									);
 								}}
 							/>
 						</div>
@@ -692,79 +980,84 @@ export function StickerBoardPropertiesPanel() {
 
 					<div className="grid grid-cols-2 gap-3">
 						<div>
-							<div className="text-xs font-medium text-gray-600">가로(%)</div>
+							<div className="text-xs font-medium text-gray-600">가로(px)</div>
 							<Input
 								className="mt-2"
 								type="number"
 								min={2}
-								max={100}
-								step={0.5}
-								value={selectedImageComponent.widthPct}
+								max={Math.max(0, Math.round(canvasSize.width))}
+								step={1}
+								value={getDraftValue(selectedImageComponent.id, "width")}
 								disabled={selectedImageComponent.isLocked === true}
+								onFocus={() => {
+									editingFieldRef.current = "width";
+								}}
 								onChange={(e) => {
-									const widthPctRaw = Number(e.target.value || 0);
-									updateComponent(selectedImageComponent.id, (prev) => {
-										const MIN = 2;
-										let widthPct = Number.isFinite(widthPctRaw)
-											? widthPctRaw
-											: prev.widthPct;
-										widthPct = Math.max(MIN, widthPct);
-										let heightPct = prev.heightPct;
-										if (prev.lockAspectRatio === true) {
-											const aspect =
-												prev.heightPct / Math.max(0.0001, prev.widthPct);
-											heightPct = Math.max(MIN, widthPct * aspect);
-										}
-										return {
-											...prev,
-											...clampStickerToEditorBounds({
-												xPct: prev.xPct,
-												yPct: prev.yPct,
-												widthPct,
-												heightPct,
-											}),
-										};
-									});
+									const value = e.target.value;
+									setPxDraft((prev) => ({
+										...prev,
+										id: selectedImageComponent.id,
+										width: value,
+									}));
+								}}
+								onBlur={() => {
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedImageComponent.id,
+										"width",
+										getDraftValue(selectedImageComponent.id, "width")
+									);
+								}}
+								onKeyDown={(e) => {
+									if (e.key !== "Enter") return;
+									e.preventDefault();
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedImageComponent.id,
+										"width",
+										getDraftValue(selectedImageComponent.id, "width")
+									);
 								}}
 							/>
 						</div>
 						<div>
-							<div className="text-xs font-medium text-gray-600">세로(%)</div>
+							<div className="text-xs font-medium text-gray-600">세로(px)</div>
 							<Input
 								className="mt-2"
 								type="number"
 								min={2}
-								max={100}
-								step={0.5}
-								value={selectedImageComponent.heightPct}
+								max={Math.max(0, Math.round(canvasSize.height))}
+								step={1}
+								value={getDraftValue(selectedImageComponent.id, "height")}
 								disabled={selectedImageComponent.isLocked === true}
+								onFocus={() => {
+									editingFieldRef.current = "height";
+								}}
 								onChange={(e) => {
-									const heightPctRaw = Number(e.target.value || 0);
-									updateComponent(selectedImageComponent.id, (prev) => {
-										const MIN = 2;
-										let heightPct = Number.isFinite(heightPctRaw)
-											? heightPctRaw
-											: prev.heightPct;
-										heightPct = Math.max(MIN, heightPct);
-										let widthPct = prev.widthPct;
-										if (prev.lockAspectRatio === true) {
-											const aspect =
-												prev.heightPct / Math.max(0.0001, prev.widthPct);
-											widthPct = Math.max(
-												MIN,
-												heightPct / Math.max(0.0001, aspect),
-											);
-										}
-										return {
-											...prev,
-											...clampStickerToEditorBounds({
-												xPct: prev.xPct,
-												yPct: prev.yPct,
-												widthPct,
-												heightPct,
-											}),
-										};
-									});
+									const value = e.target.value;
+									setPxDraft((prev) => ({
+										...prev,
+										id: selectedImageComponent.id,
+										height: value,
+									}));
+								}}
+								onBlur={() => {
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedImageComponent.id,
+										"height",
+										getDraftValue(selectedImageComponent.id, "height")
+									);
+								}}
+								onKeyDown={(e) => {
+									if (e.key !== "Enter") return;
+									e.preventDefault();
+									editingFieldRef.current = null;
+									applyPxUpdate(
+										selectedImageComponent.id,
+										"height",
+										getDraftValue(selectedImageComponent.id, "height")
+									);
 								}}
 							/>
 						</div>

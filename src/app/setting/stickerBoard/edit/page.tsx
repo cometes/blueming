@@ -15,6 +15,7 @@ import { isImageSticker } from "@/lib/stickerboard-utils";
 import { setSettingsMainStickerBoard } from "@/queries/set/setSettingsMainStickerBoard";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import type { StickerBoardSettings } from "@/types/stickerBoard";
+import { toast } from "sonner";
 
 const LAYOUT_ITEM_ID = "스티커보드";
 
@@ -91,6 +92,9 @@ function StickerBoardEditContent({
 			// NOTE: percent-based `components` is the single source of truth.
 			await setSettingsMainStickerBoard(stickerBoardToSave);
 			await refreshSettings?.({ broadcast: true });
+			toast.success("스티커보드를 저장했어요.");
+		} catch (error) {
+			toast.error("스티커보드 저장에 실패했어요.");
 		} finally {
 			setIsSaving(false);
 		}
