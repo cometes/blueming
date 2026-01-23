@@ -6,9 +6,17 @@ import type { StickerBoardComponent } from "@/types/stickerBoard";
 
 export function StickerRenderer({
 	component,
+	onDoubleClick,
+	isEditing,
 }: {
 	component: StickerBoardComponent;
+	onDoubleClick?: () => void;
+	isEditing?: boolean;
 }) {
+	// 편집 중인 텍스트 스티커는 숨김 (textarea가 대신 표시됨)
+	if (isEditing && isTextSticker(component)) {
+		return null;
+	}
 	const rotation = component.rotation ?? 0;
 	const opacity = (component.opacity ?? 100) / 100;
 	const scaleX = component.flipX ? -1 : 1;
@@ -24,6 +32,7 @@ export function StickerRenderer({
 			data-sticker-locked={isLocked ? "true" : "false"}
 			data-sticker-flip-x={component.flipX ? "true" : "false"}
 			data-sticker-flip-y={component.flipY ? "true" : "false"}
+			onDoubleClick={onDoubleClick}
 			style={{
 				left: `${component.xPct}%`,
 				top: `${component.yPct}%`,

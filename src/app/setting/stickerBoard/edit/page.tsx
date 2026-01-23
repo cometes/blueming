@@ -14,9 +14,7 @@ import { fitToGrid12 } from "@/lib/stickerboard";
 import { isImageSticker } from "@/lib/stickerboard-utils";
 import { setSettingsMainStickerBoard } from "@/queries/set/setSettingsMainStickerBoard";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
-import type {
-	StickerBoardSettings,
-} from "@/types/stickerBoard";
+import type { StickerBoardSettings } from "@/types/stickerBoard";
 
 const LAYOUT_ITEM_ID = "스티커보드";
 
@@ -52,7 +50,12 @@ function StickerBoardEditContent({
 	const [ratio, setRatio] = useState<{ w: number; h: number } | null>(null);
 	const [isSaving, setIsSaving] = useState(false);
 	const {
-		state: { componentsDraft, isImageDialogOpen, uploadThumbnail, imageReplaceTargetId },
+		state: {
+			componentsDraft,
+			isImageDialogOpen,
+			uploadThumbnail,
+			imageReplaceTargetId,
+		},
 		actions: {
 			setIsImageDialogOpen,
 			setUploadThumbnail,
@@ -79,7 +82,7 @@ function StickerBoardEditContent({
 			...(stickerBoard || {}),
 			components: componentsDraft,
 		}),
-		[componentsDraft, stickerBoard]
+		[componentsDraft, stickerBoard],
 	);
 
 	const handleSave = async () => {
@@ -94,7 +97,7 @@ function StickerBoardEditContent({
 	};
 
 	return (
-		<main className="w-full min-h-[calc(100vh)] flex items-center justify-center mt-5">
+		<main className="w-full min-h-dvh flex items-center justify-center">
 			<ImageUploadDialog
 				isOpen={isImageDialogOpen}
 				onOpenChange={setIsImageDialogOpen}
@@ -120,12 +123,11 @@ function StickerBoardEditContent({
 				<section
 					className="grid gap-4"
 					style={{
-						gridTemplateColumns: "1fr 768px 1fr",
+						gridTemplateColumns: "1fr 1fr 1fr",
 					}}
 				>
 					<StickerBoardLayersPanel />
 					<StickerBoardCanvas ratio={ratio} />
-
 					<aside className="rounded-card border border-card bg-card-bg/60 p-4 blur-proxy">
 						<div className="text-sm font-semibold text-main-text">
 							편집 패널
