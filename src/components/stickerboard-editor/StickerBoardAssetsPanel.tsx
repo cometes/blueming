@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Rnd } from "react-rnd";
 import { useStickerBoardEditorContext } from "@/contexts/StickerBoardEditorContext";
@@ -33,6 +33,12 @@ export function StickerBoardAssetsPanel({
 	const [isMounted, setIsMounted] = useState(false);
 	const [panelSize, setPanelSize] = useState({ width: 280, height: 360 });
 	const [panelPosition, setPanelPosition] = useState({ x: 24, y: 120 });
+	const [panelConstraints, setPanelConstraints] = useState({
+		minWidth: 220,
+		minHeight: 240,
+	});
+	const panelSizeRef = useRef(panelSize);
+	const panelPositionRef = useRef(panelPosition);
 	const filteredAssets = useMemo(() => {
 		const q = query.trim().toLowerCase();
 		if (!q) return assets;
@@ -45,19 +51,64 @@ export function StickerBoardAssetsPanel({
 		setIsMounted(true);
 	}, []);
 	useEffect(() => {
+		panelSizeRef.current = panelSize;
+	}, [panelSize]);
+	useEffect(() => {
+		panelPositionRef.current = panelPosition;
+	}, [panelPosition]);
+
+	const clampPanelToViewport = useCallback(
+		(useDefaultIfUnmoved: boolean) => {
+			if (typeof window === "undefined") return;
+			const margin = 30;
+			const maxWidth = Math.max(1, window.innerWidth - margin * 2);
+			const maxHeight = Math.max(1, window.innerHeight - margin * 2);
+			const nextMinWidth = Math.min(220, maxWidth);
+			const nextMinHeight = Math.min(240, maxHeight);
+			setPanelConstraints({
+				minWidth: nextMinWidth,
+				minHeight: nextMinHeight,
+			});
+
+			const baseWidth = panelSizeRef.current.width;
+			const baseHeight = panelSizeRef.current.height;
+			const nextWidth = Math.min(baseWidth, maxWidth);
+			const nextHeight = Math.min(baseHeight, maxHeight);
+			if (nextWidth !== baseWidth || nextHeight !== baseHeight) {
+				setPanelSize({ width: nextWidth, height: nextHeight });
+			}
+
+			const maxX = Math.max(margin, window.innerWidth - nextWidth - margin);
+			const maxY = Math.max(margin, window.innerHeight - nextHeight - margin);
+			let nextX = panelPositionRef.current.x;
+			let nextY = panelPositionRef.current.y;
+			if (useDefaultIfUnmoved && nextX === 24 && nextY === 120) {
+				nextX = maxX;
+				nextY = maxY;
+			} else {
+				nextX = Math.min(Math.max(nextX, margin), maxX);
+				nextY = Math.min(Math.max(nextY, margin), maxY);
+			}
+			setPanelPosition({ x: nextX, y: nextY });
+		},
+		[]
+	);
+
+	useEffect(() => {
 		if (!isMounted) return;
-		const margin = 30;
-		const width = panelSize.width;
-		const height = panelSize.height;
-		const x = Math.max(margin, window.innerWidth - width - margin);
-		const y = Math.max(margin, window.innerHeight - height - margin);
-		setPanelPosition((prev) =>
-			prev.x === 24 && prev.y === 120 ? { x, y } : prev
-		);
-	}, [isMounted, panelSize.height, panelSize.width]);
+		clampPanelToViewport(true);
+	}, [clampPanelToViewport, isMounted]);
+
+	useEffect(() => {
+		if (!isMounted || !isOpen) return;
+		const handleResize = () => clampPanelToViewport(false);
+		handleResize();
+		window.addEventListener("resize", handleResize);
+		return () => window.removeEventListener("resize", handleResize);
+	}, [clampPanelToViewport, isMounted, isOpen]);
 
 	const panelBody = (
-		<div className="rounded-card border border-card bg-card-bg/90 p-3 shadow-lg blur-proxy">
+		<div className="rounded-card border border-card bg-card p-3 shadow-lg blur-proxy">
 			<div className="asset-panel-handle flex items-center justify-between gap-2 cursor-move">
 				<div className="text-xs font-semibold text-main-text">이미지 에셋</div>
 				<button
@@ -178,8 +229,8 @@ export function StickerBoardAssetsPanel({
 						<Rnd
 							size={panelSize}
 							position={panelPosition}
-							minWidth={220}
-							minHeight={240}
+							minWidth={panelConstraints.minWidth}
+							minHeight={panelConstraints.minHeight}
 							bounds="window"
 							enableResizing={{
 								top: true,
@@ -202,6 +253,7 @@ export function StickerBoardAssetsPanel({
 									height: ref.offsetHeight,
 								});
 								setPanelPosition({ x: position.x, y: position.y });
+								requestAnimationFrame(() => clampPanelToViewport(false));
 							}}
 						>
 							{panelBody}
