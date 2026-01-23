@@ -67,6 +67,8 @@ export default function LibraryListView({
 	currentPageSafe,
 	setActivePage,
 }: LibraryListViewProps) {
+	const skeletonCount = isCardOn ? Math.max(6, postsPerRow * 2) : 6;
+
 	return (
 		<>
 			<div className="mt-3 flex items-center justify-between">
@@ -134,29 +136,51 @@ export default function LibraryListView({
 				)}
 				<div
 					className={cn(
-						"grid",
-						isListReady ? "opacity-100" : "opacity-0",
+						"grid opacity-100",
 						isCardOn ? `gap-2.5 grid-cols-${postsPerRow}` : "gap-4 grid-cols-1"
 					)}
 					style={
 						isCardOn
 							? {
 									gridTemplateColumns: `repeat(${postsPerRow}, minmax(0, 1fr))`,
-									transition: "opacity 0.3s ease-out",
 							  }
-							: {
-									transition: "opacity 0.3s ease-out",
-							  }
+							: undefined
 					}
 				>
-					{isCardOn && (
+					{!isListReady && (
+						<>
+							{Array.from({ length: skeletonCount }).map((_, index) => (
+								<div
+									key={`library-skeleton-${index}`}
+									className={cn(
+										"rounded-card border-card bg-card-bg animate-pulse overflow-hidden",
+										isCardOn ? "h-[240px]" : "h-[72px]"
+									)}
+								>
+									<div
+										className={cn(
+											"p-4 space-y-3",
+											isCardOn ? "" : "flex items-center justify-between space-y-0"
+										)}
+									>
+										<div className="space-y-2">
+											<div className="h-3 w-3/4 rounded-full bg-card" />
+											<div className="h-2 w-1/2 rounded-full bg-card" />
+										</div>
+										<div className="h-2 w-16 rounded-full bg-card" />
+									</div>
+								</div>
+							))}
+						</>
+					)}
+					{isListReady && isCardOn && (
 						<>
 							{listItems.map((el) => (
 								<ItemGallery data={el} key={el.id} detailQuery={detailQuery} />
 							))}
 						</>
 					)}
-					{!isCardOn && layoutType === "listWithImage" && (
+					{isListReady && !isCardOn && layoutType === "listWithImage" && (
 						<>
 							{listItems.map((el) => (
 								<ItemListWithImage
@@ -167,7 +191,7 @@ export default function LibraryListView({
 							))}
 						</>
 					)}
-					{!isCardOn && layoutType === "list" && (
+					{isListReady && !isCardOn && layoutType === "list" && (
 						<>
 							{listItems.map((el) => (
 								<ItemList

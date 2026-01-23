@@ -54,7 +54,7 @@ export default function PhotoboardDetailModal({
 			{/* Arrow Navigation */}
 			<DialogContent
 				showCloseButton={false}
-				className="max-w-3xl md:max-w-3xl w-full bg-card border-card rounded-r-none rounded-l-none md:rounded-card backdrop-blur-card p-0 overflow-visible"
+				className="max-w-3xl md:max-w-3xl w-full bg-card border-card rounded-r-none rounded-l-none md:rounded-card backdrop-blur-card p-0 overflow-visible min-h-[60vh]"
 			>
 				{hasPrev && (
 					<button
