@@ -104,8 +104,8 @@ export const measureTextStickerPx = (opts: {
 	fontWeight?: StickerBoardTextComponent["style"] extends {
 		fontWeight?: infer W;
 	}
-		? W
-		: unknown;
+	? W
+	: unknown;
 	lineHeight?: number;
 	paddingPx: { x: number; y: number };
 	maxWidthPx: number;
