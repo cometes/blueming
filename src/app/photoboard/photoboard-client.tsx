@@ -1,32 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
-import {
-	Bookmark,
-	Heart,
-	MessageCircle,
-	MoreHorizontal,
-	Plus,
-	Repeat2,
-	Share2,
-} from "lucide-react";
-import { photoBoardPosts, type PhotoBoardPost } from "@/data/photoboard";
-import { cn } from "@/lib/utils";
+import { useEffect, useMemo, useState } from "react";
+import { Plus, Search, Settings, X } from "lucide-react";
+import { type PhotoBoardPost } from "@/data/photoboard";
 import { toast } from "sonner";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/components/tiptap-ui-primitive/tooltip/tooltip";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import PhotoboardCreateModal from "@/components/modal/PhotoboardCreateModal";
+import {
+	deletePhotoboardPost,
+	fetchPhotoboardPosts,
+} from "@/queries/photoboard";
+import PhotoboardSettingsDialog from "@/components/modal/PhotoboardSettingsDialog";
+import AdminOnly from "@/components/common/AdminOnly";
+import { useSettings } from "@/contexts/SettingsContext";
+import { setSettingsMainPhotoboard } from "@/queries/set/setSettingsMainPhotoboard";
+import { useAuthStore } from "@/store/auth/store";
+import { useAdmin } from "@/hooks/auth/UseAdmin";
+import PhotoboardItem from "@/components/items/PhotoboardItem";
 
 const formatAbsoluteDate = (iso: string) => {
 	const date = new Date(iso);
@@ -60,16 +51,147 @@ const formatRelative = (iso: string) => {
 	return `${years}년 전`;
 };
 
-const shouldTruncate = (caption: string) => caption.length > 120;
-const getInitial = (value: string) => value.trim().charAt(0).toUpperCase();
-const isRemoteImage = (src: string) => src.startsWith("http");
 export default function PhotoBoardClient() {
+	const { main, updateMain, refreshSettings } = useSettings();
+	const { user } = useAuthStore();
+	const { isAdmin } = useAdmin();
 	const [liked, setLiked] = useState<Record<string, boolean>>({});
 	const [reposted, setReposted] = useState<Record<string, boolean>>({});
 	const [bookmarked, setBookmarked] = useState<Record<string, boolean>>({});
 	const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-	const [posts, setPosts] = useState<PhotoBoardPost[]>(() => photoBoardPosts);
+	const [posts, setPosts] = useState<PhotoBoardPost[]>([]);
 	const [composerOpen, setComposerOpen] = useState(false);
+	const [isLoading, setIsLoading] = useState(true);
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const [editTarget, setEditTarget] = useState<PhotoBoardPost | null>(null);
+	const [isEditOpen, setIsEditOpen] = useState(false);
+	const [searchInput, setSearchInput] = useState("");
+	const [appliedQuery, setAppliedQuery] = useState("");
+
+	const defaultPhotoboardSettings = useMemo(
+		() => ({
+			postsPerRow: 3,
+			writePermission: "member" as const,
+		}),
+		[]
+	);
+
+	const resolvedPhotoboardSettings = useMemo(
+		() => ({
+			...defaultPhotoboardSettings,
+			...(main?.photoboard || {}),
+		}),
+		[defaultPhotoboardSettings, main]
+	);
+
+	const [postsPerRow, setPostsPerRow] = useState(
+		resolvedPhotoboardSettings.postsPerRow
+	);
+	const [writePermission, setWritePermission] = useState<"admin" | "member">(
+		resolvedPhotoboardSettings.writePermission
+	);
+
+	const [tempPostsPerRow, setTempPostsPerRow] = useState(postsPerRow);
+	const [tempWritePermission, setTempWritePermission] =
+		useState(writePermission);
+
+	useEffect(() => {
+		setPostsPerRow(resolvedPhotoboardSettings.postsPerRow);
+		setWritePermission(resolvedPhotoboardSettings.writePermission);
+	}, [resolvedPhotoboardSettings]);
+
+	useEffect(() => {
+		if (isDialogOpen) {
+			setTempPostsPerRow(postsPerRow);
+			setTempWritePermission(writePermission);
+		}
+	}, [isDialogOpen, postsPerRow, writePermission]);
+
+	useEffect(() => {
+		let isActive = true;
+		fetchPhotoboardPosts()
+			.then((data) => {
+				if (!isActive) return;
+				setPosts(data.items);
+			})
+			.catch(() => {
+				if (!isActive) return;
+				toast.error("포토보드 데이터를 불러오지 못했습니다.");
+			})
+			.finally(() => {
+				if (!isActive) return;
+				setIsLoading(false);
+			});
+		return () => {
+			isActive = false;
+		};
+	}, []);
+
+	const handleSaveSettings = async () => {
+		try {
+			const payload = {
+				postsPerRow: tempPostsPerRow,
+				writePermission: tempWritePermission,
+			};
+			await setSettingsMainPhotoboard(payload);
+			updateMain?.({ photoboard: payload });
+			await refreshSettings?.({ broadcast: true });
+			setPostsPerRow(payload.postsPerRow);
+			setWritePermission(payload.writePermission);
+			setIsDialogOpen(false);
+			toast.success("저장되었습니다.");
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : "저장에 실패했습니다.";
+			toast.error(message);
+		}
+	};
+
+	const clampedPostsPerRow = Math.min(Math.max(postsPerRow, 1), 6);
+	const columnsClass =
+		{
+			1: "columns-1 sm:columns-1 lg:columns-1",
+			2: "columns-1 sm:columns-2 lg:columns-2",
+			3: "columns-1 sm:columns-2 lg:columns-3",
+			4: "columns-1 sm:columns-2 lg:columns-4",
+			5: "columns-1 sm:columns-2 lg:columns-5",
+			6: "columns-1 sm:columns-2 lg:columns-6",
+		}[clampedPostsPerRow] ?? "columns-1 sm:columns-2 lg:columns-3";
+
+	const canManagePost = (post: PhotoBoardPost) =>
+		Boolean(isAdmin || (user && post.author?.id === user.uid));
+
+	const normalizedQuery = appliedQuery.trim().toLowerCase();
+	const filteredPosts = useMemo(() => {
+		if (!normalizedQuery) return posts;
+		return posts.filter((post) => {
+			const tags = Array.isArray(post.tags) ? post.tags.join(" ") : "";
+			const haystack = [
+				post.caption,
+				post.author?.name ?? "",
+				tags,
+			]
+				.join(" ")
+				.toLowerCase();
+			return haystack.includes(normalizedQuery);
+		});
+	}, [posts, normalizedQuery]);
+
+	const handleDeletePost = async (post: PhotoBoardPost) => {
+		const confirmed = window.confirm(
+			"게시글을 삭제할까요? 이 작업은 되돌릴 수 없어요."
+		);
+		if (!confirmed) return;
+		try {
+			await deletePhotoboardPost(post.id);
+			setPosts((prev) => prev.filter((item) => item.id !== post.id));
+			toast.success("게시글이 삭제되었습니다.");
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : "삭제에 실패했습니다.";
+			toast.error(message);
+		}
+	};
 
 	const handleShare = async (post: PhotoBoardPost) => {
 		const link = `${window.location.origin}/photoboard#${post.id}`;
@@ -82,247 +204,213 @@ export default function PhotoBoardClient() {
 	};
 
 	return (
-		<div className="w-full max-w-[1200px] mx-auto px-6 pt-16 pb-20">
-			<header className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-				<div>
-					<p className="text-sm text-sub-text">포토보드</p>
-					<h1 className="text-3xl font-bold text-main-text mt-2">
-						포토보드
-					</h1>
-					<p className="text-sm text-sub-text mt-2">
-						이미지와 짧은 기록을 한눈에 모아보는 공간이에요.
-					</p>
+		<div className="w-full max-w-[1200px] mx-auto px-6 mt-[90px] mb-[40px]">
+			<header className="mb-10 flex items-center justify-center">
+				<div className="flex items-center gap-2 w-full sm:w-auto">
+					<div className="w-[150px]">
+
+					</div>
+					<div className="w-full sm:w-[200px]">
+						<Input
+							className="border-card bg-card backdrop-blur-card rounded-card text-main-text"
+							endIcon={searchInput ? X : Search}
+							value={searchInput}
+							onChange={(e) => setSearchInput(e.target.value)}
+							placeholder="본문, 태그로 검색"
+							onKeyDown={(e) => {
+								if (e.key === "Enter") {
+									e.preventDefault();
+									setAppliedQuery(searchInput.trim());
+								}
+							}}
+							onEndIconClick={
+								searchInput
+									? () => {
+											setSearchInput("");
+											setAppliedQuery("");
+										}
+									: undefined
+							}
+							endIconAriaLabel="검색어 지우기"
+						/>
+					</div>
+					<AdminOnly>
+						<PhotoboardSettingsDialog
+							isOpen={isDialogOpen}
+							onOpenChange={setIsDialogOpen}
+							tempPostsPerRow={tempPostsPerRow}
+							setTempPostsPerRow={setTempPostsPerRow}
+							tempWritePermission={tempWritePermission}
+							setTempWritePermission={setTempWritePermission}
+							onSave={handleSaveSettings}
+							trigger={
+								<Button className="bg-card border-card text-main-text rounded-full w-10 h-10 hover:border-transparent">
+									<Settings />
+								</Button>
+							}
+						/>
+					</AdminOnly>
+					{writePermission === "admin" ? (
+						<AdminOnly>
+							<Button
+								type="button"
+								onClick={() => setComposerOpen(true)}
+								className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
+							>
+								<Plus size={16} />
+								새 글쓰기
+							</Button>
+						</AdminOnly>
+					) : (
+						<Button
+							type="button"
+							onClick={() => setComposerOpen(true)}
+							className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
+						>
+							<Plus size={16} />
+							새 글쓰기
+						</Button>
+					)}
 				</div>
-				<Button
-					type="button"
-					onClick={() => setComposerOpen(true)}
-					className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
-				>
-					<Plus size={16} />
-					새 글쓰기
-				</Button>
 			</header>
 
-			<div className="columns-1 sm:columns-2 lg:columns-3 gap-2">
-				{posts.map((post) => {
-					const isLiked = liked[post.id] ?? false;
-					const isReposted = reposted[post.id] ?? false;
-					const isBookmarked = bookmarked[post.id] ?? false;
-					const isExpanded = expanded[post.id] ?? false;
-					const caption = post.caption;
-					const showMore = shouldTruncate(caption);
-					const absoluteDate = formatAbsoluteDate(post.createdAt);
-					const relativeDate = formatRelative(post.createdAt);
-
-					return (
-						<article
-							key={post.id}
-							id={post.id}
-							className="mb-6 break-inside-avoid rounded-card border-card bg-card backdrop-blur-card overflow-hidden shadow-sm"
+			{isLoading ? (
+				<div className={`${columnsClass} gap-2`}>
+					{Array.from({ length: 6 }).map((_, index) => (
+						<div
+							key={`photoboard-skeleton-${index}`}
+							className="mb-6 break-inside-avoid rounded-card border-card bg-card-bg overflow-hidden animate-pulse"
 						>
-							<div className="flex items-center justify-between px-4 py-3">
-								<div className="flex items-center gap-3">
-									<div className="w-9 h-9 rounded-full overflow-hidden border border-card bg-card-bg flex items-center justify-center">
-										{post.author.avatarUrl ? (
-											isRemoteImage(post.author.avatarUrl) ? (
-												<Image
-													src={post.author.avatarUrl}
-													alt={post.author.name}
-													width={36}
-													height={36}
-													className="w-full h-full object-cover"
-												/>
-											) : (
-												<img
-													src={post.author.avatarUrl}
-													alt={post.author.name}
-													className="w-full h-full object-cover"
-												/>
-											)
-										) : (
-											<span className="text-xs font-semibold text-sub-text">
-												{getInitial(post.author.name)}
-											</span>
-										)}
-									</div>
-									<div className="flex flex-col">
-										<span className="text-sm font-semibold text-main-text">
-											{post.author.name}
-										</span>
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<span className="text-xs text-sub-text cursor-default">
-													{relativeDate}
-												</span>
-											</TooltipTrigger>
-											<TooltipContent className="text-xs">
-												{absoluteDate}
-											</TooltipContent>
-										</Tooltip>
-									</div>
+							<div className="px-4 py-3 flex items-center gap-3">
+								<div className="w-9 h-9 rounded-full bg-card" />
+								<div className="space-y-2">
+									<div className="h-3 w-24 rounded-full bg-card" />
+									<div className="h-2 w-16 rounded-full bg-card" />
 								</div>
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<button
-											type="button"
-											className="w-8 h-8 rounded-full flex items-center justify-center text-sub-text hover:text-main-text hover:bg-card-bg"
-											aria-label="게시글 메뉴"
-										>
-											<MoreHorizontal size={18} />
-										</button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent align="end">
-										<DropdownMenuItem>수정하기</DropdownMenuItem>
-										<DropdownMenuItem className="text-red-400">
-											삭제하기
-										</DropdownMenuItem>
-									</DropdownMenuContent>
-								</DropdownMenu>
 							</div>
-
-							<div className="w-full bg-card-bg">
-								{isRemoteImage(post.imageUrl) ? (
-									<Image
-										src={post.imageUrl}
-										alt={post.caption}
-										width={1200}
-										height={800}
-										className="w-full h-auto object-cover"
-										sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-									/>
-								) : (
-									<img
-										src={post.imageUrl}
-										alt={post.caption}
-										className="w-full h-full object-cover"
-										loading="lazy"
-										decoding="async"
-									/>
-								)}
-							</div>
-
-							<div className="px-4 py-3 space-y-3">
+							<div className="w-full aspect-[4/3] bg-card" />
+							<div className="px-4 py-4 space-y-3">
 								<div className="flex items-center justify-between">
-									<div className="flex items-center gap-4">
-										<button
-											type="button"
-											onClick={() =>
-												setLiked((prev) => ({
-													...prev,
-													[post.id]: !isLiked,
-												}))
-											}
-											className={cn(
-												"flex items-center justify-center transition-transform",
-												isLiked ? "text-pink-500 scale-105" : "text-sub-text"
-											)}
-											aria-label="좋아요"
-										>
-											<Heart
-												size={20}
-												fill={isLiked ? "currentColor" : "none"}
-											/>
-										</button>
-										<button
-											type="button"
-											className="text-sub-text hover:text-main-text transition-colors"
-											aria-label="코멘트"
-										>
-											<MessageCircle size={20} />
-										</button>
-										<button
-											type="button"
-											onClick={() =>
-												setReposted((prev) => ({
-													...prev,
-													[post.id]: !isReposted,
-												}))
-											}
-											className={cn(
-												"transition-colors",
-												isReposted ? "text-emerald-400" : "text-sub-text"
-											)}
-											aria-label="재게시"
-										>
-											<Repeat2 size={20} />
-										</button>
-										<button
-											type="button"
-											onClick={() => handleShare(post)}
-											className="text-sub-text hover:text-main-text transition-colors"
-											aria-label="공유하기"
-										>
-											<Share2 size={20} />
-										</button>
+									<div className="flex items-center gap-2">
+										<div className="h-4 w-4 rounded-full bg-card" />
+										<div className="h-4 w-4 rounded-full bg-card" />
+										<div className="h-4 w-4 rounded-full bg-card" />
+										<div className="h-4 w-4 rounded-full bg-card" />
 									</div>
-									<button
-										type="button"
-										onClick={() =>
-											setBookmarked((prev) => ({
-												...prev,
-												[post.id]: !isBookmarked,
-											}))
-										}
-										className={cn(
-											"transition-colors",
-											isBookmarked ? "text-amber-400" : "text-sub-text"
-										)}
-										aria-label="북마크"
-									>
-										<Bookmark
-											size={20}
-											fill={isBookmarked ? "currentColor" : "none"}
-										/>
-									</button>
+									<div className="h-4 w-4 rounded-full bg-card" />
 								</div>
-
-								<p className="text-sm text-sub-text">
-									좋아요 {post.likeCount.toLocaleString()}개
-								</p>
-
-								<div className="text-sm text-main-text leading-relaxed">
-									<p className={cn(!isExpanded && "line-clamp-2")}>
-										{caption}
-									</p>
-									{showMore && (
-										<button
-											type="button"
-											onClick={() =>
-												setExpanded((prev) => ({
-													...prev,
-													[post.id]: !isExpanded,
-												}))
-											}
-											className="text-xs text-sub-text mt-1 hover:text-theme-primary"
-										>
-											{isExpanded ? "접기" : "더보기"}
-										</button>
-									)}
-									{post.tags?.length ? (
-										<div className="flex flex-wrap gap-2 pt-3">
-											{post.tags.map((tag) => (
-												<span
-													key={`${post.id}-${tag}`}
-													className="text-xs text-theme-primary bg-theme-primary/10 px-2 py-1 rounded-full"
-												>
-													#{tag}
-												</span>
-											))}
-										</div>
-									) : null}
+								<div className="h-3 w-24 rounded-full bg-card" />
+								<div className="space-y-2">
+									<div className="h-3 w-full rounded-full bg-card" />
+									<div className="h-3 w-4/5 rounded-full bg-card" />
 								</div>
 							</div>
-						</article>
-					);
-				})}
-			</div>
+						</div>
+					))}
+				</div>
+			) : filteredPosts.length === 0 ? (
+				<div className="rounded-card border-card bg-card-bg text-center py-16 px-6">
+					{posts.length === 0 ? (
+						<>
+							<p className="text-sm text-sub-text">
+								아직 포토보드가 비어 있어요.
+							</p>
+							<p className="text-base text-main-text mt-2">
+								첫 게시물을 만들어보세요.
+							</p>
+						</>
+					) : (
+						<>
+							<p className="text-sm text-sub-text">검색 결과가 없어요.</p>
+							<p className="text-base text-main-text mt-2">
+								다른 검색어로 시도해보세요.
+							</p>
+						</>
+					)}
+				</div>
+			) : (
+				<div className={`${columnsClass} gap-2`}>
+					{filteredPosts.map((post) => {
+						const isLiked = liked[post.id] ?? false;
+						const isReposted = reposted[post.id] ?? false;
+						const isBookmarked = bookmarked[post.id] ?? false;
+						const isExpanded = expanded[post.id] ?? false;
+						const absoluteDate = formatAbsoluteDate(post.createdAt);
+						const relativeDate = formatRelative(post.createdAt);
+
+						return (
+							<PhotoboardItem
+								key={post.id}
+								post={post}
+								isLiked={isLiked}
+								isReposted={isReposted}
+								isBookmarked={isBookmarked}
+								isExpanded={isExpanded}
+								absoluteDate={absoluteDate}
+								relativeDate={relativeDate}
+								canManage={canManagePost(post)}
+								onToggleLike={() =>
+									setLiked((prev) => ({
+										...prev,
+										[post.id]: !isLiked,
+									}))
+								}
+								onToggleRepost={() =>
+									setReposted((prev) => ({
+										...prev,
+										[post.id]: !isReposted,
+									}))
+								}
+								onToggleBookmark={() =>
+									setBookmarked((prev) => ({
+										...prev,
+										[post.id]: !isBookmarked,
+									}))
+								}
+								onToggleExpand={() =>
+									setExpanded((prev) => ({
+										...prev,
+										[post.id]: !isExpanded,
+									}))
+								}
+								onShare={() => handleShare(post)}
+								onEdit={() => {
+									setEditTarget(post);
+									setIsEditOpen(true);
+								}}
+								onDelete={() => handleDeletePost(post)}
+							/>
+						);
+					})}
+				</div>
+			)}
 
 			<PhotoboardCreateModal
 				isOpen={composerOpen}
 				onOpenChange={setComposerOpen}
-				onCreate={(newPost) => {
+				onSubmit={(newPost) => {
 					setPosts((prev) => [newPost, ...prev]);
 					toast.success("새 게시물이 추가되었습니다.");
+				}}
+			/>
+			<PhotoboardCreateModal
+				isOpen={isEditOpen}
+				onOpenChange={(open) => {
+					setIsEditOpen(open);
+					if (!open) {
+						setEditTarget(null);
+					}
+				}}
+				mode="edit"
+				post={editTarget}
+				onSubmit={(updatedPost) => {
+					setPosts((prev) =>
+						prev.map((item) =>
+							item.id === updatedPost.id ? updatedPost : item
+						)
+					);
+					setEditTarget(updatedPost);
+					toast.success("게시물이 수정되었습니다.");
 				}}
 			/>
 		</div>
