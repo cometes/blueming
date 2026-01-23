@@ -20,7 +20,7 @@ import {
 
 export function StickerBoardLayersPanel() {
 	const {
-		state: { selectedId, expandedGroupIds, editingGroupId },
+		state: { selectedId, selectedIds, expandedGroupIds, editingGroupId },
 		refs: { interactionHistoryBaseRef, presentRef },
 		actions: {
 			setExpandedGroupIds,
@@ -107,7 +107,7 @@ export function StickerBoardLayersPanel() {
 									{(() => {
 										const counts = new Map<string, number>();
 										return layerItems.map((layer, index) => {
-											const isSelected = selectedId === layer.id;
+											const isSelected = selectedIds.has(layer.id);
 											const isVisible = layer.isVisible !== false;
 											const isLocked = layer.isLocked === true;
 											const isGroup = isGroupSticker(
@@ -239,9 +239,9 @@ export function StickerBoardLayersPanel() {
 																							className={[
 																								"flex items-center gap-2 rounded border px-2 py-1",
 																								isChildSelected
-																									? "border-blue-300 bg-blue-50/60"
-																									: "border-transparent bg-transparent hover:bg-black/5",
-																							].join(" ")}
+																							? "border-blue-300 bg-blue-50/60"
+																							: "border-transparent bg-transparent hover:bg-black/5",
+																					].join(" ")}
 																							onClick={(e) => {
 																								e.stopPropagation();
 																								enterGroupEdit(layer.id);

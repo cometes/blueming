@@ -93,7 +93,7 @@ function StickerBoardEditContent({
 			await setSettingsMainStickerBoard(stickerBoardToSave);
 			await refreshSettings?.({ broadcast: true });
 			toast.success("스티커보드를 저장했어요.");
-		} catch (error) {
+		} catch {
 			toast.error("스티커보드 저장에 실패했어요.");
 		} finally {
 			setIsSaving(false);

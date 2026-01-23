@@ -192,63 +192,65 @@ export function StickerBoardPropertiesPanel() {
 				rafId = requestAnimationFrame(tick);
 				return;
 			}
-			if (moveableInteractionRef.current) {
-				const canvas = canvasRef.current;
-				const target = canvas
-					? (canvas.querySelector(
-							`[data-sticker-id="${component.id}"]`,
-						) as HTMLElement | null)
-					: null;
-				if (target) {
-					const leftPct = parseFloat(target.style.left || "");
-					const topPct = parseFloat(target.style.top || "");
-					const widthPct = parseFloat(target.style.width || "");
-					const heightPct = parseFloat(target.style.height || "");
-					const next = {
-						x: String(
-							toPx(
-								Number.isFinite(leftPct) ? leftPct : component.xPct,
-								canvasSize.width,
-							),
+			if (!moveableInteractionRef.current) {
+				rafId = requestAnimationFrame(tick);
+				return;
+			}
+			const canvas = canvasRef.current;
+			const target = canvas
+				? (canvas.querySelector(
+						`[data-sticker-id="${component.id}"]`,
+					) as HTMLElement | null)
+				: null;
+			if (target) {
+				const leftPct = parseFloat(target.style.left || "");
+				const topPct = parseFloat(target.style.top || "");
+				const widthPct = parseFloat(target.style.width || "");
+				const heightPct = parseFloat(target.style.height || "");
+				const next = {
+					x: String(
+						toPx(
+							Number.isFinite(leftPct) ? leftPct : component.xPct,
+							canvasSize.width,
 						),
-						y: String(
-							toPx(
-								Number.isFinite(topPct) ? topPct : component.yPct,
-								canvasSize.height,
-							),
+					),
+					y: String(
+						toPx(
+							Number.isFinite(topPct) ? topPct : component.yPct,
+							canvasSize.height,
 						),
-						width: String(
-							toPx(
-								Number.isFinite(widthPct) ? widthPct : component.widthPct,
-								canvasSize.width,
-							),
+					),
+					width: String(
+						toPx(
+							Number.isFinite(widthPct) ? widthPct : component.widthPct,
+							canvasSize.width,
 						),
-						height: String(
-							toPx(
-								Number.isFinite(heightPct) ? heightPct : component.heightPct,
-								canvasSize.height,
-							),
+					),
+					height: String(
+						toPx(
+							Number.isFinite(heightPct) ? heightPct : component.heightPct,
+							canvasSize.height,
 						),
+					),
+				};
+				setPxDraft((prev) => {
+					if (
+						prev.id === component.id &&
+						prev.x === next.x &&
+						prev.y === next.y &&
+						prev.width === next.width &&
+						prev.height === next.height
+					) {
+						return prev;
+					}
+					return {
+						id: component.id,
+						x: next.x,
+						y: next.y,
+						width: next.width,
+						height: next.height,
 					};
-					setPxDraft((prev) => {
-						if (
-							prev.id === component.id &&
-							prev.x === next.x &&
-							prev.y === next.y &&
-							prev.width === next.width &&
-							prev.height === next.height
-						) {
-							return prev;
-						}
-						return {
-							id: component.id,
-							x: next.x,
-							y: next.y,
-							width: next.width,
-							height: next.height,
-						};
-					});
-				}
+				});
 			}
 			rafId = requestAnimationFrame(tick);
 		};

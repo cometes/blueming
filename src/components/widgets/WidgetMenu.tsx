@@ -84,7 +84,6 @@ export default function WidgetMenu() {
 	const router = useRouter();
 	const { isAdmin } = useAdmin();
 	const [openFolders, setOpenFolders] = useState<OpenFolders>({});
-	const menuItemCount = menuData.menus?.length ?? 0;
 
 	// -------------------------------------------------------------------------
 	// CONSTANTS
@@ -173,15 +172,6 @@ export default function WidgetMenu() {
 		() => getTextAlignClass(design?.textAlign || ""),
 		[design?.textAlign, getTextAlignClass],
 	);
-
-	const menuListMinHeight = useMemo(() => {
-		if (!menuItemCount) return undefined;
-		const itemHeight = 40;
-		const itemGap = 10;
-		return (
-			menuItemCount * itemHeight + Math.max(menuItemCount - 1, 0) * itemGap
-		);
-	}, [menuItemCount]);
 
 	const asideBackgroundStyle = useMemo(
 		() =>
