@@ -89,6 +89,8 @@ export interface StickerBoardGroupComponent extends StickerBoardComponentBase {
 export interface StickerBoardImageComponent extends StickerBoardComponentBase {
 	type: "image";
 	imageUrl: string;
+	/** original asset name (if available) */
+	name?: string;
 	imageFit?: "contain" | "cover";
 }
 

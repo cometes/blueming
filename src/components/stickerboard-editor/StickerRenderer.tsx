@@ -22,6 +22,8 @@ export function StickerRenderer({
 			data-sticker-id={component.id}
 			data-sticker-root="true"
 			data-sticker-locked={isLocked ? "true" : "false"}
+			data-sticker-flip-x={component.flipX ? "true" : "false"}
+			data-sticker-flip-y={component.flipY ? "true" : "false"}
 			style={{
 				left: `${component.xPct}%`,
 				top: `${component.yPct}%`,

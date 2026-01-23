@@ -1,0 +1,18 @@
+.blur-proxy {
+	position: relative;
+}
+
+.blur-proxy::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	pointer-events: none;
+	backdrop-filter: blur(var(--size-card-blur, 10px));
+	background-color: var(--color-card-bg, rgba(255, 255, 255, 0.08));
+}
+
+.blur-proxy > * {
+	position: relative;
+	z-index: 1;
+}
