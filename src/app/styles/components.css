@@ -1,0 +1,130 @@
+/* 애니메이션 키프레임 정의 */
+@keyframes jingle {
+	0%,
+	100% {
+		transform: rotate(0deg);
+	}
+	25% {
+		transform: rotate(10deg);
+	}
+	75% {
+		transform: rotate(-10deg);
+	}
+}
+
+@keyframes musicBar {
+	0% {
+		height: 4px;
+	}
+	50% {
+		height: 14px;
+	}
+	100% {
+		height: 4px;
+	}
+}
+
+@keyframes marqueeVertical {
+	0% {
+		transform: translate3d(0, 0, 0);
+	}
+	100% {
+		transform: translate3d(0, -50%, 0);
+	}
+}
+
+@layer components {
+	.widget-wrapper {
+		@apply w-full h-full relative overflow-hidden bg-clip-padding;
+		background: var(--widget-bg);
+		border-color: var(--widget-border-color);
+		border-radius: var(--widget-border-radius);
+		border-width: var(--widget-border-width);
+		border-style: solid;
+		backdrop-filter: blur(var(--widget-blur));
+	}
+
+	/* 보더 이미지 코너만 적용 */
+	.widget-wrapper[data-border-image-type="corner"] {
+		position: relative;
+	}
+
+	.widget-wrapper[data-border-image-type="corner"]::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 30px;
+		height: 30px;
+		background-image: var(--widget-corner-image);
+		background-size: contain;
+		background-repeat: no-repeat;
+		background-position: top left;
+		pointer-events: none;
+		z-index: 10;
+	}
+
+	.widget-wrapper[data-border-image-type="corner"]::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		right: 0;
+		width: 30px;
+		height: 30px;
+		background-image: var(--widget-corner-image);
+		background-size: contain;
+		background-repeat: no-repeat;
+		background-position: top right;
+		pointer-events: none;
+		z-index: 10;
+	}
+
+	/* 하단 코너는 별도 요소로 추가 필요 (CSS만으로는 제한적) */
+	.card-wrapper {
+		background: var(--card-bg);
+		border-color: var(--card-border-color);
+		border-radius: var(--card-border-radius);
+		border-width: var(--widget-border-width);
+		border-style: solid;
+		box-shadow: var(--card-shadow);
+		transition: transform 0.2s ease, border-color 0.2s ease;
+
+		&:hover {
+			transform: translateY(var(--card-translate-y));
+			border-color: var(--card-border-active);
+		}
+	}
+
+	.marquee-vertical-track {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		height: 200%;
+		animation: marqueeVertical 12s linear infinite;
+		will-change: transform;
+		backface-visibility: hidden;
+	}
+
+	.marquee-vertical-segment {
+		height: 50%;
+		width: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.marquee-vertical-item {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		white-space: nowrap;
+		writing-mode: vertical-rl;
+		text-orientation: mixed;
+	}
+
+	.background-effect-layer,
+	.background-effect-layer * {
+		pointer-events: none;
+	}
+}

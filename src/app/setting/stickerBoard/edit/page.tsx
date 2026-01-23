@@ -6,7 +6,6 @@ import {
 	StickerBoardEditorProvider,
 	useStickerBoardEditorContext,
 } from "@/contexts/StickerBoardEditorContext";
-import { StickerBoardAssetsPanel } from "@/components/stickerboard-editor/StickerBoardAssetsPanel";
 import { StickerBoardCanvas } from "@/components/stickerboard-editor/StickerBoardCanvas";
 import { StickerBoardLayersPanel } from "@/components/stickerboard-editor/StickerBoardLayersPanel";
 import { StickerBoardPropertiesPanel } from "@/components/stickerboard-editor/StickerBoardPropertiesPanel";
@@ -127,16 +126,13 @@ function StickerBoardEditContent({
 					<StickerBoardLayersPanel />
 					<StickerBoardCanvas ratio={ratio} />
 
-					<aside className="rounded-card border border-card bg-card-bg/60 p-4 backdrop-blur-card">
+					<aside className="rounded-card border border-card bg-card-bg/60 p-4 blur-proxy">
 						<div className="text-sm font-semibold text-main-text">
 							편집 패널
 						</div>
 						<p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
 							선택한 스티커 속성 편집(텍스트/스타일/회전/투명도 등)
 						</p>
-
-						{/* Asset Panel */}
-						<StickerBoardAssetsPanel />
 
 						<StickerBoardPropertiesPanel />
 					</aside>

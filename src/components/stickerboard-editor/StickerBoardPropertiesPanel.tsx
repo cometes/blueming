@@ -25,8 +25,9 @@ import {
 	AlignStartHorizontal,
 	AlignStartVertical,
 	ImagePlus,
-	Plus,
+	Type,
 } from "lucide-react";
+import { StickerBoardAssetsPanel } from "@/components/stickerboard-editor/StickerBoardAssetsPanel";
 
 export function StickerBoardPropertiesPanel() {
 	const {
@@ -44,25 +45,28 @@ export function StickerBoardPropertiesPanel() {
 
 	return (
 		<>
-			<div className="mt-4 space-y-2">
+			<div className="mt-4 flex items-center gap-2">
 				<Button
 					type="button"
-					className="w-full justify-start"
 					variant="outline"
+					size="icon"
 					onClick={() => setIsImageDialogOpen(true)}
+					aria-label="이미지 스티커 추가"
+					title="이미지 스티커 추가"
 				>
-					<ImagePlus className="h-4 w-4 mr-2" />
-					이미지 스티커 추가
+					<ImagePlus className="h-4 w-4" />
 				</Button>
 				<Button
 					type="button"
-					className="w-full justify-start"
 					variant="outline"
+					size="icon"
 					onClick={addTextSticker}
+					aria-label="텍스트 스티커 추가"
+					title="텍스트 스티커 추가"
 				>
-					<Plus className="h-4 w-4 mr-2" />
-					텍스트 스티커 추가
+					<Type className="h-4 w-4" />
 				</Button>
+				<StickerBoardAssetsPanel containerClassName="" compactTrigger />
 			</div>
 			<div className="mt-4 rounded-md border border-dashed border-gray-300/70 bg-background/40 p-3 text-xs text-gray-400">
 				{selectedComponent

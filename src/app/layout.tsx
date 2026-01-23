@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { cache } from "react";
 import "./globals.css";
 import Layout from "@/components/layout/Layout";
 import Providers from "@/providers/Providers";
@@ -168,7 +167,7 @@ const buildFontFaceCSS = (fonts: FontRegistryItem[]) =>
 		})
 		.join("");
 
-const getSettings = cache(async (): Promise<AppSettings | null> => {
+async function getSettings(): Promise<AppSettings | null> {
 	try {
 		const res = await fetch("https://api-w5buphcleq-du.a.run.app/settings", {
 			next: { revalidate: SETTINGS_REVALIDATE_SECONDS, tags: ["settings"] },
@@ -183,7 +182,7 @@ const getSettings = cache(async (): Promise<AppSettings | null> => {
 	} catch {
 		return null;
 	}
-});
+}
 
 export async function generateMetadata(): Promise<Metadata> {
 	const settings = await getSettings();

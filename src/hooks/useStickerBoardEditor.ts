@@ -577,6 +577,7 @@ const addImageStickerAt = async (opts: {
 	centerXPct?: number;
 	centerYPct?: number;
 	assetId?: string;
+	assetName?: string;
 	assetWidth?: number;
 	assetHeight?: number;
 	historyBase?: StickerBoardComponent[] | null;
@@ -653,6 +654,7 @@ const addImageStickerAt = async (opts: {
 		heightPct: pos.heightPct,
 		type: "image",
 		imageUrl: opts.url,
+		name: opts.assetName,
 		imageFit: "contain",
 		isVisible: true,
 		isLocked: false,

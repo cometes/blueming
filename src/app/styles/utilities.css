@@ -1,0 +1,101 @@
+@layer utilities {
+	/* Border utilities */
+	.border-widget {
+		border: var(--border-widget);
+	}
+	.border-card {
+		border: var(--border-card);
+	}
+	.border-widget-color {
+		border-color: var(--color-widget-border);
+	}
+	.border-card-color {
+		border-color: var(--color-card-border);
+	}
+	.border-card-active {
+		border-color: var(--color-card-border-active);
+	}
+	.border-widget-width {
+		border-width: var(--size-widget-border);
+	}
+	.border-card-width {
+		border-width: var(--size-card-border);
+	}
+	.marquee-vertical-text {
+		writing-mode: vertical-rl;
+		text-orientation: mixed;
+	}
+
+	/* Background utilities */
+	.bg-card {
+		background: var(--card-bg);
+	}
+	.bg-widget {
+		background: var(--widget-bg);
+	}
+	.bg-theme-bg {
+		background: var(--color-theme-bg);
+	}
+	.bg-theme-primary {
+		background: var(--color-theme-primary);
+	}
+	.bg-theme-secondary {
+		background: var(--color-theme-secondary);
+	}
+
+	/* Text color utilities */
+	.text-main-text {
+		color: var(--color-main-text);
+	}
+	.text-sub-text {
+		color: var(--color-sub-text);
+	}
+	.text-theme-primary {
+		color: var(--color-theme-primary);
+	}
+	.text-theme-secondary {
+		color: var(--color-theme-secondary);
+	}
+
+	/* Font family utilities */
+	.font-body {
+		font-family: var(--font-body);
+	}
+	.font-title {
+		font-family: var(--font-title);
+	}
+
+	/* Border radius utilities */
+	.rounded-card {
+		border-radius: var(--card-border-radius);
+	}
+	.rounded-widget {
+		border-radius: var(--widget-border-radius);
+	}
+
+	/* Shadow utilities */
+	.shadow-card {
+		box-shadow: var(--shadow-card);
+	}
+
+	/* Backdrop blur utilities */
+	.backdrop-blur-card {
+		backdrop-filter: blur(var(--card-blur));
+	}
+	.backdrop-blur-widget {
+		backdrop-filter: blur(var(--size-widget-blur));
+	}
+
+	/* Animation utilities */
+	.animate-jingle {
+		animation: var(--animate-jingle);
+	}
+	.animate-music-bar {
+		animation: var(--animate-music-bar);
+	}
+
+	/* Transform utilities */
+	.translate-y-card {
+		transform: translateY(var(--size-card-translate-y));
+	}
+}

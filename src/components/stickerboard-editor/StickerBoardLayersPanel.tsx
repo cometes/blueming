@@ -35,8 +35,32 @@ export function StickerBoardLayersPanel() {
 		computed: { layerItems },
 	} = useStickerBoardEditorContext();
 
+	const getImageName = (name?: string, url?: string) => {
+		if (name?.trim()) return name.trim();
+		if (!url) return "이미지";
+		const clean = url.split("?")[0] ?? "";
+		const last = clean.split("/").pop() ?? "";
+		return last.trim() || "이미지";
+	};
+
+	const getBaseLabel = (item: StickerBoardComponent) => {
+		if (isGroupSticker(item as StickerBoardGroupComponent)) {
+			const group = item as StickerBoardGroupComponent;
+			return group.name ? String(group.name) : `그룹 (${group.children?.length ?? 0})`;
+		}
+		if (item.type === "text") {
+			return item.text?.trim()
+				? item.text.trim().slice(0, 20)
+				: "텍스트";
+		}
+		if (item.type === "image") {
+			return getImageName(item.name, item.imageUrl);
+		}
+		return "스티커";
+	};
+
 	return (
-		<aside className="rounded-card border border-card bg-card-bg/60 p-4">
+		<aside className="rounded-card border border-card bg-card-bg/60 p-4 blur-proxy">
 			<div className="flex items-center justify-between gap-3">
 				<div className="flex items-center gap-2">
 					<Layers className="h-4 w-4 text-gray-500" />
@@ -79,24 +103,23 @@ export function StickerBoardLayersPanel() {
 									{...provided.droppableProps}
 									className="space-y-1"
 								>
-									{layerItems.map((layer, index) => {
+									{(() => {
+										const counts = new Map<string, number>();
+										return layerItems.map((layer, index) => {
 										const isSelected = selectedId === layer.id;
 										const isVisible = layer.isVisible !== false;
 										const isLocked = layer.isLocked === true;
 										const isGroup = isGroupSticker(
 											layer as StickerBoardGroupComponent
 										);
+										const baseLabel = getBaseLabel(layer);
+										const nextCount = (counts.get(baseLabel) ?? 0) + 1;
+										counts.set(baseLabel, nextCount);
 										const label = isGroup
-											? (layer as StickerBoardGroupComponent).name
-												? String((layer as StickerBoardGroupComponent).name)
-												: `그룹 (${(
-													layer as StickerBoardGroupComponent
-												).children?.length ?? 0})`
-											: layer.type === "text"
-											? layer.text?.trim()
-												? layer.text.trim().slice(0, 20)
-												: "텍스트 스티커"
-											: "이미지 스티커";
+											? baseLabel
+											: nextCount > 1
+												? `${baseLabel} ${nextCount}`
+												: baseLabel;
 
 										return (
 											<Draggable
@@ -157,7 +180,11 @@ export function StickerBoardLayersPanel() {
 																		</span>
 																	</button>
 																)}
-																<span className="text-xs font-medium text-main-text truncate">
+																<span
+																	className="text-xs font-medium text-main-text truncate"
+																	title={label}
+																	aria-label={label}
+																>
 																	{label}
 																</span>
 																{layer.groupId && (
@@ -168,23 +195,25 @@ export function StickerBoardLayersPanel() {
 															</div>
 															{isGroup && expandedGroupIds.has(layer.id) && (
 																<div className="mt-1 space-y-1 pl-4">
-																	{(
-																		(layer as StickerBoardGroupComponent).children ?? []
-																	)
-																		.slice()
-																		.sort(
-																			(a: StickerBoardComponent, b: StickerBoardComponent) =>
-																					(b.zIndex ?? 0) - (a.zIndex ?? 0)
+																	{(() => {
+																		const childCounts = new Map<string, number>();
+																		return (
+																			(layer as StickerBoardGroupComponent).children ?? []
 																		)
-																		.map((child: StickerBoardComponent) => {
-																			const childLabel =
-																				child.type === "text"
-																					? child.text?.trim()
-																						? child.text.trim().slice(0, 18)
-																						: "텍스트"
-																					: child.type === "image"
-																					? "이미지"
-																					: "스티커";
+																			.slice()
+																			.sort(
+																				(a: StickerBoardComponent, b: StickerBoardComponent) =>
+																						(b.zIndex ?? 0) - (a.zIndex ?? 0)
+																			)
+																			.map((child: StickerBoardComponent) => {
+																				const baseChildLabel = getBaseLabel(child);
+																				const nextChildCount =
+																					(childCounts.get(baseChildLabel) ?? 0) + 1;
+																				childCounts.set(baseChildLabel, nextChildCount);
+																				const childLabel =
+																					nextChildCount > 1
+																						? `${baseChildLabel} ${nextChildCount}`
+																						: baseChildLabel;
 											const isChildSelected =
 												editingGroupId === layer.id && selectedId === child.id;
 																			return (
@@ -204,12 +233,17 @@ export function StickerBoardLayersPanel() {
 																					role="button"
 																					tabIndex={0}
 																				>
-																					<span className="text-[11px] text-gray-500 truncate">
+																					<span
+																						className="text-[11px] text-gray-500 truncate"
+																						title={childLabel}
+																						aria-label={childLabel}
+																					>
 																						{childLabel}
 																					</span>
 																				</div>
 																			);
-																		})}
+																			});
+																	})()}
 																</div>
 															)}
 														</div>
@@ -275,7 +309,8 @@ export function StickerBoardLayersPanel() {
 												)}
 											</Draggable>
 										);
-									})}
+									});
+									})()}
 									{provided.placeholder}
 								</div>
 							)}

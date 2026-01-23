@@ -1,0 +1,15 @@
+/* Menu responsive toggle */
+.menu-desktop {
+	display: flex;
+}
+.menu-iconbar {
+	display: none;
+}
+@media (max-width: 1000px) {
+	.menu-desktop {
+		display: none;
+	}
+	.menu-iconbar {
+		display: flex;
+	}
+}
