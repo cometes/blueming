@@ -40,7 +40,7 @@ const useContainerHeight = (ref: React.RefObject<HTMLDivElement>) => {
 	return height;
 };
 
-export default function WidgetLatestPosts() {
+export default function WidgetLatestPosts({ onReady }: { onReady?: () => void }) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const containerHeight = useContainerHeight(containerRef);
 	const [items, setItems] = useState<LibraryItem[]>([]);
@@ -60,9 +60,11 @@ export default function WidgetLatestPosts() {
 				if (!isActive) return;
 				const nextItems = Array.isArray(data?.items) ? data.items : [];
 				setItems(nextItems);
+				onReady?.();
 			} catch {
 				if (!isActive) return;
 				setItems([]);
+				onReady?.();
 			} finally {
 				if (!isActive) return;
 				setIsLoading(false);
