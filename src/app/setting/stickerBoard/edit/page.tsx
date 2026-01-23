@@ -97,7 +97,7 @@ function StickerBoardEditContent({
 	};
 
 	return (
-		<main className="w-full min-h-dvh flex items-center justify-center">
+		<main className="mx-auto w-full max-w-[1400px] p-6 mt-10">
 			<ImageUploadDialog
 				isOpen={isImageDialogOpen}
 				onOpenChange={setIsImageDialogOpen}
@@ -117,29 +117,25 @@ function StickerBoardEditContent({
 				}}
 			/>
 
-			<div className="mx-auto w-full max-w-[1400px] px-6 py-10">
-				<StickerBoardToolbar onSave={handleSave} isSaving={isSaving} />
+			<StickerBoardToolbar onSave={handleSave} isSaving={isSaving} />
 
-				<section
-					className="grid gap-4"
-					style={{
-						gridTemplateColumns: "1fr 1fr 1fr",
-					}}
-				>
-					<StickerBoardLayersPanel />
-					<StickerBoardCanvas ratio={ratio} />
-					<aside className="rounded-card border border-card bg-card-bg/60 p-4 blur-proxy">
-						<div className="text-sm font-semibold text-main-text">
-							편집 패널
-						</div>
-						<p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-							선택한 스티커 속성 편집(텍스트/스타일/회전/투명도 등)
-						</p>
+			<section
+				className="grid gap-4"
+				style={{
+					gridTemplateColumns: "240px 1fr 240px",
+				}}
+			>
+				<StickerBoardLayersPanel />
+				<StickerBoardCanvas ratio={ratio} />
+				<aside className="rounded-card border-card bg-card p-4 blur-proxy">
+					<div className="text-sm font-semibold text-main-text">편집 패널</div>
+					<p className="mt-2 text-xs text-sub-text">
+						선택한 스티커의 속성을 편집할 수 있어요.
+					</p>
 
-						<StickerBoardPropertiesPanel />
-					</aside>
-				</section>
-			</div>
+					<StickerBoardPropertiesPanel />
+				</aside>
+			</section>
 		</main>
 	);
 }
