@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { useStickerBoardEditorContext } from "@/contexts/StickerBoardEditorContext";
 import { isGroupSticker } from "@/lib/stickerboard-utils";
 import type {
@@ -66,11 +67,11 @@ export function StickerBoardLayersPanel() {
 					<Layers className="h-4 w-4 text-gray-500" />
 					<div className="text-sm font-semibold text-main-text">레이어</div>
 				</div>
-				<div className="text-[11px] text-gray-500 dark:text-gray-400">
+				<div className="text-[11px] text-gray-500">
 					{layerItems.length}개
 				</div>
 			</div>
-			<p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+			<p className="mt-2 text-xs text-gray-500">
 				레이어 목록/정렬/숨김/잠금 영역
 			</p>
 
@@ -132,11 +133,11 @@ export function StickerBoardLayersPanel() {
 															ref={provided.innerRef}
 															{...provided.draggableProps}
 															className={[
-																"flex items-center gap-2 rounded-md border px-2 py-2",
+																"flex items-center gap-2 rounded-md border px-1 py-1",
 																snapshot.isDragging ? "opacity-80" : "",
 																isSelected
-																	? "border-blue-300 bg-blue-50/60 dark:border-blue-500/40 dark:bg-blue-950/20"
-																	: "border-card bg-background/30 hover:bg-background/50",
+																	? "border-theme-primary bg-theme-primary "
+																	: "border-card bg-card hover:bg-theme-primary/60",
 															].join(" ")}
 															onClick={() => {
 																setSelection(new Set([layer.id]), layer.id);
@@ -150,11 +151,11 @@ export function StickerBoardLayersPanel() {
 														>
 															{/* drag handle */}
 															<div
-																className="flex h-7 w-7 items-center justify-center rounded hover:bg-black/5 dark:hover:bg-white/5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing"
+																className="flex h-7 w-7 items-center justify-center rounded hover:bg-black/5 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
 																onClick={(e) => e.stopPropagation()}
 																{...provided.dragHandleProps}
 															>
-																<GripVertical className="h-4 w-4" />
+																<GripVertical className={cn("h-4 w-4", isSelected ? "text-main-text" : "")} />
 															</div>
 
 															<div className="min-w-0 flex-1">
@@ -162,7 +163,7 @@ export function StickerBoardLayersPanel() {
 																	{isGroup && (
 																		<button
 																			type="button"
-																			className="p-1 -ml-1 rounded hover:bg-black/5 dark:hover:bg-white/5 text-gray-500"
+																			className="p-1 -ml-1 rounded hover:bg-black/5 text-gray-500"
 																			onClick={(e) => {
 																				e.stopPropagation();
 																				setExpandedGroupIds((prev) => {
@@ -191,7 +192,7 @@ export function StickerBoardLayersPanel() {
 																		{label}
 																	</span>
 																	{layer.groupId && (
-																		<span className="shrink-0 rounded-full border border-gray-300/70 bg-background/50 px-1.5 py-0.5 text-[10px] leading-none text-gray-500 dark:border-gray-700 dark:text-gray-400">
+																		<span className="shrink-0 rounded-full border border-gray-300/70 bg-background/50 px-1.5 py-0.5 text-[10px] leading-none text-gray-500">
 																			G{String(layer.groupId).slice(-4)}
 																		</span>
 																	)}
@@ -269,7 +270,7 @@ export function StickerBoardLayersPanel() {
 
 															<button
 																type="button"
-																className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5"
+																className="p-1 rounded hover:bg-black/5"
 																onClick={(e) => {
 																	e.stopPropagation();
 																	toggleVisibility(layer.id);
@@ -278,15 +279,15 @@ export function StickerBoardLayersPanel() {
 																title={isVisible ? "숨기기" : "표시"}
 															>
 																{isVisible ? (
-																	<Eye className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+																	<Eye className={cn("h-4 w-4", isSelected ? "text-main-text" : "text-gray-600")} />
 																) : (
-																	<EyeOff className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+																	<EyeOff className={cn("h-4 w-4", isSelected ? "text-main-text" : "text-gray-500")} />
 																)}
 															</button>
 
 															<button
 																type="button"
-																className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/5"
+																className="p-1 rounded hover:bg-black/5"
 																onClick={(e) => {
 																	e.stopPropagation();
 																	toggleLock(layer.id);
@@ -295,19 +296,19 @@ export function StickerBoardLayersPanel() {
 																title={isLocked ? "잠금 해제" : "잠금"}
 															>
 																{isLocked ? (
-																	<Lock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+																	<Lock className={cn("h-4 w-4", isSelected ? "text-main-text" : "text-amber-600")} />
 																) : (
-																	<Unlock className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+																	<Unlock className={cn("h-4 w-4", isSelected ? "text-main-text" : "text-gray-600")} />
 																)}
 															</button>
 
 															<button
 																type="button"
 																className={[
-																	"p-1 rounded",
+																	"group p-1 rounded",
 																	isLocked
 																		? "opacity-40 cursor-not-allowed"
-																		: "hover:bg-black/5 dark:hover:bg-white/5",
+																		: "hover:bg-black/5",
 																].join(" ")}
 																onClick={(e) => {
 																	e.stopPropagation();
@@ -322,7 +323,7 @@ export function StickerBoardLayersPanel() {
 																		: "삭제"
 																}
 															>
-																<Trash2 className="h-4 w-4 text-red-500" />
+																<Trash2 className="h-4 w-4 text-gray-600 group-hover:text-red-500" />
 															</button>
 														</div>
 													)}
