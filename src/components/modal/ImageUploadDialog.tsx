@@ -26,6 +26,8 @@ interface ImageUploadDialogProps {
 	onUpload: (url: string) => void;
 	uploadMode?: "immediate" | "deferred";
 	onFileSelect?: (file: File, previewUrl: string) => void;
+	onFilesSelect?: (files: File[], previewUrls: string[]) => void;
+	allowMultiple?: boolean;
 	rightContent?: ReactNode;
 	enableAssetSearch?: boolean;
 	assetSearchQuery?: string;
@@ -40,6 +42,8 @@ export default function ImageUploadDialog({
 	onUpload,
 	uploadMode = "immediate",
 	onFileSelect,
+	onFilesSelect,
+	allowMultiple = false,
 	rightContent,
 	enableAssetSearch = false,
 	assetSearchQuery = "",
@@ -67,19 +71,36 @@ export default function ImageUploadDialog({
 		event: React.ChangeEvent<HTMLInputElement>
 	) => {
 		try {
-			const file = event.target.files?.[0];
-			if (!file) return;
+			const selectedFiles = Array.from(event.target.files ?? []);
+			if (selectedFiles.length === 0) return;
 
 			if (uploadMode === "deferred") {
+				if (allowMultiple && selectedFiles.length > 1) {
+					const previewUrls = selectedFiles.map((selected) =>
+						URL.createObjectURL(selected),
+					);
+					setThumbnail(previewUrls[0] ?? "");
+					onFilesSelect?.(selectedFiles, previewUrls);
+					return;
+				}
+
+				const file = selectedFiles[0];
+				if (!file) return;
 				const previewUrl = URL.createObjectURL(file);
 				setThumbnail(previewUrl);
-				onFileSelect?.(file, previewUrl);
+				if (onFilesSelect) {
+					onFilesSelect([file], [previewUrl]);
+				} else {
+					onFileSelect?.(file, previewUrl);
+				}
 				return;
 			}
 
 			setIsUploading(true);
 
 			const formData = new FormData();
+			const file = selectedFiles[0];
+			if (!file) return;
 			formData.append("image", file);
 
 			const authHeader = await getAuthHeader();
@@ -171,6 +192,7 @@ export default function ImageUploadDialog({
 								accept="image/*"
 								onChange={handleFileUpload}
 								disabled={isUploading}
+								multiple={allowMultiple}
 								className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
 							/>
 						</div>
