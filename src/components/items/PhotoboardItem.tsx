@@ -147,12 +147,9 @@ export default function PhotoboardItem({
 				className="relative w-full bg-card-bg overflow-hidden cursor-pointer group"
 				onClick={onClick}
 			>
-				<div
-					className={cn(
-						"absolute inset-0 bg-card animate-pulse transition-opacity",
-						isImageLoaded ? "opacity-0 pointer-events-none" : "opacity-100"
-					)}
-				/>
+				{!isImageLoaded && (
+					<div className="absolute inset-0 bg-card animate-pulse" aria-hidden="true" />
+				)}
 				<img
 					src={post.imageUrl}
 					alt={post.caption}
