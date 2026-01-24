@@ -121,7 +121,7 @@ export default function Layout({ children }: LayoutProps) {
 						"flex justify-between items-center px-6 py-0 w-full h-12",
 						"fixed top-0 left-0 border-b border-card-bg z-50",
 						"backdrop-blur-sm",
-						isHeaderVisible ? "translate-y-0" : "-translate-y-full"
+						isHeaderVisible ? "translate-y-0" : "-translate-y-full",
 					)}
 					style={{ transition: "transform 300ms ease-in-out" }}
 				>
@@ -157,11 +157,11 @@ export default function Layout({ children }: LayoutProps) {
 					isStickerBoardEditPage
 						? "max-w-none px-0 h-auto"
 						: isMainPage
-						? "max-w-7xl px-5 h-dvh"
-						: "max-w-5xl px-5 h-auto"
+							? "max-w-7xl px-5 h-dvh"
+							: "max-w-5xl px-5 h-auto",
 				)}
 			>
-				<div className="w-full h-dvh flex items-start justify-center gap-6 relative z-10">
+				<div className="w-full h-full flex items-start justify-center gap-6 relative z-10">
 					{!shouldHideMenu && !isMenuRightAligned && <WidgetMenu />}
 					{children}
 					{!shouldHideMenu && isMenuRightAligned && <WidgetMenu />}
