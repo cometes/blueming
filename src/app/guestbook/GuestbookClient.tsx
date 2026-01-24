@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import { useAuthStore } from "@/store/auth/store";
 import { useAdmin } from "@/hooks/auth/UseAdmin";
@@ -32,22 +32,14 @@ import GuestbookEditDialog from "@/components/guestbook/GuestbookEditDialog";
 import GuestbookSecretDialog from "@/components/guestbook/GuestbookSecretDialog";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import AssetGrid from "@/components/asset/AssetGrid";
-import { listStickerAssets } from "@/queries/stickerAssets";
-import type { StickerAsset } from "@/types/stickerBoard";
+import { useGuestbookForm, type GuestbookImage } from "@/hooks/guestbook/useGuestbookForm";
+import { useCooldown } from "@/hooks/guestbook/useCooldown";
+import { useImageDialog } from "@/hooks/guestbook/useImageDialog";
+import { useAssets } from "@/hooks/guestbook/useAssets";
 
 const PIN_REGEX = /^\d{4}$/;
 const DEFAULT_PAGE_SIZE = 10;
-const COOLDOWN_SECONDS = 20;
 const MAX_IMAGE_COUNT = 8;
-
-type GuestbookImage = {
-	id: string;
-	url: string;
-	file?: File;
-};
-
-const createImageId = () =>
-	`img_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
 interface GuestbookClientProps {
 	initialEntries: GuestbookEntry[];
@@ -66,155 +58,86 @@ export default function GuestbookClient({
 	const [totalCount, setTotalCount] = useState(total);
 	const [currentPage, setCurrentPage] = useState(1);
 
-	const [displayName, setDisplayName] = useState("");
-	const [pin, setPin] = useState("");
-	const [message, setMessage] = useState("");
-	const [images, setImages] = useState<GuestbookImage[]>([]);
-	const [isSecret, setIsSecret] = useState(false);
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [cooldownUntil, setCooldownUntil] = useState(0);
-	const [cooldownRemaining, setCooldownRemaining] = useState(0);
-	const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
-	const [imageDialogTarget, setImageDialogTarget] = useState<
-		"create" | "edit" | null
-	>(null);
-	const [assets, setAssets] = useState<StickerAsset[]>([]);
-	const [assetsLoading, setAssetsLoading] = useState(false);
-	const [assetsError, setAssetsError] = useState<string | null>(null);
-	const [assetSearchQuery, setAssetSearchQuery] = useState("");
+	const resolvedMode: "user" | "anon" = isAuthenticated ? "user" : "anon";
 
+	// 폼 상태 관리
+	const form = useGuestbookForm({ mode: resolvedMode });
+	const { cooldownRemaining, startCooldown } = useCooldown();
+
+	// 다이얼로그 상태
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [dialogMode, setDialogMode] = useState<"edit" | "delete">("edit");
 	const [dialogPin, setDialogPin] = useState("");
 	const [dialogMessage, setDialogMessage] = useState("");
 	const [dialogImages, setDialogImages] = useState<GuestbookImage[]>([]);
-	const [dialogPreviewUrl, setDialogPreviewUrl] = useState("");
-	const [dialogPreviewUrls, setDialogPreviewUrls] = useState<string[]>([]);
-	const [dialogPreviewFiles, setDialogPreviewFiles] = useState<File[]>([]);
 	const [dialogSecret, setDialogSecret] = useState(false);
 	const [activeEntry, setActiveEntry] = useState<GuestbookEntry | null>(null);
-	const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>(
-		{},
-	);
+
+	// 비밀글 관리
+	const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
 	const [secretDialogOpen, setSecretDialogOpen] = useState(false);
 	const [secretDialogPin, setSecretDialogPin] = useState("");
-	const [secretDialogEntry, setSecretDialogEntry] =
-		useState<GuestbookEntry | null>(null);
+	const [secretDialogEntry, setSecretDialogEntry] = useState<GuestbookEntry | null>(null);
 	const [isVerifyingSecret, setIsVerifyingSecret] = useState(false);
-	const skipDialogPreviewRevokeRef = useRef(false);
-	const imagesRef = useRef<GuestbookImage[]>([]);
-	const dialogImagesRef = useRef<GuestbookImage[]>([]);
-	const dialogPreviewUrlRef = useRef("");
-	const dialogPreviewUrlsRef = useRef<string[]>([]);
+
+	// 이미지 다이얼로그
+	const imageDialog = useImageDialog();
+	const assets = useAssets(imageDialog.isOpen);
 
 	const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
-	const resolvedMode: "user" | "anon" = isAuthenticated ? "user" : "anon";
+	const canSubmit = form.canSubmit && cooldownRemaining === 0;
 
-	const revokeBlobUrl = (url: string) => {
-		if (url.startsWith("blob:")) {
-			URL.revokeObjectURL(url);
-		}
-	};
-
-	const clearImageList = (list: GuestbookImage[], setter: (next: GuestbookImage[]) => void) => {
-		list.forEach((image) => revokeBlobUrl(image.url));
-		setter([]);
-	};
-
-	const resetForm = () => {
-		setDisplayName("");
-		setPin("");
-		setMessage("");
-		clearImageList(images, setImages);
-		setIsSecret(false);
-	};
-
-	const filteredAssets = useMemo(() => {
-		if (!assetSearchQuery.trim()) return assets;
-		const query = assetSearchQuery.trim().toLowerCase();
-		return assets.filter((asset) =>
-			(asset.name || asset.url || "").toLowerCase().includes(query),
-		);
-	}, [assets, assetSearchQuery]);
-
-	const canSubmit = useMemo(() => {
-		if (!message.trim()) return false;
-		if (cooldownRemaining > 0) return false;
-		return resolvedMode === "anon"
-			? displayName.trim().length > 0 && PIN_REGEX.test(pin)
-			: true;
-	}, [displayName, message, pin, resolvedMode, cooldownRemaining]);
-
-	const openDialog = (entry: GuestbookEntry, modeType: "edit" | "delete") => {
-		const entryImages =
-			Array.isArray(entry.imageUrls) && entry.imageUrls.length > 0
-				? entry.imageUrls
-				: entry.imageUrl
-					? [entry.imageUrl]
-					: [];
-		setActiveEntry(entry);
-		setDialogMode(modeType);
-		setDialogPin("");
-		setDialogMessage(entry.message);
-		clearImageList(dialogImages, setDialogImages);
-		setDialogImages(
-			entryImages.map((url) => ({
-				id: createImageId(),
-				url,
-			})),
-		);
-		setDialogSecret(entry.isSecret === true);
-		setDialogOpen(true);
-	};
-
-	const closeDialog = () => {
-		setDialogOpen(false);
-		setActiveEntry(null);
-		clearImageList(dialogImages, setDialogImages);
-	};
-
-	const handleCreate = async () => {
-		if (!canSubmit) return;
-		setIsSubmitting(true);
+	const loadPage = useCallback(async () => {
 		try {
-			const fileImages = images.filter((image) => image.file);
-			const uploadedUrls =
-				fileImages.length > 0
-					? await uploadGuestbookImages(
-							fileImages.map((image) => image.file as File),
-						)
-					: [];
-			let uploadIndex = 0;
-			const finalImageUrls = images.reduce<string[]>((acc, image) => {
-				if (image.file) {
-					const nextUrl = uploadedUrls[uploadIndex];
-					uploadIndex += 1;
-					if (nextUrl) {
-						acc.push(nextUrl);
-					}
-				} else if (image.url && !image.url.startsWith("blob:")) {
-					acc.push(image.url);
+			const data = await fetchGuestbookList({
+				page: currentPage,
+				limit: pageSize,
+			});
+			setEntries(data.items);
+			setTotalCount(data.total);
+		} catch {
+			// 에러 처리는 선택적
+		}
+	}, [currentPage, pageSize]);
+
+	const uploadImages = useCallback(async (images: GuestbookImage[]) => {
+		const fileImages = images.filter((image) => image.file);
+		const uploadedUrls =
+			fileImages.length > 0
+				? await uploadGuestbookImages(fileImages.map((image) => image.file as File))
+				: [];
+
+		let uploadIndex = 0;
+		return images.reduce<string[]>((acc, image) => {
+			if (image.file) {
+				const nextUrl = uploadedUrls[uploadIndex];
+				uploadIndex += 1;
+				if (nextUrl) {
+					acc.push(nextUrl);
 				}
-				return acc;
-			}, []);
+			} else if (image.url && !image.url.startsWith("blob:")) {
+				acc.push(image.url);
+			}
+			return acc;
+		}, []);
+	}, []);
+
+	const handleCreate = useCallback(async () => {
+		if (!canSubmit) return;
+		form.setIsSubmitting(true);
+		try {
+			const finalImageUrls = await uploadImages(form.images);
 			await createGuestbookEntry({
-				message,
-				displayName: resolvedMode === "anon" ? displayName : undefined,
-				pin: resolvedMode === "anon" ? pin : undefined,
-				isSecret,
+				message: form.message,
+				displayName: resolvedMode === "anon" ? form.displayName : undefined,
+				pin: resolvedMode === "anon" ? form.pin : undefined,
+				isSecret: form.isSecret,
 				imageUrls: finalImageUrls.length > 0 ? finalImageUrls : undefined,
 			});
 			toast.success("저장되었습니다.");
-			resetForm();
-			const nextCooldown = Date.now() + COOLDOWN_SECONDS * 1000;
-			setCooldownUntil(nextCooldown);
-			if (typeof window !== "undefined") {
-				window.localStorage.setItem(
-					"guestbookCooldownUntil",
-					String(nextCooldown),
-				);
-			}
+			form.resetForm();
+			startCooldown();
 			setCurrentPage(1);
 			await loadPage();
 		} catch (error) {
@@ -230,35 +153,15 @@ export default function GuestbookClient({
 			}
 			toast.error("저장에 실패했습니다.");
 		} finally {
-			setIsSubmitting(false);
+			form.setIsSubmitting(false);
 		}
-	};
+	}, [canSubmit, form, resolvedMode, uploadImages, startCooldown, loadPage]);
 
-	const handleUpdate = async () => {
-		if (!activeEntry) return;
-		if (!dialogMessage.trim()) return;
+	const handleUpdate = useCallback(async () => {
+		if (!activeEntry || !dialogMessage.trim()) return;
 
 		try {
-			const fileImages = dialogImages.filter((image) => image.file);
-			const uploadedUrls =
-				fileImages.length > 0
-					? await uploadGuestbookImages(
-							fileImages.map((image) => image.file as File),
-						)
-					: [];
-			let uploadIndex = 0;
-			const finalImageUrls = dialogImages.reduce<string[]>((acc, image) => {
-				if (image.file) {
-					const nextUrl = uploadedUrls[uploadIndex];
-					uploadIndex += 1;
-					if (nextUrl) {
-						acc.push(nextUrl);
-					}
-				} else if (image.url && !image.url.startsWith("blob:")) {
-					acc.push(image.url);
-				}
-				return acc;
-			}, []);
+			const finalImageUrls = await uploadImages(dialogImages);
 			await updateGuestbookEntry(activeEntry.id, {
 				message: dialogMessage,
 				pin: activeEntry.authorType === "anon" ? dialogPin : undefined,
@@ -272,9 +175,9 @@ export default function GuestbookClient({
 		} finally {
 			closeDialog();
 		}
-	};
+	}, [activeEntry, dialogMessage, dialogPin, dialogSecret, dialogImages, uploadImages, loadPage]);
 
-	const handleDelete = async () => {
+	const handleDelete = useCallback(async () => {
 		if (!activeEntry) return;
 		try {
 			await deleteGuestbookEntry(activeEntry.id, {
@@ -287,69 +190,115 @@ export default function GuestbookClient({
 		} finally {
 			closeDialog();
 		}
-	};
+	}, [activeEntry, dialogPin, loadPage]);
 
-	const canEditEntry = (entry: GuestbookEntry) => {
-		if (isAdmin) return entry.isAdmin === true;
-		if (entry.authorType === "anon") return true;
-		if (entry.uid && user?.uid) return entry.uid === user.uid;
-		return false;
-	};
+	const canEditEntry = useCallback(
+		(entry: GuestbookEntry) => {
+			if (isAdmin) return entry.isAdmin === true;
+			if (entry.authorType === "anon") return true;
+			if (entry.uid && user?.uid) return entry.uid === user.uid;
+			return false;
+		},
+		[isAdmin, user?.uid],
+	);
 
-	const canDeleteEntry = (entry: GuestbookEntry) => {
-		if (isAdmin) return true;
-		if (entry.authorType === "anon") return true;
-		if (entry.uid && user?.uid) return entry.uid === user.uid;
-		return false;
-	};
+	const canDeleteEntry = useCallback(
+		(entry: GuestbookEntry) => {
+			if (isAdmin) return true;
+			if (entry.authorType === "anon") return true;
+			if (entry.uid && user?.uid) return entry.uid === user.uid;
+			return false;
+		},
+		[isAdmin, user?.uid],
+	);
 
-	const canViewSecretDirectly = (entry: GuestbookEntry) => {
-		if (!entry.isSecret) return true;
-		if (isAdmin) return true;
-		if (entry.authorType === "user") {
-			return entry.uid !== undefined && entry.uid === user?.uid;
-		}
-		return false;
-	};
+	const canViewSecretDirectly = useCallback(
+		(entry: GuestbookEntry) => {
+			if (!entry.isSecret) return true;
+			if (isAdmin) return true;
+			if (entry.authorType === "user") {
+				return entry.uid !== undefined && entry.uid === user?.uid;
+			}
+			return false;
+		},
+		[isAdmin, user?.uid],
+	);
 
-	const canViewSecret = (entry: GuestbookEntry) => {
-		if (!entry.isSecret) return false;
-		if (canViewSecretDirectly(entry)) return true;
-		return entry.authorType === "anon";
-	};
+	const canViewSecret = useCallback(
+		(entry: GuestbookEntry) => {
+			if (!entry.isSecret) return false;
+			if (canViewSecretDirectly(entry)) return true;
+			return entry.authorType === "anon";
+		},
+		[canViewSecretDirectly],
+	);
 
-	const openSecretDialog = (entry: GuestbookEntry) => {
+	const openDialog = useCallback((entry: GuestbookEntry, modeType: "edit" | "delete") => {
+		const entryImages =
+			Array.isArray(entry.imageUrls) && entry.imageUrls.length > 0
+				? entry.imageUrls
+				: entry.imageUrl
+					? [entry.imageUrl]
+					: [];
+		setActiveEntry(entry);
+		setDialogMode(modeType);
+		setDialogPin("");
+		setDialogMessage(entry.message);
+		setDialogImages(
+			entryImages.map((url) => ({
+				id: `img_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+				url,
+			})),
+		);
+		setDialogSecret(entry.isSecret === true);
+		setDialogOpen(true);
+	}, []);
+
+	const closeDialog = useCallback(() => {
+		setDialogOpen(false);
+		setActiveEntry(null);
+		dialogImages.forEach((image) => {
+			if (image.url.startsWith("blob:")) {
+				URL.revokeObjectURL(image.url);
+			}
+		});
+		setDialogImages([]);
+	}, [dialogImages]);
+
+	const openSecretDialog = useCallback((entry: GuestbookEntry) => {
 		setSecretDialogEntry(entry);
 		setSecretDialogPin("");
 		setSecretDialogOpen(true);
-	};
+	}, []);
 
-	const closeSecretDialog = () => {
+	const closeSecretDialog = useCallback(() => {
 		setSecretDialogOpen(false);
 		setSecretDialogEntry(null);
 		setSecretDialogPin("");
-	};
+	}, []);
 
-	const handleSecretToggle = (entry: GuestbookEntry) => {
-		const isVisible = !!visibleSecrets[entry.id];
-		if (isVisible) {
-			setVisibleSecrets((prev) => ({ ...prev, [entry.id]: false }));
-			return;
-		}
+	const handleSecretToggle = useCallback(
+		(entry: GuestbookEntry) => {
+			const isVisible = !!visibleSecrets[entry.id];
+			if (isVisible) {
+				setVisibleSecrets((prev) => ({ ...prev, [entry.id]: false }));
+				return;
+			}
 
-		if (canViewSecretDirectly(entry)) {
-			setVisibleSecrets((prev) => ({ ...prev, [entry.id]: true }));
-			return;
-		}
+			if (canViewSecretDirectly(entry)) {
+				setVisibleSecrets((prev) => ({ ...prev, [entry.id]: true }));
+				return;
+			}
 
-		if (entry.authorType === "anon") {
-			openSecretDialog(entry);
-		}
-	};
+			if (entry.authorType === "anon") {
+				openSecretDialog(entry);
+			}
+		},
+		[visibleSecrets, canViewSecretDirectly, openSecretDialog],
+	);
 
-	const handleVerifySecret = async () => {
-		if (!secretDialogEntry) return;
-		if (!PIN_REGEX.test(secretDialogPin)) return;
+	const handleVerifySecret = useCallback(async () => {
+		if (!secretDialogEntry || !PIN_REGEX.test(secretDialogPin)) return;
 		setIsVerifyingSecret(true);
 		try {
 			const data = await verifyGuestbookSecret(secretDialogEntry.id, {
@@ -367,9 +316,7 @@ export default function GuestbookClient({
 						? {
 								...entry,
 								message: data.message ?? entry.message,
-								imageUrls: resolvedImageUrls.length
-									? resolvedImageUrls
-									: entry.imageUrls,
+								imageUrls: resolvedImageUrls.length ? resolvedImageUrls : entry.imageUrls,
 								imageUrl:
 									typeof data.imageUrl === "undefined"
 										? entry.imageUrl
@@ -388,207 +335,75 @@ export default function GuestbookClient({
 		} finally {
 			setIsVerifyingSecret(false);
 		}
-	};
+	}, [secretDialogEntry, secretDialogPin, closeSecretDialog]);
 
-	const loadPage = useCallback(async () => {
-		try {
-			const data = await fetchGuestbookList({
-				page: currentPage,
-				limit: pageSize,
-			});
-			setEntries(data.items);
-			setTotalCount(data.total);
-		} catch {}
-	}, [currentPage, pageSize]);
-
-	useEffect(() => {
-		if (resolvedMode === "user") {
-			setDisplayName("");
-			setPin("");
-		}
-	}, [resolvedMode]);
-
-	useEffect(() => {
-		if (typeof window === "undefined") return;
-		const stored = Number(
-			window.localStorage.getItem("guestbookCooldownUntil"),
-		);
-		if (stored && stored > Date.now()) {
-			setCooldownUntil(stored);
-		}
-	}, []);
-
-	useEffect(() => {
-		if (!cooldownUntil) {
-			setCooldownRemaining(0);
-			return;
-		}
-		const updateRemaining = () => {
-			const remaining = Math.max(
-				0,
-				Math.ceil((cooldownUntil - Date.now()) / 1000),
-			);
-			setCooldownRemaining(remaining);
-			if (remaining === 0 && typeof window !== "undefined") {
-				window.localStorage.removeItem("guestbookCooldownUntil");
-			}
-		};
-		updateRemaining();
-		const id = window.setInterval(updateRemaining, 1000);
-		return () => window.clearInterval(id);
-	}, [cooldownUntil]);
-
-	useEffect(() => {
-		loadPage();
-	}, [loadPage]);
-
-	useEffect(() => {
-		imagesRef.current = images;
-	}, [images]);
-
-	useEffect(() => {
-		dialogImagesRef.current = dialogImages;
-	}, [dialogImages]);
-
-	useEffect(() => {
-		dialogPreviewUrlRef.current = dialogPreviewUrl;
-	}, [dialogPreviewUrl]);
-
-	useEffect(() => {
-		dialogPreviewUrlsRef.current = dialogPreviewUrls;
-	}, [dialogPreviewUrls]);
-
-	useEffect(() => {
-		return () => {
-			imagesRef.current.forEach((image) => revokeBlobUrl(image.url));
-			dialogImagesRef.current.forEach((image) => revokeBlobUrl(image.url));
-			revokeBlobUrl(dialogPreviewUrlRef.current);
-			dialogPreviewUrlsRef.current.forEach((url) => revokeBlobUrl(url));
-		};
-	}, []);
-
-	useEffect(() => {
-		if (!isImageDialogOpen) return;
-		const loadAssets = async () => {
-			try {
-				setAssetsLoading(true);
-				setAssetsError(null);
-				const list = await listStickerAssets("all");
-				setAssets(list.filter((asset) => asset.url));
-			} catch (error) {
-				const message =
-					error instanceof Error
-						? error.message
-						: "에셋을 불러오지 못했습니다.";
-				setAssetsError(message);
-			} finally {
-				setAssetsLoading(false);
-			}
-		};
-		void loadAssets();
-	}, [isImageDialogOpen]);
-
-	const activeImageUrl = dialogPreviewUrl;
-
-	const setDialogPreview = (url: string) => {
-		if (!url) return;
-		if (dialogPreviewUrl.startsWith("blob:") && dialogPreviewUrl !== url) {
-			revokeBlobUrl(dialogPreviewUrl);
-		}
-		dialogPreviewUrls.forEach((previewUrl) => revokeBlobUrl(previewUrl));
-		setDialogPreviewUrl(url);
-		setDialogPreviewUrls([url]);
-		setDialogPreviewFiles([]);
-	};
-
-	const handleThumbnailChange = (url: string) => {
-		if (!url) return;
-		if (dialogPreviewUrl.startsWith("blob:") && dialogPreviewUrl !== url) {
-			revokeBlobUrl(dialogPreviewUrl);
-		}
-		dialogPreviewUrls.forEach((previewUrl) => revokeBlobUrl(previewUrl));
-		setDialogPreviewUrl(url);
-		setDialogPreviewUrls([url]);
-		setDialogPreviewFiles([]);
-	};
-
-	const openImageDialog = (target: "create" | "edit") => {
-		const currentCount = target === "edit" ? dialogImages.length : images.length;
-		if (currentCount >= MAX_IMAGE_COUNT) {
-			toast.error("이미지는 최대 8개까지 첨부할 수 있어요.");
-			return;
-		}
-		setImageDialogTarget(target);
-		setDialogPreviewUrl("");
-		setDialogPreviewUrls([]);
-		setDialogPreviewFiles([]);
-		setIsImageDialogOpen(true);
-	};
-
-	const addImageToTarget = (
-		target: "create" | "edit",
-		url: string,
-		file?: File | null,
-	) => {
-		if (!url) return;
-		const addImage = (prev: GuestbookImage[]) => {
-			if (prev.length >= MAX_IMAGE_COUNT) {
-				toast.error("이미지는 최대 8개까지 첨부할 수 있어요.");
-				return prev;
-			}
-			return [
-				...prev,
-				{
-					id: createImageId(),
-					url,
-					file: file ?? undefined,
-				},
-			];
-		};
-
-		if (target === "edit") {
-			setDialogImages(addImage);
-			return;
-		}
-		setImages(addImage);
-	};
-
-	const removeImageFromTarget = (target: "create" | "edit", id: string) => {
+	const removeImageFromTarget = useCallback((target: "create" | "edit", id: string) => {
 		const remove = (prev: GuestbookImage[]) => {
 			const targetImage = prev.find((image) => image.id === id);
-			if (targetImage) {
-				revokeBlobUrl(targetImage.url);
+			if (targetImage?.url.startsWith("blob:")) {
+				URL.revokeObjectURL(targetImage.url);
 			}
 			return prev.filter((image) => image.id !== id);
 		};
 
 		if (target === "edit") {
 			setDialogImages(remove);
-			return;
+		} else {
+			form.setImages(remove);
 		}
-		setImages(remove);
-	};
+	}, [form]);
 
-	const clearDialogPreview = () => {
-		if (!imageDialogTarget) return;
-		if (!skipDialogPreviewRevokeRef.current) {
-			revokeBlobUrl(dialogPreviewUrl);
-			dialogPreviewUrls.forEach((previewUrl) => revokeBlobUrl(previewUrl));
-		}
-		skipDialogPreviewRevokeRef.current = false;
-		setDialogPreviewUrl("");
-		setDialogPreviewUrls([]);
-		setDialogPreviewFiles([]);
-	};
+	const handleImageDialogOpen = useCallback(
+		(target: "create" | "edit") => {
+			const currentCount = target === "edit" ? dialogImages.length : form.images.length;
+			if (!imageDialog.openDialog(target, currentCount)) {
+				toast.error("이미지는 최대 8개까지 첨부할 수 있어요.");
+			}
+		},
+		[imageDialog, dialogImages.length, form.images.length],
+	);
 
-	const handleImageDialogOpenChange = (open: boolean) => {
-		setIsImageDialogOpen(open);
-		if (!open) {
-			clearDialogPreview();
-			setImageDialogTarget(null);
-			setAssetSearchQuery("");
+	const handleImageUpload = useCallback(
+		(url: string) => {
+			if (!imageDialog.target || !url) return;
+
+			const setter = imageDialog.target === "edit" ? setDialogImages : form.setImages;
+
+			if (imageDialog.previewFiles.length > 0 && imageDialog.previewUrls.length > 0) {
+				if (imageDialog.addImagesToTarget(setter)) {
+					toast.success("이미지가 추가되었습니다.");
+				}
+			} else {
+				imageDialog.addSingleImageToTarget(setter, url);
+				toast.success("이미지가 추가되었습니다.");
+			}
+		},
+		[imageDialog, form],
+	);
+
+	// 모드 변경 시 폼 초기화
+	useEffect(() => {
+		if (resolvedMode === "user") {
+			form.setDisplayName("");
+			form.setPin("");
 		}
-	};
+	}, [resolvedMode, form]);
+
+	// 페이지 로드
+	useEffect(() => {
+		loadPage();
+	}, [loadPage]);
+
+	// 컴포넌트 언마운트 시 blob URL 정리
+	useEffect(() => {
+		return () => {
+			form.images.forEach((image) => {
+				if (image.url.startsWith("blob:")) {
+					URL.revokeObjectURL(image.url);
+				}
+			});
+		};
+	}, [form.images]);
 
 	return (
 		<div className="min-w-[540px] mx-auto mt-[90px] mb-[60px]">
@@ -604,8 +419,8 @@ export default function GuestbookClient({
 									<Input
 										type="text"
 										placeholder="닉네임"
-										value={displayName}
-										onChange={(e) => setDisplayName(e.target.value)}
+										value={form.displayName}
+										onChange={(e) => form.setDisplayName(e.target.value)}
 										className=""
 									/>
 								</div>
@@ -615,8 +430,8 @@ export default function GuestbookClient({
 										type="password"
 										placeholder="비밀번호 4자리"
 										inputMode="numeric"
-										value={pin}
-										onChange={(e) => setPin(e.target.value)}
+										value={form.pin}
+										onChange={(e) => form.setPin(e.target.value)}
 										className=""
 									/>
 								</div>
@@ -626,8 +441,8 @@ export default function GuestbookClient({
 					<div>
 						<p className="text-sm text-sub-text mb-1">message</p>
 						<textarea
-							value={message}
-							onChange={(e) => setMessage(e.target.value)}
+							value={form.message}
+							onChange={(e) => form.setMessage(e.target.value)}
 							placeholder="메시지를 입력해주세요"
 							maxLength={500}
 							className="w-full min-h-[120px] rounded-card border-card bg-card-bg px-4 py-3 text-sm text-main-text resize-none"
@@ -637,28 +452,26 @@ export default function GuestbookClient({
 					<div className="flex items-center justify-between">
 						<div className="flex flex-wrap items-center gap-3">
 							<label className="inline-flex items-center gap-2 text-sm text-sub-text">
-								<Switch checked={isSecret} onCheckedChange={setIsSecret} />
+								<Switch checked={form.isSecret} onCheckedChange={form.setIsSecret} />
 								<Lock size={14} />
 								비밀글
 							</label>
 							<button
 								type="button"
-								onClick={() => {
-									openImageDialog("create");
-								}}
-								disabled={isSubmitting || images.length >= MAX_IMAGE_COUNT}
+								onClick={() => handleImageDialogOpen("create")}
+								disabled={form.isSubmitting || form.images.length >= MAX_IMAGE_COUNT}
 								className={cn(
 									"inline-flex items-center justify-center w-9 h-9 rounded-card border border-card bg-card-bg text-main-text",
-									isSubmitting || images.length >= MAX_IMAGE_COUNT
+									form.isSubmitting || form.images.length >= MAX_IMAGE_COUNT
 										? "opacity-60 pointer-events-none"
-										: ""
+										: "",
 								)}
 								aria-label="사진 첨부"
 							>
 								<ImagePlus size={16} />
 							</button>
 							<span className="text-xs text-sub-text">
-								{images.length}/{MAX_IMAGE_COUNT}
+								{form.images.length}/{MAX_IMAGE_COUNT}
 							</span>
 							{cooldownRemaining > 0 && (
 								<span className="text-xs text-sub-text">
@@ -670,16 +483,16 @@ export default function GuestbookClient({
 							<Button
 								type="button"
 								onClick={handleCreate}
-								disabled={!canSubmit || isSubmitting}
+								disabled={!canSubmit || form.isSubmitting}
 							>
 								등록하기
 							</Button>
 						</div>
 					</div>
 
-					{images.length > 0 && (
+					{form.images.length > 0 && (
 						<div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-							{images.map((image) => (
+							{form.images.map((image) => (
 								<div
 									key={image.id}
 									className="relative aspect-square rounded-card border-card bg-card-bg overflow-hidden"
@@ -792,9 +605,7 @@ export default function GuestbookClient({
 				onDialogSecretChange={setDialogSecret}
 				dialogImages={dialogImages}
 				onRemoveDialogImage={(id) => removeImageFromTarget("edit", id)}
-				onOpenImageDialog={() => {
-					openImageDialog("edit");
-				}}
+				onOpenImageDialog={() => handleImageDialogOpen("edit")}
 				onClose={closeDialog}
 				onConfirm={dialogMode === "edit" ? handleUpdate : handleDelete}
 			/>
@@ -810,55 +621,31 @@ export default function GuestbookClient({
 			/>
 
 			<ImageUploadDialog
-				isOpen={isImageDialogOpen}
-				onOpenChange={handleImageDialogOpenChange}
-				thumbnail={activeImageUrl}
-				setThumbnail={setDialogPreview}
+				isOpen={imageDialog.isOpen}
+				onOpenChange={imageDialog.setIsOpen}
+				thumbnail={imageDialog.previewUrl}
+				setThumbnail={imageDialog.setPreview}
 				uploadMode="deferred"
 				allowMultiple={true}
 				onFilesSelect={(files, previewUrls) => {
-					if (dialogPreviewUrl.startsWith("blob:")) {
-						revokeBlobUrl(dialogPreviewUrl);
-					}
-					dialogPreviewUrls.forEach((previewUrl) => revokeBlobUrl(previewUrl));
-					setDialogPreviewUrls(previewUrls);
-					setDialogPreviewFiles(files);
-					setDialogPreviewUrl(previewUrls[0] ?? "");
+					imageDialog.setMultipleFiles(files, previewUrls);
 				}}
-				onUpload={(url) => {
-					if (!imageDialogTarget || !url) {
-						return;
-					}
-					skipDialogPreviewRevokeRef.current = true;
-					if (dialogPreviewFiles.length > 0 && dialogPreviewUrls.length > 0) {
-						dialogPreviewUrls.forEach((previewUrl, index) => {
-							const file = dialogPreviewFiles[index];
-							addImageToTarget(
-								imageDialogTarget,
-								previewUrl,
-								file ?? undefined,
-							);
-						});
-					} else {
-						addImageToTarget(imageDialogTarget, url);
-					}
-					toast.success("이미지가 추가되었습니다.");
-				}}
+				onUpload={handleImageUpload}
 				rightContent={
 					<AssetGrid
-						assets={filteredAssets}
-						loading={assetsLoading}
-						error={assetsError}
-						selectedUrl={activeImageUrl}
-						onSelect={(asset) => handleThumbnailChange(asset.url)}
+						assets={assets.assets}
+						loading={assets.loading}
+						error={assets.error}
+						selectedUrl={imageDialog.previewUrl}
+						onSelect={(asset) => imageDialog.setPreview(asset.url)}
 						aspectClassName="aspect-square"
 						imageClassName="w-full h-full object-contain"
 						gridTemplateColumns="repeat(3, minmax(0, 1fr))"
 					/>
 				}
 				enableAssetSearch={true}
-				assetSearchQuery={assetSearchQuery}
-				onAssetSearchChange={setAssetSearchQuery}
+				assetSearchQuery={assets.searchQuery}
+				onAssetSearchChange={assets.setSearchQuery}
 			/>
 		</div>
 	);

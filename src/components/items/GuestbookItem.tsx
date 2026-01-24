@@ -89,17 +89,12 @@ export default function GuestbookItem({
 								{entry.message}
 							</p>
 						)}
-						{entry.isSecret && visibleSecret && (
-							<p className="mt-2 text-sm text-sub-text break-words">
-								{entry.message}
-							</p>
-						)}
 						{imageUrls.length > 0 && showSecretContent && (
-							<div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+							<div className="mt-3 flex gap-1.5">
 								{imageUrls.map((url, index) => (
 									<div
 										key={`${entry.id}-image-${index}`}
-										className="relative aspect-square rounded-card border-card bg-card-bg overflow-hidden"
+										className="relative aspect-square rounded-card border-card bg-card-bg overflow-hidden min-w-14"
 									>
 										{/* eslint-disable-next-line @next/next/no-img-element */}
 										<img
