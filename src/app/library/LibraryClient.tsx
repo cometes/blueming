@@ -175,13 +175,20 @@ export default function LibraryClient({
 
 	// 초기 상태를 한 번에 설정하여 리렌더링 최소화
 	useEffect(() => {
-		const { layoutType: newLayout, postsPerPage: newPosts, postsPerRow: newRows, writePermission: newPermission } = resolvedLibrarySettings;
+		const {
+			layoutType: newLayout,
+			postsPerPage: newPosts,
+			postsPerRow: newRows,
+			writePermission: newPermission,
+		} = resolvedLibrarySettings;
 
 		// 상태를 배치로 업데이트
-		setLayoutType(prev => newLayout !== prev ? newLayout : prev);
-		setPostsPerPage(prev => newPosts !== prev ? newPosts : prev);
-		setPostsPerRow(prev => newRows !== prev ? newRows : prev);
-		setWritePermission(prev => newPermission !== prev ? newPermission : prev);
+		setLayoutType((prev) => (newLayout !== prev ? newLayout : prev));
+		setPostsPerPage((prev) => (newPosts !== prev ? newPosts : prev));
+		setPostsPerRow((prev) => (newRows !== prev ? newRows : prev));
+		setWritePermission((prev) =>
+			newPermission !== prev ? newPermission : prev,
+		);
 	}, [resolvedLibrarySettings]);
 
 	useEffect(() => {
@@ -287,12 +294,7 @@ export default function LibraryClient({
 
 	return (
 		<>
-			<div
-				className={cn(
-					"shrink-0 w-full   max-w-3xl mt-[90px] mb-[40px]",
-					isSeriesOn ? "" : "",
-				)}
-			>
+			<div className={cn("shrink-0 w-full max-w-2xl mt-[90px] mb-[40px] mx-auto")}>
 				<div className="flex justify-center items-center gap-2.5">
 					<div className="relative flex rounded-card bg-transparent p-1">
 						<div

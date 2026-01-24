@@ -24,7 +24,9 @@ interface PhotoBoardClientProps {
 	initialPosts: PhotoBoardPost[];
 }
 
-export default function PhotoBoardClient({ initialPosts }: PhotoBoardClientProps) {
+export default function PhotoBoardClient({
+	initialPosts,
+}: PhotoBoardClientProps) {
 	const { main, updateMain, refreshSettings } = useSettings();
 	const { user } = useAuthStore();
 	const { isAdmin } = useAdmin();
@@ -47,7 +49,7 @@ export default function PhotoBoardClient({ initialPosts }: PhotoBoardClientProps
 			postsPerRow: 3,
 			writePermission: "member" as const,
 		}),
-		[]
+		[],
 	);
 
 	const resolvedPhotoboardSettings = useMemo(
@@ -55,14 +57,14 @@ export default function PhotoBoardClient({ initialPosts }: PhotoBoardClientProps
 			...defaultPhotoboardSettings,
 			...(main?.photoboard || {}),
 		}),
-		[defaultPhotoboardSettings, main]
+		[defaultPhotoboardSettings, main],
 	);
 
 	const [postsPerRow, setPostsPerRow] = useState(
-		resolvedPhotoboardSettings.postsPerRow
+		resolvedPhotoboardSettings.postsPerRow,
 	);
 	const [writePermission, setWritePermission] = useState<"admin" | "member">(
-		resolvedPhotoboardSettings.writePermission
+		resolvedPhotoboardSettings.writePermission,
 	);
 
 	const [tempPostsPerRow, setTempPostsPerRow] = useState(postsPerRow);
@@ -71,10 +73,13 @@ export default function PhotoBoardClient({ initialPosts }: PhotoBoardClientProps
 
 	// 상태 업데이트 최적화: 값이 변경될 때만 업데이트
 	useEffect(() => {
-		const { postsPerRow: newRows, writePermission: newPermission } = resolvedPhotoboardSettings;
+		const { postsPerRow: newRows, writePermission: newPermission } =
+			resolvedPhotoboardSettings;
 
-		setPostsPerRow(prev => newRows !== prev ? newRows : prev);
-		setWritePermission(prev => newPermission !== prev ? newPermission : prev);
+		setPostsPerRow((prev) => (newRows !== prev ? newRows : prev));
+		setWritePermission((prev) =>
+			newPermission !== prev ? newPermission : prev,
+		);
 	}, [resolvedPhotoboardSettings]);
 
 	useEffect(() => {
@@ -149,11 +154,7 @@ export default function PhotoBoardClient({ initialPosts }: PhotoBoardClientProps
 		if (!normalizedQuery) return posts;
 		return posts.filter((post) => {
 			const tags = Array.isArray(post.tags) ? post.tags.join(" ") : "";
-			const haystack = [
-				post.caption,
-				post.author?.name ?? "",
-				tags,
-			]
+			const haystack = [post.caption, post.author?.name ?? "", tags]
 				.join(" ")
 				.toLowerCase();
 			return haystack.includes(normalizedQuery);
@@ -174,13 +175,17 @@ export default function PhotoBoardClient({ initialPosts }: PhotoBoardClientProps
 
 	const selectedPostIndex = useMemo(() => {
 		if (!selectedPostId) return -1;
-		return filteredPosts.findIndex(p => p.id === selectedPostId);
+		return filteredPosts.findIndex((p) => p.id === selectedPostId);
 	}, [selectedPostId, filteredPosts]);
 
-	const selectedPost = selectedPostIndex >= 0 ? filteredPosts[selectedPostIndex] : null;
+	const selectedPost =
+		selectedPostIndex >= 0 ? filteredPosts[selectedPostIndex] : null;
 
 	const handleNextPost = () => {
-		if (selectedPostIndex >= 0 && selectedPostIndex < filteredPosts.length - 1) {
+		if (
+			selectedPostIndex >= 0 &&
+			selectedPostIndex < filteredPosts.length - 1
+		) {
 			setSelectedPostId(filteredPosts[selectedPostIndex + 1].id);
 		}
 	};
@@ -193,7 +198,7 @@ export default function PhotoBoardClient({ initialPosts }: PhotoBoardClientProps
 
 	const handleDeletePost = async (post: PhotoBoardPost) => {
 		const confirmed = window.confirm(
-			"게시글을 삭제할까요? 이 작업은 되돌릴 수 없어요."
+			"게시글을 삭제할까요? 이 작업은 되돌릴 수 없어요.",
 		);
 		if (!confirmed) return;
 		try {
@@ -218,12 +223,10 @@ export default function PhotoBoardClient({ initialPosts }: PhotoBoardClientProps
 	};
 
 	return (
-		<div className="w-full max-w-[1200px] mx-auto px-6 mt-[90px] mb-[40px]">
+		<div className="shrink-0 w-full max-w-2xl mt-[90px] mb-[40px] mx-auto">
 			<header className="mb-10 flex items-center justify-center">
 				<div className="flex items-center gap-2 w-full sm:w-auto">
-					<div className="w-[150px]">
-
-					</div>
+					<div className="w-[150px]"></div>
 					<div className="w-full sm:w-[200px]">
 						<Input
 							className="border-card bg-card backdrop-blur-card rounded-card text-main-text"
@@ -240,9 +243,9 @@ export default function PhotoBoardClient({ initialPosts }: PhotoBoardClientProps
 							onEndIconClick={
 								searchInput
 									? () => {
-										setSearchInput("");
-										setAppliedQuery("");
-									}
+											setSearchInput("");
+											setAppliedQuery("");
+										}
 									: undefined
 							}
 							endIconAriaLabel="검색어 지우기"
@@ -271,8 +274,7 @@ export default function PhotoBoardClient({ initialPosts }: PhotoBoardClientProps
 								onClick={() => setComposerOpen(true)}
 								className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
 							>
-								<Plus size={16} />
-								새 글쓰기
+								<Plus size={16} />새 글쓰기
 							</Button>
 						</AdminOnly>
 					) : (
@@ -281,8 +283,7 @@ export default function PhotoBoardClient({ initialPosts }: PhotoBoardClientProps
 							onClick={() => setComposerOpen(true)}
 							className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
 						>
-							<Plus size={16} />
-							새 글쓰기
+							<Plus size={16} />새 글쓰기
 						</Button>
 					)}
 				</div>
@@ -417,8 +418,8 @@ export default function PhotoBoardClient({ initialPosts }: PhotoBoardClientProps
 				onSubmit={(updatedPost) => {
 					setPosts((prev) =>
 						prev.map((item) =>
-							item.id === updatedPost.id ? updatedPost : item
-						)
+							item.id === updatedPost.id ? updatedPost : item,
+						),
 					);
 					setEditTarget(updatedPost);
 					toast.success("게시물이 수정되었습니다.");
@@ -430,7 +431,9 @@ export default function PhotoBoardClient({ initialPosts }: PhotoBoardClientProps
 				onClose={handleCloseDetail}
 				onNext={handleNextPost}
 				onPrev={handlePrevPost}
-				hasNext={selectedPostIndex >= 0 && selectedPostIndex < filteredPosts.length - 1}
+				hasNext={
+					selectedPostIndex >= 0 && selectedPostIndex < filteredPosts.length - 1
+				}
 				hasPrev={selectedPostIndex > 0}
 			/>
 		</div>

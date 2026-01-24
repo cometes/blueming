@@ -32,7 +32,10 @@ import GuestbookEditDialog from "@/components/guestbook/GuestbookEditDialog";
 import GuestbookSecretDialog from "@/components/guestbook/GuestbookSecretDialog";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import AssetGrid from "@/components/asset/AssetGrid";
-import { useGuestbookForm, type GuestbookImage } from "@/hooks/guestbook/useGuestbookForm";
+import {
+	useGuestbookForm,
+	type GuestbookImage,
+} from "@/hooks/guestbook/useGuestbookForm";
 import { useCooldown } from "@/hooks/guestbook/useCooldown";
 import { useImageDialog } from "@/hooks/guestbook/useImageDialog";
 import { useAssets } from "@/hooks/guestbook/useAssets";
@@ -74,10 +77,13 @@ export default function GuestbookClient({
 	const [activeEntry, setActiveEntry] = useState<GuestbookEntry | null>(null);
 
 	// 비밀글 관리
-	const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
+	const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>(
+		{},
+	);
 	const [secretDialogOpen, setSecretDialogOpen] = useState(false);
 	const [secretDialogPin, setSecretDialogPin] = useState("");
-	const [secretDialogEntry, setSecretDialogEntry] = useState<GuestbookEntry | null>(null);
+	const [secretDialogEntry, setSecretDialogEntry] =
+		useState<GuestbookEntry | null>(null);
 	const [isVerifyingSecret, setIsVerifyingSecret] = useState(false);
 
 	// 이미지 다이얼로그
@@ -105,7 +111,9 @@ export default function GuestbookClient({
 		const fileImages = images.filter((image) => image.file);
 		const uploadedUrls =
 			fileImages.length > 0
-				? await uploadGuestbookImages(fileImages.map((image) => image.file as File))
+				? await uploadGuestbookImages(
+						fileImages.map((image) => image.file as File),
+					)
 				: [];
 
 		let uploadIndex = 0;
@@ -175,7 +183,15 @@ export default function GuestbookClient({
 		} finally {
 			closeDialog();
 		}
-	}, [activeEntry, dialogMessage, dialogPin, dialogSecret, dialogImages, uploadImages, loadPage]);
+	}, [
+		activeEntry,
+		dialogMessage,
+		dialogPin,
+		dialogSecret,
+		dialogImages,
+		uploadImages,
+		loadPage,
+	]);
 
 	const handleDelete = useCallback(async () => {
 		if (!activeEntry) return;
@@ -233,26 +249,29 @@ export default function GuestbookClient({
 		[canViewSecretDirectly],
 	);
 
-	const openDialog = useCallback((entry: GuestbookEntry, modeType: "edit" | "delete") => {
-		const entryImages =
-			Array.isArray(entry.imageUrls) && entry.imageUrls.length > 0
-				? entry.imageUrls
-				: entry.imageUrl
-					? [entry.imageUrl]
-					: [];
-		setActiveEntry(entry);
-		setDialogMode(modeType);
-		setDialogPin("");
-		setDialogMessage(entry.message);
-		setDialogImages(
-			entryImages.map((url) => ({
-				id: `img_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-				url,
-			})),
-		);
-		setDialogSecret(entry.isSecret === true);
-		setDialogOpen(true);
-	}, []);
+	const openDialog = useCallback(
+		(entry: GuestbookEntry, modeType: "edit" | "delete") => {
+			const entryImages =
+				Array.isArray(entry.imageUrls) && entry.imageUrls.length > 0
+					? entry.imageUrls
+					: entry.imageUrl
+						? [entry.imageUrl]
+						: [];
+			setActiveEntry(entry);
+			setDialogMode(modeType);
+			setDialogPin("");
+			setDialogMessage(entry.message);
+			setDialogImages(
+				entryImages.map((url) => ({
+					id: `img_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+					url,
+				})),
+			);
+			setDialogSecret(entry.isSecret === true);
+			setDialogOpen(true);
+		},
+		[],
+	);
 
 	const closeDialog = useCallback(() => {
 		setDialogOpen(false);
@@ -316,11 +335,13 @@ export default function GuestbookClient({
 						? {
 								...entry,
 								message: data.message ?? entry.message,
-								imageUrls: resolvedImageUrls.length ? resolvedImageUrls : entry.imageUrls,
+								imageUrls: resolvedImageUrls.length
+									? resolvedImageUrls
+									: entry.imageUrls,
 								imageUrl:
 									typeof data.imageUrl === "undefined"
 										? entry.imageUrl
-										: data.imageUrl ?? "",
+										: (data.imageUrl ?? ""),
 							}
 						: entry,
 				),
@@ -337,25 +358,29 @@ export default function GuestbookClient({
 		}
 	}, [secretDialogEntry, secretDialogPin, closeSecretDialog]);
 
-	const removeImageFromTarget = useCallback((target: "create" | "edit", id: string) => {
-		const remove = (prev: GuestbookImage[]) => {
-			const targetImage = prev.find((image) => image.id === id);
-			if (targetImage?.url.startsWith("blob:")) {
-				URL.revokeObjectURL(targetImage.url);
-			}
-			return prev.filter((image) => image.id !== id);
-		};
+	const removeImageFromTarget = useCallback(
+		(target: "create" | "edit", id: string) => {
+			const remove = (prev: GuestbookImage[]) => {
+				const targetImage = prev.find((image) => image.id === id);
+				if (targetImage?.url.startsWith("blob:")) {
+					URL.revokeObjectURL(targetImage.url);
+				}
+				return prev.filter((image) => image.id !== id);
+			};
 
-		if (target === "edit") {
-			setDialogImages(remove);
-		} else {
-			form.setImages(remove);
-		}
-	}, [form]);
+			if (target === "edit") {
+				setDialogImages(remove);
+			} else {
+				form.setImages(remove);
+			}
+		},
+		[form],
+	);
 
 	const handleImageDialogOpen = useCallback(
 		(target: "create" | "edit") => {
-			const currentCount = target === "edit" ? dialogImages.length : form.images.length;
+			const currentCount =
+				target === "edit" ? dialogImages.length : form.images.length;
 			if (!imageDialog.openDialog(target, currentCount)) {
 				toast.error("이미지는 최대 8개까지 첨부할 수 있어요.");
 			}
@@ -367,9 +392,13 @@ export default function GuestbookClient({
 		(url: string) => {
 			if (!imageDialog.target || !url) return;
 
-			const setter = imageDialog.target === "edit" ? setDialogImages : form.setImages;
+			const setter =
+				imageDialog.target === "edit" ? setDialogImages : form.setImages;
 
-			if (imageDialog.previewFiles.length > 0 && imageDialog.previewUrls.length > 0) {
+			if (
+				imageDialog.previewFiles.length > 0 &&
+				imageDialog.previewUrls.length > 0
+			) {
 				if (imageDialog.addImagesToTarget(setter)) {
 					toast.success("이미지가 추가되었습니다.");
 				}
@@ -406,7 +435,7 @@ export default function GuestbookClient({
 	}, [form.images]);
 
 	return (
-		<div className="min-w-[540px] mx-auto mt-[90px] mb-[60px]">
+		<div className="shrink-0 w-full max-w-[540px] mt-[90px] mb-[40px] mx-auto">
 			<h2 className="text-[20px] font-semibold text-main-text">방명록</h2>
 			<p className="text-sm text-sub-text mt-2">간단한 메시지를 남겨주세요.</p>
 			<section className="bg-card border-card rounded-card p-3 mt-10">
@@ -452,14 +481,19 @@ export default function GuestbookClient({
 					<div className="flex items-center justify-between">
 						<div className="flex flex-wrap items-center gap-3">
 							<label className="inline-flex items-center gap-2 text-sm text-sub-text">
-								<Switch checked={form.isSecret} onCheckedChange={form.setIsSecret} />
+								<Switch
+									checked={form.isSecret}
+									onCheckedChange={form.setIsSecret}
+								/>
 								<Lock size={14} />
 								비밀글
 							</label>
 							<button
 								type="button"
 								onClick={() => handleImageDialogOpen("create")}
-								disabled={form.isSubmitting || form.images.length >= MAX_IMAGE_COUNT}
+								disabled={
+									form.isSubmitting || form.images.length >= MAX_IMAGE_COUNT
+								}
 								className={cn(
 									"inline-flex items-center justify-center w-9 h-9 rounded-card border border-card bg-card-bg text-main-text",
 									form.isSubmitting || form.images.length >= MAX_IMAGE_COUNT
