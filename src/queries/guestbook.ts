@@ -8,6 +8,7 @@ export interface GuestbookEntry {
 	uid?: string | null;
 	photoURL?: string | null;
 	imageUrl?: string | null;
+	imageUrls?: string[] | null;
 	message: string;
 	isSecret?: boolean;
 	isAdmin?: boolean;
@@ -62,6 +63,7 @@ export const createGuestbookEntry = async (payload: {
 	pin?: string;
 	isSecret?: boolean;
 	imageUrl?: string;
+	imageUrls?: string[];
 }) => {
 	const headers = await getAuthHeader();
 	const response = await axios.post(`${API_BASE}/guestbook`, payload, {
@@ -72,7 +74,13 @@ export const createGuestbookEntry = async (payload: {
 
 export const updateGuestbookEntry = async (
 	id: string,
-	payload: { message: string; pin?: string; isSecret?: boolean; imageUrl?: string }
+	payload: {
+		message: string;
+		pin?: string;
+		isSecret?: boolean;
+		imageUrl?: string;
+		imageUrls?: string[];
+	}
 ) => {
 	const headers = await getAuthHeader();
 	const response = await axios.put(`${API_BASE}/guestbook/${id}`, payload, {
@@ -101,5 +109,36 @@ export const verifyGuestbookSecret = async (
 	const response = await axios.post(`${API_BASE}/guestbook/${id}/verify`, payload, {
 		headers,
 	});
-	return response.data as { message: string; imageUrl?: string | null };
+	return response.data as {
+		message: string;
+		imageUrl?: string | null;
+		imageUrls?: string[] | null;
+	};
+};
+
+export const uploadGuestbookImages = async (files: File[]) => {
+	if (files.length === 0) return [];
+	const formData = new FormData();
+	files.forEach((file) => {
+		formData.append("file", file);
+	});
+	const response = await fetch(`${API_BASE}/guestbook/uploadImage`, {
+		method: "POST",
+		body: formData,
+	});
+
+	if (!response.ok) {
+		throw new Error(`Upload failed: ${response.statusText}`);
+	}
+
+	const data = await response.json();
+	const urls = Array.isArray(data.files)
+		? data.files.map((file: { url?: string }) => file.url).filter(Boolean)
+		: data.file?.url
+			? [data.file.url]
+			: [];
+	if (urls.length === 0) {
+		throw new Error("서버에서 올바른 응답을 받지 못했습니다.");
+	}
+	return urls as string[];
 };
