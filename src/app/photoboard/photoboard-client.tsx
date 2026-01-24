@@ -20,39 +20,11 @@ import { useAdmin } from "@/hooks/auth/UseAdmin";
 import PhotoboardItem from "@/components/items/PhotoboardItem";
 import PhotoboardDetailModal from "@/components/modal/PhotoboardDetailModal";
 
-const formatAbsoluteDate = (iso: string) => {
-	const date = new Date(iso);
-	if (Number.isNaN(date.getTime())) return "";
-	return date.toLocaleString("ko-KR", {
-		year: "numeric",
-		month: "2-digit",
-		day: "2-digit",
-		hour: "2-digit",
-		minute: "2-digit",
-	});
-};
+interface PhotoBoardClientProps {
+	initialPosts: PhotoBoardPost[];
+}
 
-const formatRelative = (iso: string) => {
-	const date = new Date(iso);
-	if (Number.isNaN(date.getTime())) return "";
-	const diff = Date.now() - date.getTime();
-	const seconds = Math.floor(diff / 1000);
-	if (seconds < 60) return "방금 전";
-	const minutes = Math.floor(seconds / 60);
-	if (minutes < 60) return `${minutes}분 전`;
-	const hours = Math.floor(minutes / 60);
-	if (hours < 24) return `${hours}시간 전`;
-	const days = Math.floor(hours / 24);
-	if (days < 7) return `${days}일 전`;
-	const weeks = Math.floor(days / 7);
-	if (weeks < 4) return `${weeks}주 전`;
-	const months = Math.floor(days / 30);
-	if (months < 12) return `${months}개월 전`;
-	const years = Math.floor(days / 365);
-	return `${years}년 전`;
-};
-
-export default function PhotoBoardClient() {
+export default function PhotoBoardClient({ initialPosts }: PhotoBoardClientProps) {
 	const { main, updateMain, refreshSettings } = useSettings();
 	const { user } = useAuthStore();
 	const { isAdmin } = useAdmin();
@@ -60,9 +32,9 @@ export default function PhotoBoardClient() {
 	const [reposted, setReposted] = useState<Record<string, boolean>>({});
 	const [bookmarked, setBookmarked] = useState<Record<string, boolean>>({});
 	const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-	const [posts, setPosts] = useState<PhotoBoardPost[]>([]);
+	const [posts, setPosts] = useState<PhotoBoardPost[]>(initialPosts);
 	const [composerOpen, setComposerOpen] = useState(false);
-	const [isLoading, setIsLoading] = useState(true);
+	const [isLoading, setIsLoading] = useState(initialPosts.length === 0);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [editTarget, setEditTarget] = useState<PhotoBoardPost | null>(null);
 	const [isEditOpen, setIsEditOpen] = useState(false);
@@ -97,9 +69,12 @@ export default function PhotoBoardClient() {
 	const [tempWritePermission, setTempWritePermission] =
 		useState(writePermission);
 
+	// 상태 업데이트 최적화: 값이 변경될 때만 업데이트
 	useEffect(() => {
-		setPostsPerRow(resolvedPhotoboardSettings.postsPerRow);
-		setWritePermission(resolvedPhotoboardSettings.writePermission);
+		const { postsPerRow: newRows, writePermission: newPermission } = resolvedPhotoboardSettings;
+
+		setPostsPerRow(prev => newRows !== prev ? newRows : prev);
+		setWritePermission(prev => newPermission !== prev ? newPermission : prev);
 	}, [resolvedPhotoboardSettings]);
 
 	useEffect(() => {
@@ -109,7 +84,13 @@ export default function PhotoBoardClient() {
 		}
 	}, [isDialogOpen, postsPerRow, writePermission]);
 
+	// 초기 데이터가 있으면 fetch 생략, 없으면 클라이언트에서 fetch
 	useEffect(() => {
+		if (initialPosts.length > 0) {
+			setIsLoading(false);
+			return;
+		}
+
 		let isActive = true;
 		fetchPhotoboardPosts()
 			.then((data) => {
@@ -127,7 +108,7 @@ export default function PhotoBoardClient() {
 		return () => {
 			isActive = false;
 		};
-	}, []);
+	}, [initialPosts]);
 
 	const handleSaveSettings = async () => {
 		try {
@@ -368,8 +349,6 @@ export default function PhotoBoardClient() {
 						const isReposted = reposted[post.id] ?? false;
 						const isBookmarked = bookmarked[post.id] ?? false;
 						const isExpanded = expanded[post.id] ?? false;
-						const absoluteDate = formatAbsoluteDate(post.createdAt);
-						const relativeDate = formatRelative(post.createdAt);
 
 						return (
 							<PhotoboardItem
@@ -379,8 +358,6 @@ export default function PhotoBoardClient() {
 								isReposted={isReposted}
 								isBookmarked={isBookmarked}
 								isExpanded={isExpanded}
-								absoluteDate={absoluteDate}
-								relativeDate={relativeDate}
 								canManage={canManagePost(post)}
 								onToggleLike={() =>
 									setLiked((prev) => ({

@@ -32,7 +32,7 @@ interface LibraryListViewProps {
 	listItems: LibraryItem[];
 	pinnedItems: LibraryItem[];
 	listTotalCount: number;
-	isListReady: boolean;
+	isLoading: boolean;
 	isCardOn: boolean;
 	layoutType: "list" | "listWithImage";
 	postsPerRow: number;
@@ -52,7 +52,7 @@ export default function LibraryListView({
 	listItems,
 	pinnedItems,
 	listTotalCount,
-	isListReady,
+	isLoading,
 	isCardOn,
 	layoutType,
 	postsPerRow,
@@ -97,7 +97,7 @@ export default function LibraryListView({
 						: "제목순"}
 				</button>
 			</div>
-			<div className="mt-3 flex flex-col min-h-[520px]">
+			<div className="mt-3 flex flex-col min-h-[520px] w-full">
 				{pinnedItems.length > 0 && (
 					<div className="rounded-card border-card bg-card mb-4">
 						{/* <div className="px-4 py-3 border-b border-card-bg text-sm font-medium text-main-text">
@@ -136,7 +136,7 @@ export default function LibraryListView({
 				)}
 				<div
 					className={cn(
-						"grid opacity-100",
+						"grid w-full opacity-100",
 						isCardOn ? `gap-2.5 grid-cols-${postsPerRow}` : "gap-4 grid-cols-1"
 					)}
 					style={
@@ -147,7 +147,7 @@ export default function LibraryListView({
 							: undefined
 					}
 				>
-					{!isListReady && (
+					{isLoading && (
 						<>
 							{Array.from({ length: skeletonCount }).map((_, index) => (
 								<div
@@ -173,14 +173,14 @@ export default function LibraryListView({
 							))}
 						</>
 					)}
-					{isListReady && isCardOn && (
+					{!isLoading && isCardOn && (
 						<>
 							{listItems.map((el) => (
 								<ItemGallery data={el} key={el.id} detailQuery={detailQuery} />
 							))}
 						</>
 					)}
-					{isListReady && !isCardOn && layoutType === "listWithImage" && (
+					{!isLoading && !isCardOn && layoutType === "listWithImage" && (
 						<>
 							{listItems.map((el) => (
 								<ItemListWithImage
@@ -191,7 +191,7 @@ export default function LibraryListView({
 							))}
 						</>
 					)}
-					{isListReady && !isCardOn && layoutType === "list" && (
+					{!isLoading && !isCardOn && layoutType === "list" && (
 						<>
 							{listItems.map((el) => (
 								<ItemList
@@ -247,23 +247,42 @@ export default function LibraryListView({
 										}}
 									/>
 								</PaginationItem>
-								{Array.from({ length: totalPages }).map((_, index) => {
-									const page = index + 1;
-									return (
-										<PaginationItem key={page}>
-											<PaginationLink
-												href="#"
-												isActive={page === currentPageSafe}
-												onClick={(e) => {
-													e.preventDefault();
-													setActivePage(page);
-												}}
-											>
-												{page}
-											</PaginationLink>
-										</PaginationItem>
-									);
-								})}
+								{(() => {
+									// 페이지네이션 청크 렌더링: 최대 7개 페이지만 표시
+									const maxVisible = 7;
+									let startPage = 1;
+									let endPage = totalPages;
+
+									if (totalPages > maxVisible) {
+										const halfVisible = Math.floor(maxVisible / 2);
+										startPage = Math.max(1, currentPageSafe - halfVisible);
+										endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+										// 끝 페이지에 도달했을 때 조정
+										if (endPage === totalPages) {
+											startPage = Math.max(1, endPage - maxVisible + 1);
+										}
+									}
+
+									const pages = [];
+									for (let i = startPage; i <= endPage; i++) {
+										pages.push(
+											<PaginationItem key={i}>
+												<PaginationLink
+													href="#"
+													isActive={i === currentPageSafe}
+													onClick={(e) => {
+														e.preventDefault();
+														setActivePage(i);
+													}}
+												>
+													{i}
+												</PaginationLink>
+											</PaginationItem>
+										);
+									}
+									return pages;
+								})()}
 								<PaginationItem>
 									<PaginationNext
 										href="#"
