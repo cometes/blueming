@@ -13,6 +13,22 @@ export const fetchPhotoboardPosts = async (limit = 18) => {
 	return response.data;
 };
 
+// 서버 사이드에서 사용하는 fetch 함수
+export const fetchPhotoboardPostsServer = async (limit = 18) => {
+	try {
+		const response = await fetch(`${API_BASE}/photoboard?limit=${limit}`, {
+			next: { revalidate: 60 }, // 60초 캐싱
+		});
+		if (!response.ok) {
+			return { data: { items: [] } };
+		}
+		const data = await response.json();
+		return { data };
+	} catch {
+		return { data: { items: [] } };
+	}
+};
+
 export const createPhotoboardPost = async (payload: {
 	caption: string;
 	imageUrl: string;

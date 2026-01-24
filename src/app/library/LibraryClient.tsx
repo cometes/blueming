@@ -101,7 +101,7 @@ export default function LibraryClient({
 		setListPage,
 		setActivePage,
 	} = useLibraryFilters({ isSeriesOn, postsPerPage });
-	const { listItems, pinnedItems, listTotalCount, tagOptions, isListReady } =
+	const { listItems, pinnedItems, listTotalCount, tagOptions, isLoading } =
 		useLibraryListData({
 			initialList: listData,
 			initialPinned: pinnedData,
@@ -173,11 +173,15 @@ export default function LibraryClient({
 		localStorage.setItem("isCardOn", isCardOn.toString());
 	}, [isCardOn, isCardPrefsLoaded]);
 
+	// 초기 상태를 한 번에 설정하여 리렌더링 최소화
 	useEffect(() => {
-		setLayoutType(resolvedLibrarySettings.layoutType);
-		setPostsPerPage(resolvedLibrarySettings.postsPerPage);
-		setPostsPerRow(resolvedLibrarySettings.postsPerRow);
-		setWritePermission(resolvedLibrarySettings.writePermission);
+		const { layoutType: newLayout, postsPerPage: newPosts, postsPerRow: newRows, writePermission: newPermission } = resolvedLibrarySettings;
+
+		// 상태를 배치로 업데이트
+		setLayoutType(prev => newLayout !== prev ? newLayout : prev);
+		setPostsPerPage(prev => newPosts !== prev ? newPosts : prev);
+		setPostsPerRow(prev => newRows !== prev ? newRows : prev);
+		setWritePermission(prev => newPermission !== prev ? newPermission : prev);
 	}, [resolvedLibrarySettings]);
 
 	useEffect(() => {
@@ -192,7 +196,7 @@ export default function LibraryClient({
 			isSyncingFromQuery.current = true;
 			setListPage(parsedPage);
 		}
-	}, [isSeriesOn, searchParams, setListPage]);
+	}, [isSeriesOn, searchParams, listPage, setListPage]);
 
 	useEffect(() => {
 		if (isSeriesOn) return;
@@ -274,7 +278,6 @@ export default function LibraryClient({
 		listPage,
 		seriesPage,
 		listTotalCount,
-		pinnedItems.length,
 		postsPerPage,
 	]);
 
@@ -432,7 +435,7 @@ export default function LibraryClient({
 						listItems={listItems}
 						pinnedItems={pinnedItems}
 						listTotalCount={listTotalCount}
-						isListReady={isListReady}
+						isLoading={isLoading}
 						isCardOn={isCardOn}
 						layoutType={layoutType}
 						postsPerRow={postsPerRow}

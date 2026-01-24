@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import {
 	Bookmark,
@@ -25,14 +25,44 @@ import {
 	TooltipTrigger,
 } from "@/components/tiptap-ui-primitive/tooltip/tooltip";
 
+const formatAbsoluteDate = (iso: string) => {
+	const date = new Date(iso);
+	if (Number.isNaN(date.getTime())) return "";
+	return date.toLocaleString("ko-KR", {
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+	});
+};
+
+const formatRelative = (iso: string) => {
+	const date = new Date(iso);
+	if (Number.isNaN(date.getTime())) return "";
+	const diff = Date.now() - date.getTime();
+	const seconds = Math.floor(diff / 1000);
+	if (seconds < 60) return "방금 전";
+	const minutes = Math.floor(seconds / 60);
+	if (minutes < 60) return `${minutes}분 전`;
+	const hours = Math.floor(minutes / 60);
+	if (hours < 24) return `${hours}시간 전`;
+	const days = Math.floor(hours / 24);
+	if (days < 7) return `${days}일 전`;
+	const weeks = Math.floor(days / 7);
+	if (weeks < 4) return `${weeks}주 전`;
+	const months = Math.floor(days / 30);
+	if (months < 12) return `${months}개월 전`;
+	const years = Math.floor(days / 365);
+	return `${years}년 전`;
+};
+
 interface PhotoboardItemProps {
 	post: PhotoBoardPost;
 	isLiked: boolean;
 	isReposted: boolean;
 	isBookmarked: boolean;
 	isExpanded: boolean;
-	absoluteDate: string;
-	relativeDate: string;
 	canManage: boolean;
 	onToggleLike: () => void;
 	onToggleRepost: () => void;
@@ -54,8 +84,6 @@ export default function PhotoboardItem({
 	isReposted,
 	isBookmarked,
 	isExpanded,
-	absoluteDate,
-	relativeDate,
 	canManage,
 	onToggleLike,
 	onToggleRepost,
@@ -69,6 +97,10 @@ export default function PhotoboardItem({
 	const caption = post.caption;
 	const showMore = shouldTruncate(caption);
 	const [isImageLoaded, setIsImageLoaded] = useState(false);
+
+	// 날짜 포맷팅 메모이제이션
+	const absoluteDate = useMemo(() => formatAbsoluteDate(post.createdAt), [post.createdAt]);
+	const relativeDate = useMemo(() => formatRelative(post.createdAt), [post.createdAt]);
 
 	useEffect(() => {
 		setIsImageLoaded(false);
