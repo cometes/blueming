@@ -345,7 +345,7 @@ export default function DetailClient({ detailData }) {
 		<div
 			className="fixed top-0 right-0 flex h-screen"
 			style={{
-				zIndex: 100,
+				zIndex: 60,
 				transform: isSidebarOpen ? "translateX(0)" : "translateX(340px)",
 				transition: "transform 300ms ease-in-out",
 			}}
