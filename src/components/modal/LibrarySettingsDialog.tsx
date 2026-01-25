@@ -49,7 +49,7 @@ export default function LibrarySettingsDialog({
 			>
 				<DialogHeader className="gap-0">
 					<DialogTitle className="border-b border-card-border px-5 py-4 text-main-text flex items-center justify-between">
-						<p> 페이지 설정</p>
+						<p className="font-title"> 페이지 설정</p>
 						<Button onClick={onSave}>저장하기</Button>
 					</DialogTitle>
 					<div className="px-5 py-4 text-main-text">

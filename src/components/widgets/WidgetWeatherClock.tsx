@@ -191,7 +191,7 @@ export default function WidgetWeatherClock({ onReady }: { onReady?: () => void }
                     <div className="flex justify-between items-center">
                         <div className="weather-widget-temp leading-none">
                             {/* 기온: 최소 1.5rem ~ 최대 4.5rem */}
-                            <p className="font-medium" style={{ fontSize: "clamp(1.5rem, 24cqmin, 2.4rem)" }}>
+                            <p className="font-medium font-title" style={{ fontSize: "clamp(1.5rem, 24cqmin, 2.4rem)" }}>
                                 {weather.temperature}°
                             </p>
                             <div className="weather-widget-city flex items-center mt-[1cqmin]">
@@ -247,7 +247,7 @@ export default function WidgetWeatherClock({ onReady }: { onReady?: () => void }
                                 {formattedDate}
                             </div>
                             <div
-                                className="weather-widget-time font-semibold leading-none"
+                                className="weather-widget-time font-semibold leading-none font-title"
                                 style={{
                                     // 시간: 최소 1.5rem ~ 최대 4.5rem
                                     fontSize: "clamp(1.5rem, 24cqmin, 3rem)"

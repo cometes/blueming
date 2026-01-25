@@ -59,7 +59,7 @@ export default function WidgetLatestPosts({ onReady }: { onReady?: () => void })
 		<div className="widget-wrapper">
 			<div className="w-full h-full flex flex-col p-3.5 pr-2">
 				<div className="flex items-center justify-between shrink-0">
-					<h3 className="text-sm font-semibold text-main-text">최신글</h3>
+					<h3 className="text-sm font-semibold text-main-text font-title">최신글</h3>
 					<span className="text-xs text-sub-text">{items.length}</span>
 				</div>
 

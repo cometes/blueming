@@ -186,7 +186,7 @@ export default function PhotoboardCreateModal({
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
 			<DialogContent className="max-w-3xl md:max-w-3xl w-full bg-card border-card rounded-card backdrop-blur-card p-0 overflow-hidden text-main-text gap-0">
 				<DialogHeader className="p-4 border-b border-card-border">
-				<DialogTitle className="text-[20px] font-semibold">
+				<DialogTitle className="text-[20px] font-semibold font-title">
 					{isEditMode ? "게시물 수정" : "새 게시물"}
 				</DialogTitle>
 				</DialogHeader>

@@ -136,7 +136,7 @@ export default function MenuEditModal({
 			>
 				<DialogHeader>
 					<div className="flex items-center justify-between">
-						<DialogTitle className="text-xl font-bold flex items-center gap-2">
+						<DialogTitle className="text-xl font-bold flex items-center gap-2 font-title">
 							메뉴 설정
 							<Badge variant="secondary" className="px-2 py-0 text-[10px] h-5">
 								{menuTypeLabel}

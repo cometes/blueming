@@ -62,11 +62,11 @@ export default function WidgetDday() {
 							/>
 						)}
 						<div className="absolute inset-0 bg-[rgba(127,127,127,0.4)] mix-blend-multiply opacity-50 z-20" />
-						<p className="relative z-30 text-lg text-gray-100 [text-shadow:0_3px_8px_rgba(90,90,90,0.4)] text-title-font">
+						<p className="relative z-30 text-lg text-gray-100 [text-shadow:0_3px_8px_rgba(90,90,90,0.4)] font-title">
 							{dday.title}
 						</p>
 						<div className="relative z-30 flex flex-col items-end">
-							<p className="relative z-30 text-2xl text-white [text-shadow:0_3px_8px_rgba(90,90,90,0.4)]">
+							<p className="relative z-30 text-2xl text-white [text-shadow:0_3px_8px_rgba(90,90,90,0.4)] font-title">
 								{calculateDday(dday.date)}
 							</p>
 							<p className="relative z-30 text-sm text-gray-400/60 [text-shadow:0_3px_8px_rgba(90,90,90,0.4)]">

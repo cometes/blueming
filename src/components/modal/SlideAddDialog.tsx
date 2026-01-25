@@ -126,7 +126,7 @@ export default function SlideAddDialog({
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
 			<DialogContent className="max-w-xl sm:max-w-xl w-full bg-card-bg border-card rounded-card backdrop-blur-card">
 				<DialogHeader>
-					<DialogTitle className="text-[20px] font-semibold">
+					<DialogTitle className="text-[20px] font-semibold font-title">
 						슬라이드 추가하기
 					</DialogTitle>
 				</DialogHeader>

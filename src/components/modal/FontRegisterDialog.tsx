@@ -131,7 +131,7 @@ export default function FontRegisterDialog({
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="max-w-[640px] bg-card border-card rounded-card backdrop-blur-card">
 				<DialogHeader>
-					<DialogTitle>폰트 등록하기</DialogTitle>
+					<DialogTitle className="font-title">폰트 등록하기</DialogTitle>
 				</DialogHeader>
 
 				<div className="space-y-6">

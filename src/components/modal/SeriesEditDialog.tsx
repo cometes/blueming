@@ -70,7 +70,7 @@ export default function SeriesEditDialog({
 			>
 				<DialogHeader className="gap-0">
 					<DialogTitle className="border-b border-card-border px-5 py-4 text-main-text flex items-center justify-between">
-						<p>시리즈 수정</p>
+						<p className="font-title">시리즈 수정</p>
 					</DialogTitle>
 					<DialogDescription className="px-5 py-5 text-main-text">
 						<div className="space-y-5">

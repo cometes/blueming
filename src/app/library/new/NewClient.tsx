@@ -65,7 +65,9 @@ export default function LibararyNewClient({
 	const [subtitle, setSubtitle] = React.useState("");
 	const [metaOpen, setMetaOpen] = React.useState(false);
 	const [isSubmitting, setIsSubmitting] = React.useState(false);
-	const [contentOverride, setContentOverride] = React.useState<string | null>(null);
+	const [contentOverride, setContentOverride] = React.useState<string | null>(
+		null,
+	);
 	const [passwordInput, setPasswordInput] = React.useState("");
 	const [passwordError, setPasswordError] = React.useState("");
 	const [isVerifyingPassword, setIsVerifyingPassword] = React.useState(false);
@@ -128,7 +130,7 @@ export default function LibararyNewClient({
 			summary: initialData.summary ?? "",
 			visibility: initialData.allow ?? "all",
 			password:
-				initialData.allow === "password" ? initialData.password ?? "" : "",
+				initialData.allow === "password" ? (initialData.password ?? "") : "",
 			thumbnail: initialData.thumbnail ?? "",
 			pinned: initialData.pinned ?? false,
 		});
@@ -150,7 +152,7 @@ export default function LibararyNewClient({
 			slug: data.slug ?? "",
 			summary: data.summary ?? "",
 			visibility: data.allow ?? "all",
-			password: data.allow === "password" ? data.password ?? "" : "",
+			password: data.allow === "password" ? (data.password ?? "") : "",
 			thumbnail: data.thumbnail ?? "",
 			pinned: data.pinned ?? false,
 		});
@@ -178,7 +180,7 @@ export default function LibararyNewClient({
 			setPasswordError("");
 		} catch (error) {
 			setPasswordError(
-				getApiErrorMessage(error, "비밀번호가 올바르지 않습니다.")
+				getApiErrorMessage(error, "비밀번호가 올바르지 않습니다."),
 			);
 		} finally {
 			setIsVerifyingPassword(false);
@@ -210,7 +212,12 @@ export default function LibararyNewClient({
 		return () => {
 			isMounted = false;
 		};
-	}, [applyDetailData, initialData?.id, initialData?.slug, needsPasswordForEdit]);
+	}, [
+		applyDetailData,
+		initialData?.id,
+		initialData?.slug,
+		needsPasswordForEdit,
+	]);
 
 	if (mode === "edit" && !isAuthLoading && !isAdmin) {
 		return null;
@@ -298,7 +305,9 @@ export default function LibararyNewClient({
 				{/* Header */}
 				<header className="Header w-full h-[60px] border-b border-card-bg backdrop-blur-card fixed top-0 left-0 z-50">
 					<div className="HeaderContainer px-20 h-full flex justify-between items-center">
-						<Button variant="ghost" onClick={onClickMoveToPage("/library/")}>뒤로가기</Button>
+						<Button variant="ghost" onClick={onClickMoveToPage("/library/")}>
+							뒤로가기
+						</Button>
 						{/* Tiptap Toolbar */}
 						<TiptapToolbar editor={editor} />
 						<Button onClick={handleOpenMeta}>
@@ -314,13 +323,13 @@ export default function LibararyNewClient({
 							placeholder="제목을 입력해주세요."
 							value={title}
 							onChange={(e) => setTitle(e.target.value)}
-							className="text-4xl border-none border-transparent text-main-text bg-background-none placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 focus-visible:border-transparent p-0"
+							className="text-4xl border-none border-transparent text-main-text bg-background-none placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 focus-visible:border-transparent p-0 font-title"
 						/>
 					</div>
 					<div className="flex items-center mt-5">
 						<span
 							className={cn(
-								"SubTitleIconBox flex items-center justify-center  w-6 h-6  bg-gray-300 border border-gray-400 text-gray-400 rounded-[3px] cursor-pointer"
+								"SubTitleIconBox flex items-center justify-center  w-6 h-6  bg-gray-300 border border-gray-400 text-gray-400 rounded-[3px] cursor-pointer",
 							)}
 							style={{ transition: "all 300ms ease" }}
 							onClick={() => {
@@ -376,9 +385,7 @@ export default function LibararyNewClient({
 									</Button>
 								</div>
 								{passwordError && (
-									<p className="mt-2 text-xs text-red-500">
-										{passwordError}
-									</p>
+									<p className="mt-2 text-xs text-red-500">{passwordError}</p>
 								)}
 							</div>
 						)}

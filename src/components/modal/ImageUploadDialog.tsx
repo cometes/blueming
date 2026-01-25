@@ -132,7 +132,7 @@ export default function ImageUploadDialog({
 				].join(" ")}
 			>
 				<DialogHeader>
-					<DialogTitle className="text-[20px] font-semibold">
+					<DialogTitle className="text-[20px] font-semibold font-title">
 						이미지 업로드
 					</DialogTitle>
 					<DialogDescription className="text-sm text-sub-text">
