@@ -120,7 +120,7 @@ export default function GuestbookItem({
 						</p>
 					)}
 				</div>
-				{(canEdit || canDelete) && (
+				{(canEdit || canDelete) && showSecretContent && (
 					<div className="flex items-center gap-2 shrink-0">
 						{canEdit && (
 							<Button
