@@ -1,5 +1,6 @@
 import axios from "axios";
 import { auth } from "@/lib/Firebase";
+import { API_BASE } from "@/queries/apiClient";
 
 export interface Comment {
 	id: string;
@@ -27,8 +28,6 @@ interface CommentListParams {
 	page?: number;
 	limit?: number;
 }
-
-const API_BASE = "https://api-w5buphcleq-du.a.run.app";
 
 const getAuthHeader = async () => {
 	const currentUser = auth.currentUser;
