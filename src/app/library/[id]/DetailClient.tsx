@@ -28,6 +28,7 @@ import {
 	TooltipTrigger,
 } from "@/components/tiptap-ui-primitive/tooltip/tooltip";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import { BulletList } from "@tiptap/extension-bullet-list";
@@ -75,6 +76,7 @@ export default function DetailClient({ detailData }) {
 	const [authChecked, setAuthChecked] = useState(false);
 	const [secretAuthChecked, setSecretAuthChecked] = useState(false);
 	const [secretAccessGranted, setSecretAccessGranted] = useState(false);
+	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 	const ownerId =
 		localDetail?.authorId ??
 		localDetail?.author?.id ??
@@ -338,272 +340,317 @@ export default function DetailClient({ detailData }) {
 		};
 	}, [detailId, isAuthLoading, isAdmin, isOwner, isSecret]);
 
-	return (
-		<div className="Wrapper min-h-100vh">
-			<div
-				className="Container w-3xl min-h-dvh m-auto bg-card backdrop-blur-card border-card px-6 pt-10 pb-10 flex flex-col justify-between"
-				style={{ borderTop: "none", borderBottom: "none" }}
+	const sidebarDrawer = (
+		<div
+			className="fixed top-0 right-0 flex h-screen"
+			style={{
+				zIndex: 100,
+				transform: isSidebarOpen ? "translateX(0)" : "translateX(340px)",
+				transition: "transform 300ms ease-in-out",
+			}}
+		>
+			{/* 책갈피 탭 */}
+			<button
+				type="button"
+				onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+				className="w-8 h-20 mt-[120px] bg-card border border-r-0 border-card-border rounded-l-lg flex items-center justify-center cursor-pointer hover:bg-card-bg self-start"
+				style={{ transition: "background-color 200ms" }}
+				aria-label={isSidebarOpen ? "사이드바 닫기" : "사이드바 열기"}
 			>
-				{requiresPassword && !authChecked ? (
-					<div className="flex flex-col items-center justify-center min-h-[60vh]">
-						<div
-							className="w-10 h-10 rounded-full border-2 border-card-border border-t-theme-primary animate-spin"
-							aria-label="로딩 중"
-						/>
-					</div>
-				) : requiresSecretAccess && !secretAuthChecked ? (
-					<div className="flex flex-col items-center justify-center min-h-[60vh]">
-						<div
-							className="w-10 h-10 rounded-full border-2 border-card-border border-t-theme-primary animate-spin"
-							aria-label="로딩 중"
-						/>
-					</div>
-				) : requiresSecretAccess ? (
-					<div className="flex flex-col items-center justify-center min-h-[60vh]">
-						<div className="flex flex-col items-center gap-6 w-full max-w-md">
-							<div className="w-20 h-20 rounded-full bg-card-bg border-2 border-card flex items-center justify-center">
-								<Lock size={30} className="text-sub-text" />
-							</div>
-							<div className="text-center">
-								<h2 className="text-2xl font-semibold text-main-text mb-2">
-									비공개 게시글입니다.
-								</h2>
-								<p className="text-sub-text">
-									작성자와 관리자만 열람할 수 있습니다.
-								</p>
-							</div>
-							<Button
-								variant="default"
-								onClick={onClickMoveToPage(listPath)}
-								className="mt-10"
-							>
-								목록으로
-							</Button>
+				<ChevronLeft
+					size={16}
+					className="text-sub-text"
+					style={{
+						transform: isSidebarOpen ? "rotate(180deg)" : "rotate(0deg)",
+						transition: "transform 300ms ease-in-out",
+					}}
+				/>
+			</button>
+			{/* 드로어 본체 */}
+			<div className="w-[340px] h-full bg-card border-l border-card-border shadow-lg flex flex-col backdrop-blur-card">
+				<div className="p-4 border-b border-card-border">
+					<h3 className="text-main-text font-semibold">사이드바</h3>
+				</div>
+				<div className="p-4 flex-1 overflow-y-auto">
+					<p className="text-sub-text">사이드바 내용</p>
+				</div>
+			</div>
+		</div>
+	);
+
+	return (
+		<>
+			{/* 사이드바 드로어를 Portal로 body에 직접 렌더링 */}
+			{typeof window !== "undefined" &&
+				createPortal(sidebarDrawer, document.body)}
+			<div className="Wrapper min-h-100vh">
+				<div
+					className="Container relative w-3xl min-h-dvh m-auto bg-card backdrop-blur-card border-card px-6 pt-10 pb-10 flex flex-col justify-between"
+					style={{ borderTop: "none", borderBottom: "none" }}
+				>
+					{requiresPassword && !authChecked ? (
+						<div className="flex flex-col items-center justify-center min-h-[60vh]">
+							<div
+								className="w-10 h-10 rounded-full border-2 border-card-border border-t-theme-primary animate-spin"
+								aria-label="로딩 중"
+							/>
 						</div>
-					</div>
-				) : requiresPassword ? (
-					<div className="flex flex-col items-center justify-center min-h-[60vh]">
-						<div className="flex flex-col items-center gap-6 w-full max-w-md">
-							<div className="w-20 h-20 rounded-full bg-card-bg border-2 border-card flex items-center justify-center">
-								<Lock size={30} className="text-sub-text" />
-							</div>
-							<div className="text-center">
-								<h2 className="text-2xl font-semibold text-main-text mb-2">
-									보호된 게시글입니다.
-								</h2>
-								<p className="text-sub-text">
-									게시글 열람을 위해서 비밀번호를 입력해 주세요.
-								</p>
-							</div>
-							<div className="w-full flex flex-col gap-3">
-								<div className="flex items-center justify-center gap-2">
-									<input
-										type="password"
-										value={password}
-										onChange={(e) => setPassword(e.target.value)}
-										onKeyDown={(e) => {
-											if (e.key === "Enter") {
-												handleVerifyPassword();
-											}
-										}}
-										placeholder="비밀번호를 입력해주세요."
-										className="w-44 rounded-card border-card bg-card-bg px-3 py-2 text-sm text-main-text focus:outline-none focus:ring-0 focus:border-theme-primary"
-									/>
+					) : requiresSecretAccess && !secretAuthChecked ? (
+						<div className="flex flex-col items-center justify-center min-h-[60vh]">
+							<div
+								className="w-10 h-10 rounded-full border-2 border-card-border border-t-theme-primary animate-spin"
+								aria-label="로딩 중"
+							/>
+						</div>
+					) : requiresSecretAccess ? (
+						<div className="flex flex-col items-center justify-center min-h-[60vh]">
+							<div className="flex flex-col items-center gap-6 w-full max-w-md">
+								<div className="w-20 h-20 rounded-full bg-card-bg border-2 border-card flex items-center justify-center">
+									<Lock size={30} className="text-sub-text" />
 								</div>
-								{passwordError && (
-									<p className="text-sm text-red-500 text-center">
-										{passwordError}
+								<div className="text-center">
+									<h2 className="text-2xl font-semibold text-main-text mb-2">
+										비공개 게시글입니다.
+									</h2>
+									<p className="text-sub-text">
+										작성자와 관리자만 열람할 수 있습니다.
 									</p>
-								)}
+								</div>
+								<Button
+									variant="default"
+									onClick={onClickMoveToPage(listPath)}
+									className="mt-10"
+								>
+									목록으로
+								</Button>
 							</div>
-							<Button
-								variant="default"
-								onClick={onClickMoveToPage(listPath)}
-								className="mt-10"
-							>
-								목록으로
-							</Button>
 						</div>
-					</div>
-				) : (
-					<div>
+					) : requiresPassword ? (
+						<div className="flex flex-col items-center justify-center min-h-[60vh]">
+							<div className="flex flex-col items-center gap-6 w-full max-w-md">
+								<div className="w-20 h-20 rounded-full bg-card-bg border-2 border-card flex items-center justify-center">
+									<Lock size={30} className="text-sub-text" />
+								</div>
+								<div className="text-center">
+									<h2 className="text-2xl font-semibold text-main-text mb-2">
+										보호된 게시글입니다.
+									</h2>
+									<p className="text-sub-text">
+										게시글 열람을 위해서 비밀번호를 입력해 주세요.
+									</p>
+								</div>
+								<div className="w-full flex flex-col gap-3">
+									<div className="flex items-center justify-center gap-2">
+										<input
+											type="password"
+											value={password}
+											onChange={(e) => setPassword(e.target.value)}
+											onKeyDown={(e) => {
+												if (e.key === "Enter") {
+													handleVerifyPassword();
+												}
+											}}
+											placeholder="비밀번호를 입력해주세요."
+											className="w-44 rounded-card border-card bg-card-bg px-3 py-2 text-sm text-main-text focus:outline-none focus:ring-0 focus:border-theme-primary"
+										/>
+									</div>
+									{passwordError && (
+										<p className="text-sm text-red-500 text-center">
+											{passwordError}
+										</p>
+									)}
+								</div>
+								<Button
+									variant="default"
+									onClick={onClickMoveToPage(listPath)}
+									className="mt-10"
+								>
+									목록으로
+								</Button>
+							</div>
+						</div>
+					) : (
 						<div>
-							<Button onClick={onClickMoveToPage(listPath)} className="mt-10">
-								목록으로
-							</Button>
-						</div>
-						<div className="TitleWrap mt-15">
-							<h1 className="Title text-3xl text-main-text font-bold tracking-normal font-title">
-								{localDetail?.title}
-							</h1>
-							<h2 className="Subtitle text-lg text-sub-text mt-2 font-medium">
-								{localDetail?.subtitle}
-							</h2>
-							<div className="EditWrap flex items-center mt-10">
-								{localDetail?.tags?.length > 0 && (
-									<div className="TagBox flex">
-										{/* 태그 */}
-										{localDetail.tags?.length > 0 && (
-											<div className="flex flex-wrap gap-2 mt-1.5">
-												{localDetail.tags.map((tag, index) => (
-													<Badge
-														key={index}
-														variant="secondary"
-														className={cn(
-															"px-3 text-xs font-medium rounded-full",
-															"bg-theme-primary/10 text-theme-primary border-theme-primary/20",
-															"hover:bg-theme-primary/20",
-														)}
-														style={{
-															transition:
-																"background-color 200ms, color 200ms, border-color 200ms",
-														}}
-													>
-														{tag}
-													</Badge>
-												))}
+							<div>
+								<Button onClick={onClickMoveToPage(listPath)} className="mt-10">
+									목록으로
+								</Button>
+							</div>
+							<div className="TitleWrap mt-15">
+								<h1 className="Title text-3xl text-main-text font-bold tracking-normal font-title">
+									{localDetail?.title}
+								</h1>
+								<h2 className="Subtitle text-lg text-sub-text mt-2 font-medium">
+									{localDetail?.subtitle}
+								</h2>
+								<div className="EditWrap flex items-center mt-10">
+									{localDetail?.tags?.length > 0 && (
+										<div className="TagBox flex">
+											{/* 태그 */}
+											{localDetail.tags?.length > 0 && (
+												<div className="flex flex-wrap gap-2 mt-1.5">
+													{localDetail.tags.map((tag, index) => (
+														<Badge
+															key={index}
+															variant="secondary"
+															className={cn(
+																"px-3 text-xs font-medium rounded-full",
+																"bg-theme-primary/10 text-theme-primary border-theme-primary/20",
+																"hover:bg-theme-primary/20",
+															)}
+															style={{
+																transition:
+																	"background-color 200ms, color 200ms, border-color 200ms",
+															}}
+														>
+															{tag}
+														</Badge>
+													))}
+												</div>
+											)}
+										</div>
+									)}
+
+									<div className="EditBox flex gap-4 items-center ml-auto">
+										<span className="CreatedAt text-sub-text">
+											{dateTimeConvert(localDetail?.createdAt)}
+										</span>
+										{isAdmin && (
+											<div className="flex items-center gap-3">
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<button
+															type="button"
+															onClick={handleTogglePin}
+															className={cn(
+																"w-8 h-8 rounded-full flex items-center justify-center border border-card cursor-pointer",
+																isPinned
+																	? "text-theme-primary"
+																	: "text-sub-text",
+															)}
+															style={{ transition: "color 200ms ease-out" }}
+															aria-label="공지로 설정"
+														>
+															<Pin size={16} />
+														</button>
+													</TooltipTrigger>
+													<TooltipContent className="text-xs">
+														{isPinned ? "공지 해제" : "공지로 설정"}
+													</TooltipContent>
+												</Tooltip>
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<button
+															type="button"
+															onClick={onClickMoveToPage(
+																`/library/${localDetail?.id}/edit`,
+															)}
+															className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
+															style={{ transition: "color 200ms ease-out" }}
+															aria-label="수정"
+														>
+															<Pencil size={16} />
+														</button>
+													</TooltipTrigger>
+													<TooltipContent className="text-xs">
+														수정
+													</TooltipContent>
+												</Tooltip>
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<button
+															type="button"
+															onClick={handleDelete}
+															className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
+															style={{ transition: "color 200ms ease-out" }}
+															aria-label="삭제"
+														>
+															<Trash2 size={16} />
+														</button>
+													</TooltipTrigger>
+													<TooltipContent className="text-xs">
+														삭제
+													</TooltipContent>
+												</Tooltip>
 											</div>
 										)}
 									</div>
-								)}
-
-								<div className="EditBox flex gap-4 items-center ml-auto">
-									<span className="CreatedAt text-sub-text">
-										{dateTimeConvert(localDetail?.createdAt)}
-									</span>
-									{isAdmin && (
-										<div className="flex items-center gap-3">
-											<Tooltip>
-												<TooltipTrigger asChild>
-													<button
-														type="button"
-														onClick={handleTogglePin}
-														className={cn(
-															"w-8 h-8 rounded-full flex items-center justify-center border border-card cursor-pointer",
-															isPinned ? "text-theme-primary" : "text-sub-text",
-														)}
-														style={{ transition: "color 200ms ease-out" }}
-														aria-label="공지로 설정"
-													>
-														<Pin size={16} />
-													</button>
-												</TooltipTrigger>
-												<TooltipContent className="text-xs">
-													{isPinned ? "공지 해제" : "공지로 설정"}
-												</TooltipContent>
-											</Tooltip>
-											<Tooltip>
-												<TooltipTrigger asChild>
-													<button
-														type="button"
-														onClick={onClickMoveToPage(
-															`/library/${localDetail?.id}/edit`,
-														)}
-														className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
-														style={{ transition: "color 200ms ease-out" }}
-														aria-label="수정"
-													>
-														<Pencil size={16} />
-													</button>
-												</TooltipTrigger>
-												<TooltipContent className="text-xs">
-													수정
-												</TooltipContent>
-											</Tooltip>
-											<Tooltip>
-												<TooltipTrigger asChild>
-													<button
-														type="button"
-														onClick={handleDelete}
-														className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
-														style={{ transition: "color 200ms ease-out" }}
-														aria-label="삭제"
-													>
-														<Trash2 size={16} />
-													</button>
-												</TooltipTrigger>
-												<TooltipContent className="text-xs">
-													삭제
-												</TooltipContent>
-											</Tooltip>
-										</div>
-									)}
 								</div>
 							</div>
+							<Separator className="mb-[60px] mt-7 bg-card-border" />
+							{!parsedContent || !editor || editor.isEmpty ? (
+								<p className="text-sub-text">내용이 없습니다.</p>
+							) : (
+								<EditorContent editor={editor} />
+							)}
 						</div>
-						<Separator className="mb-[60px] mt-7 bg-card-border" />
-						{!parsedContent || !editor || editor.isEmpty ? (
-							<p className="text-sub-text">내용이 없습니다.</p>
-						) : (
-							<EditorContent editor={editor} />
-						)}
-					</div>
-				)}
-				{!requiresPassword && (!isSecret || canViewSecret) && (
-					<div className="PrevNextWrap flex justify-between mt-24">
-						{localDetail?.prevPost ? (
-							<div
-								className="PrevNextBox prev flex-none flex items-center cursor-pointer rounded-card max-w-52 p-3 border-card bg-card-bg overflow-hidden group min-w-48"
-								onClick={onClickMoveToPage(
-									`/library/${
-										localDetail?.prevPost?.slug || localDetail?.prevPost?.id
-									}${detailQuery}`,
-								)}
-							>
+					)}
+					{!requiresPassword && (!isSecret || canViewSecret) && (
+						<div className="PrevNextWrap flex justify-between mt-24">
+							{localDetail?.prevPost ? (
 								<div
-									className="PrevNextIconBox prevIcon w-12 h-12 flex-none flex items-center justify-center rounded-full bg-gray-300 group-hover:-translate-x-1"
-									style={{ transition: "all 300ms ease-in-out" }}
+									className="PrevNextBox prev flex-none flex items-center cursor-pointer rounded-card max-w-52 p-3 border-card bg-card-bg overflow-hidden group min-w-48"
+									onClick={onClickMoveToPage(
+										`/library/${
+											localDetail?.prevPost?.slug || localDetail?.prevPost?.id
+										}${detailQuery}`,
+									)}
 								>
-									<ChevronLeft size={20} className="text-gray-600" />
-								</div>
-								<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 48px)] pl-3.5">
-									<span className="PrevNextText text-xs text-sub-text">
-										이전 글
-									</span>
-									<p
-										className="PrevNextTitle text-lg font-semibold text-sub-text whitespace-nowrap overflow-hidden text-ellipsis w-full group-hover:text-gray-500 font-title"
-										style={{ transition: "color 300ms" }}
+									<div
+										className="PrevNextIconBox prevIcon w-12 h-12 flex-none flex items-center justify-center rounded-full bg-gray-300 group-hover:-translate-x-1"
+										style={{ transition: "all 300ms ease-in-out" }}
 									>
-										{localDetail?.prevPost?.title}
-									</p>
+										<ChevronLeft size={20} className="text-gray-600" />
+									</div>
+									<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 48px)] pl-3.5">
+										<span className="PrevNextText text-xs text-sub-text">
+											이전 글
+										</span>
+										<p
+											className="PrevNextTitle text-lg font-semibold text-sub-text whitespace-nowrap overflow-hidden text-ellipsis w-full group-hover:text-gray-500 font-title"
+											style={{ transition: "color 300ms" }}
+										>
+											{localDetail?.prevPost?.title}
+										</p>
+									</div>
 								</div>
-							</div>
-						) : (
-							<div className="flex-none" />
-						)}
-						{localDetail?.nextPost ? (
-							<div
-								className="PrevNextBox next flex-none flex items-center cursor-pointer rounded-card max-w-52 p-3 border-card bg-card-bg overflow-hidden flex-row-reverse group min-w-48"
-								onClick={onClickMoveToPage(
-									`/library/${
-										localDetail?.nextPost?.slug || localDetail?.nextPost?.id
-									}${detailQuery}`,
-								)}
-							>
+							) : (
+								<div className="flex-none" />
+							)}
+							{localDetail?.nextPost ? (
 								<div
-									className="PrevNextIconBox nextIcon w-12 h-12 flex-none flex items-center justify-center rounded-full bg-gray-300 group-hover:translate-x-1"
-									style={{ transition: "all 300ms ease-in-out" }}
+									className="PrevNextBox next flex-none flex items-center cursor-pointer rounded-card max-w-52 p-3 border-card bg-card-bg overflow-hidden flex-row-reverse group min-w-48"
+									onClick={onClickMoveToPage(
+										`/library/${
+											localDetail?.nextPost?.slug || localDetail?.nextPost?.id
+										}${detailQuery}`,
+									)}
 								>
-									<ChevronRight size={20} className="text-gray-600" />
-								</div>
-								<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 48px)] pr-3.5 flex flex-col items-end">
-									<span className="PrevNextText text-xs text-sub-text">
-										다음 글
-									</span>
-									<p
-										className="PrevNextTitle text-lg font-semibold text-sub-text whitespace-nowrap overflow-hidden text-ellipsis w-full text-end group-hover:text-gray-500 font-title"
-										style={{ transition: "color 300ms" }}
+									<div
+										className="PrevNextIconBox nextIcon w-12 h-12 flex-none flex items-center justify-center rounded-full bg-gray-300 group-hover:translate-x-1"
+										style={{ transition: "all 300ms ease-in-out" }}
 									>
-										{localDetail?.nextPost?.title}
-									</p>
+										<ChevronRight size={20} className="text-gray-600" />
+									</div>
+									<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 48px)] pr-3.5 flex flex-col items-end">
+										<span className="PrevNextText text-xs text-sub-text">
+											다음 글
+										</span>
+										<p
+											className="PrevNextTitle text-lg font-semibold text-sub-text whitespace-nowrap overflow-hidden text-ellipsis w-full text-end group-hover:text-gray-500 font-title"
+											style={{ transition: "color 300ms" }}
+										>
+											{localDetail?.nextPost?.title}
+										</p>
+									</div>
 								</div>
-							</div>
-						) : (
-							<div className="flex-none" />
-						)}
-					</div>
-				)}
+							) : (
+								<div className="flex-none" />
+							)}
+						</div>
+					)}
+				</div>
 			</div>
-		</div>
+		</>
 	);
 }
