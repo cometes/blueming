@@ -14,6 +14,14 @@ interface LibraryItem {
 	allow?: "all" | "password" | "secret";
 }
 
+type ListParams = {
+	page: number;
+	limit: number;
+	sort: "latest" | "oldest" | "title";
+	tag?: string;
+	query?: string;
+};
+
 interface UseLibraryListDataParams {
 	initialList: LibraryItem[];
 	initialPinned: LibraryItem[];
@@ -26,6 +34,7 @@ interface UseLibraryListDataParams {
 	activeTag: string;
 	appliedQuery: string;
 	setListPage: (page: number) => void;
+	enablePrefetch?: boolean;
 }
 
 export const useLibraryListData = ({
@@ -40,6 +49,7 @@ export const useLibraryListData = ({
 	activeTag,
 	appliedQuery,
 	setListPage,
+	enablePrefetch = false,
 }: UseLibraryListDataParams) => {
 	const [listItems, setListItems] = useState<LibraryItem[]>(initialList);
 	const [pinnedItems, setPinnedItems] = useState<LibraryItem[]>(initialPinned);
@@ -47,6 +57,14 @@ export const useLibraryListData = ({
 	const [tagOptions, setTagOptions] = useState<string[]>(initialTags ?? []);
 	const [isListReady, setIsListReady] = useState(true);
 	const requestIdRef = useRef(0);
+	const initialParamsRef = useRef<ListParams>({
+		page: listPage,
+		limit: postsPerPage,
+		sort: sortOrder,
+		tag: activeTag === "전체" ? undefined : activeTag,
+		query: appliedQuery || undefined,
+	});
+	const initialFetchDoneRef = useRef(false);
 
 	useEffect(() => {
 		setListItems(initialList);
@@ -76,16 +94,25 @@ export const useLibraryListData = ({
 		loadTags();
 	}, [initialTags]);
 
+	const buildListParams = (): ListParams => ({
+		page: listPage,
+		limit: postsPerPage,
+		sort: sortOrder,
+		tag: activeTag === "전체" ? undefined : activeTag,
+		query: appliedQuery || undefined,
+	});
+
 	const listParams = useMemo(
-		() => ({
-			page: listPage,
-			limit: postsPerPage,
-			sort: sortOrder,
-			tag: activeTag === "전체" ? undefined : activeTag,
-			query: appliedQuery || undefined,
-		}),
+		() => buildListParams(),
 		[listPage, postsPerPage, sortOrder, activeTag, appliedQuery]
 	);
+
+	const areParamsEqual = (a: ListParams, b: ListParams) =>
+		a.page === b.page &&
+		a.limit === b.limit &&
+		a.sort === b.sort &&
+		a.tag === b.tag &&
+		a.query === b.query;
 
 	const refreshList = useCallback(async () => {
 		const requestId = ++requestIdRef.current;
@@ -99,58 +126,21 @@ export const useLibraryListData = ({
 		return data;
 	}, [listParams]);
 
-	const applyPinOptimistic = useCallback(
-		(id: string, nextPinned: boolean) => {
-			const listSnapshot = listItems;
-			const pinnedSnapshot = pinnedItems;
-
-			const findItem = () =>
-				listSnapshot.find((item) => item.id === id) ??
-				pinnedSnapshot.find((item) => item.id === id);
-
-			const target = findItem();
-			if (!target) {
-				return () => undefined;
-			}
-
-			const nextItem = { ...target, pinned: nextPinned };
-
-			if (nextPinned) {
-				setPinnedItems((prev) => {
-					if (prev.some((item) => item.id === id)) {
-						return prev.map((item) =>
-							item.id === id ? nextItem : item
-						);
-					}
-					return [nextItem, ...prev];
-				});
-				setListItems((prev) => prev.filter((item) => item.id !== id));
-			} else {
-				setPinnedItems((prev) => prev.filter((item) => item.id !== id));
-				setListItems((prev) => {
-					if (prev.some((item) => item.id === id)) {
-						return prev.map((item) =>
-							item.id === id ? nextItem : item
-						);
-					}
-					return [nextItem, ...prev];
-				});
-			}
-
-			return () => {
-				setListItems(listSnapshot);
-				setPinnedItems(pinnedSnapshot);
-			};
-		},
-		[listItems, pinnedItems]
-	);
-
 	useEffect(() => {
 		if (isSeriesOn) {
 			return;
 		}
 
 		const fetchPage = async () => {
+			const shouldSkipInitialFetch =
+				!initialFetchDoneRef.current &&
+				initialParamsRef.current &&
+				areParamsEqual(listParams, initialParamsRef.current);
+			if (shouldSkipInitialFetch) {
+				initialFetchDoneRef.current = true;
+				return;
+			}
+
 			setIsListReady(false);
 			try {
 				const data = await refreshList();
@@ -165,6 +155,7 @@ export const useLibraryListData = ({
 				setListItems([]);
 				setListTotalCount(0);
 			} finally {
+				initialFetchDoneRef.current = true;
 				setIsListReady(true);
 			}
 		};
@@ -173,6 +164,9 @@ export const useLibraryListData = ({
 	}, [isSeriesOn, refreshList, listPage, postsPerPage, setListPage]);
 
 	useEffect(() => {
+		if (!enablePrefetch) {
+			return;
+		}
 		if (isSeriesOn) {
 			return;
 		}
@@ -201,6 +195,7 @@ export const useLibraryListData = ({
 		sortOrder,
 		activeTag,
 		appliedQuery,
+		enablePrefetch,
 	]);
 
 	return {
@@ -209,7 +204,5 @@ export const useLibraryListData = ({
 		listTotalCount,
 		tagOptions,
 		isListReady,
-		refreshList,
-		applyPinOptimistic,
 	};
 };

@@ -3,11 +3,15 @@ import { useEffect, useState } from "react";
 interface UseLibraryFiltersParams {
 	isSeriesOn: boolean;
 	postsPerPage: number;
+	initialListPage?: number;
+	initialSeriesPage?: number;
 }
 
 export const useLibraryFilters = ({
 	isSeriesOn,
 	postsPerPage,
+	initialListPage = 1,
+	initialSeriesPage = 1,
 }: UseLibraryFiltersParams) => {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [appliedQuery, setAppliedQuery] = useState("");
@@ -15,8 +19,8 @@ export const useLibraryFilters = ({
 	const [sortOrder, setSortOrder] = useState<"latest" | "oldest" | "title">(
 		"latest"
 	);
-	const [listPage, setListPage] = useState(1);
-	const [seriesPage, setSeriesPage] = useState(1);
+	const [listPage, setListPage] = useState(initialListPage);
+	const [seriesPage, setSeriesPage] = useState(initialSeriesPage);
 
 	const setActivePage = (page: number) => {
 		if (isSeriesOn) {

@@ -47,6 +47,7 @@ export default async function LibararyListPage({
 					listTotal={finalListResponse.total}
 					seriesData={seriesData}
 					tagData={Array.isArray(tagData) ? tagData : []}
+					initialPage={currentPage}
 				/>
 			</Suspense>
 		);
@@ -59,6 +60,7 @@ export default async function LibararyListPage({
 					listTotal={0}
 					seriesData={[]}
 					tagData={[]}
+					initialPage={1}
 				/>
 			</Suspense>
 		);

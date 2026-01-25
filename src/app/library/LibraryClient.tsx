@@ -36,6 +36,7 @@ interface LibraryClientProps {
 	listTotal: number;
 	seriesData: LibraryItem[];
 	tagData?: string[];
+	initialPage: number;
 }
 
 export default function LibraryClient({
@@ -44,6 +45,7 @@ export default function LibraryClient({
 	listTotal,
 	seriesData,
 	tagData,
+	initialPage,
 }: LibraryClientProps) {
 	const { library, updateLibrary, refreshSettings } = useSettings();
 	const [isSeriesOn, setIsSeriesOn] = useState(false);
@@ -53,7 +55,7 @@ export default function LibraryClient({
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [isCardPrefsLoaded, setIsCardPrefsLoaded] = useState(false);
-	const isSyncingFromQuery = useRef(false);
+	const skipNextQueryUpdateRef = useRef(false);
 
 	const defaultLibrarySettings = useMemo(
 		() => ({
@@ -100,7 +102,11 @@ export default function LibraryClient({
 		seriesPage,
 		setListPage,
 		setActivePage,
-	} = useLibraryFilters({ isSeriesOn, postsPerPage });
+	} = useLibraryFilters({
+		isSeriesOn,
+		postsPerPage,
+		initialListPage: initialPage,
+	});
 	const {
 		listItems,
 		pinnedItems,
@@ -119,6 +125,7 @@ export default function LibraryClient({
 		activeTag,
 		appliedQuery,
 		setListPage,
+		enablePrefetch: false,
 	});
 
 	// Dialog 임시 상태 (저장 전까지 사용)
@@ -189,21 +196,25 @@ export default function LibraryClient({
 		if (isSeriesOn) return;
 		const pageParam = searchParams.get("page");
 		const parsedPage = pageParam ? Number(pageParam) : 1;
-		if (Number.isFinite(parsedPage) && parsedPage > 0 && parsedPage !== listPage) {
-			isSyncingFromQuery.current = true;
-			setListPage(parsedPage);
+		const nextPage =
+			Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+		if (nextPage !== listPage) {
+			skipNextQueryUpdateRef.current = true;
+			setListPage(nextPage);
 		}
-	}, [isSeriesOn, searchParams, setListPage]);
+	}, [isSeriesOn, searchParams, listPage, setListPage]);
 
 	useEffect(() => {
 		if (isSeriesOn) return;
-		if (isSyncingFromQuery.current) {
-			isSyncingFromQuery.current = false;
+		if (skipNextQueryUpdateRef.current) {
+			skipNextQueryUpdateRef.current = false;
 			return;
 		}
 		const pageParam = searchParams.get("page");
 		const parsedPage = pageParam ? Number(pageParam) : 1;
-		if (parsedPage !== listPage) {
+		const nextPage =
+			Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+		if (nextPage !== listPage) {
 			updatePageParam(listPage);
 		}
 	}, [isSeriesOn, listPage, pathname, router, searchParams]);
