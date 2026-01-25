@@ -74,7 +74,7 @@ export default function WidgetMarquee() {
 						</div>
 						<div className="marquee-vertical-segment">
 							<div
-								className="marquee-vertical-item"
+								className="marquee-vertical-item font-title"
 								style={{ color: marqueeSettings.textColor }}
 							>
 								{bannerText}
@@ -89,7 +89,7 @@ export default function WidgetMarquee() {
 						style={{ height: "100%" }}
 					>
 						<div
-							className="min-h-6 flex items-center px-2"
+							className="min-h-6 flex items-center px-2 font-title"
 							style={{ color: marqueeSettings.textColor }}
 						>
 							{bannerText}

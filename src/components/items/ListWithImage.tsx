@@ -64,7 +64,7 @@ export default function ItemListWithImage({
 							<h3
 								className={cn(
 									"text-lg font-semibold text-main-text leading-tight",
-									"line-clamp-2 group-hover:text-theme-primary"
+									"line-clamp-2 group-hover:text-theme-primary font-title"
 								)}
 								style={{ transition: "color 0.2s ease-out" }}
 							>

@@ -196,7 +196,7 @@ export default function DdayAddDialog({
 				onOpenAutoFocus={(e) => e.preventDefault()}
 			>
 				<DialogHeader>
-					<DialogTitle className="text-[20px] font-semibold">
+					<DialogTitle className="text-[20px] font-semibold font-title">
 						디데이 추가하기
 					</DialogTitle>
 				</DialogHeader>

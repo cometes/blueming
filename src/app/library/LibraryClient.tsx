@@ -395,7 +395,7 @@ export default function LibraryClient({
 					<div className="TabBox flex justify-center">
 						<button
 							className={cn(
-								"Tab block font-medium text-sub-text bg-transparent px-2.5 py-4 border-0 min-w-20 cursor-pointer",
+								"Tab block font-medium text-sub-text bg-transparent px-2.5 py-4 border-0 min-w-20 cursor-pointer font-title",
 								isSeriesOn ? "" : "text-theme-primary",
 							)}
 							onClick={() => {
@@ -407,7 +407,7 @@ export default function LibraryClient({
 						</button>
 						<button
 							className={cn(
-								"Tab block font-medium text-sub-text bg-transparent px-2.5 py-4 border-0 min-w-20 cursor-pointer",
+								"Tab block font-medium text-sub-text bg-transparent px-2.5 py-4 border-0 min-w-20 cursor-pointer font-title",
 								isSeriesOn ? "text-theme-primary" : "",
 							)}
 							onClick={() => {

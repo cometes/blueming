@@ -230,7 +230,7 @@ const CreateModal = ({
 					<div className="flex gap-8">
 						{/* 좌측: 썸네일 + 소개 */}
 						<div className="w-1/2">
-							<h3 className="text-2xl font-semibold text-main-text mb-4">
+							<h3 className="text-2xl font-semibold text-main-text mb-4 font-title">
 								포스트 미리보기
 							</h3>
 							<section className="space-y-4">
@@ -276,7 +276,7 @@ const CreateModal = ({
 									)}
 								</div>
 								<div>
-									<h4 className="text-xl font-semibold text-main-text overflow-ellipsis whitespace-nowrap overflow-hidden">
+									<h4 className="text-xl font-semibold text-main-text overflow-ellipsis whitespace-nowrap overflow-hidden font-title">
 										{value.title || "제목을 입력해주세요"}
 									</h4>
 									<textarea
@@ -314,7 +314,7 @@ const CreateModal = ({
 								{tagOpen ? (
 									/* 태그 설정 화면 */
 									<section className="space-y-6">
-										<h3 className="text-xl font-semibold text-main-text">
+										<h3 className="text-xl font-semibold text-main-text font-title">
 											태그 설정
 										</h3>
 										<div className="space-y-3">
@@ -434,7 +434,7 @@ const CreateModal = ({
 								) : seriesOpen ? (
 									/* 시리즈 추가 화면 */
 									<section className="space-y-6">
-										<h3 className="text-xl font-semibold text-main-text">
+										<h3 className="text-xl font-semibold text-main-text font-title">
 											시리즈 설정
 										</h3>
 										{seriesInputOpen ? (
@@ -526,7 +526,7 @@ const CreateModal = ({
 									/* 기본 설정 화면 */
 									<section className="space-y-6">
 										<div>
-											<h3 className="text-xl font-semibold text-main-text mb-4">
+											<h3 className="text-xl font-semibold text-main-text mb-4 font-title">
 												공개 설정
 											</h3>
 											<div className="flex gap-2">
@@ -614,7 +614,7 @@ const CreateModal = ({
 										</div>
 
 										<div>
-											<h3 className="text-xl font-semibold text-main-text mb-4">
+											<h3 className="text-xl font-semibold text-main-text mb-4 font-title">
 												URL 설정
 											</h3>
 											<Input
@@ -650,7 +650,7 @@ const CreateModal = ({
 										</div>
 
 										<div>
-											<h3 className="text-xl font-semibold text-main-text mb-4">
+											<h3 className="text-xl font-semibold text-main-text mb-4 font-title">
 												태그 설정
 											</h3>
 											<div className="space-y-3">
@@ -693,7 +693,7 @@ const CreateModal = ({
 										</div>
 
 										<div>
-											<h3 className="text-xl font-semibold text-main-text mb-4">
+											<h3 className="text-xl font-semibold text-main-text mb-4 font-title">
 												시리즈 설정
 											</h3>
 											{value.series ? (

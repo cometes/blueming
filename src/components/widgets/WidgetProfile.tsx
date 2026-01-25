@@ -57,7 +57,7 @@ export default function WidgetProfile() {
 							/>
 						)}
 					</div>
-					<p className="text-2xl font-bold text-main-text">
+					<p className="text-2xl font-bold text-main-text font-title">
 						{profileData.nickname}
 					</p>
 					<div className="text-sm mt-1 text-main-text">

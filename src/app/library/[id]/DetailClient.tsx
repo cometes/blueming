@@ -156,7 +156,7 @@ export default function DetailClient({ detailData }) {
 			CustomYoutubeNode,
 			CustomImage,
 		],
-		[]
+		[],
 	);
 	const editor = useEditor({
 		extensions: viewerExtensions,
@@ -205,7 +205,7 @@ export default function DetailClient({ detailData }) {
 		try {
 			await setLibraryPin(localDetail.id, nextPinned);
 			toast.success(
-				nextPinned ? "공지로 설정되었습니다." : "공지 설정이 해제되었습니다."
+				nextPinned ? "공지로 설정되었습니다." : "공지 설정이 해제되었습니다.",
 			);
 		} catch {
 			setIsPinned(!nextPinned);
@@ -236,7 +236,7 @@ export default function DetailClient({ detailData }) {
 			setAuthChecked(true);
 		} catch (error) {
 			setPasswordError(
-				getApiErrorMessage(error, "비밀번호가 올바르지 않습니다.")
+				getApiErrorMessage(error, "비밀번호가 올바르지 않습니다."),
 			);
 		} finally {
 			setIsVerifying(false);
@@ -343,10 +343,12 @@ export default function DetailClient({ detailData }) {
 				) : (
 					<div>
 						<div>
-							<Button onClick={onClickMoveToPage(listPath)} className="mt-10">목록으로</Button>
+							<Button onClick={onClickMoveToPage(listPath)} className="mt-10">
+								목록으로
+							</Button>
 						</div>
 						<div className="TitleWrap mt-15">
-							<h1 className="Title text-3xl text-main-text font-bold tracking-normal">
+							<h1 className="Title text-3xl text-main-text font-bold tracking-normal font-title">
 								{localDetail?.title}
 							</h1>
 							<h2 className="Subtitle text-lg text-sub-text mt-2 font-medium">
@@ -365,7 +367,7 @@ export default function DetailClient({ detailData }) {
 														className={cn(
 															"px-3 text-xs font-medium rounded-full",
 															"bg-theme-primary/10 text-theme-primary border-theme-primary/20",
-															"hover:bg-theme-primary/20"
+															"hover:bg-theme-primary/20",
 														)}
 														style={{
 															transition:
@@ -393,7 +395,7 @@ export default function DetailClient({ detailData }) {
 														onClick={handleTogglePin}
 														className={cn(
 															"w-8 h-8 rounded-full flex items-center justify-center border border-card cursor-pointer",
-															isPinned ? "text-theme-primary" : "text-sub-text"
+															isPinned ? "text-theme-primary" : "text-sub-text",
 														)}
 														style={{ transition: "color 200ms ease-out" }}
 														aria-label="공지로 설정"
@@ -410,7 +412,7 @@ export default function DetailClient({ detailData }) {
 													<button
 														type="button"
 														onClick={onClickMoveToPage(
-															`/library/${localDetail?.id}/edit`
+															`/library/${localDetail?.id}/edit`,
 														)}
 														className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
 														style={{ transition: "color 200ms ease-out" }}
@@ -460,7 +462,7 @@ export default function DetailClient({ detailData }) {
 								onClick={onClickMoveToPage(
 									`/library/${
 										localDetail?.prevPost?.slug || localDetail?.prevPost?.id
-									}${detailQuery}`
+									}${detailQuery}`,
 								)}
 							>
 								<div
@@ -470,11 +472,11 @@ export default function DetailClient({ detailData }) {
 									<ChevronLeft size={20} className="text-gray-600" />
 								</div>
 								<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 48px)] pl-3.5">
-									<span className="PrevNextText text-sm text-sub-text">
+									<span className="PrevNextText text-xs text-sub-text">
 										이전 글
 									</span>
 									<p
-										className="PrevNextTitle text-xl font-semibold text-sub-text whitespace-nowrap overflow-hidden text-ellipsis w-full group-hover:text-gray-500"
+										className="PrevNextTitle text-lg font-semibold text-sub-text whitespace-nowrap overflow-hidden text-ellipsis w-full group-hover:text-gray-500 font-title"
 										style={{ transition: "color 300ms" }}
 									>
 										{localDetail?.prevPost?.title}
@@ -490,7 +492,7 @@ export default function DetailClient({ detailData }) {
 								onClick={onClickMoveToPage(
 									`/library/${
 										localDetail?.nextPost?.slug || localDetail?.nextPost?.id
-									}${detailQuery}`
+									}${detailQuery}`,
 								)}
 							>
 								<div
@@ -500,11 +502,11 @@ export default function DetailClient({ detailData }) {
 									<ChevronRight size={20} className="text-gray-600" />
 								</div>
 								<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 48px)] pr-3.5 flex flex-col items-end">
-									<span className="PrevNextText text-sm text-sub-text">
+									<span className="PrevNextText text-xs text-sub-text">
 										다음 글
 									</span>
 									<p
-										className="PrevNextTitle text-xl font-semibold text-sub-text whitespace-nowrap overflow-hidden text-ellipsis w-full text-end group-hover:text-gray-500"
+										className="PrevNextTitle text-lg font-semibold text-sub-text whitespace-nowrap overflow-hidden text-ellipsis w-full text-end group-hover:text-gray-500 font-title"
 										style={{ transition: "color 300ms" }}
 									>
 										{localDetail?.nextPost?.title}

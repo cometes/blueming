@@ -46,11 +46,11 @@ export default function ItemCard(props) {
 				)}
 			>
 				<div className="flex items-center justify-between">
-					<p className="SeriesTitle font-semibold text-lg">
+					<p className="SeriesTitle font-semibold text-lg font-title">
 						{props.data.series}
 					</p>
 
-					<span className="text-sm">{props.data.postLength}개의 포스트</span>
+					<span className="text-sm font-title">{props.data.postLength}개의 포스트</span>
 				</div>
 
 				<span className="text-sm text-sub-text before:content-'·' mt-1">
