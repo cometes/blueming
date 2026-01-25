@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import { useAuthStore } from "@/store/auth/store";
-import { useAdmin } from "@/hooks/auth/UseAdmin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -25,7 +24,7 @@ import {
 	type GuestbookEntry,
 	uploadGuestbookImages,
 } from "@/queries/guestbook";
-import { ImagePlus, Lock } from "lucide-react";
+import { ImagePlus, Lock, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import GuestbookItem from "@/components/items/GuestbookItem";
@@ -41,7 +40,6 @@ import { useCooldown } from "@/hooks/guestbook/useCooldown";
 import { useImageDialog } from "@/hooks/guestbook/useImageDialog";
 import { useAssets } from "@/hooks/guestbook/useAssets";
 
-const PIN_REGEX = /^\d{4}$/;
 const DEFAULT_PAGE_SIZE = 10;
 const MAX_IMAGE_COUNT = 8;
 
@@ -56,8 +54,7 @@ export default function GuestbookClient({
 	total,
 	pageSize = DEFAULT_PAGE_SIZE,
 }: GuestbookClientProps) {
-	const { user, isAuthenticated, isLoading: isAuthLoading } = useAuthStore();
-	const { isAdmin } = useAdmin();
+	const { isAuthenticated, isLoading: isAuthLoading } = useAuthStore();
 	const [entries, setEntries] = useState<GuestbookEntry[]>(initialEntries);
 	const [totalCount, setTotalCount] = useState(total);
 	const [currentPage, setCurrentPage] = useState(1);
@@ -77,13 +74,6 @@ export default function GuestbookClient({
 	const [dialogSecret, setDialogSecret] = useState(false);
 	const [activeEntry, setActiveEntry] = useState<GuestbookEntry | null>(null);
 
-	// 비밀글 관리
-	const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>(
-		{},
-	);
-	const [secretOverrides, setSecretOverrides] = useState<
-		Record<string, { message: string; imageUrls: string[] }>
-	>({});
 	const [secretDialogOpen, setSecretDialogOpen] = useState(false);
 	const [secretDialogPin, setSecretDialogPin] = useState("");
 	const [secretDialogEntry, setSecretDialogEntry] =
@@ -212,54 +202,13 @@ export default function GuestbookClient({
 		}
 	}, [activeEntry, dialogPin, loadPage]);
 
-	const canEditEntry = useCallback(
-		(entry: GuestbookEntry) => {
-			if (isAdmin) return entry.isAdmin === true;
-			if (entry.authorType === "anon") return true;
-			if (entry.uid && user?.uid) return entry.uid === user.uid;
-			return false;
-		},
-		[isAdmin, user?.uid],
-	);
-
-	const canDeleteEntry = useCallback(
-		(entry: GuestbookEntry) => {
-			if (isAdmin) return true;
-			if (entry.authorType === "anon") return true;
-			if (entry.uid && user?.uid) return entry.uid === user.uid;
-			return false;
-		},
-		[isAdmin, user?.uid],
-	);
-
-	const canViewSecretDirectly = useCallback(
-		(entry: GuestbookEntry) => {
-			if (!entry.isSecret) return true;
-			if (isAdmin) return true;
-			if (entry.authorType === "user") {
-				return entry.uid !== undefined && entry.uid === user?.uid;
-			}
-			return false;
-		},
-		[isAdmin, user?.uid],
-	);
-
-	const canViewSecret = useCallback(
-		(entry: GuestbookEntry) => {
-			if (!entry.isSecret) return false;
-			if (canViewSecretDirectly(entry)) return true;
-			return entry.authorType === "anon";
-		},
-		[canViewSecretDirectly],
-	);
-
 	const openDialog = useCallback(
 		(entry: GuestbookEntry, modeType: "edit" | "delete") => {
-			const entryImages = entry.imageUrls ?? [];
+			const entryImages = entry.displayImageUrls ?? entry.imageUrls ?? [];
 			setActiveEntry(entry);
 			setDialogMode(modeType);
 			setDialogPin("");
-			setDialogMessage(entry.message);
+			setDialogMessage(entry.displayMessage ?? entry.message ?? "");
 			setDialogImages(
 				entryImages.map((url) => ({
 					id: `img_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -297,52 +246,15 @@ export default function GuestbookClient({
 
 	const handleSecretToggle = useCallback(
 		async (entry: GuestbookEntry) => {
-			const isVisible = !!visibleSecrets[entry.id];
-			if (isVisible) {
-				setVisibleSecrets((prev) => ({ ...prev, [entry.id]: false }));
-				return;
-			}
-
-			// 관리자나 작성자 본인인 경우 PIN 없이 verify API 호출
-			if (canViewSecretDirectly(entry)) {
-				try {
-					const data = await verifyGuestbookSecret(entry.id, {});
-					const resolvedImageUrls = data.imageUrls ?? [];
-					setEntries((prev) =>
-						prev.map((e) =>
-							e.id === entry.id
-								? {
-										...e,
-										message: data.message ?? e.message,
-										imageUrls: resolvedImageUrls,
-									}
-								: e,
-						),
-					);
-					setSecretOverrides((prev) => ({
-						...prev,
-						[entry.id]: {
-							message: data.message ?? "",
-							imageUrls: resolvedImageUrls,
-						},
-					}));
-					setVisibleSecrets((prev) => ({ ...prev, [entry.id]: true }));
-				} catch {
-					toast.error("비밀글을 불러올 수 없습니다.");
-				}
-				return;
-			}
-
-			// 익명 작성자의 비밀글은 PIN 입력 다이얼로그 표시
-			if (entry.authorType === "anon") {
-				openSecretDialog(entry);
-			}
+			if (entry.masked !== true) return;
+			if (!entry.canViewSecret) return;
+			openSecretDialog(entry);
 		},
-		[visibleSecrets, canViewSecretDirectly, openSecretDialog],
+		[openSecretDialog],
 	);
 
 	const handleVerifySecret = useCallback(async () => {
-		if (!secretDialogEntry || !PIN_REGEX.test(secretDialogPin)) return;
+		if (!secretDialogEntry || !/^\d{4}$/.test(secretDialogPin)) return;
 		setIsVerifyingSecret(true);
 		try {
 			const data = await verifyGuestbookSecret(secretDialogEntry.id, {
@@ -356,21 +268,14 @@ export default function GuestbookClient({
 								...entry,
 								message: data.message ?? entry.message,
 								imageUrls: resolvedImageUrls,
+								displayMessage: data.message ?? entry.displayMessage ?? "",
+								displayImageUrls:
+									data.imageUrls ?? entry.displayImageUrls ?? [],
+								masked: false,
 							}
 						: entry,
 				),
 			);
-			setSecretOverrides((prev) => ({
-				...prev,
-				[secretDialogEntry.id]: {
-					message: data.message ?? "",
-					imageUrls: resolvedImageUrls,
-				},
-			}));
-			setVisibleSecrets((prev) => ({
-				...prev,
-				[secretDialogEntry.id]: true,
-			}));
 			closeSecretDialog();
 		} catch {
 			toast.error("비밀번호가 올바르지 않습니다.");
@@ -441,8 +346,9 @@ export default function GuestbookClient({
 
 	// 페이지 로드
 	useEffect(() => {
+		if (isAuthLoading) return;
 		loadPage();
-	}, [loadPage]);
+	}, [isAuthLoading, loadPage]);
 
 	// 컴포넌트 언마운트 시 blob URL 정리
 	useEffect(() => {
@@ -562,10 +468,14 @@ export default function GuestbookClient({
 						<div className="flex items-center gap-2">
 							<Button
 								type="button"
+								size="sm"
+								variant="ghost"
 								onClick={handleCreate}
 								disabled={!canSubmit || form.isSubmitting}
+								className="w-8 h-8 p-0"
+								aria-label="방명록 등록"
 							>
-								등록하기
+								<Send size={16} className="text-theme-primary" />
 							</Button>
 						</div>
 					</div>
@@ -606,25 +516,17 @@ export default function GuestbookClient({
 				</div>
 
 				<div className="mt-4 space-y-4">
-					{entries.map((entry) => {
-						const override = secretOverrides[entry.id];
-						const resolvedEntry = override
-							? { ...entry, ...override }
-							: entry;
-						return (
+					{entries.map((entry) => (
 						<GuestbookItem
 							key={entry.id}
-							entry={resolvedEntry}
-							visibleSecret={!!visibleSecrets[entry.id]}
-							canViewSecret={canViewSecret(entry)}
-							canEdit={canEditEntry(entry)}
-							canDelete={canDeleteEntry(entry)}
+							entry={entry}
 							onToggleSecret={() => handleSecretToggle(entry)}
-							onEdit={() => openDialog(entry, "edit")}
-							onDelete={() => openDialog(entry, "delete")}
+							onEdit={entry.canEdit ? () => openDialog(entry, "edit") : undefined}
+							onDelete={
+								entry.canDelete ? () => openDialog(entry, "delete") : undefined
+							}
 						/>
-						);
-					})}
+					))}
 
 					{entries.length === 0 && (
 						<div className="text-center py-10 text-sub-text">
@@ -683,7 +585,7 @@ export default function GuestbookClient({
 				onOpenChange={setDialogOpen}
 				mode={dialogMode}
 				isAnon={activeEntry?.authorType === "anon"}
-				isAdmin={isAdmin}
+				isAdmin={activeEntry?.isAdmin === true}
 				dialogPin={dialogPin}
 				onDialogPinChange={setDialogPin}
 				dialogMessage={dialogMessage}

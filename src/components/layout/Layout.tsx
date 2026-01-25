@@ -161,7 +161,7 @@ export default function Layout({ children }: LayoutProps) {
 						: "max-w-5xl px-5 h-auto"
 				)}
 			>
-				<div className="w-full h-full flex items-start justify-center gap-6 relative z-10">
+			<div className="w-full h-full flex items-start justify-center gap-6 relative">
 					{!shouldHideMenu && !isMenuRightAligned && <WidgetMenu />}
 					{children}
 					{!shouldHideMenu && isMenuRightAligned && <WidgetMenu />}
