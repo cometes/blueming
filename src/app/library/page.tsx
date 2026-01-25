@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { fetchLibraryList } from "@/queries/fetch/fetchLibrary";
 import {
+	fetchLibraryListServer,
 	fetchLibrarySeriesServer,
 	fetchLibraryTagsServer,
 } from "@/queries/fetch/fetchLibraryServer";
@@ -28,7 +28,7 @@ export default async function LibararyListPage({
 
 		const [{ data: listResponse }, { data: seriesData }, { data: tagData }] =
 			await Promise.all([
-				fetchLibraryList({ page: currentPage, limit: postsPerPage }),
+				fetchLibraryListServer({ page: currentPage, limit: postsPerPage }),
 				fetchLibrarySeriesServer(),
 				fetchLibraryTagsServer(),
 			]);

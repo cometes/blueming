@@ -70,7 +70,7 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 
 	useEffect(() => {
 		setFailedImages((prev) =>
-			prev.header ? { ...prev, header: false } : prev
+			prev.header ? { ...prev, header: false } : prev,
 		);
 	}, [seriesMeta.thumbnail]);
 
@@ -90,7 +90,7 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 	}
 
 	return (
-		<div className="w-full max-w-[700px] mx-auto mt-20 mb-20">
+		<div className="shrink-0 w-full max-w-[700px] mt-[90px] mb-[40px] mx-auto">
 			<Button
 				onClick={onClickMoveToPage("/library?tab=series")}
 				variant="default"
@@ -110,7 +110,7 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 									backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.5) 100%), url(${seriesMeta.thumbnail})`,
 									backgroundSize: "cover",
 									backgroundPosition: "center",
-							  }
+								}
 							: undefined
 					}
 				>
