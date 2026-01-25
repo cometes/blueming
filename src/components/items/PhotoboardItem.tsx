@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import Image from "next/image";
 import {
 	Bookmark,
@@ -96,15 +96,10 @@ export default function PhotoboardItem({
 }: PhotoboardItemProps) {
 	const caption = post.caption;
 	const showMore = shouldTruncate(caption);
-	const [isImageLoaded, setIsImageLoaded] = useState(false);
 
 	// 날짜 포맷팅 메모이제이션
 	const absoluteDate = useMemo(() => formatAbsoluteDate(post.createdAt), [post.createdAt]);
 	const relativeDate = useMemo(() => formatRelative(post.createdAt), [post.createdAt]);
-
-	useEffect(() => {
-		setIsImageLoaded(false);
-	}, [post.imageUrl]);
 
 	return (
 		<article
@@ -179,20 +174,12 @@ export default function PhotoboardItem({
 				className="relative w-full bg-card-bg overflow-hidden cursor-pointer group"
 				onClick={onClick}
 			>
-				{!isImageLoaded && (
-					<div className="absolute inset-0 bg-card animate-pulse" aria-hidden="true" />
-				)}
 				<img
 					src={post.imageUrl}
 					alt={post.caption}
-					className={cn(
-						"w-full h-auto object-cover transition-opacity duration-300",
-						isImageLoaded ? "opacity-100" : "opacity-0"
-					)}
+					className="w-full h-auto object-cover"
 					loading="lazy"
 					decoding="async"
-					onLoad={() => setIsImageLoaded(true)}
-					onError={() => setIsImageLoaded(true)}
 				/>
 			</div>
 
