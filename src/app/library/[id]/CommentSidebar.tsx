@@ -100,8 +100,8 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 				}
 				setTotalCount(data.total);
 				setHasMore(page * DEFAULT_PAGE_SIZE < data.total);
-			} catch {
-				// 에러 처리는 선택적
+			} catch (error) {
+				console.error("Failed to load comments:", error);
 			} finally {
 				setIsLoading(false);
 			}
@@ -465,8 +465,9 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 
 	// 초기 로드
 	useEffect(() => {
+		console.log("CommentSidebar: Loading comments for postId:", postId);
 		loadComments(1);
-	}, [loadComments]);
+	}, [loadComments, postId]);
 
 	// 컴포넌트 언마운트 시 blob URL 정리
 	useEffect(() => {
