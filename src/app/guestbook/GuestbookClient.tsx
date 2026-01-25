@@ -713,9 +713,8 @@ export default function GuestbookClient({
 				thumbnail={imageDialog.previewUrl}
 				setThumbnail={imageDialog.setPreview}
 				uploadMode="deferred"
-				allowMultiple={true}
-				onFilesSelect={(files, previewUrls) => {
-					imageDialog.setMultipleFiles(files, previewUrls);
+				onFileSelect={(file, previewUrl) => {
+					imageDialog.setMultipleFiles([file], [previewUrl]);
 				}}
 				onUpload={handleImageUpload}
 				rightContent={

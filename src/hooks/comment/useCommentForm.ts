@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 
-export type GuestbookImage = {
+export type CommentImage = {
 	id: string;
 	url: string;
 	file?: File;
@@ -12,16 +12,16 @@ const MAX_IMAGE_COUNT = 8;
 export const createImageId = () =>
 	`img_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-interface UseGuestbookFormProps {
+interface UseCommentFormProps {
 	mode: "user" | "anon";
 	onSuccess?: () => void;
 }
 
-export const useGuestbookForm = ({ mode }: UseGuestbookFormProps) => {
+export const useCommentForm = ({ mode }: UseCommentFormProps) => {
 	const [displayName, setDisplayName] = useState("");
 	const [pin, setPin] = useState("");
 	const [message, setMessage] = useState("");
-	const [images, setImages] = useState<GuestbookImage[]>([]);
+	const [images, setImages] = useState<CommentImage[]>([]);
 	const [isSecret, setIsSecret] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 

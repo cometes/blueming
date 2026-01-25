@@ -1,7 +1,7 @@
 "use client";
 
 import { useMoveToPage } from "@/hooks/useMoveToPage";
-import { dateConvert, dateTimeConvert } from "@/lib/date";
+import { dateTimeConvert } from "@/lib/date";
 import {
 	ChevronLeft,
 	ChevronRight,
@@ -49,6 +49,7 @@ import { Link } from "@tiptap/extension-link";
 import { CustomImage } from "@/components/tiptap-extension/custom-image";
 import { CustomYoutubeNode } from "@/components/tiptap-node/youtube-node/youtube-node";
 import { renderRichText } from "@/lib/richText";
+import CommentSidebar from "./CommentSidebar";
 
 import "@/styles/tiptap-variables.css";
 import "@/components/tiptap-node/list-node/list-node.scss";
@@ -368,12 +369,7 @@ export default function DetailClient({ detailData }) {
 			</button>
 			{/* 드로어 본체 */}
 			<div className="w-[340px] h-full bg-card border-l border-card-border shadow-lg flex flex-col backdrop-blur-card">
-				<div className="p-4 border-b border-card-border">
-					<h3 className="text-main-text font-semibold">사이드바</h3>
-				</div>
-				<div className="p-4 flex-1 overflow-y-auto">
-					<p className="text-sub-text">사이드바 내용</p>
-				</div>
+				{localDetail?.id && <CommentSidebar postId={localDetail.id} />}
 			</div>
 		</div>
 	);
