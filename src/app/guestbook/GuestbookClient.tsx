@@ -295,18 +295,44 @@ export default function GuestbookClient({
 	}, []);
 
 	const handleSecretToggle = useCallback(
-		(entry: GuestbookEntry) => {
+		async (entry: GuestbookEntry) => {
 			const isVisible = !!visibleSecrets[entry.id];
 			if (isVisible) {
 				setVisibleSecrets((prev) => ({ ...prev, [entry.id]: false }));
 				return;
 			}
 
+			// 관리자나 작성자 본인인 경우 PIN 없이 verify API 호출
 			if (canViewSecretDirectly(entry)) {
-				setVisibleSecrets((prev) => ({ ...prev, [entry.id]: true }));
+				try {
+					const data = await verifyGuestbookSecret(entry.id, {});
+					const resolvedImageUrls = data.imageUrls ?? [];
+					setEntries((prev) =>
+						prev.map((e) =>
+							e.id === entry.id
+								? {
+										...e,
+										message: data.message ?? e.message,
+										imageUrls: resolvedImageUrls,
+									}
+								: e,
+						),
+					);
+					setSecretOverrides((prev) => ({
+						...prev,
+						[entry.id]: {
+							message: data.message ?? "",
+							imageUrls: resolvedImageUrls,
+						},
+					}));
+					setVisibleSecrets((prev) => ({ ...prev, [entry.id]: true }));
+				} catch {
+					toast.error("비밀글을 불러올 수 없습니다.");
+				}
 				return;
 			}
 
+			// 익명 작성자의 비밀글은 PIN 입력 다이얼로그 표시
 			if (entry.authorType === "anon") {
 				openSecretDialog(entry);
 			}
