@@ -87,7 +87,7 @@ export function DatePicker({
 				}
 				calendarClassName="react-datepicker__calendar"
 				wrapperClassName="relative w-full"
-				popperClassName="react-datepicker-popper z-50"
+				popperClassName="react-datepicker-popper z-[70]"
 				popperPlacement="bottom-start"
 				dayClassName={() => "react-datepicker__day-cell"}
 			/>
