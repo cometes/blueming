@@ -72,6 +72,9 @@ const IMAGE_WIDGET_IDS = [
 	"이미지 위젯 4",
 ];
 
+// 로딩 대기에서 제외할 위젯 (비동기 로딩이 불안정하거나 선택적인 위젯)
+const EXCLUDE_FROM_LOADING = ["날씨&시계"];
+
 export default function Home() {
 	const { main } = useSettings();
 	const isMobile = useMobile();
@@ -108,15 +111,23 @@ export default function Home() {
 	const [readyWidgets, setReadyWidgets] = useState<Set<string>>(new Set());
 	const [isAllReady, setIsAllReady] = useState(false);
 
+	// 로딩 대기 대상 위젯 (제외 목록에 없는 위젯들만)
+	const widgetsToWaitFor = useMemo(
+		() => activeLayout.filter((item) => !EXCLUDE_FROM_LOADING.includes(item.i)),
+		[activeLayout]
+	);
+
 	useEffect(() => {
-		if (activeLayout.length === 0) {
+		if (widgetsToWaitFor.length === 0) {
 			setIsAllReady(true);
 			return;
 		}
-		if (readyWidgets.size >= activeLayout.length) {
+		// 대기 대상 위젯들이 모두 ready인지 확인
+		const allWaitingReady = widgetsToWaitFor.every((item) => readyWidgets.has(item.i));
+		if (allWaitingReady) {
 			setIsAllReady(true);
 		}
-	}, [readyWidgets.size, activeLayout.length]);
+	}, [readyWidgets, widgetsToWaitFor]);
 
 	const handleWidgetReady = useCallback((id: string) => {
 		setReadyWidgets((prev) => {

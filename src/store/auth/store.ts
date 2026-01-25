@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 
 export interface AuthUser {
   uid: string;
@@ -24,29 +24,38 @@ interface AuthStore extends AuthState {
 
 export const useAuthStore = create<AuthStore>()(
   devtools(
-    (set) => ({
-      // Initial state
-      isAuthenticated: false,
-      user: null,
-      isLoading: true,
+    persist(
+      (set) => ({
+        // Initial state
+        isAuthenticated: false,
+        user: null,
+        isLoading: true,
 
-      // Actions
-      setAuthData: (data) => 
-        set((state) => ({ ...state, ...data }), false, 'setAuthData'),
-      
-      clearAuth: () => 
-        set({ isAuthenticated: false, user: null, isLoading: false }, false, 'clearAuth'),
-      
-      setLoading: (loading) => 
-        set({ isLoading: loading }, false, 'setLoading'),
-      
-      setUser: (user) => 
-        set({ 
-          user, 
-          isAuthenticated: !!user, 
-          isLoading: false 
-        }, false, 'setUser'),
-    }),
+        // Actions
+        setAuthData: (data) =>
+          set((state) => ({ ...state, ...data }), false, 'setAuthData'),
+
+        clearAuth: () =>
+          set({ isAuthenticated: false, user: null, isLoading: false }, false, 'clearAuth'),
+
+        setLoading: (loading) =>
+          set({ isLoading: loading }, false, 'setLoading'),
+
+        setUser: (user) =>
+          set({
+            user,
+            isAuthenticated: !!user,
+            isLoading: false
+          }, false, 'setUser'),
+      }),
+      {
+        name: 'auth-storage',
+        partialize: (state) => ({
+          isAuthenticated: state.isAuthenticated,
+          user: state.user,
+        }),
+      }
+    ),
     {
       name: 'auth-store',
     }
