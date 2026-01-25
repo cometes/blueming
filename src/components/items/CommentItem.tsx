@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Lock, Pencil, ShieldCheck, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,29 +11,55 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { Comment } from "@/queries/comment";
+import ImageSlideModal from "@/components/modal/ImageSlideModal";
 
 interface CommentItemProps {
 	comment: Comment;
 	isOwn: boolean;
-	visibleSecret: boolean;
-	canViewSecret: boolean;
-	canEdit: boolean;
-	canDelete: boolean;
-	onToggleSecret: () => void;
-	onEdit: () => void;
-	onDelete: () => void;
+	onToggleSecret?: (pin: string) => void;
+	onEdit?: () => void;
+	onDelete?: () => void;
 }
 
 export default function CommentItem({
 	comment,
 	isOwn,
-	visibleSecret,
-	canViewSecret,
-	canEdit,
-	canDelete,
+	onToggleSecret,
+	onEdit,
+	onDelete,
 }: CommentItemProps) {
-	const showSecretContent = !comment.isSecret || visibleSecret;
-	const imageUrls = comment.imageUrls ?? [];
+	const showSecretContent = !comment.isSecret || comment.masked !== true;
+	const showMenu = Boolean(onEdit || onDelete) && showSecretContent;
+	const imageUrls = comment.displayImageUrls ?? comment.imageUrls ?? [];
+	const displayMessage = comment.displayMessage ?? comment.message ?? "";
+	const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+	const [activeImageIndex, setActiveImageIndex] = useState(0);
+	const [showPinInput, setShowPinInput] = useState(false);
+	const [pinValue, setPinValue] = useState("");
+	const [menuOpen, setMenuOpen] = useState(false);
+
+	const openImageModal = (index: number) => {
+		setActiveImageIndex(index);
+		setIsImageModalOpen(true);
+	};
+
+	const handleEdit = () => {
+		setMenuOpen(false);
+		onEdit?.();
+	};
+
+	const handleDelete = () => {
+		setMenuOpen(false);
+		onDelete?.();
+	};
+
+	const handleSecretConfirm = () => {
+		if (!onToggleSecret) return;
+		if (!/^\d{4}$/.test(pinValue)) return;
+		onToggleSecret(pinValue);
+		setShowPinInput(false);
+		setPinValue("");
+	};
 
 	const formatTime = (dateString: string | null) => {
 		if (!dateString) return "";
@@ -94,7 +121,8 @@ export default function CommentItem({
 							</span>
 						)}
 						<span className="text-[10px] text-sub-text">
-							{comment.authorType === "anon" ? "익명" : ""}
+							{comment.authorLabel ??
+								(comment.authorType === "anon" ? "익명" : "")}
 						</span>
 					</div>
 				)}
@@ -124,25 +152,60 @@ export default function CommentItem({
 					{/* 메시지 내용 */}
 					{comment.isSecret && !showSecretContent ? (
 						<div className="flex flex-wrap items-center gap-2">
-							<span
-								className={cn(
-									"text-sm",
-									isOwn ? "text-white/80" : "text-sub-text",
-								)}
-							>
-								비밀글입니다.
-							</span>
-							{canViewSecret && (
-								<button
-									type="button"
-									disabled
-									className={cn(
-										"text-xs hover:opacity-70",
-										isOwn ? "text-white underline" : "text-theme-primary",
+							{showPinInput ? (
+								<div className="flex items-center gap-2">
+									<input
+										type="password"
+										inputMode="numeric"
+										placeholder="비밀번호 4자리"
+										value={pinValue}
+										onChange={(e) => setPinValue(e.target.value)}
+										onKeyDown={(e) => {
+											if (e.key === "Enter") {
+												e.preventDefault();
+												handleSecretConfirm();
+											}
+										}}
+										className={cn(
+											"w-24 rounded-card border-card bg-card px-2 py-1 text-xs",
+											isOwn ? "text-white" : "text-main-text",
+										)}
+									/>
+									<button
+										type="button"
+										onClick={handleSecretConfirm}
+										disabled={!/^\d{4}$/.test(pinValue)}
+										className={cn(
+											"text-xs hover:opacity-70",
+											isOwn ? "text-white underline" : "text-theme-primary",
+										)}
+									>
+										확인
+									</button>
+								</div>
+							) : (
+								<>
+									<span
+										className={cn(
+											"text-sm",
+											isOwn ? "text-white/80" : "text-sub-text",
+										)}
+									>
+										비밀글입니다.
+									</span>
+									{comment.canViewSecret && (
+										<button
+											type="button"
+											onClick={() => setShowPinInput(true)}
+											className={cn(
+												"text-xs hover:opacity-70",
+												isOwn ? "text-white underline" : "text-theme-primary",
+											)}
+										>
+											보기
+										</button>
 									)}
-								>
-									보기
-								</button>
+								</>
 							)}
 						</div>
 					) : (
@@ -152,7 +215,7 @@ export default function CommentItem({
 								isOwn ? "text-white" : "text-main-text",
 							)}
 						>
-							{comment.message}
+							{displayMessage}
 						</p>
 					)}
 
@@ -163,7 +226,7 @@ export default function CommentItem({
 								<button
 									key={`${comment.id}-image-${index}`}
 									type="button"
-									disabled
+									onClick={() => openImageModal(index)}
 									className="relative aspect-square min-w-12 rounded-card overflow-hidden border border-gray-400"
 									aria-label={`이미지 ${index + 1} 확대 보기`}
 								>
@@ -179,33 +242,40 @@ export default function CommentItem({
 					)}
 
 					{/* 수정/삭제 메뉴 (호버 시 표시) */}
-					{(canEdit || canDelete) && showSecretContent && (
+					{showMenu && (
 						<div
 							className={cn(
 								"absolute opacity-0 group-hover:opacity-100 transition-opacity",
 								isOwn ? "-left-6 bottom-0" : "-right-6 bottom-0",
 							)}
 						>
-							<DropdownMenu>
+							<DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
 								<DropdownMenuTrigger asChild>
 									<Button
 										variant="ghost"
 										size="sm"
-										disabled
+										disabled={!onEdit && !onDelete}
 										className="w-6 h-6 p-0 rounded-full"
 									>
 										<MoreVertical size={12} />
 									</Button>
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align={isOwn ? "end" : "start"}>
-									{canEdit && (
-										<DropdownMenuItem disabled>
+									{onEdit && (
+										<DropdownMenuItem
+											onClick={handleEdit}
+											disabled={!onEdit}
+										>
 											<Pencil size={12} className="mr-2" />
 											수정
 										</DropdownMenuItem>
 									)}
-									{canDelete && (
-										<DropdownMenuItem className="text-red-500" disabled>
+									{onDelete && (
+										<DropdownMenuItem
+											className="text-red-500"
+											onClick={handleDelete}
+											disabled={!onDelete}
+										>
 											<Trash2 size={12} className="mr-2" />
 											삭제
 										</DropdownMenuItem>
@@ -246,6 +316,15 @@ export default function CommentItem({
 				</div>
 			)}
 
+			{/* 이미지 모달 */}
+			{imageUrls.length > 0 && (
+				<ImageSlideModal
+					isOpen={isImageModalOpen}
+					onOpenChange={setIsImageModalOpen}
+					images={imageUrls}
+					initialIndex={activeImageIndex}
+				/>
+			)}
 		</div>
 	);
 }

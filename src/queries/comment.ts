@@ -13,6 +13,14 @@ export interface Comment {
 	message: string;
 	isSecret?: boolean;
 	isAdmin?: boolean;
+	canEdit?: boolean;
+	canDelete?: boolean;
+	canViewSecret?: boolean;
+	masked?: boolean;
+	isOwn?: boolean;
+	displayMessage?: string;
+	displayImageUrls?: string[];
+	authorLabel?: string;
 	createdAt: string | null;
 	updatedAt: string | null;
 }
