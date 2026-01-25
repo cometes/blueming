@@ -7,8 +7,7 @@ export interface GuestbookEntry {
 	displayName: string;
 	uid?: string | null;
 	photoURL?: string | null;
-	imageUrl?: string | null;
-	imageUrls?: string[] | null;
+	imageUrls: string[];
 	message: string;
 	isSecret?: boolean;
 	isAdmin?: boolean;
@@ -62,7 +61,6 @@ export const createGuestbookEntry = async (payload: {
 	displayName?: string;
 	pin?: string;
 	isSecret?: boolean;
-	imageUrl?: string;
 	imageUrls?: string[];
 }) => {
 	const headers = await getAuthHeader();
@@ -78,7 +76,6 @@ export const updateGuestbookEntry = async (
 		message: string;
 		pin?: string;
 		isSecret?: boolean;
-		imageUrl?: string;
 		imageUrls?: string[];
 	}
 ) => {
@@ -111,8 +108,7 @@ export const verifyGuestbookSecret = async (
 	});
 	return response.data as {
 		message: string;
-		imageUrl?: string | null;
-		imageUrls?: string[] | null;
+		imageUrls?: string[];
 	};
 };
 

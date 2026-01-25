@@ -62,7 +62,7 @@ export default function LibraryClient({
 			postsPerRow: 3,
 			writePermission: "admin" as const,
 		}),
-		[],
+		[]
 	);
 
 	const resolvedLibrarySettings = useMemo(
@@ -70,21 +70,21 @@ export default function LibraryClient({
 			...defaultLibrarySettings,
 			...(library || {}),
 		}),
-		[defaultLibrarySettings, library],
+		[defaultLibrarySettings, library]
 	);
 
 	// 페이지 설정 상태
 	const [layoutType, setLayoutType] = useState<"list" | "listWithImage">(
-		resolvedLibrarySettings.layoutType,
+		resolvedLibrarySettings.layoutType
 	);
 	const [postsPerPage, setPostsPerPage] = useState(
-		resolvedLibrarySettings.postsPerPage,
+		resolvedLibrarySettings.postsPerPage
 	);
 	const [postsPerRow, setPostsPerRow] = useState(
-		resolvedLibrarySettings.postsPerRow,
+		resolvedLibrarySettings.postsPerRow
 	);
 	const [writePermission, setWritePermission] = useState<"admin" | "member">(
-		resolvedLibrarySettings.writePermission,
+		resolvedLibrarySettings.writePermission
 	);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const {
@@ -101,20 +101,25 @@ export default function LibraryClient({
 		setListPage,
 		setActivePage,
 	} = useLibraryFilters({ isSeriesOn, postsPerPage });
-	const { listItems, pinnedItems, listTotalCount, tagOptions, isLoading } =
-		useLibraryListData({
-			initialList: listData,
-			initialPinned: pinnedData,
-			initialTotal: listTotal,
-			initialTags: tagData,
-			isSeriesOn,
-			listPage,
-			postsPerPage,
-			sortOrder,
-			activeTag,
-			appliedQuery,
-			setListPage,
-		});
+	const {
+		listItems,
+		pinnedItems,
+		listTotalCount,
+		tagOptions,
+		isListReady,
+	} = useLibraryListData({
+		initialList: listData,
+		initialPinned: pinnedData,
+		initialTotal: listTotal,
+		initialTags: tagData,
+		isSeriesOn,
+		listPage,
+		postsPerPage,
+		sortOrder,
+		activeTag,
+		appliedQuery,
+		setListPage,
+	});
 
 	// Dialog 임시 상태 (저장 전까지 사용)
 	const [tempLayoutType, setTempLayoutType] = useState(layoutType);
@@ -173,37 +178,22 @@ export default function LibraryClient({
 		localStorage.setItem("isCardOn", isCardOn.toString());
 	}, [isCardOn, isCardPrefsLoaded]);
 
-	// 초기 상태를 한 번에 설정하여 리렌더링 최소화
 	useEffect(() => {
-		const {
-			layoutType: newLayout,
-			postsPerPage: newPosts,
-			postsPerRow: newRows,
-			writePermission: newPermission,
-		} = resolvedLibrarySettings;
-
-		// 상태를 배치로 업데이트
-		setLayoutType((prev) => (newLayout !== prev ? newLayout : prev));
-		setPostsPerPage((prev) => (newPosts !== prev ? newPosts : prev));
-		setPostsPerRow((prev) => (newRows !== prev ? newRows : prev));
-		setWritePermission((prev) =>
-			newPermission !== prev ? newPermission : prev,
-		);
+		setLayoutType(resolvedLibrarySettings.layoutType);
+		setPostsPerPage(resolvedLibrarySettings.postsPerPage);
+		setPostsPerRow(resolvedLibrarySettings.postsPerRow);
+		setWritePermission(resolvedLibrarySettings.writePermission);
 	}, [resolvedLibrarySettings]);
 
 	useEffect(() => {
 		if (isSeriesOn) return;
 		const pageParam = searchParams.get("page");
 		const parsedPage = pageParam ? Number(pageParam) : 1;
-		if (
-			Number.isFinite(parsedPage) &&
-			parsedPage > 0 &&
-			parsedPage !== listPage
-		) {
+		if (Number.isFinite(parsedPage) && parsedPage > 0 && parsedPage !== listPage) {
 			isSyncingFromQuery.current = true;
 			setListPage(parsedPage);
 		}
-	}, [isSeriesOn, searchParams, listPage, setListPage]);
+	}, [isSeriesOn, searchParams, setListPage]);
 
 	useEffect(() => {
 		if (isSeriesOn) return;
@@ -253,6 +243,8 @@ export default function LibraryClient({
 		}
 	};
 
+
+
 	const filteredSeriesData = useMemo(() => {
 		const sorted = [...seriesData].sort((a, b) => {
 			if (sortOrder === "title") {
@@ -266,7 +258,9 @@ export default function LibraryClient({
 	}, [seriesData, sortOrder]);
 
 	const { totalPages, currentPageSafe, pagedSeriesData } = useMemo(() => {
-		const totalItems = isSeriesOn ? filteredSeriesData.length : listTotalCount;
+		const totalItems = isSeriesOn
+			? filteredSeriesData.length
+			: listTotalCount;
 		const nextTotalPages = Math.max(1, Math.ceil(totalItems / postsPerPage));
 		const activePage = isSeriesOn ? seriesPage : listPage;
 		const nextCurrentPage = Math.min(activePage, nextTotalPages);
@@ -276,7 +270,7 @@ export default function LibraryClient({
 			currentPageSafe: nextCurrentPage,
 			pagedSeriesData: filteredSeriesData.slice(
 				startIndex,
-				startIndex + postsPerPage,
+				startIndex + postsPerPage
 			),
 		};
 	}, [
@@ -285,6 +279,7 @@ export default function LibraryClient({
 		listPage,
 		seriesPage,
 		listTotalCount,
+		pinnedItems.length,
 		postsPerPage,
 	]);
 
@@ -294,13 +289,18 @@ export default function LibraryClient({
 
 	return (
 		<>
-			<div className={cn("shrink-0 w-full max-w-2xl mt-[90px] mb-[40px] mx-auto")}>
+			<div
+				className={cn(
+					"shrink-0 w-full   max-w-3xl mt-[90px] mb-[40px]",
+					isSeriesOn ? "" : ""
+				)}
+			>
 				<div className="flex justify-center items-center gap-2.5">
 					<div className="relative flex rounded-card bg-transparent p-1">
 						<div
 							className={cn(
 								"absolute top-1 w-10 h-10 rounded-card bg-card border border-card transition-all duration-300 ease-in-out shadow-sm",
-								isCardOn ? "translate-x-10" : "translate-x-0",
+								isCardOn ? "translate-x-10" : "translate-x-0"
 							)}
 						/>
 						<button
@@ -329,7 +329,7 @@ export default function LibraryClient({
 							<span className="w-full h-full rounded-[1px] bg-[#dee2e6]" />
 						</button>
 					</div>
-					<div className="flex items-center w-fit h-full sm:w-[200px]">
+					<div className="flex items-center w-fit h-full">
 						<Input
 							className="border-card bg-card backdrop-blur-card rounded-card text-main-text"
 							endIcon={searchQuery ? X : Search}
@@ -349,7 +349,7 @@ export default function LibraryClient({
 											setAppliedQuery("");
 											setActiveTag("전체");
 											setListPage(1);
-										}
+									  }
 									: undefined
 							}
 							endIconAriaLabel="검색어 지우기"
@@ -398,7 +398,7 @@ export default function LibraryClient({
 						<button
 							className={cn(
 								"Tab block font-medium text-sub-text bg-transparent px-2.5 py-4 border-0 min-w-20 cursor-pointer",
-								isSeriesOn ? "" : "text-theme-primary",
+								isSeriesOn ? "" : "text-theme-primary"
 							)}
 							onClick={() => {
 								setIsSeriesOn(false);
@@ -410,7 +410,7 @@ export default function LibraryClient({
 						<button
 							className={cn(
 								"Tab block font-medium text-sub-text bg-transparent px-2.5 py-4 border-0 min-w-20 cursor-pointer",
-								isSeriesOn ? "text-theme-primary" : "",
+								isSeriesOn ? "text-theme-primary" : ""
 							)}
 							onClick={() => {
 								setIsSeriesOn(true);
@@ -423,7 +423,7 @@ export default function LibraryClient({
 					<div
 						className={cn(
 							"h-0.5 bg-sub-text relative after:absolute after:top-0 after:block after:w-1/2 after:h-0.5 after:bg-theme-primary after:transition-all after:duration-300 after:ease-in-out",
-							isSeriesOn ? "after:right-0" : "after:right-1/2",
+							isSeriesOn ? "after:right-0" : "after:right-1/2"
 						)}
 					/>
 				</div>
@@ -437,7 +437,7 @@ export default function LibraryClient({
 						listItems={listItems}
 						pinnedItems={pinnedItems}
 						listTotalCount={listTotalCount}
-						isLoading={isLoading}
+						isListReady={isListReady}
 						isCardOn={isCardOn}
 						layoutType={layoutType}
 						postsPerRow={postsPerRow}

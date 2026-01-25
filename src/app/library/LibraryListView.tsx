@@ -32,7 +32,7 @@ interface LibraryListViewProps {
 	listItems: LibraryItem[];
 	pinnedItems: LibraryItem[];
 	listTotalCount: number;
-	isLoading: boolean;
+	isListReady: boolean;
 	isCardOn: boolean;
 	layoutType: "list" | "listWithImage";
 	postsPerRow: number;
@@ -52,7 +52,7 @@ export default function LibraryListView({
 	listItems,
 	pinnedItems,
 	listTotalCount,
-	isLoading,
+	isListReady,
 	isCardOn,
 	layoutType,
 	postsPerRow,
@@ -67,8 +67,6 @@ export default function LibraryListView({
 	currentPageSafe,
 	setActivePage,
 }: LibraryListViewProps) {
-	const skeletonCount = isCardOn ? Math.max(6, postsPerRow * 2) : 6;
-
 	return (
 		<>
 			<div className="mt-3 flex items-center justify-between">
@@ -97,7 +95,7 @@ export default function LibraryListView({
 						: "제목순"}
 				</button>
 			</div>
-			<div className="mt-3 flex flex-col min-h-[520px] w-full">
+			<div className="mt-3 flex flex-col min-h-[520px]">
 				{pinnedItems.length > 0 && (
 					<div className="rounded-card border-card bg-card mb-4">
 						{/* <div className="px-4 py-3 border-b border-card-bg text-sm font-medium text-main-text">
@@ -136,51 +134,29 @@ export default function LibraryListView({
 				)}
 				<div
 					className={cn(
-						"grid w-full opacity-100",
+						"grid",
+						isListReady ? "opacity-100" : "opacity-0",
 						isCardOn ? `gap-2.5 grid-cols-${postsPerRow}` : "gap-4 grid-cols-1"
 					)}
 					style={
 						isCardOn
 							? {
 									gridTemplateColumns: `repeat(${postsPerRow}, minmax(0, 1fr))`,
+									transition: "opacity 0.3s ease-out",
 							  }
-							: undefined
+							: {
+									transition: "opacity 0.3s ease-out",
+							  }
 					}
 				>
-					{isLoading && (
-						<>
-							{Array.from({ length: skeletonCount }).map((_, index) => (
-								<div
-									key={`library-skeleton-${index}`}
-									className={cn(
-										"rounded-card border-card bg-card-bg animate-pulse overflow-hidden",
-										isCardOn ? "h-[240px]" : "h-[72px]"
-									)}
-								>
-									<div
-										className={cn(
-											"p-4 space-y-3",
-											isCardOn ? "" : "flex items-center justify-between space-y-0"
-										)}
-									>
-										<div className="space-y-2">
-											<div className="h-3 w-3/4 rounded-full bg-card" />
-											<div className="h-2 w-1/2 rounded-full bg-card" />
-										</div>
-										<div className="h-2 w-16 rounded-full bg-card" />
-									</div>
-								</div>
-							))}
-						</>
-					)}
-					{!isLoading && isCardOn && (
+					{isCardOn && (
 						<>
 							{listItems.map((el) => (
 								<ItemGallery data={el} key={el.id} detailQuery={detailQuery} />
 							))}
 						</>
 					)}
-					{!isLoading && !isCardOn && layoutType === "listWithImage" && (
+					{!isCardOn && layoutType === "listWithImage" && (
 						<>
 							{listItems.map((el) => (
 								<ItemListWithImage
@@ -191,7 +167,7 @@ export default function LibraryListView({
 							))}
 						</>
 					)}
-					{!isLoading && !isCardOn && layoutType === "list" && (
+					{!isCardOn && layoutType === "list" && (
 						<>
 							{listItems.map((el) => (
 								<ItemList
@@ -247,42 +223,23 @@ export default function LibraryListView({
 										}}
 									/>
 								</PaginationItem>
-								{(() => {
-									// 페이지네이션 청크 렌더링: 최대 7개 페이지만 표시
-									const maxVisible = 7;
-									let startPage = 1;
-									let endPage = totalPages;
-
-									if (totalPages > maxVisible) {
-										const halfVisible = Math.floor(maxVisible / 2);
-										startPage = Math.max(1, currentPageSafe - halfVisible);
-										endPage = Math.min(totalPages, startPage + maxVisible - 1);
-
-										// 끝 페이지에 도달했을 때 조정
-										if (endPage === totalPages) {
-											startPage = Math.max(1, endPage - maxVisible + 1);
-										}
-									}
-
-									const pages = [];
-									for (let i = startPage; i <= endPage; i++) {
-										pages.push(
-											<PaginationItem key={i}>
-												<PaginationLink
-													href="#"
-													isActive={i === currentPageSafe}
-													onClick={(e) => {
-														e.preventDefault();
-														setActivePage(i);
-													}}
-												>
-													{i}
-												</PaginationLink>
-											</PaginationItem>
-										);
-									}
-									return pages;
-								})()}
+								{Array.from({ length: totalPages }).map((_, index) => {
+									const page = index + 1;
+									return (
+										<PaginationItem key={page}>
+											<PaginationLink
+												href="#"
+												isActive={page === currentPageSafe}
+												onClick={(e) => {
+													e.preventDefault();
+													setActivePage(page);
+												}}
+											>
+												{page}
+											</PaginationLink>
+										</PaginationItem>
+									);
+								})}
 								<PaginationItem>
 									<PaginationNext
 										href="#"
