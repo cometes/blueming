@@ -27,6 +27,7 @@ import {
 } from "@/queries/guestbook";
 import { ImagePlus, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import GuestbookItem from "@/components/items/GuestbookItem";
 import GuestbookEditDialog from "@/components/guestbook/GuestbookEditDialog";
 import GuestbookSecretDialog from "@/components/guestbook/GuestbookSecretDialog";
@@ -55,7 +56,7 @@ export default function GuestbookClient({
 	total,
 	pageSize = DEFAULT_PAGE_SIZE,
 }: GuestbookClientProps) {
-	const { user, isAuthenticated } = useAuthStore();
+	const { user, isAuthenticated, isLoading: isAuthLoading } = useAuthStore();
 	const { isAdmin } = useAdmin();
 	const [entries, setEntries] = useState<GuestbookEntry[]>(initialEntries);
 	const [totalCount, setTotalCount] = useState(total);
@@ -459,6 +460,31 @@ export default function GuestbookClient({
 			<h2 className="text-[20px] font-semibold text-main-text">방명록</h2>
 			<p className="text-sm text-sub-text mt-2">간단한 메시지를 남겨주세요.</p>
 			<section className="bg-card border-card rounded-card p-3 mt-10">
+				{isAuthLoading ? (
+					<div className="space-y-2">
+						<div className="flex gap-1.5">
+							<div className="w-full">
+								<Skeleton className="h-4 w-10 mb-1 bg-card" />
+								<Skeleton className="h-9 w-full rounded-card bg-card" />
+							</div>
+							<div className="w-full">
+								<Skeleton className="h-4 w-16 mb-1 bg-card" />
+								<Skeleton className="h-9 w-full rounded-card bg-card" />
+							</div>
+						</div>
+						<div>
+							<Skeleton className="h-4 w-14 mb-1 bg-card" />
+							<Skeleton className="h-[120px] w-full rounded-card bg-card" />
+						</div>
+						<div className="flex items-center justify-between">
+							<div className="flex items-center gap-3">
+								<Skeleton className="h-5 w-20 bg-card" />
+								<Skeleton className="h-9 w-9 rounded-card bg-card" />
+							</div>
+							<Skeleton className="h-9 w-20 rounded-card bg-card" />
+						</div>
+					</div>
+				) : (
 				<div className="space-y-2">
 					{resolvedMode === "anon" && (
 						<>
@@ -569,6 +595,7 @@ export default function GuestbookClient({
 						</div>
 					)}
 				</div>
+				)}
 			</section>
 
 			<section className="mt-8">

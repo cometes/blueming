@@ -48,7 +48,7 @@ export default function WidgetDday() {
 				{ddayData.map((dday: DdayItem) => (
 					<div
 						className={cn(
-							"dday-item relative px-4 py-5 flex flex-col justify-between w-full h-full overflow-hidden"
+							"dday-item relative p-3.5 flex flex-col justify-between w-full h-full overflow-hidden"
 						)}
 						key={dday.id}
 					>
@@ -62,7 +62,7 @@ export default function WidgetDday() {
 							/>
 						)}
 						<div className="absolute inset-0 bg-[rgba(127,127,127,0.4)] mix-blend-multiply opacity-50 z-20" />
-						<p className="relative z-30 text-lg text-gray-100 [text-shadow:0_3px_8px_rgba(90,90,90,0.4)]">
+						<p className="relative z-30 text-lg text-gray-100 [text-shadow:0_3px_8px_rgba(90,90,90,0.4)] text-title-font">
 							{dday.title}
 						</p>
 						<div className="relative z-30 flex flex-col items-end">
