@@ -57,6 +57,7 @@ export const useLibraryListData = ({
 	const [pinnedItems, setPinnedItems] = useState<LibraryItem[]>(initialPinned);
 	const [listTotalCount, setListTotalCount] = useState(initialTotal);
 	const [tagOptions, setTagOptions] = useState<string[]>(initialTags ?? []);
+	const [isLoading, setIsLoading] = useState(!initialHasData);
 	const requestIdRef = useRef(0);
 	const initialParamsRef = useRef<ListParams>({
 		page: listPage,
@@ -71,7 +72,10 @@ export const useLibraryListData = ({
 		setListItems(initialList);
 		setPinnedItems(initialPinned);
 		setListTotalCount(initialTotal);
-	}, [initialList, initialPinned, initialTotal]);
+		if (initialHasData) {
+			setIsLoading(false);
+		}
+	}, [initialList, initialPinned, initialTotal, initialHasData]);
 
 	useEffect(() => {
 		if (initialTags && initialTags.length > 0) {
@@ -142,6 +146,7 @@ export const useLibraryListData = ({
 				return;
 			}
 
+			setIsLoading(true);
 			try {
 				const data = await refreshList();
 				const nextTotalPages = Math.max(
@@ -156,6 +161,7 @@ export const useLibraryListData = ({
 				setListTotalCount(0);
 			} finally {
 				initialFetchDoneRef.current = true;
+				setIsLoading(false);
 			}
 		};
 
@@ -202,5 +208,6 @@ export const useLibraryListData = ({
 		pinnedItems,
 		listTotalCount,
 		tagOptions,
+		isLoading,
 	};
 };

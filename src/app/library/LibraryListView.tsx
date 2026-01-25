@@ -32,6 +32,7 @@ interface LibraryListViewProps {
 	listItems: LibraryItem[];
 	pinnedItems: LibraryItem[];
 	listTotalCount: number;
+	isLoading?: boolean;
 	isCardOn: boolean;
 	layoutType: "list" | "listWithImage";
 	postsPerRow: number;
@@ -51,6 +52,7 @@ export default function LibraryListView({
 	listItems,
 	pinnedItems,
 	listTotalCount,
+	isLoading = false,
 	isCardOn,
 	layoutType,
 	postsPerRow,
@@ -65,6 +67,8 @@ export default function LibraryListView({
 	currentPageSafe,
 	setActivePage,
 }: LibraryListViewProps) {
+	const isEmpty = listItems.length === 0 && pinnedItems.length === 0;
+
 	return (
 		<>
 			<div className="mt-3 flex items-center justify-between">
@@ -94,6 +98,10 @@ export default function LibraryListView({
 				</button>
 			</div>
 			<div className="mt-3 flex flex-col min-h-[520px]">
+				{isLoading && isEmpty ? (
+					<div className="min-h-[520px] w-full" aria-hidden="true" />
+				) : (
+					<>
 				{pinnedItems.length > 0 && (
 					<div className="rounded-card border-card bg-card mb-4">
 						{/* <div className="px-4 py-3 border-b border-card-bg text-sm font-medium text-main-text">
@@ -249,6 +257,8 @@ export default function LibraryListView({
 							</PaginationContent>
 						</Pagination>
 					</div>
+				)}
+					</>
 				)}
 			</div>
 		</>
