@@ -91,6 +91,7 @@ export default function PhotoBoardClient({
 
 	// 초기 데이터가 있으면 fetch 생략, 없으면 클라이언트에서 fetch
 	useEffect(() => {
+		setPosts(initialPosts);
 		if (initialPosts.length > 0) {
 			setIsLoading(false);
 			return;
@@ -109,6 +110,26 @@ export default function PhotoBoardClient({
 			.finally(() => {
 				if (!isActive) return;
 				setIsLoading(false);
+			});
+		return () => {
+			isActive = false;
+		};
+	}, [initialPosts]);
+
+	useEffect(() => {
+		if (initialPosts.length === 0) return;
+		const hasMissingImage = initialPosts.some((post) => !post.imageUrl);
+		if (!hasMissingImage) return;
+
+		let isActive = true;
+		fetchPhotoboardPosts()
+			.then((data) => {
+				if (!isActive) return;
+				setPosts(data.items);
+			})
+			.catch(() => {
+				if (!isActive) return;
+				toast.error("포토보드 이미지를 불러오지 못했습니다.");
 			});
 		return () => {
 			isActive = false;
