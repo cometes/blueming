@@ -78,6 +78,7 @@ export default function DetailClient({ detailData }) {
 	const [secretAuthChecked, setSecretAuthChecked] = useState(false);
 	const [secretAccessGranted, setSecretAccessGranted] = useState(false);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+	const [isMounted, setIsMounted] = useState(false);
 	const ownerId =
 		localDetail?.authorId ??
 		localDetail?.author?.id ??
@@ -185,6 +186,10 @@ export default function DetailClient({ detailData }) {
 			},
 		},
 	});
+
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
 
 	useEffect(() => {
 		setIsPinned(Boolean(detailData?.pinned));
@@ -377,8 +382,7 @@ export default function DetailClient({ detailData }) {
 	return (
 		<>
 			{/* 사이드바 드로어를 Portal로 body에 직접 렌더링 */}
-			{typeof window !== "undefined" &&
-				createPortal(sidebarDrawer, document.body)}
+			{isMounted && createPortal(sidebarDrawer, document.body)}
 			<div className="Wrapper min-h-100vh">
 				<div
 					className="Container relative w-3xl min-h-dvh m-auto bg-card backdrop-blur-card border-card px-6 pt-10 pb-10 flex flex-col justify-between"

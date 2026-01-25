@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Lock, Pencil, ShieldCheck, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +10,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { Comment } from "@/queries/comment";
-import ImageSlideModal from "@/components/modal/ImageSlideModal";
 
 interface CommentItemProps {
 	comment: Comment;
@@ -32,19 +30,9 @@ export default function CommentItem({
 	canViewSecret,
 	canEdit,
 	canDelete,
-	onToggleSecret,
-	onEdit,
-	onDelete,
 }: CommentItemProps) {
 	const showSecretContent = !comment.isSecret || visibleSecret;
 	const imageUrls = comment.imageUrls ?? [];
-	const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-	const [activeImageIndex, setActiveImageIndex] = useState(0);
-
-	const openImageModal = (index: number) => {
-		setActiveImageIndex(index);
-		setIsImageModalOpen(true);
-	};
 
 	const formatTime = (dateString: string | null) => {
 		if (!dateString) return "";
@@ -147,7 +135,7 @@ export default function CommentItem({
 							{canViewSecret && (
 								<button
 									type="button"
-									onClick={onToggleSecret}
+									disabled
 									className={cn(
 										"text-xs hover:opacity-70",
 										isOwn ? "text-white underline" : "text-theme-primary",
@@ -175,7 +163,7 @@ export default function CommentItem({
 								<button
 									key={`${comment.id}-image-${index}`}
 									type="button"
-									onClick={() => openImageModal(index)}
+									disabled
 									className="relative aspect-square min-w-12 rounded-card overflow-hidden border border-gray-400"
 									aria-label={`이미지 ${index + 1} 확대 보기`}
 								>
@@ -203,6 +191,7 @@ export default function CommentItem({
 									<Button
 										variant="ghost"
 										size="sm"
+										disabled
 										className="w-6 h-6 p-0 rounded-full"
 									>
 										<MoreVertical size={12} />
@@ -210,16 +199,13 @@ export default function CommentItem({
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align={isOwn ? "end" : "start"}>
 									{canEdit && (
-										<DropdownMenuItem onClick={onEdit}>
+										<DropdownMenuItem disabled>
 											<Pencil size={12} className="mr-2" />
 											수정
 										</DropdownMenuItem>
 									)}
 									{canDelete && (
-										<DropdownMenuItem
-											onClick={onDelete}
-											className="text-red-500"
-										>
+										<DropdownMenuItem className="text-red-500" disabled>
 											<Trash2 size={12} className="mr-2" />
 											삭제
 										</DropdownMenuItem>
@@ -260,15 +246,6 @@ export default function CommentItem({
 				</div>
 			)}
 
-			{/* 이미지 모달 */}
-			{imageUrls.length > 0 && (
-				<ImageSlideModal
-					isOpen={isImageModalOpen}
-					onOpenChange={setIsImageModalOpen}
-					images={imageUrls}
-					initialIndex={activeImageIndex}
-				/>
-			)}
 		</div>
 	);
 }
