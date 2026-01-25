@@ -6,7 +6,6 @@ import { dateConvert } from "@/lib/date";
 import ItemGallery from "@/components/items/Gallery";
 import ItemListWithImage from "@/components/items/ListWithImage";
 import ItemList from "@/components/items/List";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
 	Pagination,
 	PaginationContent,
@@ -33,7 +32,6 @@ interface LibraryListViewProps {
 	listItems: LibraryItem[];
 	pinnedItems: LibraryItem[];
 	listTotalCount: number;
-	isListReady: boolean;
 	isCardOn: boolean;
 	layoutType: "list" | "listWithImage";
 	postsPerRow: number;
@@ -53,7 +51,6 @@ export default function LibraryListView({
 	listItems,
 	pinnedItems,
 	listTotalCount,
-	isListReady,
 	isCardOn,
 	layoutType,
 	postsPerRow,
@@ -68,48 +65,36 @@ export default function LibraryListView({
 	currentPageSafe,
 	setActivePage,
 }: LibraryListViewProps) {
-	const showSkeleton = !isListReady;
-	const skeletonCount = isCardOn ? Math.max(4, postsPerRow * 2) : 6;
-
 	return (
 		<>
 			<div className="mt-3 flex items-center justify-between">
-				{showSkeleton ? (
-					<>
-						<Skeleton className="h-4 w-24" />
-						<Skeleton className="h-4 w-16" />
-					</>
-				) : (
-					<>
-						<span className="text-sm text-sub-text">
-							총 {listTotalCount + pinnedItems.length}개
-						</span>
-						<button
-							type="button"
-							onClick={() =>
-								setSortOrder(
-									sortOrder === "latest"
-										? "oldest"
-										: sortOrder === "oldest"
-										? "title"
-										: "latest"
-								)
-							}
-							className="text-theme-primary font-medium inline-flex items-center gap-1 hover:opacity-70 cursor-pointer"
-							style={{ transition: "opacity 0.2s ease-out" }}
-						>
-							<ArrowUpDown size={14} className="text-theme-primary" />
-							{sortOrder === "latest"
-								? "최신순"
+				<span className="text-sm text-sub-text">
+					총 {listTotalCount + pinnedItems.length}개
+				</span>
+				<button
+					type="button"
+					onClick={() =>
+						setSortOrder(
+							sortOrder === "latest"
+								? "oldest"
 								: sortOrder === "oldest"
-								? "오래된순"
-								: "제목순"}
-						</button>
-					</>
-				)}
+								? "title"
+								: "latest"
+						)
+					}
+					className="text-theme-primary font-medium inline-flex items-center gap-1 hover:opacity-70 cursor-pointer"
+					style={{ transition: "opacity 0.2s ease-out" }}
+				>
+					<ArrowUpDown size={14} className="text-theme-primary" />
+					{sortOrder === "latest"
+						? "최신순"
+						: sortOrder === "oldest"
+						? "오래된순"
+						: "제목순"}
+				</button>
 			</div>
 			<div className="mt-3 flex flex-col min-h-[520px]">
-				{!showSkeleton && pinnedItems.length > 0 && (
+				{pinnedItems.length > 0 && (
 					<div className="rounded-card border-card bg-card mb-4">
 						{/* <div className="px-4 py-3 border-b border-card-bg text-sm font-medium text-main-text">
 							공지
@@ -148,7 +133,6 @@ export default function LibraryListView({
 				<div
 					className={cn(
 						"grid",
-						showSkeleton || isListReady ? "opacity-100" : "opacity-0",
 						isCardOn ? `gap-2.5 grid-cols-${postsPerRow}` : "gap-4 grid-cols-1"
 					)}
 					style={
@@ -162,25 +146,14 @@ export default function LibraryListView({
 							  }
 					}
 				>
-					{showSkeleton &&
-						Array.from({ length: skeletonCount }).map((_, index) => (
-							<Skeleton
-								key={`library-skeleton-${index}`}
-								className={
-									isCardOn
-										? "h-40 w-full rounded-card"
-										: "h-16 w-full rounded-card"
-								}
-							/>
-						))}
-					{!showSkeleton && isCardOn && (
+					{isCardOn && (
 						<>
 							{listItems.map((el) => (
 								<ItemGallery data={el} key={el.id} detailQuery={detailQuery} />
 							))}
 						</>
 					)}
-					{!showSkeleton && !isCardOn && layoutType === "listWithImage" && (
+					{!isCardOn && layoutType === "listWithImage" && (
 						<>
 							{listItems.map((el) => (
 								<ItemListWithImage
@@ -191,7 +164,7 @@ export default function LibraryListView({
 							))}
 						</>
 					)}
-					{!showSkeleton && !isCardOn && layoutType === "list" && (
+					{!isCardOn && layoutType === "list" && (
 						<>
 							{listItems.map((el) => (
 								<ItemList
@@ -203,7 +176,7 @@ export default function LibraryListView({
 						</>
 					)}
 				</div>
-				{!showSkeleton && tagOptions.length > 0 && (
+				{tagOptions.length > 0 && (
 					<div className="flex flex-wrap gap-2 mt-6 justify-center">
 						<button
 							type="button"
