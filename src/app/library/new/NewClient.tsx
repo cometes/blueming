@@ -323,7 +323,7 @@ export default function LibararyNewClient({
 							placeholder="제목을 입력해주세요."
 							value={title}
 							onChange={(e) => setTitle(e.target.value)}
-							className="text-4xl border-none border-transparent text-main-text bg-background-none placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 focus-visible:border-transparent p-0 font-title"
+							className="text-4xl border-none border-transparent text-main-text bg-background-none w-full placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 focus-visible:border-transparent p-0 font-title"
 						/>
 					</div>
 					<div className="flex items-center mt-5">
@@ -339,9 +339,12 @@ export default function LibararyNewClient({
 							{subOpen ? <X size={16} /> : <Plus size={16} />}
 						</span>
 						<div
-							className={cn("SubTitleWrap relative overflow-hidden")}
+							className={cn(
+								"SubTitleWrap relative overflow-hidden",
+								subOpen ? "flex-1 min-w-0" : "flex-none"
+							)}
 							style={{
-								maxWidth: subOpen ? "520px" : "0px",
+								maxWidth: subOpen ? "100%" : "0px",
 								marginLeft: subOpen ? "12px" : "0px",
 								opacity: subOpen ? 1 : 0,
 								pointerEvents: subOpen ? "auto" : "none",
@@ -355,7 +358,7 @@ export default function LibararyNewClient({
 								value={subtitle}
 								onChange={(e) => setSubtitle(e.target.value)}
 								onFocus={() => setSubOpen(true)}
-								className="text-lg border-0 text-sub-text bg-background-none placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 pl-3"
+								className="text-lg border-0 text-sub-text w-full bg-background-none placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 pl-3"
 								style={{ transition: "all 300ms ease" }}
 							/>
 						</div>
