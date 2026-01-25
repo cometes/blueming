@@ -17,7 +17,7 @@ export const fetchPhotoboardPosts = async (limit = 18) => {
 export const fetchPhotoboardPostsServer = async (limit = 18) => {
 	try {
 		const response = await fetch(`${API_BASE}/photoboard?limit=${limit}`, {
-			cache: "no-store",
+			next: { revalidate: 60 }, // 60초 캐싱
 		});
 		if (!response.ok) {
 			return { data: { items: [] } };

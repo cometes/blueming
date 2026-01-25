@@ -1,10 +1,10 @@
 import { Suspense } from "react";
+import { apiClient } from "@/queries/apiClient";
 import {
-	fetchLibraryListServer,
-	fetchLibrarySeriesServer,
-	fetchLibraryTagsServer,
-} from "@/queries/fetch/fetchLibraryServer";
-import { fetchSettingsServer } from "@/queries/fetch/fetchSettingsServer";
+	fetchLibraryList,
+	fetchLibrarySeries,
+	fetchLibraryTags,
+} from "@/queries/fetch/fetchLibrary";
 import LibraryClient from "./LibraryClient";
 
 export default async function LibararyListPage({
@@ -14,23 +14,25 @@ export default async function LibararyListPage({
 }) {
 	try {
 		const params = searchParams ? await searchParams : undefined;
+		const parsedPage = Number(params?.page);
+		const currentPage =
+			Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+
 		let postsPerPage = 10;
 		try {
-			const { data: settingsData } = await fetchSettingsServer();
+			const settingsResponse = await apiClient.get("/settings");
+			const settingsData = settingsResponse.data;
 			if (typeof settingsData?.library?.postsPerPage === "number") {
 				postsPerPage = settingsData.library.postsPerPage;
 			}
 		} catch {
 		}
 
-		const parsedPage = Number(params?.page);
-		const currentPage = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-
 		const [{ data: listResponse }, { data: seriesData }, { data: tagData }] =
 			await Promise.all([
-				fetchLibraryListServer({ page: currentPage, limit: postsPerPage }),
-				fetchLibrarySeriesServer(),
-				fetchLibraryTagsServer(),
+				fetchLibraryList({ page: currentPage, limit: postsPerPage }),
+				fetchLibrarySeries(),
+				fetchLibraryTags(),
 			]);
 
 		const finalListResponse = {

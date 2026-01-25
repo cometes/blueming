@@ -89,7 +89,6 @@ export default function PhotoBoardClient({
 		}
 	}, [isDialogOpen, postsPerRow, writePermission]);
 
-	// 초기 데이터가 있으면 fetch 생략, 없으면 클라이언트에서 fetch
 	useEffect(() => {
 		setPosts(initialPosts);
 		if (initialPosts.length > 0) {
@@ -110,26 +109,6 @@ export default function PhotoBoardClient({
 			.finally(() => {
 				if (!isActive) return;
 				setIsLoading(false);
-			});
-		return () => {
-			isActive = false;
-		};
-	}, [initialPosts]);
-
-	useEffect(() => {
-		if (initialPosts.length === 0) return;
-		const hasMissingImage = initialPosts.some((post) => !post.imageUrl);
-		if (!hasMissingImage) return;
-
-		let isActive = true;
-		fetchPhotoboardPosts()
-			.then((data) => {
-				if (!isActive) return;
-				setPosts(data.items);
-			})
-			.catch(() => {
-				if (!isActive) return;
-				toast.error("포토보드 이미지를 불러오지 못했습니다.");
 			});
 		return () => {
 			isActive = false;
@@ -310,41 +289,7 @@ export default function PhotoBoardClient({
 				</div>
 			</header>
 
-			{isLoading ? (
-				<div className={`${columnsClass} gap-2`}>
-					{Array.from({ length: 6 }).map((_, index) => (
-						<div
-							key={`photoboard-skeleton-${index}`}
-							className="mb-6 break-inside-avoid rounded-card border-card bg-card-bg overflow-hidden animate-pulse"
-						>
-							<div className="px-4 py-3 flex items-center gap-3">
-								<div className="w-9 h-9 rounded-full bg-card" />
-								<div className="space-y-2">
-									<div className="h-3 w-24 rounded-full bg-card" />
-									<div className="h-2 w-16 rounded-full bg-card" />
-								</div>
-							</div>
-							<div className="w-full aspect-[4/3] bg-card" />
-							<div className="px-4 py-4 space-y-3">
-								<div className="flex items-center justify-between">
-									<div className="flex items-center gap-2">
-										<div className="h-4 w-4 rounded-full bg-card" />
-										<div className="h-4 w-4 rounded-full bg-card" />
-										<div className="h-4 w-4 rounded-full bg-card" />
-										<div className="h-4 w-4 rounded-full bg-card" />
-									</div>
-									<div className="h-4 w-4 rounded-full bg-card" />
-								</div>
-								<div className="h-3 w-24 rounded-full bg-card" />
-								<div className="space-y-2">
-									<div className="h-3 w-full rounded-full bg-card" />
-									<div className="h-3 w-4/5 rounded-full bg-card" />
-								</div>
-							</div>
-						</div>
-					))}
-				</div>
-			) : filteredPosts.length === 0 ? (
+			{isLoading ? null : filteredPosts.length === 0 ? (
 				<div className="rounded-card border-card bg-card-bg text-center py-16 px-6">
 					{posts.length === 0 ? (
 						<>

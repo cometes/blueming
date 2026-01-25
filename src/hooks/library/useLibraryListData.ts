@@ -27,6 +27,7 @@ interface UseLibraryListDataParams {
 	initialPinned: LibraryItem[];
 	initialTotal: number;
 	initialTags?: string[];
+	initialHasData?: boolean;
 	isSeriesOn: boolean;
 	listPage: number;
 	postsPerPage: number;
@@ -50,12 +51,12 @@ export const useLibraryListData = ({
 	appliedQuery,
 	setListPage,
 	enablePrefetch = false,
+	initialHasData = false,
 }: UseLibraryListDataParams) => {
 	const [listItems, setListItems] = useState<LibraryItem[]>(initialList);
 	const [pinnedItems, setPinnedItems] = useState<LibraryItem[]>(initialPinned);
 	const [listTotalCount, setListTotalCount] = useState(initialTotal);
 	const [tagOptions, setTagOptions] = useState<string[]>(initialTags ?? []);
-	const [isListReady, setIsListReady] = useState(true);
 	const requestIdRef = useRef(0);
 	const initialParamsRef = useRef<ListParams>({
 		page: listPage,
@@ -70,7 +71,6 @@ export const useLibraryListData = ({
 		setListItems(initialList);
 		setPinnedItems(initialPinned);
 		setListTotalCount(initialTotal);
-		setIsListReady(true);
 	}, [initialList, initialPinned, initialTotal]);
 
 	useEffect(() => {
@@ -135,13 +135,13 @@ export const useLibraryListData = ({
 			const shouldSkipInitialFetch =
 				!initialFetchDoneRef.current &&
 				initialParamsRef.current &&
+				initialHasData &&
 				areParamsEqual(listParams, initialParamsRef.current);
 			if (shouldSkipInitialFetch) {
 				initialFetchDoneRef.current = true;
 				return;
 			}
 
-			setIsListReady(false);
 			try {
 				const data = await refreshList();
 				const nextTotalPages = Math.max(
@@ -156,7 +156,6 @@ export const useLibraryListData = ({
 				setListTotalCount(0);
 			} finally {
 				initialFetchDoneRef.current = true;
-				setIsListReady(true);
 			}
 		};
 
@@ -203,6 +202,5 @@ export const useLibraryListData = ({
 		pinnedItems,
 		listTotalCount,
 		tagOptions,
-		isListReady,
 	};
 };

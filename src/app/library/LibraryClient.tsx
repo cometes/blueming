@@ -113,6 +113,7 @@ export default function LibraryClient({
 			initialPinned: pinnedData,
 			initialTotal: listTotal,
 			initialTags: tagData,
+			initialHasData: listTotal > 0 || listData.length > 0,
 			isSeriesOn,
 			listPage,
 			postsPerPage,
