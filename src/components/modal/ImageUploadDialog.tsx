@@ -26,6 +26,7 @@ interface ImageUploadDialogProps {
 	onUpload: (url: string) => void;
 	uploadMode?: "immediate" | "deferred";
 	onFileSelect?: (file: File, previewUrl: string) => void;
+	onFilesSelect?: (files: File[], previewUrls: string[]) => void;
 	rightContent?: ReactNode;
 	enableAssetSearch?: boolean;
 	assetSearchQuery?: string;
@@ -40,6 +41,7 @@ export default function ImageUploadDialog({
 	onUpload,
 	uploadMode = "immediate",
 	onFileSelect,
+	onFilesSelect,
 	rightContent,
 	enableAssetSearch = false,
 	assetSearchQuery = "",
@@ -67,20 +69,32 @@ export default function ImageUploadDialog({
 		event: React.ChangeEvent<HTMLInputElement>
 	) => {
 		try {
-			const file = event.target.files?.[0];
-			if (!file) return;
+			const fileList = event.target.files;
+			if (!fileList || fileList.length === 0) return;
+			const files = Array.from(fileList);
 
 			if (uploadMode === "deferred") {
-				const previewUrl = URL.createObjectURL(file);
-				setThumbnail(previewUrl);
-				onFileSelect?.(file, previewUrl);
+				const previewUrls = files.map((selectedFile) =>
+					URL.createObjectURL(selectedFile),
+				);
+				setThumbnail(previewUrls[0] ?? "");
+				if (previewUrls.length > 1) {
+					onFilesSelect?.(files, previewUrls);
+				} else if (previewUrls.length === 1) {
+					onFileSelect?.(files[0], previewUrls[0]);
+				}
 				return;
 			}
 
 			setIsUploading(true);
 
+			if (files.length > 1) {
+				toast.error("여러 파일 업로드는 준비 중입니다.");
+				return;
+			}
+
 			const formData = new FormData();
-			formData.append("image", file);
+			formData.append("image", files[0]);
 
 			const authHeader = await getAuthHeader();
 			const response = await fetch(
@@ -166,13 +180,14 @@ export default function ImageUploadDialog({
 									<p className="text-sm text-sub-text">Upload Image</p>
 								</div>
 							)}
-							<input
-								type="file"
-								accept="image/*"
-								onChange={handleFileUpload}
-								disabled={isUploading}
-								className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-							/>
+			<input
+				type="file"
+				accept="image/*"
+				onChange={handleFileUpload}
+				multiple
+				disabled={isUploading}
+				className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+			/>
 						</div>
 					</div>
 					{rightContent ? (
