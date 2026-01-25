@@ -66,10 +66,7 @@ export default function CommentItem({
 
 	return (
 		<div
-			className={cn(
-				"flex gap-2 mb-3",
-				isOwn ? "flex-row-reverse" : "flex-row"
-			)}
+			className={cn("flex gap-2 mb-3", isOwn ? "flex-row-reverse" : "flex-row")}
 		>
 			{/* 프로필 이미지 */}
 			{!isOwn && (
@@ -93,13 +90,13 @@ export default function CommentItem({
 			<div
 				className={cn(
 					"flex flex-col max-w-[75%]",
-					isOwn ? "items-end" : "items-start"
+					isOwn ? "items-end" : "items-start",
 				)}
 			>
 				{/* 닉네임 & 뱃지 */}
 				{!isOwn && (
 					<div className="flex items-center gap-1.5 mb-1">
-						<span className="text-xs font-medium text-main-text">
+						<span className="text-xs font-medium text-main-text font-title">
 							{comment.displayName}
 						</span>
 						{comment.isAdmin && (
@@ -120,7 +117,7 @@ export default function CommentItem({
 						"relative group rounded-2xl px-3 py-2 break-words",
 						isOwn
 							? "bg-theme-primary text-white rounded-br-sm"
-							: "bg-card-bg border border-card rounded-bl-sm"
+							: "bg-card-bg border border-card rounded-bl-sm",
 					)}
 				>
 					{/* 비밀글 표시 */}
@@ -128,7 +125,7 @@ export default function CommentItem({
 						<div
 							className={cn(
 								"flex items-center gap-1 text-[10px] mb-1",
-								isOwn ? "text-white/70" : "text-sub-text"
+								isOwn ? "text-white/70" : "text-sub-text",
 							)}
 						>
 							<Lock size={10} />
@@ -142,7 +139,7 @@ export default function CommentItem({
 							<span
 								className={cn(
 									"text-sm",
-									isOwn ? "text-white/80" : "text-sub-text"
+									isOwn ? "text-white/80" : "text-sub-text",
 								)}
 							>
 								비밀글입니다.
@@ -153,7 +150,7 @@ export default function CommentItem({
 									onClick={onToggleSecret}
 									className={cn(
 										"text-xs hover:opacity-70",
-										isOwn ? "text-white underline" : "text-theme-primary"
+										isOwn ? "text-white underline" : "text-theme-primary",
 									)}
 								>
 									보기
@@ -164,7 +161,7 @@ export default function CommentItem({
 						<p
 							className={cn(
 								"text-sm whitespace-pre-wrap",
-								isOwn ? "text-white" : "text-main-text"
+								isOwn ? "text-white" : "text-main-text",
 							)}
 						>
 							{comment.message}
@@ -179,7 +176,7 @@ export default function CommentItem({
 									key={`${comment.id}-image-${index}`}
 									type="button"
 									onClick={() => openImageModal(index)}
-									className="relative w-16 h-16 rounded-lg overflow-hidden"
+									className="relative aspect-square min-w-12 rounded-card overflow-hidden border border-gray-400"
 									aria-label={`이미지 ${index + 1} 확대 보기`}
 								>
 									{/* eslint-disable-next-line @next/next/no-img-element */}
@@ -197,8 +194,8 @@ export default function CommentItem({
 					{(canEdit || canDelete) && showSecretContent && (
 						<div
 							className={cn(
-								"absolute top-1 opacity-0 group-hover:opacity-100 transition-opacity",
-								isOwn ? "-left-8" : "-right-8"
+								"absolute opacity-0 group-hover:opacity-100 transition-opacity",
+								isOwn ? "-left-6 bottom-0" : "-right-6 bottom-0",
 							)}
 						>
 							<DropdownMenu>
@@ -219,7 +216,10 @@ export default function CommentItem({
 										</DropdownMenuItem>
 									)}
 									{canDelete && (
-										<DropdownMenuItem onClick={onDelete} className="text-red-500">
+										<DropdownMenuItem
+											onClick={onDelete}
+											className="text-red-500"
+										>
 											<Trash2 size={12} className="mr-2" />
 											삭제
 										</DropdownMenuItem>
@@ -234,7 +234,7 @@ export default function CommentItem({
 				<div
 					className={cn(
 						"flex items-center gap-1 mt-1 text-[10px] text-sub-text",
-						isOwn ? "flex-row-reverse" : "flex-row"
+						isOwn ? "flex-row-reverse" : "flex-row",
 					)}
 				>
 					<span>{formatDate(comment.createdAt)}</span>
