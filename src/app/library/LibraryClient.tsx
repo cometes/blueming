@@ -107,7 +107,7 @@ export default function LibraryClient({
 		postsPerPage,
 		initialListPage: initialPage,
 	});
-	const { listItems, pinnedItems, listTotalCount, tagOptions } =
+	const { listItems, pinnedItems, listTotalCount, tagOptions, isLoading } =
 		useLibraryListData({
 			initialList: listData,
 			initialPinned: pinnedData,
@@ -435,6 +435,7 @@ export default function LibraryClient({
 						listItems={listItems}
 						pinnedItems={pinnedItems}
 						listTotalCount={listTotalCount}
+						isLoading={isLoading}
 						isCardOn={isCardOn}
 						layoutType={layoutType}
 						postsPerRow={postsPerRow}
