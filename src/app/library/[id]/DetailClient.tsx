@@ -28,7 +28,6 @@ import {
 	TooltipTrigger,
 } from "@/components/tiptap-ui-primitive/tooltip/tooltip";
 import { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import { BulletList } from "@tiptap/extension-bullet-list";
@@ -78,7 +77,6 @@ export default function DetailClient({ detailData }) {
 	const [secretAuthChecked, setSecretAuthChecked] = useState(false);
 	const [secretAccessGranted, setSecretAccessGranted] = useState(false);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-	const [isMounted, setIsMounted] = useState(false);
 	const ownerId =
 		localDetail?.authorId ??
 		localDetail?.author?.id ??
@@ -186,10 +184,6 @@ export default function DetailClient({ detailData }) {
 			},
 		},
 	});
-
-	useEffect(() => {
-		setIsMounted(true);
-	}, []);
 
 	useEffect(() => {
 		setIsPinned(Boolean(detailData?.pinned));
@@ -381,8 +375,7 @@ export default function DetailClient({ detailData }) {
 
 	return (
 		<>
-			{/* 사이드바 드로어를 Portal로 body에 직접 렌더링 */}
-			{isMounted && createPortal(sidebarDrawer, document.body)}
+			{sidebarDrawer}
 			<div className="Wrapper min-h-100vh">
 				<div
 					className="Container relative w-3xl min-h-dvh m-auto bg-card backdrop-blur-card border-card px-6 pt-10 pb-10 flex flex-col justify-between"

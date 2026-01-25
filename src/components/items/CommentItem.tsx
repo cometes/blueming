@@ -120,10 +120,12 @@ export default function CommentItem({
 								관리자
 							</span>
 						)}
-						<span className="text-[10px] text-sub-text">
-							{comment.authorLabel ??
-								(comment.authorType === "anon" ? "익명" : "")}
-						</span>
+						{!comment.isAdmin && (
+							<span className="text-[10px] text-sub-text">
+								{comment.authorLabel ??
+									(comment.authorType === "anon" ? "익명" : "")}
+							</span>
+						)}
 					</div>
 				)}
 

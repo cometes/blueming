@@ -9,27 +9,20 @@ import ImageSlideModal from "@/components/modal/ImageSlideModal";
 
 interface GuestbookItemProps {
 	entry: GuestbookEntry;
-	visibleSecret: boolean;
-	canViewSecret: boolean;
-	canEdit: boolean;
-	canDelete: boolean;
-	onToggleSecret: () => void;
-	onEdit: () => void;
-	onDelete: () => void;
+	onToggleSecret?: () => void;
+	onEdit?: () => void;
+	onDelete?: () => void;
 }
 
 export default function GuestbookItem({
 	entry,
-	visibleSecret,
-	canViewSecret,
-	canEdit,
-	canDelete,
 	onToggleSecret,
 	onEdit,
 	onDelete,
 }: GuestbookItemProps) {
-	const showSecretContent = !entry.isSecret || visibleSecret;
-	const imageUrls = entry.imageUrls ?? [];
+	const showSecretContent = !entry.isSecret || entry.masked !== true;
+	const imageUrls = entry.displayImageUrls ?? entry.imageUrls ?? [];
+	const displayMessage = entry.displayMessage ?? entry.message ?? "";
 	const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 	const [activeImageIndex, setActiveImageIndex] = useState(0);
 
@@ -64,9 +57,12 @@ export default function GuestbookItem({
 								관리자
 							</span>
 						)}
-						<span className="text-xs text-sub-text">
-							{entry.authorType === "anon" ? "익명" : "회원"}
-						</span>
+						{!entry.isAdmin && (
+							<span className="text-xs text-sub-text">
+								{entry.authorLabel ??
+									(entry.authorType === "anon" ? "익명" : "회원")}
+							</span>
+						)}
 						{entry.isSecret && (
 							<span className="text-xs text-sub-text inline-flex items-center gap-1">
 								<Lock size={12} />
@@ -78,19 +74,19 @@ export default function GuestbookItem({
 						{entry.isSecret && !showSecretContent ? (
 							<div className="flex flex-wrap items-center gap-2">
 								<span className="text-sm text-sub-text">비밀글입니다.</span>
-								{canViewSecret && (
+								{entry.canViewSecret && (
 									<button
 										type="button"
 										onClick={onToggleSecret}
 										className="text-xs text-theme-primary hover:opacity-70"
 									>
-										{visibleSecret ? "숨기기" : "보기"}
+										보기
 									</button>
 								)}
 							</div>
 						) : (
 							<p className="text-sm text-sub-text break-words">
-								{entry.message}
+								{displayMessage}
 							</p>
 						)}
 						{imageUrls.length > 0 && showSecretContent && (
@@ -120,25 +116,27 @@ export default function GuestbookItem({
 						</p>
 					)}
 				</div>
-				{(canEdit || canDelete) && showSecretContent && (
+				{(entry.canEdit || entry.canDelete) && showSecretContent && (
 					<div className="flex items-center gap-2 shrink-0">
-						{canEdit && (
+						{entry.canEdit && (
 							<Button
 								type="button"
 								size="sm"
 								variant="ghost"
 								onClick={onEdit}
+								disabled={!onEdit}
 								className={cn("w-9 h-9 p-0")}
 							>
 								<Pencil size={14} />
 							</Button>
 						)}
-						{canDelete && (
+						{entry.canDelete && (
 							<Button
 								type="button"
 								size="sm"
 								variant="ghost"
 								onClick={onDelete}
+								disabled={!onDelete}
 								className={cn("w-9 h-9 p-0")}
 							>
 								<Trash2 size={14} />
