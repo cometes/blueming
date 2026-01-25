@@ -2,7 +2,7 @@ import { useMoveToPage } from "@/hooks/useMoveToPage";
 import { dateConvert } from "@/lib/date";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { MessageCircle, Lock } from "lucide-react";
+import { CircleSlash, MessageCircle, Lock } from "lucide-react";
 
 interface ItemListProps {
 	data: {
@@ -47,9 +47,12 @@ export default function ItemList({ data, detailQuery = "" }: ItemListProps) {
 									고정
 								</Badge>
 							)}
-									{data.allow === "password" && (
-										<Lock size={14} className="text-sub-text shrink-0" />
-									)}
+							{data.allow === "password" && (
+								<Lock size={14} className="text-sub-text shrink-0" />
+							)}
+							{data.allow === "secret" && (
+								<CircleSlash size={14} className="text-sub-text shrink-0" />
+							)}
 							<h3
 								className={cn(
 									"text-lg font-semibold text-main-text leading-tight",

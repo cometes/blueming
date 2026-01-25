@@ -457,7 +457,7 @@ export default function GuestbookClient({
 
 	return (
 		<div className="shrink-0 w-full max-w-[540px] mt-[90px] mb-[40px] mx-auto">
-			<h2 className="text-[20px] font-semibold text-main-text">방명록</h2>
+			<h2 className="text-[20px] font-semibold text-main-text font-title">방명록</h2>
 			<p className="text-sm text-sub-text mt-2">간단한 메시지를 남겨주세요.</p>
 			<section className="bg-card border-card rounded-card p-3 mt-10">
 				{isAuthLoading ? (
@@ -600,8 +600,8 @@ export default function GuestbookClient({
 
 			<section className="mt-8">
 				<div className="flex items-center justify-between">
-					<h3 className="text-base font-semibold text-main-text">
-						전체 {totalCount}개
+					<h3 className="text-sm text-sub-text">
+						총 {totalCount}개
 					</h3>
 				</div>
 

@@ -117,7 +117,7 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 					{/* Title Box */}
 					<div className="flex flex-col justify-between w-full h-full px-8 py-6">
 						<div>
-							<h1 className="text-3xl font-semibold">{seriesMeta.name}</h1>
+							<h1 className="text-3xl font-semibold font-title">{seriesMeta.name}</h1>
 							<p className="mt-1">{seriesMeta.posts.length}개의 포스트</p>
 							<div className="flex items-center justify-between mt-3 w-full">
 								<span className="text-sm text-sub-text block">
@@ -238,10 +238,10 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 									className="flex cursor-pointer"
 									onClick={onClickMoveToPage(`/library/${el.slug || el.id}`)}
 								>
-									<span className="block text-sub-text italic text-xl font-semibold">
+									<span className="block text-sub-text italic text-xl font-semibold font-title">
 										{isSorted ? sortedData.length - index : index + 1}.
 									</span>
-									<span className="block text-sub-text-dark text-xl font-semibold ml-2.5 hover:text-theme-primary transition-colors">
+									<span className="block text-sub-text-dark text-xl font-semibold ml-2.5 hover:text-theme-primary transition-colors font-title">
 										{el.title}
 									</span>
 								</h2>

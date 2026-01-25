@@ -73,7 +73,7 @@ const IMAGE_WIDGET_IDS = [
 ];
 
 // 로딩 대기에서 제외할 위젯 (비동기 로딩이 불안정하거나 선택적인 위젯)
-const EXCLUDE_FROM_LOADING = ["날씨&시계"];
+const EXCLUDE_FROM_LOADING: string[] = [];
 
 export default function Home() {
 	const { main } = useSettings();

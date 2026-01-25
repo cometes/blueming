@@ -1,7 +1,7 @@
 "use client";
 
 import { useMoveToPage } from "@/hooks/useMoveToPage";
-import { dateConvert } from "@/lib/date";
+import { dateConvert, dateTimeConvert } from "@/lib/date";
 import {
 	ChevronLeft,
 	ChevronRight,
@@ -63,6 +63,7 @@ export default function DetailClient({ detailData }) {
 	const searchParams = useSearchParams();
 	const { isAdmin } = useAdmin();
 	const isAuthLoading = useAuthStore((state) => state.isLoading);
+	const user = useAuthStore((state) => state.user);
 	const listPage = searchParams.get("page");
 	const listPath = listPage ? `/library?page=${listPage}` : "/library";
 	const detailQuery = listPage ? `?page=${listPage}` : "";
@@ -72,8 +73,20 @@ export default function DetailClient({ detailData }) {
 	const [passwordError, setPasswordError] = useState("");
 	const [isVerifying, setIsVerifying] = useState(false);
 	const [authChecked, setAuthChecked] = useState(false);
+	const [secretAuthChecked, setSecretAuthChecked] = useState(false);
+	const [secretAccessGranted, setSecretAccessGranted] = useState(false);
+	const ownerId =
+		localDetail?.authorId ??
+		localDetail?.author?.id ??
+		localDetail?.uid ??
+		null;
+	const isOwner = Boolean(ownerId && user?.uid === ownerId);
+	const isSecret = localDetail?.allow === "secret";
+	const canViewSecret = Boolean(isAdmin || isOwner || secretAccessGranted);
+	const contentSource =
+		isSecret && !canViewSecret ? null : localDetail?.content;
 	const parsedContent = useMemo(() => {
-		if (!localDetail?.content) return null;
+		if (!contentSource) return null;
 
 		const isTiptapDoc = (value: unknown) => {
 			if (!value || typeof value !== "object") return false;
@@ -91,7 +104,7 @@ export default function DetailClient({ detailData }) {
 
 		const toParagraphHtml = (value: string) => `<p>${escapeHtml(value)}</p>`;
 
-		const rawContent = localDetail.content;
+		const rawContent = contentSource;
 		if (typeof rawContent === "string") {
 			const trimmed = rawContent.trim();
 			if (!trimmed) return "";
@@ -114,7 +127,7 @@ export default function DetailClient({ detailData }) {
 
 		const fallbackHtml = renderRichText(rawContent);
 		return fallbackHtml || null;
-	}, [localDetail?.content]);
+	}, [contentSource]);
 	const viewerExtensions = useMemo(
 		() => [
 			StarterKit.configure({
@@ -216,6 +229,7 @@ export default function DetailClient({ detailData }) {
 	const requiresPassword =
 		localDetail?.allow === "password" && !localDetail?.content;
 	const detailId = localDetail?.slug || localDetail?.id;
+	const requiresSecretAccess = isSecret && !canViewSecret;
 
 	const handleVerifyPassword = async () => {
 		if (!detailId || isVerifying) return;
@@ -283,6 +297,47 @@ export default function DetailClient({ detailData }) {
 		};
 	}, [detailId, isAuthLoading, requiresPassword]);
 
+	useEffect(() => {
+		if (!isSecret || !detailId) {
+			setSecretAuthChecked(true);
+			setSecretAccessGranted(false);
+			return;
+		}
+		if (isAdmin || isOwner) {
+			setSecretAuthChecked(true);
+			return;
+		}
+		if (isAuthLoading) return;
+		let isMounted = true;
+
+		const fetchWithAuth = async () => {
+			const headers = await getAuthHeader();
+			if (!headers.Authorization) {
+				if (isMounted) setSecretAuthChecked(true);
+				return;
+			}
+			try {
+				const response = await apiClient.get(`/library/detail/${detailId}`, {
+					headers,
+				});
+				if (isMounted && response.data?.content) {
+					setLocalDetail(response.data);
+					setSecretAccessGranted(true);
+				}
+			} catch {
+				// Ignore: user isn't author or no auth
+			} finally {
+				if (isMounted) setSecretAuthChecked(true);
+			}
+		};
+
+		fetchWithAuth();
+
+		return () => {
+			isMounted = false;
+		};
+	}, [detailId, isAuthLoading, isAdmin, isOwner, isSecret]);
+
 	return (
 		<div className="Wrapper min-h-100vh">
 			<div
@@ -295,6 +350,36 @@ export default function DetailClient({ detailData }) {
 							className="w-10 h-10 rounded-full border-2 border-card-border border-t-theme-primary animate-spin"
 							aria-label="로딩 중"
 						/>
+					</div>
+				) : requiresSecretAccess && !secretAuthChecked ? (
+					<div className="flex flex-col items-center justify-center min-h-[60vh]">
+						<div
+							className="w-10 h-10 rounded-full border-2 border-card-border border-t-theme-primary animate-spin"
+							aria-label="로딩 중"
+						/>
+					</div>
+				) : requiresSecretAccess ? (
+					<div className="flex flex-col items-center justify-center min-h-[60vh]">
+						<div className="flex flex-col items-center gap-6 w-full max-w-md">
+							<div className="w-20 h-20 rounded-full bg-card-bg border-2 border-card flex items-center justify-center">
+								<Lock size={30} className="text-sub-text" />
+							</div>
+							<div className="text-center">
+								<h2 className="text-2xl font-semibold text-main-text mb-2">
+									비공개 게시글입니다.
+								</h2>
+								<p className="text-sub-text">
+									작성자와 관리자만 열람할 수 있습니다.
+								</p>
+							</div>
+							<Button
+								variant="default"
+								onClick={onClickMoveToPage(listPath)}
+								className="mt-10"
+							>
+								목록으로
+							</Button>
+						</div>
 					</div>
 				) : requiresPassword ? (
 					<div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -384,7 +469,7 @@ export default function DetailClient({ detailData }) {
 
 								<div className="EditBox flex gap-4 items-center ml-auto">
 									<span className="CreatedAt text-sub-text">
-										{dateConvert(localDetail?.createdAt)}
+										{dateTimeConvert(localDetail?.createdAt)}
 									</span>
 									{isAdmin && (
 										<div className="flex items-center gap-3">
@@ -454,7 +539,7 @@ export default function DetailClient({ detailData }) {
 						)}
 					</div>
 				)}
-				{!requiresPassword && (
+				{!requiresPassword && (!isSecret || canViewSecret) && (
 					<div className="PrevNextWrap flex justify-between mt-24">
 						{localDetail?.prevPost ? (
 							<div
