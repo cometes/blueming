@@ -45,23 +45,14 @@ export const useLibraryListData = ({
 	const [pinnedItems, setPinnedItems] = useState<LibraryItem[]>(initialPinned);
 	const [listTotalCount, setListTotalCount] = useState(initialTotal);
 	const [tagOptions, setTagOptions] = useState<string[]>(initialTags ?? []);
-	// 초기 데이터가 있으면 ready, 없으면 로딩 중으로 시작
-	const [isLoading, setIsLoading] = useState(
-		!(initialList.length > 0 || initialPinned.length > 0)
-	);
+	const [isListReady, setIsListReady] = useState(true);
 	const requestIdRef = useRef(0);
 
-	// 초기 데이터가 있으면 즉시 ready 상태로 전환
 	useEffect(() => {
 		setListItems(initialList);
 		setPinnedItems(initialPinned);
 		setListTotalCount(initialTotal);
-		// 초기 데이터가 로드되었으면 ready 상태로 변경
-		if (initialList.length > 0 || initialPinned.length > 0) {
-			setIsLoading(false);
-		} else {
-			setIsLoading(true);
-		}
+		setIsListReady(true);
 	}, [initialList, initialPinned, initialTotal]);
 
 	useEffect(() => {
@@ -160,20 +151,9 @@ export const useLibraryListData = ({
 		}
 
 		const fetchPage = async () => {
-			setIsLoading(true);
+			setIsListReady(false);
 			try {
-				const requestId = ++requestIdRef.current;
-				const { data } = await fetchLibraryList(listParams);
-
-				// 요청이 취소되었는지 확인
-				if (requestId !== requestIdRef.current) {
-					return;
-				}
-
-				setListItems(Array.isArray(data?.items) ? data.items : []);
-				setPinnedItems(Array.isArray(data?.pinnedItems) ? data.pinnedItems : []);
-				setListTotalCount(typeof data?.total === "number" ? data.total : 0);
-
+				const data = await refreshList();
 				const nextTotalPages = Math.max(
 					1,
 					Math.ceil((data?.total || 0) / postsPerPage)
@@ -184,13 +164,13 @@ export const useLibraryListData = ({
 			} catch {
 				setListItems([]);
 				setListTotalCount(0);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+			} finally {
+				setIsListReady(true);
+			}
+		};
 
 		fetchPage();
-	}, [isSeriesOn, listParams, listPage, postsPerPage, setListPage]);
+	}, [isSeriesOn, refreshList, listPage, postsPerPage, setListPage]);
 
 	useEffect(() => {
 		if (isSeriesOn) {
@@ -228,7 +208,7 @@ export const useLibraryListData = ({
 		pinnedItems,
 		listTotalCount,
 		tagOptions,
-		isLoading,
+		isListReady,
 		refreshList,
 		applyPinOptimistic,
 	};

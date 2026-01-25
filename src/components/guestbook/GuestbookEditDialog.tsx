@@ -49,12 +49,15 @@ export default function GuestbookEditDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>
+			<DialogContent
+				className="max-w-md sm:max-w-md w-full bg-card-bg border-card rounded-card backdrop-blur-card"
+				onOpenAutoFocus={(event) => event.preventDefault()}
+			>
+				<DialogHeader className="gap-2">
+					<DialogTitle className="text-[20px] font-semibold text-main-text">
 						{mode === "edit" ? "방명록 수정" : "방명록 삭제"}
 					</DialogTitle>
-					<DialogDescription>
+					<DialogDescription className="text-sm text-sub-text">
 						{mode === "edit"
 							? "내용을 수정하고 저장하세요."
 							: "정말 이 방명록을 삭제할까요?"}
@@ -102,7 +105,7 @@ export default function GuestbookEditDialog({
 							</span>
 						</div>
 						{dialogImages.length > 0 && (
-							<div className="grid grid-cols-2 gap-2 mt-3">
+							<div className="grid grid-cols-4 gap-1.5 mt-3">
 								{dialogImages.map((image) => (
 									<div
 										key={image.id}
@@ -128,8 +131,8 @@ export default function GuestbookEditDialog({
 					</>
 				)}
 
-				<DialogFooter>
-					<Button type="button" variant="outline" onClick={onClose}>
+				<DialogFooter className="gap-2 sm:gap-3">
+					<Button type="button" variant="ghost" onClick={onClose}>
 						취소
 					</Button>
 					{mode === "edit" ? (

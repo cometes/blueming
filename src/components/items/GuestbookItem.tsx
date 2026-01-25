@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Lock, Pencil, ShieldCheck, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { GuestbookEntry } from "@/queries/guestbook";
+import ImageSlideModal from "@/components/modal/ImageSlideModal";
 
 interface GuestbookItemProps {
 	entry: GuestbookEntry;
@@ -27,12 +29,14 @@ export default function GuestbookItem({
 	onDelete,
 }: GuestbookItemProps) {
 	const showSecretContent = !entry.isSecret || visibleSecret;
-	const imageUrls =
-		Array.isArray(entry.imageUrls) && entry.imageUrls.length > 0
-			? entry.imageUrls
-			: entry.imageUrl
-				? [entry.imageUrl]
-				: [];
+	const imageUrls = entry.imageUrls ?? [];
+	const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+	const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+	const openImageModal = (index: number) => {
+		setActiveImageIndex(index);
+		setIsImageModalOpen(true);
+	};
 
 	return (
 		<div className="rounded-card border-card bg-card-bg px-4 py-4">
@@ -92,9 +96,12 @@ export default function GuestbookItem({
 						{imageUrls.length > 0 && showSecretContent && (
 							<div className="mt-3 flex gap-1.5">
 								{imageUrls.map((url, index) => (
-									<div
+									<button
 										key={`${entry.id}-image-${index}`}
-										className="relative aspect-square rounded-card border-card bg-card-bg overflow-hidden min-w-14"
+										type="button"
+										onClick={() => openImageModal(index)}
+										className="relative aspect-square rounded-card border-card bg-card-bg overflow-hidden min-w-14 text-left"
+										aria-label={`이미지 ${index + 1} 확대 보기`}
 									>
 										{/* eslint-disable-next-line @next/next/no-img-element */}
 										<img
@@ -102,7 +109,7 @@ export default function GuestbookItem({
 											alt="첨부 이미지"
 											className="absolute inset-0 w-full h-full object-cover"
 										/>
-									</div>
+									</button>
 								))}
 							</div>
 						)}
@@ -140,6 +147,14 @@ export default function GuestbookItem({
 					</div>
 				)}
 			</div>
+			{imageUrls.length > 0 && (
+				<ImageSlideModal
+					isOpen={isImageModalOpen}
+					onOpenChange={setIsImageModalOpen}
+					images={imageUrls}
+					initialIndex={activeImageIndex}
+				/>
+			)}
 		</div>
 	);
 }

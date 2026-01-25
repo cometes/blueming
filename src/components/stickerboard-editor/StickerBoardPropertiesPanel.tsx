@@ -33,9 +33,8 @@ import {
 
 export function StickerBoardPropertiesPanel() {
 	const {
-		state: { canvasElement },
 		computed: { selectedComponent, selectedImageComponent },
-		refs: { canvasRef },
+		refs: { canvasRef, moveableInteractionRef },
 		actions: {
 			updateComponent,
 			requestAutoSize,
@@ -54,7 +53,7 @@ export function StickerBoardPropertiesPanel() {
 	const editingFieldRef = useRef<null | "x" | "y" | "width" | "height">(null);
 
 	useEffect(() => {
-		const canvas = canvasElement;
+		const canvas = canvasRef.current;
 		if (!canvas) return;
 		const updateSize = () => {
 			const rect = canvas.getBoundingClientRect();
@@ -67,7 +66,7 @@ export function StickerBoardPropertiesPanel() {
 		const observer = new ResizeObserver(updateSize);
 		observer.observe(canvas);
 		return () => observer.disconnect();
-	}, [canvasElement]);
+	}, [canvasRef]);
 
 	const toPx = useMemo(
 		() => (pct: number, total: number) =>
@@ -193,11 +192,15 @@ export function StickerBoardPropertiesPanel() {
 				rafId = requestAnimationFrame(tick);
 				return;
 			}
+			if (!moveableInteractionRef.current) {
+				rafId = requestAnimationFrame(tick);
+				return;
+			}
 			const canvas = canvasRef.current;
 			const target = canvas
 				? (canvas.querySelector(
-					`[data-sticker-id="${component.id}"]`,
-				) as HTMLElement | null)
+						`[data-sticker-id="${component.id}"]`,
+					) as HTMLElement | null)
 				: null;
 			if (target) {
 				const leftPct = parseFloat(target.style.left || "");
@@ -253,7 +256,7 @@ export function StickerBoardPropertiesPanel() {
 		};
 		rafId = requestAnimationFrame(tick);
 		return () => cancelAnimationFrame(rafId);
-	}, [canvasRef, canvasSize, selectedComponent, toPx]);
+	}, [canvasRef, canvasSize, moveableInteractionRef, selectedComponent, toPx]);
 
 	return (
 		<>
@@ -653,10 +656,7 @@ export function StickerBoardPropertiesPanel() {
 								className="mt-2"
 								type="number"
 								step={1}
-								value={
-									getDraftValue(selectedComponent.id, "x") ||
-									String(toPx(selectedComponent.xPct, canvasSize.width))
-								}
+								value={getDraftValue(selectedComponent.id, "x")}
 								disabled={selectedComponent.isLocked === true}
 								onFocus={() => {
 									editingFieldRef.current = "x";
@@ -695,10 +695,7 @@ export function StickerBoardPropertiesPanel() {
 								className="mt-2"
 								type="number"
 								step={1}
-								value={
-									getDraftValue(selectedComponent.id, "y") ||
-									String(toPx(selectedComponent.yPct, canvasSize.height))
-								}
+								value={getDraftValue(selectedComponent.id, "y")}
 								disabled={selectedComponent.isLocked === true}
 								onFocus={() => {
 									editingFieldRef.current = "y";
@@ -742,10 +739,7 @@ export function StickerBoardPropertiesPanel() {
 								min={2}
 								max={Math.max(0, Math.round(canvasSize.width))}
 								step={1}
-								value={
-									getDraftValue(selectedComponent.id, "width") ||
-									String(toPx(selectedComponent.widthPct, canvasSize.width))
-								}
+								value={getDraftValue(selectedComponent.id, "width")}
 								disabled={selectedComponent.isLocked === true}
 								onFocus={() => {
 									editingFieldRef.current = "width";
@@ -786,10 +780,7 @@ export function StickerBoardPropertiesPanel() {
 								min={2}
 								max={Math.max(0, Math.round(canvasSize.height))}
 								step={1}
-								value={
-									getDraftValue(selectedComponent.id, "height") ||
-									String(toPx(selectedComponent.heightPct, canvasSize.height))
-								}
+								value={getDraftValue(selectedComponent.id, "height")}
 								disabled={selectedComponent.isLocked === true}
 								onFocus={() => {
 									editingFieldRef.current = "height";
@@ -915,10 +906,7 @@ export function StickerBoardPropertiesPanel() {
 								className="mt-2"
 								type="number"
 								step={1}
-								value={
-									getDraftValue(selectedImageComponent.id, "x") ||
-									String(toPx(selectedImageComponent.xPct, canvasSize.width))
-								}
+								value={getDraftValue(selectedImageComponent.id, "x")}
 								disabled={selectedImageComponent.isLocked === true}
 								onFocus={() => {
 									editingFieldRef.current = "x";
@@ -957,10 +945,7 @@ export function StickerBoardPropertiesPanel() {
 								className="mt-2"
 								type="number"
 								step={1}
-								value={
-									getDraftValue(selectedImageComponent.id, "y") ||
-									String(toPx(selectedImageComponent.yPct, canvasSize.height))
-								}
+								value={getDraftValue(selectedImageComponent.id, "y")}
 								disabled={selectedImageComponent.isLocked === true}
 								onFocus={() => {
 									editingFieldRef.current = "y";
@@ -1004,10 +989,7 @@ export function StickerBoardPropertiesPanel() {
 								min={2}
 								max={Math.max(0, Math.round(canvasSize.width))}
 								step={1}
-								value={
-									getDraftValue(selectedImageComponent.id, "width") ||
-									String(toPx(selectedImageComponent.widthPct, canvasSize.width))
-								}
+								value={getDraftValue(selectedImageComponent.id, "width")}
 								disabled={selectedImageComponent.isLocked === true}
 								onFocus={() => {
 									editingFieldRef.current = "width";
@@ -1048,12 +1030,7 @@ export function StickerBoardPropertiesPanel() {
 								min={2}
 								max={Math.max(0, Math.round(canvasSize.height))}
 								step={1}
-								value={
-									getDraftValue(selectedImageComponent.id, "height") ||
-									String(
-										toPx(selectedImageComponent.heightPct, canvasSize.height),
-									)
-								}
+								value={getDraftValue(selectedImageComponent.id, "height")}
 								disabled={selectedImageComponent.isLocked === true}
 								onFocus={() => {
 									editingFieldRef.current = "height";

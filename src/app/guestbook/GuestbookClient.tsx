@@ -80,6 +80,9 @@ export default function GuestbookClient({
 	const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>(
 		{},
 	);
+	const [secretOverrides, setSecretOverrides] = useState<
+		Record<string, { message: string; imageUrls: string[] }>
+	>({});
 	const [secretDialogOpen, setSecretDialogOpen] = useState(false);
 	const [secretDialogPin, setSecretDialogPin] = useState("");
 	const [secretDialogEntry, setSecretDialogEntry] =
@@ -251,12 +254,7 @@ export default function GuestbookClient({
 
 	const openDialog = useCallback(
 		(entry: GuestbookEntry, modeType: "edit" | "delete") => {
-			const entryImages =
-				Array.isArray(entry.imageUrls) && entry.imageUrls.length > 0
-					? entry.imageUrls
-					: entry.imageUrl
-						? [entry.imageUrl]
-						: [];
+			const entryImages = entry.imageUrls ?? [];
 			setActiveEntry(entry);
 			setDialogMode(modeType);
 			setDialogPin("");
@@ -323,29 +321,25 @@ export default function GuestbookClient({
 			const data = await verifyGuestbookSecret(secretDialogEntry.id, {
 				pin: secretDialogPin,
 			});
-			const resolvedImageUrls =
-				Array.isArray(data.imageUrls) && data.imageUrls.length > 0
-					? data.imageUrls
-					: data.imageUrl
-						? [data.imageUrl]
-						: [];
+			const resolvedImageUrls = data.imageUrls ?? [];
 			setEntries((prev) =>
 				prev.map((entry) =>
 					entry.id === secretDialogEntry.id
 						? {
 								...entry,
 								message: data.message ?? entry.message,
-								imageUrls: resolvedImageUrls.length
-									? resolvedImageUrls
-									: entry.imageUrls,
-								imageUrl:
-									typeof data.imageUrl === "undefined"
-										? entry.imageUrl
-										: (data.imageUrl ?? ""),
+								imageUrls: resolvedImageUrls,
 							}
 						: entry,
 				),
 			);
+			setSecretOverrides((prev) => ({
+				...prev,
+				[secretDialogEntry.id]: {
+					message: data.message ?? "",
+					imageUrls: resolvedImageUrls,
+				},
+			}));
 			setVisibleSecrets((prev) => ({
 				...prev,
 				[secretDialogEntry.id]: true,
@@ -559,10 +553,15 @@ export default function GuestbookClient({
 				</div>
 
 				<div className="mt-4 space-y-4">
-					{entries.map((entry) => (
+					{entries.map((entry) => {
+						const override = secretOverrides[entry.id];
+						const resolvedEntry = override
+							? { ...entry, ...override }
+							: entry;
+						return (
 						<GuestbookItem
 							key={entry.id}
-							entry={entry}
+							entry={resolvedEntry}
 							visibleSecret={!!visibleSecrets[entry.id]}
 							canViewSecret={canViewSecret(entry)}
 							canEdit={canEditEntry(entry)}
@@ -571,7 +570,8 @@ export default function GuestbookClient({
 							onEdit={() => openDialog(entry, "edit")}
 							onDelete={() => openDialog(entry, "delete")}
 						/>
-					))}
+						);
+					})}
 
 					{entries.length === 0 && (
 						<div className="text-center py-10 text-sub-text">
