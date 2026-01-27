@@ -541,7 +541,6 @@ export default function GuestbookClient({
 							<PaginationContent>
 								<PaginationItem>
 									<PaginationPrevious
-										href="#"
 										onClick={(e) => {
 											e.preventDefault();
 											setCurrentPage((prev) => Math.max(1, prev - 1));
@@ -553,7 +552,6 @@ export default function GuestbookClient({
 									return (
 										<PaginationItem key={page}>
 											<PaginationLink
-												href="#"
 												isActive={page === currentPage}
 												onClick={(e) => {
 													e.preventDefault();
@@ -567,7 +565,6 @@ export default function GuestbookClient({
 								})}
 								<PaginationItem>
 									<PaginationNext
-										href="#"
 										onClick={(e) => {
 											e.preventDefault();
 											setCurrentPage((prev) => Math.min(totalPages, prev + 1));

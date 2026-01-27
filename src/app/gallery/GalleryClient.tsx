@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { Settings } from "lucide-react";
+import { Plus, Search, Settings, X } from "lucide-react";
 import { toast } from "sonner";
 import GalleryGrid from "./components/GalleryGrid";
 import GalleryImageModal from "@/components/modal/GalleryImageModal";
 import GallerySettingsDialog from "@/components/modal/GallerySettingsDialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useAdmin } from "@/hooks/auth/UseAdmin";
 import { dummyGalleryImages } from "./dummyData";
@@ -41,6 +42,8 @@ export default function GalleryClient() {
 
 	// 이미지 데이터 (추후 API에서 가져올 수 있음)
 	const images: GalleryImage[] = useMemo(() => dummyGalleryImages, []);
+	const [searchInput, setSearchInput] = useState("");
+	const [appliedQuery, setAppliedQuery] = useState("");
 
 	// URL 업데이트 함수 (history API 사용, searchParams 트리거 방지)
 	const updateUrlWithImageId = useCallback(
@@ -55,7 +58,7 @@ export default function GalleryClient() {
 			}
 			window.history.replaceState(null, "", url.pathname + url.search);
 		},
-		[currentSettings.behavior.enableDeepLink]
+		[currentSettings.behavior.enableDeepLink],
 	);
 
 	// 딥링크 처리 - 최초 마운트 시 한 번만 실행
@@ -80,7 +83,7 @@ export default function GalleryClient() {
 			setIsModalOpen(true);
 			updateUrlWithImageId(image.id);
 		},
-		[updateUrlWithImageId]
+		[updateUrlWithImageId],
 	);
 
 	// 모달 닫기 핸들러
@@ -91,7 +94,7 @@ export default function GalleryClient() {
 				updateUrlWithImageId(null);
 			}
 		},
-		[updateUrlWithImageId]
+		[updateUrlWithImageId],
 	);
 
 	// 모달 인덱스 변경 핸들러 (모달 내부 네비게이션용)
@@ -102,7 +105,7 @@ export default function GalleryClient() {
 				updateUrlWithImageId(images[index].id);
 			}
 		},
-		[images, updateUrlWithImageId]
+		[images, updateUrlWithImageId],
 	);
 
 	// 설정 저장 핸들러
@@ -134,23 +137,47 @@ export default function GalleryClient() {
 		}
 	};
 
-	return (
-		<div className="w-full min-h-screen bg-background">
-			<div className="mx-auto w-full max-w-[1400px] p-6 mt-10">
-				<header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-					<div>
-						<p className="text-xs uppercase tracking-[0.3em] text-sub-text">
-							Gallery
-						</p>
-						<h1 className="text-3xl sm:text-4xl font-semibold text-main-text font-title mt-2">
-							갤러리
-						</h1>
-						<p className="text-sub-text mt-2">
-							좋아하는 순간들을 한눈에 감상해보세요.
-						</p>
-					</div>
+	const normalizedQuery = appliedQuery.trim().toLowerCase();
+	const filteredImages = useMemo(() => {
+		if (!normalizedQuery) return images;
+		return images.filter((image) => {
+			const tags = Array.isArray(image.tags) ? image.tags.join(" ") : "";
+			const haystack = [image.title, image.category, tags]
+				.join(" ")
+				.toLowerCase();
+			return haystack.includes(normalizedQuery);
+		});
+	}, [images, normalizedQuery]);
 
-					{/* 관리자 설정 버튼 */}
+	return (
+		<div className="w-full max-w-[900px] mt-[90px] mb-[90px]">
+			<header className="mb-15 flex items-center justify-center">
+				<div className="flex items-center gap-2 w-full sm:w-auto">
+					<div className="w-[150px]"></div>
+					<div className="w-full sm:w-[200px]">
+						<Input
+							className="border-card bg-card backdrop-blur-card rounded-card text-main-text"
+							endIcon={searchInput ? X : Search}
+							value={searchInput}
+							onChange={(e) => setSearchInput(e.target.value)}
+							placeholder="본문, 태그로 검색"
+							onKeyDown={(e) => {
+								if (e.key === "Enter") {
+									e.preventDefault();
+									setAppliedQuery(searchInput.trim());
+								}
+							}}
+							onEndIconClick={
+								searchInput
+									? () => {
+											setSearchInput("");
+											setAppliedQuery("");
+										}
+									: undefined
+							}
+							endIconAriaLabel="검색어 지우기"
+						/>
+					</div>
 					{isManagerOrAdmin && (
 						<GallerySettingsDialog
 							isOpen={isSettingsOpen}
@@ -158,33 +185,35 @@ export default function GalleryClient() {
 							settings={currentSettings}
 							onSave={handleSaveSettings}
 							trigger={
-								<Button
-									variant="ghost"
-									size="icon"
-									disabled={isSaving}
-									className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
-								>
-									<Settings className="h-5 w-5" />
+								<Button className="bg-card border-card text-main-text rounded-full w-10 h-10 hover:border-transparent">
+									<Settings />
 								</Button>
 							}
 						/>
 					)}
-				</header>
+					<Button
+						type="button"
+						onClick={() => toast("갤러리 작성 기능은 준비 중입니다.")}
+						className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
+					>
+						<Plus size={16} />새 글쓰기
+					</Button>
+				</div>
+			</header>
 
-				<section className="mt-8 rounded-card border-card bg-card p-4 sm:p-6">
-					<GalleryGrid
-						images={images}
-						settings={currentSettings}
-						onImageClick={handleImageClick}
-					/>
-				</section>
-			</div>
+			<section>
+				<GalleryGrid
+					images={filteredImages}
+					settings={currentSettings}
+					onImageClick={handleImageClick}
+				/>
+			</section>
 
 			{/* 이미지 모달 */}
 			<GalleryImageModal
 				isOpen={isModalOpen}
 				onOpenChange={handleModalClose}
-				images={images}
+				images={filteredImages}
 				initialIndex={selectedIndex}
 				onIndexChange={handleIndexChange}
 			/>
