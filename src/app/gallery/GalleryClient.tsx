@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import GalleryGrid from "./components/GalleryGrid";
 import GalleryImageModal from "@/components/modal/GalleryImageModal";
 import GallerySettingsDialog from "@/components/modal/GallerySettingsDialog";
+import GalleryCreateModal, { type GalleryCreatePayload } from "@/components/modal/GalleryCreateModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -41,9 +42,18 @@ export default function GalleryClient() {
 	}, [gallery]);
 
 	// 이미지 데이터 (추후 API에서 가져올 수 있음)
-	const images: GalleryImage[] = useMemo(() => dummyGalleryImages, []);
+	const [images, setImages] = useState<GalleryImage[]>(() => dummyGalleryImages);
 	const [searchInput, setSearchInput] = useState("");
 	const [appliedQuery, setAppliedQuery] = useState("");
+	const [isCreateOpen, setIsCreateOpen] = useState(false);
+	const tagOptions = useMemo(() => {
+		const tags = images.flatMap((image) =>
+			Array.isArray(image.tags) ? image.tags : []
+		);
+		return Array.from(
+			new Set(tags.map((tag) => tag.trim()).filter((tag) => Boolean(tag)))
+		);
+	}, [images]);
 
 	// URL 업데이트 함수 (history API 사용, searchParams 트리거 방지)
 	const updateUrlWithImageId = useCallback(
@@ -149,6 +159,22 @@ export default function GalleryClient() {
 		});
 	}, [images, normalizedQuery]);
 
+	const handleCreateSubmit = useCallback(
+		(payload: GalleryCreatePayload) => {
+			const newItem: GalleryImage = {
+				id: crypto.randomUUID(),
+				src: payload.imageUrl,
+				title: payload.title,
+				category: "Gallery",
+				tags: payload.tags,
+				createdAt: new Date().toISOString().slice(0, 10),
+			};
+			setImages((prev) => [newItem, ...prev]);
+			toast.success("갤러리 이미지가 추가되었습니다.");
+		},
+		[],
+	);
+
 	return (
 		<div className="w-full max-w-[900px] mt-[90px] mb-[90px]">
 			<header className="mb-15 flex items-center justify-center">
@@ -193,7 +219,7 @@ export default function GalleryClient() {
 					)}
 					<Button
 						type="button"
-						onClick={() => toast("갤러리 작성 기능은 준비 중입니다.")}
+						onClick={() => setIsCreateOpen(true)}
 						className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
 					>
 						<Plus size={16} />새 글쓰기
@@ -216,6 +242,13 @@ export default function GalleryClient() {
 				images={filteredImages}
 				initialIndex={selectedIndex}
 				onIndexChange={handleIndexChange}
+			/>
+
+			<GalleryCreateModal
+				isOpen={isCreateOpen}
+				onOpenChange={setIsCreateOpen}
+				onSubmit={handleCreateSubmit}
+				tagsOptions={tagOptions}
 			/>
 		</div>
 	);
