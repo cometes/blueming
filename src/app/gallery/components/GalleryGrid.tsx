@@ -30,7 +30,7 @@ function GalleryGrid({
 	// 반응형 컬럼 계산
 	const responsiveColumns = useMemo(
 		() => getResponsiveColumns(columns),
-		[columns]
+		[columns],
 	);
 
 	// 정렬된 이미지
@@ -52,7 +52,7 @@ function GalleryGrid({
 			if (!image || !onImageClick) return;
 			onImageClick(image, index);
 		},
-		[onImageClick, sortedImages]
+		[onImageClick, sortedImages],
 	);
 
 	const gridColumnsClass =
@@ -60,9 +60,9 @@ function GalleryGrid({
 			1: "grid-cols-1 sm:grid-cols-1 lg:grid-cols-1",
 			2: "grid-cols-2 sm:grid-cols-2 lg:grid-cols-2",
 			3: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3",
-			4: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
-			5: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5",
-			6: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6",
+			4: "grid-cols-2 sm:grid-cols-4 lg:grid-cols-4",
+			5: "grid-cols-2 sm:grid-cols-4 lg:grid-cols-5",
+			6: "grid-cols-2 sm:grid-cols-4 lg:grid-cols-6",
 		}[responsiveColumns.desktop] ?? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
 
 	const masonryColumnsClass =
@@ -75,24 +75,9 @@ function GalleryGrid({
 			6: "columns-1 sm:columns-3 lg:columns-6",
 		}[responsiveColumns.desktop] ?? "columns-1 sm:columns-2 lg:columns-4";
 
-	// 로딩 스켈레톤
+	// 로딩 시 빈 상태 반환
 	if (isLoading) {
-		return (
-			<div
-				className="grid w-full p-5"
-				style={{
-					gridTemplateColumns: `repeat(${columns}, 1fr)`,
-					gap: `${gap}px`,
-				}}
-			>
-				{Array.from({ length: 12 }).map((_, index) => (
-					<div
-						key={index}
-						className="aspect-square bg-card-bg animate-pulse rounded-lg"
-					/>
-				))}
-			</div>
-		);
+		return null;
 	}
 
 	// 메이슨리 레이아웃
@@ -128,11 +113,7 @@ function GalleryGrid({
 			style={{ gap: `${gap}px` }}
 		>
 			{sortedImages.map((image, index) => (
-				<div
-					key={image.id}
-					data-index={index}
-					onClick={handleItemClick}
-				>
+				<div key={image.id} data-index={index} onClick={handleItemClick}>
 					<GalleryItem
 						image={image}
 						imageRatio={imageRatio}

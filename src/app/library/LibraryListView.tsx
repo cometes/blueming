@@ -223,7 +223,6 @@ export default function LibraryListView({
 									<PaginationContent>
 										<PaginationItem>
 											<PaginationPrevious
-												href="#"
 												onClick={(e) => {
 													e.preventDefault();
 													setActivePage(Math.max(1, currentPageSafe - 1));
@@ -235,7 +234,6 @@ export default function LibraryListView({
 											return (
 												<PaginationItem key={page}>
 													<PaginationLink
-														href="#"
 														isActive={page === currentPageSafe}
 														onClick={(e) => {
 															e.preventDefault();
@@ -249,7 +247,6 @@ export default function LibraryListView({
 										})}
 										<PaginationItem>
 											<PaginationNext
-												href="#"
 												onClick={(e) => {
 													e.preventDefault();
 													setActivePage(

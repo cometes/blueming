@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Search, Settings, X } from "lucide-react";
 import AdminOnly from "@/components/common/AdminOnly";
 import { cn } from "@/lib/utils";
@@ -56,6 +56,7 @@ export default function LibraryClient({
 	const searchParams = useSearchParams();
 	const [isCardPrefsLoaded, setIsCardPrefsLoaded] = useState(false);
 	const skipNextQueryUpdateRef = useRef(false);
+	const listTopRef = useRef<HTMLDivElement | null>(null);
 
 	const defaultLibrarySettings = useMemo(
 		() => ({
@@ -214,6 +215,15 @@ export default function LibraryClient({
 			updatePageParam(listPage);
 		}
 	}, [isSeriesOn, listPage, pathname, router, searchParams]);
+
+	const handlePageChange = useCallback(
+		(page: number) => {
+			setActivePage(page);
+			updatePageParam(page);
+			window.scrollTo({ top: 0, behavior: "smooth" });
+		},
+		[setActivePage, updatePageParam],
+	);
 
 	// Dialog가 열릴 때 현재 설정값으로 임시 상태 초기화
 	useEffect(() => {
@@ -448,7 +458,7 @@ export default function LibraryClient({
 						detailQuery={detailQuery}
 						totalPages={totalPages}
 						currentPageSafe={currentPageSafe}
-						setActivePage={setActivePage}
+						setActivePage={handlePageChange}
 					/>
 				)}
 			</div>

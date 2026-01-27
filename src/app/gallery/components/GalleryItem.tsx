@@ -5,6 +5,8 @@ import { ImageOff } from "lucide-react";
 import type { GalleryImage, GalleryImageRatio } from "@/types/gallery";
 import { IMAGE_RATIO_VALUES } from "@/types/gallery";
 import { cn } from "@/lib/utils";
+import { dateConvert } from "@/lib/date";
+import { Badge } from "@/components/ui/badge";
 
 interface GalleryItemProps {
 	image: GalleryImage;
@@ -30,9 +32,10 @@ function GalleryItem({
 	return (
 		<div
 			className={cn(
-				"relative w-full overflow-hidden bg-card-bg group cursor-pointer rounded-card border-card",
-				aspectClass
+				"relative w-full overflow-hidden bg-card-bg group cursor-pointer rounded-card transform group-hover:scale-[1.01]",
+				aspectClass,
 			)}
+			style={{ transition: "transform 250ms ease-out" }}
 			onClick={onClick}
 		>
 			{/* 로딩 스켈레톤 */}
@@ -54,25 +57,69 @@ function GalleryItem({
 						src={image.src}
 						alt={image.title}
 						className={cn(
-							"w-full h-full object-cover transform transition-transform duration-[400ms] ease-out group-hover:scale-[1.04]",
+							"w-full h-full object-cover transform group-hover:scale-[1.04]",
 							!isLoaded && "opacity-0",
-							isLoaded && "opacity-100"
+							isLoaded && "opacity-100",
 						)}
+						style={{
+							transition: "transform 400ms ease-out, opacity 300ms ease-out",
+						}}
 						onLoad={() => setIsLoaded(true)}
 						onError={() => setIsError(true)}
 					/>
 
 					{/* 오버레이 */}
 					{showCaption && (
-						<div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300">
+						<div
+							className="absolute inset-0 bg-black/0 group-hover:bg-black/50"
+							style={{ transition: "background-color 300ms ease-out" }}
+						>
 							{/* 캡션 */}
-							<div className="absolute bottom-5 left-5 opacity-0 group-hover:opacity-100 transform translate-y-0 group-hover:-translate-y-2 transition-all duration-300">
-								<p className="text-white font-semibold text-lg tracking-wide line-clamp-1">
-									{image.title}
-								</p>
-								<p className="text-white/70 text-sm mt-1 line-clamp-1">
-									{image.category}
-								</p>
+							<div
+								className="w-full h-full absolute bottom-0 left-0 opacity-0 group-hover:opacity-100 transform translate-y-0 p-2.5 flex flex-col-reverse justify-between"
+								style={{
+									transition:
+										"opacity 300ms ease-out, transform 300ms ease-out",
+								}}
+							>
+								{Array.isArray(image.tags) && image.tags.length > 0 && (
+									<div>
+										<div className="flex flex-wrap gap-2 mt-1.5">
+											{image.tags.slice(0, 2).map((tag, index) => (
+												<Badge
+													key={index}
+													variant="secondary"
+													className={cn(
+														"text-xs font-medium rounded-full",
+														"bg-theme-primary/10 text-theme-primary border-theme-primary/20",
+														"hover:bg-theme-primary/20",
+													)}
+													style={{
+														transition:
+															"background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out",
+													}}
+												>
+													{tag}
+												</Badge>
+											))}
+											{image.tags.length > 2 && (
+												<Badge
+													variant="outline"
+													className="px-2.5 text-xs font-medium rounded-full text-sub-text border-sub-text"
+												>
+													+{image.tags.length - 2}
+												</Badge>
+											)}
+										</div>
+									</div>
+								)}
+								<div className="flex justify-end items-center relative z-20 mt-1.5">
+									{image.createdAt ? (
+										<span className="block whitespace-nowrap text-main-text text-sm">
+											{dateConvert(image.createdAt)}
+										</span>
+									) : null}
+								</div>
 							</div>
 						</div>
 					)}
