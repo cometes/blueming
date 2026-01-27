@@ -8,6 +8,7 @@ export function SettingsProvider({ children, initialSettings }) {
 	const [general, setGeneral] = useState(initialSettings?.general || {});
 	const [main, setMain] = useState(initialSettings?.main || {});
 	const [library, setLibrary] = useState(initialSettings?.library || {});
+	const [gallery, setGallery] = useState(initialSettings?.gallery || {});
 	const [loading] = useState(!initialSettings);
 	const channelRef = useRef<BroadcastChannel | null>(null);
 	const clientIdRef = useRef(
@@ -37,6 +38,13 @@ export function SettingsProvider({ children, initialSettings }) {
 		}));
 	};
 
+	const updateGallery = (newSettings) => {
+		setGallery((prev) => ({
+			...prev,
+			...newSettings,
+		}));
+	};
+
 	const refreshSettings = useCallback(
 		async (options?: { broadcast?: boolean; noCache?: boolean }) => {
 			try {
@@ -60,6 +68,7 @@ export function SettingsProvider({ children, initialSettings }) {
 				setGeneral(data?.general || {});
 				setMain(data?.main || {});
 				setLibrary(data?.library || {});
+				setGallery(data?.gallery || {});
 
 				if (options?.broadcast && channelRef.current) {
 					channelRef.current.postMessage({
@@ -93,13 +102,15 @@ export function SettingsProvider({ children, initialSettings }) {
 			general,
 			main,
 			library,
+			gallery,
 			updateGeneral,
 			updateMain,
 			updateLibrary,
+			updateGallery,
 			refreshSettings,
 			loading,
 		}),
-		[general, main, library, loading, refreshSettings]
+		[general, main, library, gallery, loading, refreshSettings]
 	);
 
 	return (

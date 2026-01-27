@@ -182,13 +182,14 @@ export const handleImageUpload = async (
 
     const data = await response.json()
 
-    if (!data.file?.url) {
+    const url = data.files?.[0]?.url
+    if (!url) {
       throw new Error("서버에서 올바른 응답을 받지 못했습니다.")
     }
 
     onProgress?.({ progress: 100 })
 
-    return data.file.url
+    return url
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
       throw new Error("Upload cancelled")

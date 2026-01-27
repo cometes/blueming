@@ -138,9 +138,7 @@ export const uploadGuestbookImages = async (files: File[]) => {
 	const data = await response.json();
 	const urls = Array.isArray(data.files)
 		? data.files.map((file: { url?: string }) => file.url).filter(Boolean)
-		: data.file?.url
-			? [data.file.url]
-			: [];
+		: [];
 	if (urls.length === 0) {
 		throw new Error("서버에서 올바른 응답을 받지 못했습니다.");
 	}

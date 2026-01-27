@@ -66,6 +66,7 @@ export default function DesignSettingClient() {
 		font,
 		widget,
 		card,
+		currentDesignSetting,
 		onClickSubmit,
 		onClickReset,
 		updateDesignSetting,
@@ -225,34 +226,40 @@ export default function DesignSettingClient() {
 		e.preventDefault();
 
 		try {
-			let shouldDelay = false;
+			let nextDesign = currentDesignSetting;
 
 			// 1. pending 배경 이미지가 있으면 먼저 업로드
 			if (pendingBgImage) {
 				const url = await uploadFile(pendingBgImage.file);
+				nextDesign = {
+					...nextDesign,
+					background: {
+						...nextDesign.background,
+						image: url,
+					},
+				};
 				updateDesignSetting("background.image", url);
 				URL.revokeObjectURL(pendingBgImage.previewUrl);
 				setPendingBgImage(null);
-				shouldDelay = true;
 			}
 
 			// 2. pending 보더 이미지가 있으면 업로드
 			if (pendingBorderImage) {
 				const url = await uploadFile(pendingBorderImage.file);
+				nextDesign = {
+					...nextDesign,
+					widget: {
+						...nextDesign.widget,
+						borderImage: url,
+					},
+				};
 				updateDesignSetting("widget.borderImage", url);
 				URL.revokeObjectURL(pendingBorderImage.previewUrl);
 				setPendingBorderImage(null);
-				shouldDelay = true;
 			}
 
-			// 3. 이미지 업로드가 있었다면 약간의 딜레이 후 저장, 없으면 바로 저장
-			if (shouldDelay) {
-				setTimeout(() => {
-					onClickSubmit();
-				}, 100);
-			} else {
-				onClickSubmit();
-			}
+			// 3. 업로드 결과를 포함한 스냅샷으로 저장
+			onClickSubmit(nextDesign);
 		} catch (error) {
 			const message =
 				error instanceof Error

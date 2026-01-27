@@ -256,19 +256,21 @@ export const useSettingMenu = () => {
 		}
 	}, [reset, updateGeneral, refreshSettings]);
 
-	const handleSave = useCallback(async () => {
+	const handleSave = useCallback(async (next?: { design?: MenuDesign; menus?: MenuItem[] }) => {
 		try {
+			const nextDesign = next?.design ?? menuDesign;
+			const nextMenus = next?.menus ?? currentMenuList;
 			const preparedMenuDesign = {
-				...menuDesign,
+				...nextDesign,
 				backgroundColor:
-					menuDesign.bgType === "없음"
+					nextDesign.bgType === "없음"
 						? "rgba(0, 0, 0, 0)"
-						: menuDesign.backgroundColor,
+						: nextDesign.backgroundColor,
 			};
 
 			const menuData = {
 				design: preparedMenuDesign,
-				menus: currentMenuList,
+				menus: nextMenus,
 			};
 
 			const response = await setSettingsGeneralMenu(menuData);

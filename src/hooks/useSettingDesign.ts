@@ -171,24 +171,28 @@ export const useSettingDesign = () => {
   };
 
   // Get changed values compared to defaultValues
-  const getChangedValues = () => {
+  const getChangedValues = (source = currentDesignSetting) => {
     const changedValues = {};
 
-    Object.keys(currentDesignSetting).forEach(key => {
-      if (!_.isEqual(currentDesignSetting[key], defaultValues[key])) {
-        changedValues[key] = currentDesignSetting[key];
+    Object.keys(source).forEach(key => {
+      if (!_.isEqual(source[key], defaultValues[key])) {
+        changedValues[key] = source[key];
       }
     });
 
     return changedValues;
   };
 
-  const onClickSubmit = async () => {
-    const changedData = getChangedValues();
+  const onClickSubmit = async (overrideDesign?: typeof currentDesignSetting) => {
+    const source = overrideDesign ?? currentDesignSetting;
+    const changedData = getChangedValues(source);
     try {
       const response = await setSettingsGeneralDesign(changedData);
       if (updateDesign) {
         updateDesign(response.general.design);
+      }
+      if (overrideDesign) {
+        setCurrentDesignSetting(overrideDesign);
       }
       await refreshSettings?.({ broadcast: true });
 
