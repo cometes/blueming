@@ -1,5 +1,5 @@
 import { useAuthStore } from "@/store/auth/store";
-import { isUserAdmin, checkAdminClaims, refreshAdminClaims } from "@/lib/isAdmin";
+import { isUserAdmin, isUserManager, checkAdminClaims, refreshAdminClaims } from "@/lib/isAdmin";
 import { useCallback } from "react";
 
 /**
@@ -16,6 +16,13 @@ export const useAdmin = () => {
 			return false;
 		}
 		return isUserAdmin(user);
+	};
+
+	const isCurrentUserManager = (): boolean => {
+		if (!isAuthenticated || !user) {
+			return false;
+		}
+		return isUserManager(user);
 	};
 
 	/**
@@ -88,7 +95,10 @@ export const useAdmin = () => {
 
 	return {
 		isAdmin: isCurrentUserAdmin(),
+		isManager: isCurrentUserManager(),
+		isManagerOrAdmin: isCurrentUserAdmin() || isCurrentUserManager(),
 		isCurrentUserAdmin,
+		isCurrentUserManager,
 		checkCurrentAdminClaims,
 		refreshAdminStatus,
 		requireAdmin,

@@ -1,4 +1,5 @@
 import { getAuth, getIdTokenResult } from 'firebase/auth';
+import type { AuthUser } from "@/store/auth/store";
 
 /**
  * Firebase Custom Claims를 사용하여 관리자 여부를 확인하는 함수
@@ -15,9 +16,24 @@ export const checkAdminClaims = async (): Promise<boolean> => {
 
 		// ID 토큰에서 Custom Claims 확인
 		const tokenResult = await getIdTokenResult(currentUser);
-		return !!tokenResult.claims.isAdmin;
+		return !!tokenResult.claims.isAdmin || tokenResult.claims.role === "admin";
 	} catch {
 		return false;
+	}
+};
+
+export const getRoleClaims = async (): Promise<"user" | "manager" | "admin"> => {
+	try {
+		const auth = getAuth();
+		const currentUser = auth.currentUser;
+		if (!currentUser) return "user";
+		const tokenResult = await getIdTokenResult(currentUser);
+		const claims = tokenResult.claims || {};
+		if (claims.role === "admin" || claims.isAdmin) return "admin";
+		if (claims.role === "manager" || claims.isManager) return "manager";
+		return "user";
+	} catch {
+		return "user";
 	}
 };
 
@@ -31,6 +47,11 @@ export const isUserAdmin = (
 ): boolean => {
 	if (!user) return false;
 	return !!user.isAdmin;
+};
+
+export const isUserManager = (user: AuthUser | null): boolean => {
+	if (!user) return false;
+	return user.role === "manager" || user.role === "admin";
 };
 
 /**
@@ -48,7 +69,7 @@ export const refreshAdminClaims = async (): Promise<boolean> => {
 
 		// 토큰 강제 새로고침하여 최신 claims 가져오기
 		const tokenResult = await getIdTokenResult(currentUser, true);
-		return !!tokenResult.claims.isAdmin;
+		return !!tokenResult.claims.isAdmin || tokenResult.claims.role === "admin";
 	} catch {
 		return false;
 	}

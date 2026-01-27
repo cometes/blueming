@@ -59,7 +59,7 @@ export default function WidgetMenu() {
 	const { general } = useSettings();
 	const menuData: MenuData = general.menu || { design: {}, menus: [] };
 	const router = useRouter();
-	const { isAdmin } = useAdmin();
+	const { isAdmin, isManagerOrAdmin } = useAdmin();
 	const [openFolders, setOpenFolders] = useState<OpenFolders>({});
 
 	// -------------------------------------------------------------------------
@@ -120,7 +120,7 @@ export default function WidgetMenu() {
 		const allMenuItems = menuData.menus || [];
 		return allMenuItems.filter((item: MenuItem) => {
 			// Hide settings menu for non-admin users
-			if (item.category === "설정" && !isAdmin) {
+			if (item.category === "설정" && !isManagerOrAdmin) {
 				return false;
 			}
 
