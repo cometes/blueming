@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 
 function GallerySkeleton() {
 	return (
-		<div className="shrink-0 w-full max-w-2xl mt-[90px] mb-[40px] mx-auto">
+		<div className="w-full max-w-[900px] mt-[90px] mb-[90px]">
 			<header className="mb-10 flex items-center justify-center">
 				<div className="flex items-center gap-2 w-full sm:w-auto">
 					<div className="w-[150px]" />
