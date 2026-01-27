@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
 	ChevronLeft,
@@ -10,11 +10,12 @@ import {
 	Link as LinkIcon,
 	ImageOff,
 } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { GalleryImage } from "@/types/gallery";
 import { cn } from "@/lib/utils";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface GalleryImageModalProps {
 	isOpen: boolean;
@@ -36,42 +37,66 @@ export default function GalleryImageModal({
 	const [isError, setIsError] = useState(false);
 	const [direction, setDirection] = useState(0);
 
+	// 내부 네비게이션 중인지 추적 (외부 initialIndex 변경과 구분)
+	const isNavigating = useRef(false);
+
 	const currentImage = images[activeIndex];
 
-	// 인덱스 초기화
+	// 모달이 열릴 때 initialIndex로 동기화
 	useEffect(() => {
 		if (!isOpen) return;
-		const nextIndex =
+		// 내부 네비게이션 중이면 initialIndex 무시
+		if (isNavigating.current) {
+			isNavigating.current = false;
+			return;
+		}
+
+		const clampedIndex =
 			images.length === 0
 				? 0
 				: Math.min(Math.max(initialIndex, 0), images.length - 1);
-		setActiveIndex(nextIndex);
-		setIsLoaded(false);
-		setIsError(false);
-	}, [isOpen, images.length, initialIndex]);
 
-	// 인덱스 변경 시 콜백
-	useEffect(() => {
-		if (isOpen && onIndexChange) {
-			onIndexChange(activeIndex);
+		if (clampedIndex !== activeIndex) {
+			setActiveIndex(clampedIndex);
+			setIsLoaded(false);
+			setIsError(false);
 		}
-	}, [activeIndex, isOpen, onIndexChange]);
+	}, [isOpen, initialIndex, images.length]);
+
+	// 모달이 닫힐 때 네비게이션 플래그만 리셋 (isLoaded는 유지하여 닫힘 애니메이션 중 스피너 방지)
+	useEffect(() => {
+		if (!isOpen) {
+			isNavigating.current = false;
+		}
+	}, [isOpen]);
+
+	const navigateTo = useCallback(
+		(newIndex: number, dir: number) => {
+			if (images.length === 0) return;
+
+			isNavigating.current = true;
+			setDirection(dir);
+			setIsLoaded(false);
+			setIsError(false);
+			setActiveIndex(newIndex);
+
+			// 부모에게 인덱스 변경 알림
+			onIndexChange?.(newIndex);
+		},
+		[images.length, onIndexChange]
+	);
 
 	const handlePrev = useCallback(() => {
 		if (images.length === 0) return;
-		setDirection(-1);
-		setIsLoaded(false);
-		setIsError(false);
-		setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
-	}, [images.length]);
+		const newIndex = (activeIndex - 1 + images.length) % images.length;
+		navigateTo(newIndex, -1);
+	}, [activeIndex, images.length, navigateTo]);
 
 	const handleNext = useCallback(() => {
 		if (images.length === 0) return;
-		setDirection(1);
-		setIsLoaded(false);
-		setIsError(false);
-		setActiveIndex((prev) => (prev + 1) % images.length);
-	}, [images.length]);
+		const newIndex = (activeIndex + 1) % images.length;
+		navigateTo(newIndex, 1);
+	}, [activeIndex, images.length, navigateTo]);
 
 	// 키보드 네비게이션
 	useEffect(() => {
@@ -154,6 +179,14 @@ export default function GalleryImageModal({
 				className="max-w-4xl w-[95vw] h-[90vh] bg-black/95 border-none p-0 overflow-hidden flex flex-col"
 				showCloseButton={false}
 			>
+				<VisuallyHidden asChild>
+					<DialogTitle>갤러리 이미지 상세보기</DialogTitle>
+				</VisuallyHidden>
+				<VisuallyHidden asChild>
+					<DialogDescription>
+						갤러리 이미지 상세보기 모달입니다. 좌우 버튼으로 이동할 수 있습니다.
+					</DialogDescription>
+				</VisuallyHidden>
 				{/* 헤더 */}
 				<div className="flex items-center justify-between px-4 py-3 bg-black/50 backdrop-blur-sm">
 					<div className="flex items-center gap-2">
@@ -194,7 +227,7 @@ export default function GalleryImageModal({
 
 				{/* 이미지 영역 */}
 				<div className="relative flex-1 flex items-center justify-center overflow-hidden">
-					<AnimatePresence initial={false} custom={direction}>
+					<AnimatePresence initial={false} custom={direction} mode="wait">
 						<motion.div
 							key={activeIndex}
 							custom={direction}

@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
-import { motion } from "framer-motion";
+import { memo, useCallback, useMemo } from "react";
+import type { MouseEvent } from "react";
 import GalleryItem from "./GalleryItem";
 import type { GalleryImage } from "@/types/gallery";
 import {
@@ -10,6 +9,7 @@ import {
 	DEFAULT_GALLERY_SETTINGS,
 	getResponsiveColumns,
 } from "@/types/gallery";
+import { cn } from "@/lib/utils";
 
 interface GalleryGridProps {
 	images: GalleryImage[];
@@ -18,7 +18,7 @@ interface GalleryGridProps {
 	isLoading?: boolean;
 }
 
-export default function GalleryGrid({
+function GalleryGrid({
 	images,
 	settings = DEFAULT_GALLERY_SETTINGS,
 	onImageClick,
@@ -41,6 +41,39 @@ export default function GalleryGrid({
 		}
 		return sorted;
 	}, [images, settings.behavior.sortOrder]);
+
+	// 아이템 클릭 핸들러 - 훅은 항상 최상위에서 호출
+	const handleItemClick = useCallback(
+		(event: MouseEvent<HTMLDivElement>) => {
+			const indexAttr = event.currentTarget.dataset.index;
+			if (!indexAttr) return;
+			const index = Number(indexAttr);
+			const image = sortedImages[index];
+			if (!image || !onImageClick) return;
+			onImageClick(image, index);
+		},
+		[onImageClick, sortedImages]
+	);
+
+	const gridColumnsClass =
+		{
+			1: "grid-cols-1 sm:grid-cols-1 lg:grid-cols-1",
+			2: "grid-cols-2 sm:grid-cols-2 lg:grid-cols-2",
+			3: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3",
+			4: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
+			5: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5",
+			6: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6",
+		}[responsiveColumns.desktop] ?? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
+
+	const masonryColumnsClass =
+		{
+			1: "columns-1 sm:columns-1 lg:columns-1",
+			2: "columns-1 sm:columns-2 lg:columns-2",
+			3: "columns-1 sm:columns-2 lg:columns-3",
+			4: "columns-1 sm:columns-2 lg:columns-4",
+			5: "columns-1 sm:columns-3 lg:columns-5",
+			6: "columns-1 sm:columns-3 lg:columns-6",
+		}[responsiveColumns.desktop] ?? "columns-1 sm:columns-2 lg:columns-4";
 
 	// 로딩 스켈레톤
 	if (isLoading) {
@@ -65,95 +98,50 @@ export default function GalleryGrid({
 	// 메이슨리 레이아웃
 	if (layout === "masonry") {
 		return (
-			<div className="w-full p-5">
-				<ResponsiveMasonry
-					columnsCountBreakPoints={{
-						350: responsiveColumns.mobile,
-						750: responsiveColumns.tablet,
-						1024: responsiveColumns.desktop,
-					}}
-				>
-					<Masonry gutter={`${gap}px`}>
-						{sortedImages.map((image, index) => (
-							<motion.div
-								key={image.id}
-								layout
-								initial={{ opacity: 0, scale: 0.9 }}
-								animate={{ opacity: 1, scale: 1 }}
-								transition={{ duration: 0.3, delay: index * 0.05 }}
-							>
-								<GalleryItem
-									image={image}
-									imageRatio="original"
-									showCaption={showCaption}
-									onClick={() => onImageClick?.(image, index)}
-								/>
-							</motion.div>
-						))}
-					</Masonry>
-				</ResponsiveMasonry>
+			<div
+				className={cn("w-full", masonryColumnsClass)}
+				style={{ columnGap: `${gap}px` }}
+			>
+				{sortedImages.map((image, index) => (
+					<div
+						key={image.id}
+						className="break-inside-avoid mb-4"
+						style={{ marginBottom: `${gap}px` }}
+						data-index={index}
+						onClick={handleItemClick}
+					>
+						<GalleryItem
+							image={image}
+							imageRatio="original"
+							showCaption={showCaption}
+						/>
+					</div>
+				))}
 			</div>
 		);
 	}
 
 	// 그리드 레이아웃 (기본)
 	return (
-		<div className="w-full p-5">
-			<div
-				className="grid w-full"
-				style={{
-					gridTemplateColumns: `repeat(${responsiveColumns.desktop}, 1fr)`,
-					gap: `${gap}px`,
-				}}
-			>
-				{sortedImages.map((image, index) => (
-					<motion.div
-						key={image.id}
-						layout
-						initial={{ opacity: 0, scale: 0.9 }}
-						animate={{ opacity: 1, scale: 1 }}
-						transition={{ duration: 0.3, delay: index * 0.05 }}
-						className="sm:block hidden"
-						style={{
-							gridColumn:
-								index < responsiveColumns.desktop ? "auto" : undefined,
-						}}
-					>
-						<GalleryItem
-							image={image}
-							imageRatio={imageRatio}
-							showCaption={showCaption}
-							onClick={() => onImageClick?.(image, index)}
-						/>
-					</motion.div>
-				))}
-			</div>
-
-			{/* 모바일/태블릿 반응형 그리드 */}
-			<div
-				className="grid sm:hidden"
-				style={{
-					gridTemplateColumns: `repeat(${responsiveColumns.mobile}, 1fr)`,
-					gap: `${gap}px`,
-				}}
-			>
-				{sortedImages.map((image, index) => (
-					<motion.div
-						key={image.id}
-						layout
-						initial={{ opacity: 0, scale: 0.9 }}
-						animate={{ opacity: 1, scale: 1 }}
-						transition={{ duration: 0.3, delay: index * 0.05 }}
-					>
-						<GalleryItem
-							image={image}
-							imageRatio={imageRatio}
-							showCaption={showCaption}
-							onClick={() => onImageClick?.(image, index)}
-						/>
-					</motion.div>
-				))}
-			</div>
+		<div
+			className={cn("grid w-full", gridColumnsClass)}
+			style={{ gap: `${gap}px` }}
+		>
+			{sortedImages.map((image, index) => (
+				<div
+					key={image.id}
+					data-index={index}
+					onClick={handleItemClick}
+				>
+					<GalleryItem
+						image={image}
+						imageRatio={imageRatio}
+						showCaption={showCaption}
+					/>
+				</div>
+			))}
 		</div>
 	);
 }
+
+export default memo(GalleryGrid);
