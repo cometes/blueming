@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { ImageOff } from "lucide-react";
 import type { GalleryImage, GalleryImageRatio } from "@/types/gallery";
 import { IMAGE_RATIO_VALUES } from "@/types/gallery";
@@ -13,7 +13,7 @@ interface GalleryItemProps {
 	onClick?: () => void;
 }
 
-export default function GalleryItem({
+function GalleryItem({
 	image,
 	imageRatio = "square",
 	showCaption = true,
@@ -30,7 +30,7 @@ export default function GalleryItem({
 	return (
 		<div
 			className={cn(
-				"relative w-full overflow-hidden bg-card-bg group cursor-pointer rounded-lg",
+				"relative w-full overflow-hidden bg-card-bg group cursor-pointer rounded-card border-card",
 				aspectClass
 			)}
 			onClick={onClick}
@@ -54,7 +54,7 @@ export default function GalleryItem({
 						src={image.src}
 						alt={image.title}
 						className={cn(
-							"w-full h-full object-cover transform transition-transform duration-[400ms] ease-out group-hover:scale-110",
+							"w-full h-full object-cover transform transition-transform duration-[400ms] ease-out group-hover:scale-[1.04]",
 							!isLoaded && "opacity-0",
 							isLoaded && "opacity-100"
 						)}
@@ -81,3 +81,5 @@ export default function GalleryItem({
 		</div>
 	);
 }
+
+export default memo(GalleryItem);
