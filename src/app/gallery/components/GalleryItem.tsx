@@ -84,6 +84,11 @@ function GalleryItem({
 							>
 								{Array.isArray(image.tags) && image.tags.length > 0 && (
 									<div>
+										{image.title ? (
+											<p className="text-sm font-semibold text-main-text font-title">
+												{image.title}
+											</p>
+										) : null}
 										<div className="flex flex-wrap gap-2 mt-1.5">
 											{image.tags.slice(0, 2).map((tag, index) => (
 												<Badge
