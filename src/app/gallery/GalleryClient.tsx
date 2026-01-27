@@ -160,7 +160,7 @@ export default function GalleryClient() {
 							endIcon={searchInput ? X : Search}
 							value={searchInput}
 							onChange={(e) => setSearchInput(e.target.value)}
-							placeholder="본문, 태그로 검색"
+							placeholder="태그로 검색"
 							onKeyDown={(e) => {
 								if (e.key === "Enter") {
 									e.preventDefault();

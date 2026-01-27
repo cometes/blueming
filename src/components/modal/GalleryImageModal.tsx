@@ -10,7 +10,12 @@ import {
 	Link as LinkIcon,
 	ImageOff,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { GalleryImage } from "@/types/gallery";
@@ -83,7 +88,7 @@ export default function GalleryImageModal({
 			// 부모에게 인덱스 변경 알림
 			onIndexChange?.(newIndex);
 		},
-		[images.length, onIndexChange]
+		[images.length, onIndexChange],
 	);
 
 	const handlePrev = useCallback(() => {
@@ -176,7 +181,7 @@ export default function GalleryImageModal({
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
 			<DialogContent
-				className="max-w-4xl w-[95vw] h-[90vh] bg-black/95 border-none p-0 overflow-hidden flex flex-col"
+				className="max-w-3xl md:max-w-3xl sm:max-w-2xl border-none p-0 overflow-hidden flex flex-col bg-card border-card rounded-card backdrop-blur-card aspect-[5/4] gap-0"
 				showCloseButton={false}
 			>
 				<VisuallyHidden asChild>
@@ -188,9 +193,9 @@ export default function GalleryImageModal({
 					</DialogDescription>
 				</VisuallyHidden>
 				{/* 헤더 */}
-				<div className="flex items-center justify-between px-4 py-3 bg-black/50 backdrop-blur-sm">
+				<div className="flex items-center justify-between px-4 py-3 bg-black/40">
 					<div className="flex items-center gap-2">
-						<span className="text-white/80 text-sm">
+						<span className="text-main-text text-sm">
 							{activeIndex + 1} / {images.length}
 						</span>
 					</div>
@@ -198,7 +203,7 @@ export default function GalleryImageModal({
 						<Button
 							variant="ghost"
 							size="icon"
-							className="text-white hover:bg-white/10"
+							className="text-main-text hover:bg-white/10"
 							onClick={handleCopyLink}
 							title="링크 복사"
 						>
@@ -207,7 +212,7 @@ export default function GalleryImageModal({
 						<Button
 							variant="ghost"
 							size="icon"
-							className="text-white hover:bg-white/10"
+							className="text-main-text hover:bg-white/10"
 							onClick={handleDownload}
 							title="다운로드"
 						>
@@ -216,7 +221,7 @@ export default function GalleryImageModal({
 						<Button
 							variant="ghost"
 							size="icon"
-							className="text-white hover:bg-white/10"
+							className="text-main-text hover:bg-white/10"
 							onClick={() => onOpenChange(false)}
 							title="닫기"
 						>
@@ -226,7 +231,7 @@ export default function GalleryImageModal({
 				</div>
 
 				{/* 이미지 영역 */}
-				<div className="relative flex-1 flex items-center justify-center overflow-hidden">
+				<div className="relative flex-1 w-full overflow-hidden">
 					<AnimatePresence initial={false} custom={direction} mode="wait">
 						<motion.div
 							key={activeIndex}
@@ -239,7 +244,7 @@ export default function GalleryImageModal({
 								x: { type: "spring", stiffness: 300, damping: 30 },
 								opacity: { duration: 0.2 },
 							}}
-							className="absolute inset-0 flex items-center justify-center p-4"
+							className="absolute inset-0 flex items-center justify-center"
 						>
 							{/* 로딩 스켈레톤 */}
 							{!isLoaded && !isError && (
@@ -260,9 +265,10 @@ export default function GalleryImageModal({
 									src={currentImage.src}
 									alt={currentImage.title}
 									className={cn(
-										"max-w-full max-h-full object-contain transition-opacity duration-300",
-										isLoaded ? "opacity-100" : "opacity-0"
+										"w-full h-full object-contain transition-opacity duration-300",
+										isLoaded ? "opacity-100" : "opacity-0",
 									)}
+									style={{ display: "block" }}
 									onLoad={() => setIsLoaded(true)}
 									onError={() => setIsError(true)}
 								/>
@@ -294,7 +300,7 @@ export default function GalleryImageModal({
 				</div>
 
 				{/* 푸터 - 이미지 정보 */}
-				<div className="px-6 py-4 bg-black/50 backdrop-blur-sm">
+				<div className="px-6 py-4 bg-black/40">
 					<h3 className="text-white font-semibold text-lg">
 						{currentImage.title}
 					</h3>

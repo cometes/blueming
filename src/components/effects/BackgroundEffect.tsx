@@ -75,7 +75,7 @@ export default function BackgroundEffect() {
 
 	return (
 		<div
-			className="background-effect-layer fixed inset-0 z-0"
+			className="background-effect-layer fixed inset-0 -z-10"
 			aria-hidden="true"
 		>
 			{renderEffect()}
