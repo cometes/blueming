@@ -21,7 +21,6 @@ export default function AdminRoute({
 	redirectTo = "/",
 }: AdminRouteProps) {
 	const {
-		isAdmin,
 		isManagerOrAdmin,
 		isAuthenticated,
 		isLoading,

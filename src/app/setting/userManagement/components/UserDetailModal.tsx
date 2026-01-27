@@ -68,7 +68,10 @@ export default function UserDetailModal({
     const toDate = (value: User["createdAt"]) => {
         if (!value) return null;
         if (typeof value === "string") return new Date(value);
-        if (typeof (value as any).toDate === "function") return (value as any).toDate();
+        if (value instanceof Date) return value;
+        if (typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
+            return value.toDate() as Date;
+        }
         return null;
     };
 
