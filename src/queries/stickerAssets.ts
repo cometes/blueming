@@ -56,8 +56,11 @@ const uploadImageViaApi = async (file: File): Promise<string> => {
 	if (!response.ok) {
 		throw new Error(`Upload failed: ${response.statusText}`);
 	}
-	const data = (await response.json()) as { file?: { url?: string } };
-	const url = data?.file?.url;
+	const data = (await response.json()) as {
+		file?: { url?: string };
+		files?: Array<{ url?: string }>;
+	};
+	const url = data?.files?.[0]?.url;
 	if (!url) throw new Error("서버에서 URL을 받지 못했습니다.");
 	return url;
 };
@@ -201,4 +204,3 @@ export async function deleteStickerAsset(asset: Pick<StickerAsset, "id" | "stora
 	}
 	await deleteDoc(doc(db, "users", uid, "stickerAssets", asset.id));
 }
-

@@ -3,6 +3,7 @@
 
 import { createContext, useContext } from "react";
 import type { StickerBoardSettings } from "@/types/stickerBoard";
+import type { GallerySettings } from "@/types/gallery";
 
 // Layout Types
 interface LayoutItem {
@@ -270,11 +271,13 @@ interface SettingsContextType {
 	};
 	main?: MainSettings;
 	library?: LibrarySettings;
+	gallery?: GallerySettings;
 	updateGeneral?: (general: Partial<GeneralSettings>) => void;
 	updateDesign?: (design: Design) => void;
 	updateMenu?: (menu: Menu) => void;
 	updateMain?: (main: Partial<MainSettings>) => void;
 	updateLibrary?: (library: Partial<LibrarySettings>) => void;
+	updateGallery?: (gallery: Partial<GallerySettings>) => void;
 	refreshSettings?: (options?: { broadcast?: boolean }) => Promise<void>;
 }
 
@@ -318,4 +321,5 @@ export type {
 	ThemeItem,
 	EffectSettings,
 	StickerBoardSettings,
+	GallerySettings,
 };

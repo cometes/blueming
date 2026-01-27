@@ -493,6 +493,7 @@ export default function MenuSettingClient() {
 					try {
 						// pending 이미지들이 있으면 먼저 업로드
 						const uploadedUrls: Partial<Record<ImageFieldType, string>> = {};
+						let nextMenuDesign = menuDesign;
 
 						for (const field of Object.keys(
 							pendingImages
@@ -507,15 +508,31 @@ export default function MenuSettingClient() {
 
 						// 업로드된 URL들을 menuSetting에 반영
 						if (uploadedUrls.logo) {
+							nextMenuDesign = {
+								...nextMenuDesign,
+								logoImage: uploadedUrls.logo,
+							};
 							updateMenuSetting("logo.image", uploadedUrls.logo);
 						}
 						if (uploadedUrls.background) {
+							nextMenuDesign = {
+								...nextMenuDesign,
+								backgroundImage: uploadedUrls.background,
+							};
 							updateMenuSetting("background.image", uploadedUrls.background);
 						}
 						if (uploadedUrls.iconBarLogo) {
+							nextMenuDesign = {
+								...nextMenuDesign,
+								iconBarLogoImage: uploadedUrls.iconBarLogo,
+							};
 							updateMenuSetting("iconbar.logo.image", uploadedUrls.iconBarLogo);
 						}
 						if (uploadedUrls.iconBarBackground) {
+							nextMenuDesign = {
+								...nextMenuDesign,
+								iconBarBackgroundImage: uploadedUrls.iconBarBackground,
+							};
 							updateMenuSetting(
 								"iconbar.background.image",
 								uploadedUrls.iconBarBackground
@@ -530,14 +547,8 @@ export default function MenuSettingClient() {
 							iconBarBackground: null,
 						});
 
-						// 약간의 딜레이 후 저장 (updateMenuSetting이 비동기적으로 상태를 업데이트할 수 있으므로)
-						if (Object.keys(uploadedUrls).length > 0) {
-							setTimeout(() => {
-								handleSave();
-							}, 100);
-						} else {
-							handleSave();
-						}
+						// 업로드 결과를 포함한 스냅샷으로 저장
+						handleSave({ design: nextMenuDesign, menus });
 					} catch {
 						toast.error("이미지 업로드 중 오류가 발생했습니다.");
 					}

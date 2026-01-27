@@ -88,13 +88,14 @@ export default function ImageUploadDialog({
 
 			setIsUploading(true);
 
-			if (files.length > 1) {
-				toast.error("여러 파일 업로드는 준비 중입니다.");
-				return;
-			}
-
 			const formData = new FormData();
-			formData.append("image", files[0]);
+			files.forEach((file) => {
+				const sanitizedFileName = encodeURIComponent(file.name);
+				const processedFile = new File([file], sanitizedFileName, {
+					type: file.type,
+				});
+				formData.append("file", processedFile);
+			});
 
 			const authHeader = await getAuthHeader();
 			const response = await fetch(
@@ -111,13 +112,19 @@ export default function ImageUploadDialog({
 			}
 
 			const data = await response.json();
-			const url = data.file?.url;
+			const urls = Array.isArray(data.files)
+				? data.files
+						.map((file: { url?: string }) => file?.url)
+						.filter(Boolean)
+				: [];
+			const url = urls[0];
 
-			if (url) {
-				setThumbnail(url);
-			} else {
+			if (!url) {
 				toast.error("URL이 반환되지 않았습니다.");
+				return;
 			}
+
+			setThumbnail(url);
 		} catch {
 			toast.error("이미지 업로드 중 오류가 발생했습니다.");
 		} finally {

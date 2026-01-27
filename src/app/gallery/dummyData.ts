@@ -1,11 +1,4 @@
-export type GalleryImage = {
-	id: string;
-	src: string;
-	title: string;
-	category: string;
-	width?: number;
-	height?: number;
-};
+import type { GalleryImage } from "@/types/gallery";
 
 export const dummyGalleryImages: GalleryImage[] = [
 	{
@@ -18,19 +11,19 @@ export const dummyGalleryImages: GalleryImage[] = [
 	},
 	{
 		id: "2",
-		src: "https://picsum.photos/350/250/?image=232",
+		src: "https://picsum.photos/350/400?image=232",
 		title: "Night Sky",
 		category: "Cinematic",
 		width: 350,
-		height: 250,
+		height: 400,
 	},
 	{
 		id: "3",
-		src: "https://picsum.photos/350/250/?image=431",
+		src: "https://picsum.photos/350/300?image=431",
 		title: "Tea Talk",
 		category: "Composite",
 		width: 350,
-		height: 250,
+		height: 300,
 	},
 	{
 		id: "4",
@@ -42,66 +35,66 @@ export const dummyGalleryImages: GalleryImage[] = [
 	},
 	{
 		id: "5",
-		src: "https://picsum.photos/350/250?image=344",
+		src: "https://picsum.photos/350/450?image=344",
 		title: "Sea",
 		category: "Cityscape",
 		width: 350,
-		height: 250,
+		height: 450,
 	},
 	{
 		id: "6",
-		src: "https://picsum.photos/350/250?image=494",
+		src: "https://picsum.photos/350/280?image=494",
 		title: "Vintage",
 		category: "Cinematic",
 		width: 350,
-		height: 250,
+		height: 280,
 	},
 	{
 		id: "7",
-		src: "https://picsum.photos/350/250?image=1015",
+		src: "https://picsum.photos/350/350?image=1015",
 		title: "Mountain View",
 		category: "Nature",
 		width: 350,
-		height: 250,
+		height: 350,
 	},
 	{
 		id: "8",
-		src: "https://picsum.photos/350/250?image=1018",
+		src: "https://picsum.photos/350/420?image=1018",
 		title: "Urban Life",
 		category: "Street Photography",
 		width: 350,
-		height: 250,
+		height: 420,
 	},
 	{
 		id: "9",
-		src: "https://picsum.photos/350/250?image=1025",
+		src: "https://picsum.photos/350/300?image=1025",
 		title: "Abstract Art",
 		category: "Creative",
 		width: 350,
-		height: 250,
+		height: 300,
 	},
 	{
 		id: "10",
-		src: "https://picsum.photos/350/250?image=1043",
+		src: "https://picsum.photos/350/380?image=1043",
 		title: "Beach Sunset",
 		category: "Landscape",
 		width: 350,
-		height: 250,
+		height: 380,
 	},
 	{
 		id: "11",
-		src: "https://picsum.photos/350/250?image=1044",
+		src: "https://picsum.photos/350/320?image=1044",
 		title: "Forest Path",
 		category: "Nature",
 		width: 350,
-		height: 250,
+		height: 320,
 	},
 	{
 		id: "12",
-		src: "https://picsum.photos/350/250?image=1047",
+		src: "https://picsum.photos/350/400?image=1047",
 		title: "City Lights",
 		category: "Cityscape",
 		width: 350,
-		height: 250,
+		height: 400,
 	},
 ];

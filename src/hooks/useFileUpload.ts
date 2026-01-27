@@ -97,7 +97,7 @@ export const useFileUpload = (options?: FileUploadOptions): UseFileUploadReturn 
       }
 
       const data = await response.json();
-      const url = data.file?.url || data.files?.[0]?.url;
+      const url = data.files?.[0]?.url;
       
       if (!url) {
         throw new Error("서버에서 올바른 응답을 받지 못했습니다.");
