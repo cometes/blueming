@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { apiClient } from "@/queries/apiClient";
 import {
 	fetchLibraryList,
@@ -41,25 +42,29 @@ export default async function LibararyListPage({
 		};
 
 		return (
-			<LibraryClient
-				listData={finalListResponse.items}
-				pinnedData={finalListResponse.pinnedItems}
-				listTotal={finalListResponse.total}
-				seriesData={seriesData}
-				tagData={Array.isArray(tagData) ? tagData : []}
-				initialPage={currentPage}
-			/>
+			<Suspense fallback={null}>
+				<LibraryClient
+					listData={finalListResponse.items}
+					pinnedData={finalListResponse.pinnedItems}
+					listTotal={finalListResponse.total}
+					seriesData={seriesData}
+					tagData={Array.isArray(tagData) ? tagData : []}
+					initialPage={currentPage}
+				/>
+			</Suspense>
 		);
 	} catch {
 		return (
-			<LibraryClient
-				listData={[]}
-				pinnedData={[]}
-				listTotal={0}
-				seriesData={[]}
-				tagData={[]}
-				initialPage={1}
-			/>
+			<Suspense fallback={null}>
+				<LibraryClient
+					listData={[]}
+					pinnedData={[]}
+					listTotal={0}
+					seriesData={[]}
+					tagData={[]}
+					initialPage={1}
+				/>
+			</Suspense>
 		);
 	}
 }

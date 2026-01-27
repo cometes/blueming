@@ -49,7 +49,6 @@ export default function Layout({ children }: LayoutProps) {
 	const isMenuRightAligned = general?.menu?.design?.align === "오른쪽";
 
 	const isSettingPage = pathname.startsWith("/setting");
-	const isLibraryRoot = pathname === "/library";
 	const isLibrarySeries = pathname.startsWith("/library/series");
 	const isLibraryWrite = pathname === "/library/new";
 	const isLibraryEdit = pathname.startsWith("/library/") && pathname.endsWith("/edit");

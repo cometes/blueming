@@ -226,6 +226,11 @@ interface ThemeItem {
 	version: string;
 }
 
+interface PhotoboardSettings {
+	postsPerRow?: number;
+	writePermission?: "admin" | "member";
+}
+
 // Main Settings
 interface MainSettings {
 	customLayout?: CustomLayout;
@@ -236,6 +241,7 @@ interface MainSettings {
 	stickerBoard?: StickerBoardSettings;
 	imageWidget?: ImageWidgetSettings;
 	weatherClock?: WeatherClockSettings;
+	photoboard?: PhotoboardSettings;
 }
 
 interface LibrarySettings {
@@ -301,6 +307,7 @@ export type {
 	Profile,
 	ImageWidgetSettings,
 	WeatherClockSettings,
+	PhotoboardSettings,
 	MenuItem,
 	SubMenu,
 	MenuDesign,
