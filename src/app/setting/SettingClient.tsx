@@ -32,6 +32,9 @@ const AccountSettingClient = dynamic(
 	() => import("./account/AccountSettingClient")
 );
 const AssetSettingClient = dynamic(() => import("./asset/AssetSettingClient"));
+const UserManagementSettingClient = dynamic(
+	() => import("./userManagement/UserManagementClient")
+);
 
 type SettingSection = {
 	id: string;
@@ -159,6 +162,13 @@ export default function SettingClient({ initialSection }: SettingClientProps) {
 				title: "관리",
 				items: [
 					{
+						id: "userManagement",
+						label: "회원 관리",
+						title: "회원 관리",
+						desc: "서비스에 가입한 회원을 관리하고 가입 설정을 변경할 수 있습니다.",
+						Component: UserManagementSettingClient,
+					},
+					{
 						id: "account",
 						label: "계정 관리",
 						title: "계정 관리",
@@ -244,6 +254,6 @@ export default function SettingClient({ initialSection }: SettingClientProps) {
 					</SettingLayout>
 				</SettingHeaderActionProvider>
 			</SettingStatusProvider>
-			</AdminRoute>
+		</AdminRoute>
 	);
 }

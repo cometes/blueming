@@ -8,7 +8,7 @@ import {
 } from "firebase/auth";
 import { auth, provider } from "@/lib/Firebase";
 import { useAuthStore, AuthUser } from "@/store/auth/store";
-import { checkAdminClaims } from "@/lib/isAdmin";
+import { checkAdminClaims, getRoleClaims } from "@/lib/isAdmin";
 import axios from "axios";
 
 export const useAuth = () => {
@@ -81,10 +81,12 @@ export const useAuth = () => {
 				if (firebaseUser) {
 					// 사용자가 로그인된 상태
 					let isAdmin = false;
+					let role: AuthUser["role"] = "user";
 					
 					try {
 						// Custom Claims에서 관리자 권한 확인
 						isAdmin = await checkAdminClaims();
+						role = await getRoleClaims();
 					} catch {
 						// Claims 확인에 실패해도 로그인은 유지
 					}
@@ -95,6 +97,7 @@ export const useAuth = () => {
 						displayName: firebaseUser.displayName,
 						photoURL: firebaseUser.photoURL,
 						isAdmin,
+						role,
 					};
 
 					setAuthData({

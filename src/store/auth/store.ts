@@ -7,6 +7,7 @@ export interface AuthUser {
   displayName: string | null;
   photoURL: string | null;
   isAdmin?: boolean;
+  role?: 'user' | 'manager' | 'admin'; // 권한 역할
 }
 
 export interface AuthState {
