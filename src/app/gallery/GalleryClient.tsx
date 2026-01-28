@@ -12,10 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useAdmin } from "@/hooks/auth/UseAdmin";
-import { dummyGalleryImages } from "./dummyData";
 import type { GalleryImage, GallerySettings } from "@/types/gallery";
 import { DEFAULT_GALLERY_SETTINGS } from "@/types/gallery";
 import { apiClient } from "@/queries/apiClient";
+import { createGalleryImage, fetchGalleryImages } from "@/queries/gallery";
 
 export default function GalleryClient() {
 	const searchParams = useSearchParams();
@@ -42,7 +42,7 @@ export default function GalleryClient() {
 	}, [gallery]);
 
 	// 이미지 데이터 (추후 API에서 가져올 수 있음)
-	const [images, setImages] = useState<GalleryImage[]>(() => dummyGalleryImages);
+	const [images, setImages] = useState<GalleryImage[]>([]);
 	const [searchInput, setSearchInput] = useState("");
 	const [appliedQuery, setAppliedQuery] = useState("");
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -147,6 +147,26 @@ export default function GalleryClient() {
 		}
 	};
 
+	useEffect(() => {
+		let isActive = true;
+		fetchGalleryImages()
+			.then((data) => {
+				if (!isActive) return;
+				setImages(Array.isArray(data.items) ? data.items : []);
+			})
+			.catch(() => {
+				if (!isActive) return;
+				toast.error("갤러리 데이터를 불러오지 못했습니다.");
+				setImages([]);
+			})
+			.finally(() => {
+				if (!isActive) return;
+			});
+		return () => {
+			isActive = false;
+		};
+	}, []);
+
 	const normalizedQuery = appliedQuery.trim().toLowerCase();
 	const filteredImages = useMemo(() => {
 		if (!normalizedQuery) return images;
@@ -159,21 +179,23 @@ export default function GalleryClient() {
 		});
 	}, [images, normalizedQuery]);
 
-	const handleCreateSubmit = useCallback(
-		(payload: GalleryCreatePayload) => {
-			const newItem: GalleryImage = {
-				id: crypto.randomUUID(),
-				src: payload.imageUrl,
+	const handleCreateSubmit = useCallback(async (payload: GalleryCreatePayload) => {
+		try {
+			const created = await createGalleryImage({
 				title: payload.title,
-				category: "Gallery",
+				imageUrl: payload.imageUrl,
 				tags: payload.tags,
-				createdAt: new Date().toISOString().slice(0, 10),
-			};
-			setImages((prev) => [newItem, ...prev]);
+			});
+			setImages((prev) => [created, ...prev]);
 			toast.success("갤러리 이미지가 추가되었습니다.");
-		},
-		[],
-	);
+		} catch (error) {
+			const message =
+				error instanceof Error
+					? error.message
+					: "갤러리 이미지 등록에 실패했습니다.";
+			toast.error(message);
+		}
+	}, []);
 
 	return (
 		<div className="w-full max-w-[900px] mt-[90px] mb-[90px]">

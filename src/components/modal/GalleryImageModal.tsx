@@ -183,6 +183,9 @@ export default function GalleryImageModal({
 			<DialogContent
 				className="max-w-3xl md:max-w-3xl sm:max-w-2xl border-none p-0 overflow-hidden flex flex-col bg-card border-card rounded-card backdrop-blur-card aspect-[5/4] gap-0"
 				showCloseButton={false}
+				onOpenAutoFocus={(event) => {
+					event.preventDefault();
+				}}
 			>
 				<VisuallyHidden asChild>
 					<DialogTitle>갤러리 이미지 상세보기</DialogTitle>
