@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useFileUpload } from "@/hooks/useFileUpload";
+import { uploadGalleryImage } from "@/queries/gallery";
 
 export interface GalleryCreatePayload {
 	imageUrl: string;
@@ -39,7 +39,7 @@ export default function GalleryCreateModal({
 	tagsOptions = [],
 }: GalleryCreateModalProps) {
 	const { user } = useAuthStore();
-	const { uploadFile, state: uploadState } = useFileUpload();
+	const { isAuthenticated } = useAuthStore();
 	const [imageUrl, setImageUrl] = useState("");
 	const [imageFile, setImageFile] = useState<File | null>(null);
 	const [titleInput, setTitleInput] = useState("");
@@ -181,11 +181,16 @@ export default function GalleryCreateModal({
 
 		const trimmedTitle = titleInput.trim() || "갤러리 이미지";
 
+		if (!isAuthenticated || !user) {
+			toast.error("로그인 후 게시할 수 있어요.");
+			return;
+		}
+
 		setIsProcessing(true);
 		try {
 			let finalImageUrl = imageUrl;
 			if (imageFile) {
-				finalImageUrl = await uploadFile(imageFile);
+				finalImageUrl = await uploadGalleryImage(imageFile);
 			}
 
 			onSubmit({
@@ -439,13 +444,9 @@ export default function GalleryCreateModal({
 							</span>
 							<Button
 								onClick={handleSubmit}
-								disabled={
-									isProcessing ||
-									uploadState.loading ||
-									(!imageFile && !imageUrl)
-								}
+								disabled={isProcessing || (!imageFile && !imageUrl)}
 							>
-								{isProcessing || uploadState.loading ? (
+								{isProcessing ? (
 									<Loader2 size={16} className="animate-spin" />
 								) : (
 									"게시"
