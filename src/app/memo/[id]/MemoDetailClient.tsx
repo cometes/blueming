@@ -1,76 +1,112 @@
 "use client";
 
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
-import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
-import AssetGrid from "@/components/asset/AssetGrid";
 import {
 	ArrowLeft,
-	Heart,
 	ImagePlus,
 	Lock,
-	ThumbsUp,
-	MessageCircle,
 	Send,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/auth/store";
+import {
+	createMemoReply,
+	fetchMemoDetail,
+	uploadMemoImages,
+	type MemoDetail,
+} from "@/queries/memo";
+import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
+import AssetGrid from "@/components/asset/AssetGrid";
+import { useAssets } from "@/hooks/guestbook/useAssets";
 import { useCommentImageDialog } from "@/hooks/comment/useImageDialog";
 import type { CommentImage } from "@/hooks/comment/useCommentForm";
-import { useAssets } from "@/hooks/guestbook/useAssets";
-
-type MemoReply = {
-	id: string;
-	content: string;
-	author: string;
-	createdAt: string;
-	reactions?: {
-		hearts: number;
-		likes: number;
-		comments: number;
-	};
-};
-
-type Memo = {
-	id: string;
-	title: string;
-	content: string;
-	author: string;
-	tags?: string[];
-	createdAt: string;
-	replies: MemoReply[];
-};
 
 interface MemoDetailClientProps {
-	memo: Memo;
+	memoId: string;
 }
 
-export default function MemoDetailClient({ memo }: MemoDetailClientProps) {
+export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 	const router = useRouter();
-	const [isRepliesExpanded, setIsRepliesExpanded] = useState(true);
+	const { user, isLoading: isAuthLoading } = useAuthStore();
+	const [memo, setMemo] = useState<MemoDetail | null>(null);
+	const [isLoading, setIsLoading] = useState(true);
+	const [password, setPassword] = useState("");
+	const [passwordError, setPasswordError] = useState("");
+	const [isVerifying, setIsVerifying] = useState(false);
+
 	const [message, setMessage] = useState("");
 	const [images, setImages] = useState<CommentImage[]>([]);
-	const [isSecret, setIsSecret] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const cooldownRemaining = 0;
-	const MAX_IMAGE_COUNT = 8;
-	const canSubmit = message.trim().length > 0 && !isSubmitting;
+	const [isMounted, setIsMounted] = useState(false);
+	const messageRef = useRef<HTMLTextAreaElement | null>(null);
+
 	const imageDialog = useCommentImageDialog();
 	const assets = useAssets(imageDialog.isOpen);
 
-	const handleCreate = () => {
-		if (!canSubmit) return;
-		setIsSubmitting(true);
-		setTimeout(() => {
-			setMessage("");
-			setIsSubmitting(false);
-		}, 0);
+	const isOwner = Boolean(memo?.authorId && user?.uid === memo.authorId);
+	const requiresPassword = memo?.requiresPassword === true;
+	const requiresSecretAccess = memo?.requiresSecretAccess === true;
+	const canSubmit = isOwner && message.trim().length > 0 && !isSubmitting;
+
+	const loadDetail = useCallback(
+		async (options: { password?: string } = {}) => {
+			try {
+				setIsLoading(true);
+				const data = await fetchMemoDetail(memoId, {
+					password: options.password,
+					includeAuth: true,
+				});
+				setMemo(data);
+				return data;
+			} catch (error) {
+				const message =
+					error instanceof Error
+						? error.message
+						: "메모를 불러오지 못했습니다.";
+				toast.error(message);
+				throw error;
+			} finally {
+				setIsLoading(false);
+			}
+		},
+		[memoId],
+	);
+
+	useEffect(() => {
+		loadDetail().catch(() => undefined);
+	}, [loadDetail, user?.uid]);
+
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
+
+	const handleVerifyPassword = async () => {
+		if (isVerifying) return;
+		if (!password.trim()) {
+			setPasswordError("비밀번호를 입력해주세요.");
+			return;
+		}
+		setIsVerifying(true);
+		setPasswordError("");
+		try {
+			await loadDetail({ password: password.trim() });
+			setPassword("");
+		} catch {
+			setPasswordError("비밀번호가 올바르지 않습니다.");
+		} finally {
+			setIsVerifying(false);
+		}
 	};
 
 	const handleImageDialogOpen = useCallback(() => {
-		imageDialog.openDialog("create", images.length);
+		if (!imageDialog.openDialog("create", images.length)) {
+			toast.error("이미지는 최대 8개까지 첨부할 수 있어요.");
+		}
 	}, [imageDialog, images.length]);
 
 	const removeImage = useCallback((id: string) => {
@@ -86,16 +122,23 @@ export default function MemoDetailClient({ memo }: MemoDetailClientProps) {
 	const handleImageUpload = useCallback(
 		(url: string) => {
 			if (!imageDialog.target || !url) return;
+			if (images.length >= 8) {
+				toast.error("이미지는 최대 8개까지 첨부할 수 있어요.");
+				return;
+			}
 			if (
 				imageDialog.previewFiles.length > 0 &&
 				imageDialog.previewUrls.length > 0
 			) {
-				imageDialog.addImagesToTarget(setImages);
+				if (imageDialog.addImagesToTarget(setImages)) {
+					toast.success("이미지가 추가되었습니다.");
+				}
 				return;
 			}
 			imageDialog.addSingleImageToTarget(setImages, url);
+			toast.success("이미지가 추가되었습니다.");
 		},
-		[imageDialog],
+		[imageDialog, images.length],
 	);
 
 	useEffect(() => {
@@ -108,46 +151,173 @@ export default function MemoDetailClient({ memo }: MemoDetailClientProps) {
 		};
 	}, [images]);
 
-	return (
-		<div className="shrink-0 w-full max-w-xl mt-[90px] mb-[40px] mx-auto">
-			{/* 뒤로가기 버튼 */}
-			<Button
-				variant="default"
-				size="sm"
-				onClick={() => router.back()}
-				className="mb-8 gap-2"
-			>
-				<ArrowLeft size={16} />
-				목록으로
-			</Button>
+	const handleMessageChange = (value: string) => {
+		setMessage(value);
+		if (!messageRef.current) return;
+		messageRef.current.style.height = "auto";
+		messageRef.current.style.height = `${messageRef.current.scrollHeight}px`;
+	};
 
-			<section className="bg-card rounded-card  border-card backdrop-blur-card ">
-				{/* 메인 메모 카드 */}
+	const handleCreateReply = async () => {
+		if (!canSubmit || !memo?.id) return;
+		setIsSubmitting(true);
+		try {
+			const fileImages = images.filter((img) => img.file);
+			const uploadedUrls =
+				fileImages.length > 0
+					? await uploadMemoImages(
+							fileImages.map((img) => img.file as File),
+						)
+					: [];
+			let uploadIndex = 0;
+			const finalImageUrls = images.reduce<string[]>((acc, image) => {
+				if (image.file) {
+					const nextUrl = uploadedUrls[uploadIndex];
+					uploadIndex += 1;
+					if (nextUrl) acc.push(nextUrl);
+				} else if (image.url && !image.url.startsWith("blob:")) {
+					acc.push(image.url);
+				}
+				return acc;
+			}, []);
+
+			await createMemoReply(memo.id, {
+				content: message.trim(),
+				imageUrls: finalImageUrls,
+			});
+			setMessage("");
+			setImages([]);
+			if (messageRef.current) {
+				messageRef.current.style.height = "auto";
+			}
+			await loadDetail();
+			toast.success("답글이 추가되었습니다.");
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : "답글 작성에 실패했습니다.";
+			toast.error(message);
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
+	const replies = useMemo(() => memo?.replies ?? [], [memo?.replies]);
+
+	const contentNode = (() => {
+		if (isLoading && !memo) {
+			return <div className="text-sm text-sub-text">로딩 중...</div>;
+		}
+
+		if (!memo) {
+			return <div className="text-sm text-sub-text">메모를 찾을 수 없습니다.</div>;
+		}
+
+		if (requiresSecretAccess) {
+			return (
+				<div className="flex flex-col items-center justify-center min-h-[40vh] text-center">
+					<div className="w-16 h-16 rounded-full bg-card border border-card flex items-center justify-center">
+						<Lock size={24} className="text-sub-text" />
+					</div>
+					<h2 className="mt-4 text-lg font-semibold text-main-text">
+						비공개 메모입니다.
+					</h2>
+					<p className="text-sm text-sub-text mt-2">
+						작성자와 관리자만 열람할 수 있습니다.
+					</p>
+				</div>
+			);
+		}
+
+		if (requiresPassword) {
+			return (
+				<div className="flex flex-col items-center justify-center min-h-[40vh] text-center">
+					<div className="w-16 h-16 rounded-full bg-card border border-card flex items-center justify-center">
+						<Lock size={24} className="text-sub-text" />
+					</div>
+					<h2 className="mt-4 text-lg font-semibold text-main-text">
+						보호된 메모입니다.
+					</h2>
+					<p className="text-sm text-sub-text mt-2">
+						비밀번호를 입력하면 내용을 볼 수 있어요.
+					</p>
+					<div className="mt-4 flex items-center gap-2">
+						<Input
+							type="password"
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							onKeyDown={(e) => {
+								if (e.key === "Enter") {
+									handleVerifyPassword();
+								}
+							}}
+							placeholder="비밀번호"
+							className="w-48"
+						/>
+						<Button
+							type="button"
+							onClick={handleVerifyPassword}
+							disabled={isVerifying}
+						>
+							확인
+						</Button>
+					</div>
+					{passwordError && (
+						<p className="mt-2 text-xs text-red-500">{passwordError}</p>
+					)}
+				</div>
+			);
+		}
+
+		return (
+			<section className="bg-card rounded-card border-card backdrop-blur-card">
 				<article className="p-5">
-					{/* 작성자 및 날짜 */}
-					<div className="flex items-center justify-between text-sm text-sub-text ">
-						<div className="flex gap-2.5">
-							<div>
-								{/* <img src="" alt="" /> 여기에 작성자 프로필 사진 36x36 */}
-								<span>{memo.author}</span>
+					<div className="flex items-center justify-between text-sm text-sub-text">
+						<div className="flex items-center gap-2.5">
+							<div className="w-9 h-9 rounded-full overflow-hidden border border-card">
+								{memo.author?.avatarUrl ? (
+									// eslint-disable-next-line @next/next/no-img-element
+									<img
+										src={memo.author.avatarUrl}
+										alt={memo.author?.name ?? "작성자"}
+										className="w-full h-full object-cover"
+									/>
+								) : (
+									<div className="w-full h-full flex items-center justify-center text-xs font-medium">
+										{memo.author?.name?.charAt(0) ?? "?"}
+									</div>
+								)}
 							</div>
-
+							<span>{memo.author?.name ?? "게스트"}</span>
 							<span>{memo.createdAt}</span>
 						</div>
-						{/* 여기에 ... 아이콘 버튼 */}
 					</div>
 
-					{/* 제목 */}
 					<h1 className="text-xl font-bold text-main-text mt-2.5 font-title">
 						{memo.title}
 					</h1>
 
-					{/* 본문 */}
 					<div className="text-sm text-main-text whitespace-pre-line leading-relaxed mt-2.5">
 						{memo.content}
 					</div>
 
-					{/* 태그 배지 */}
+					{memo.imageUrls && memo.imageUrls.length > 0 && (
+						<div className="grid grid-cols-3 gap-2 mt-4">
+							{memo.imageUrls.map((url, index) => (
+								<div
+									key={`${url}-${index}`}
+									className="relative w-full aspect-square rounded-lg border border-card overflow-hidden"
+								>
+									{/* eslint-disable-next-line @next/next/no-img-element */}
+									<img
+										src={url}
+										alt="첨부 이미지"
+										className="absolute inset-0 w-full h-full object-cover"
+									/>
+								</div>
+							))}
+						</div>
+					)}
+
 					{memo.tags && memo.tags.length > 0 && (
 						<div className="flex flex-wrap gap-1.5 mt-2.5">
 							{memo.tags.map((tag, idx) => (
@@ -162,188 +332,178 @@ export default function MemoDetailClient({ memo }: MemoDetailClientProps) {
 					)}
 				</article>
 
-				{/* 답글 섹션 */}
-				{memo.replies.length > 0 && (
+				{replies.length > 0 && (
 					<>
-						<div className="overflow-hidden ">
-							{/* 답글 목록 */}
-							{isRepliesExpanded && (
-								<div className="">
-									{memo.replies.map((reply) => (
-										<>
-											<hr className="border-card-border" />
-											<div key={reply.id} className="p-5">
-												{/* 답글 작성자 및 날짜 */}
-												<div className="flex items-center justify-between text-sm text-sub-text ">
-													<div className="flex gap-2.5">
-														<div>
-															{/* <img src="" alt="" /> 여기에 작성자 프로필 사진 36x36 */}
-															<span>{memo.author}</span>
-														</div>
-
-														<span>{memo.createdAt}</span>
-													</div>
-													{/* 여기에 ... 아이콘 버튼 */}
-												</div>
-												{/* 제목 */}
-												<h1 className="text-xl font-bold text-main-text mt-2.5 font-title">
-													{memo.title}
-												</h1>
-
-												{/* 본문 */}
-												<div className="text-sm text-main-text whitespace-pre-line leading-relaxed mt-2.5">
-													{memo.content}
-												</div>
-
-												{/* 답글 반응 */}
-												{reply.reactions && (
-													<div className="flex items-center gap-4 mt-2.5">
-														<button className="flex items-center gap-1.5 text-xs text-sub-text hover:text-red-500 transition-colors">
-															<Heart size={14} />
-															<span>{reply.reactions.hearts}</span>
-														</button>
-														<button className="flex items-center gap-1.5 text-xs text-sub-text hover:text-blue-500 transition-colors">
-															<ThumbsUp size={14} />
-															<span>{reply.reactions.likes}</span>
-														</button>
-														<button className="flex items-center gap-1.5 text-xs text-sub-text hover:text-green-500 transition-colors">
-															<MessageCircle size={14} />
-															<span>{reply.reactions.comments}</span>
-														</button>
+						<hr className="border-card-border" />
+						<div>
+							{replies.map((reply) => (
+								<div key={reply.id} className="p-5 border-t border-card-border">
+									<div className="flex items-center justify-between text-sm text-sub-text">
+										<div className="flex items-center gap-2.5">
+											<div className="w-8 h-8 rounded-full overflow-hidden border border-card">
+												{reply.author?.avatarUrl ? (
+													// eslint-disable-next-line @next/next/no-img-element
+													<img
+														src={reply.author.avatarUrl}
+														alt={reply.author?.name ?? "작성자"}
+														className="w-full h-full object-cover"
+													/>
+												) : (
+													<div className="w-full h-full flex items-center justify-center text-xs font-medium">
+														{reply.author?.name?.charAt(0) ?? "?"}
 													</div>
 												)}
 											</div>
-										</>
-									))}
+											<span>{reply.author?.name ?? "게스트"}</span>
+											<span>{reply.createdAt}</span>
+										</div>
+									</div>
+									<div className="text-sm text-main-text whitespace-pre-line leading-relaxed mt-2.5">
+										{reply.content}
+									</div>
+									{reply.imageUrls && reply.imageUrls.length > 0 && (
+										<div className="flex flex-wrap gap-2 mt-3">
+											{reply.imageUrls.map((url, index) => (
+												<div
+													key={`${reply.id}-${index}`}
+													className="relative w-14 h-14 rounded-lg border border-card overflow-hidden"
+												>
+													{/* eslint-disable-next-line @next/next/no-img-element */}
+													<img
+														src={url}
+														alt="첨부 이미지"
+														className="absolute inset-0 w-full h-full object-cover"
+													/>
+												</div>
+											))}
+										</div>
+									)}
 								</div>
-							)}
+							))}
 						</div>
 					</>
 				)}
 
-				{/* 답글이 없는 경우 */}
-				{memo.replies.length === 0 && (
+				{replies.length === 0 && !isOwner && (
 					<>
 						<hr className="border-card-border" />
-						<div className=" p-6 text-center text-sub-text">
+						<div className="p-6 text-center text-sub-text">
 							아직 답글이 없습니다.
 						</div>
 					</>
 				)}
 
-				<>
-					<div className="border-t border-card-border p-3">
-						<div className="space-y-2">
-							<Input
-								type="text"
-								placeholder="댓글 제목 (옵션)"
-								className="h-8 text-sm"
-							/>
-
-							{/* 메시지 입력 */}
-							<div className="relative">
-								<textarea
-									value={message}
-									onChange={(e) => setMessage(e.target.value)}
-									placeholder="메시지를 입력하세요..."
-									maxLength={500}
-									rows={2}
-									className="w-full rounded-card border-card bg-card px-3 py-2 pr-10 text-sm text-main-text resize-none"
-									onKeyDown={(e) => {
-										if (e.key === "Enter" && !e.shiftKey && canSubmit) {
-											e.preventDefault();
-											handleCreate();
-										}
-									}}
-								/>
-								<Button
-									type="button"
-									size="sm"
-									variant="ghost"
-									onClick={handleCreate}
-									disabled={!canSubmit || isSubmitting}
-									className="absolute right-1 bottom-1 w-8 h-8 p-0"
-								>
-									<Send size={16} className="text-theme-primary" />
-								</Button>
-							</div>
-
-							{/* 하단 옵션 */}
-							<div className="flex items-center justify-between">
-								<div className="flex items-center gap-2">
-									<button
-										type="button"
-										onClick={handleImageDialogOpen}
-										disabled={isSubmitting || images.length >= MAX_IMAGE_COUNT}
-										className={cn(
-											"inline-flex items-center justify-center w-8 h-8 rounded-card border border-card bg-card text-main-text",
-											isSubmitting || images.length >= MAX_IMAGE_COUNT
-												? "opacity-60 pointer-events-none"
-												: "",
-										)}
-										aria-label="사진 첨부"
-									>
-										<ImagePlus size={14} />
-									</button>
-									{images.length > 0 && (
-										<span className="text-xs text-sub-text">
-											{images.length}/{MAX_IMAGE_COUNT}
-										</span>
-									)}
-									<label className="inline-flex items-center gap-1.5 text-xs text-sub-text">
-										<Switch
-											checked={isSecret}
-											onCheckedChange={setIsSecret}
-											className="scale-75"
+				{isOwner && (
+					<>
+						<hr className="border-card-border" />
+						<div className="border-t border-card-border p-3 bg-card-bg">
+							{isAuthLoading ? (
+								<div className="text-xs text-sub-text">로딩 중...</div>
+							) : (
+								<div className="space-y-2">
+									<div className="relative">
+										<Textarea
+											ref={messageRef}
+											value={message}
+											onChange={(e) => handleMessageChange(e.target.value)}
+											placeholder="메시지를 입력하세요..."
+											rows={2}
+											className="w-full pr-10 resize-none overflow-hidden"
+											onKeyDown={(e) => {
+												if (e.key === "Enter" && !e.shiftKey && canSubmit) {
+													e.preventDefault();
+													handleCreateReply();
+												}
+											}}
 										/>
-										<Lock size={12} />
-										비밀글
-									</label>
+										<Button
+											type="button"
+											size="sm"
+											variant="ghost"
+											onClick={handleCreateReply}
+											disabled={!canSubmit || isSubmitting}
+											className="absolute right-1 bottom-1 w-8 h-8 p-0"
+										>
+											<Send size={16} className="text-theme-primary" />
+										</Button>
+									</div>
+
+									<div className="flex items-center justify-between">
+										<div className="flex items-center gap-2">
+											<button
+												type="button"
+												onClick={handleImageDialogOpen}
+												disabled={isSubmitting}
+												className={cn(
+													"inline-flex items-center justify-center w-8 h-8 rounded-card border border-card bg-card text-main-text",
+													isSubmitting ? "opacity-60 pointer-events-none" : "",
+												)}
+												aria-label="사진 첨부"
+											>
+												<ImagePlus size={14} />
+											</button>
+											{images.length > 0 && (
+												<span className="text-xs text-sub-text">
+													{images.length}/8
+												</span>
+											)}
+										</div>
+									</div>
+
+									{images.length > 0 && (
+										<div className="flex flex-wrap gap-2">
+											{images.map((image) => (
+												<div
+													key={image.id}
+													className="relative w-12 h-12 rounded-lg border border-card overflow-hidden"
+												>
+													{/* eslint-disable-next-line @next/next/no-img-element */}
+													<img
+														src={image.url}
+														alt="첨부 이미지"
+														className="absolute inset-0 w-full h-full object-cover"
+													/>
+													<button
+														type="button"
+														onClick={() => removeImage(image.id)}
+														className="absolute top-0.5 right-0.5 rounded-full bg-black/60 text-white p-1"
+														aria-label="이미지 삭제"
+													>
+														<X size={10} />
+													</button>
+												</div>
+											))}
+										</div>
+									)}
 								</div>
-								{cooldownRemaining > 0 && (
-									<span className="text-xs text-sub-text">
-										{cooldownRemaining}초
-									</span>
-								)}
-							</div>
+							)}
 						</div>
-					</div>
-				</>
-				{images.length > 0 && (
-					<div className="px-3 pb-3 bg-card border-t border-card-border">
-						<div className="flex flex-wrap gap-1.5">
-							{images.map((image) => (
-								<div
-									key={image.id}
-									className="relative w-14 h-14 rounded-lg border border-card overflow-hidden"
-								>
-									{/* eslint-disable-next-line @next/next/no-img-element */}
-									<img
-										src={image.url}
-										alt="첨부 이미지"
-										className="absolute inset-0 w-full h-full object-cover"
-									/>
-									<button
-										type="button"
-										onClick={() => removeImage(image.id)}
-										className="absolute top-0.5 right-0.5 rounded-full bg-black/60 text-white text-[8px] px-1.5 py-0.5"
-									>
-										X
-									</button>
-								</div>
-							))}
-						</div>
-					</div>
+					</>
 				)}
+			</section>
+		);
+	})();
+
+	return (
+		<div className="shrink-0 w-full max-w-xl mt-[90px] mb-[40px] mx-auto">
+			{memo && (
+				<Button
+					variant="default"
+					size="sm"
+					onClick={() => router.back()}
+					className="mb-8 gap-2"
+				>
+					<ArrowLeft size={16} />
+					목록으로
+				</Button>
+			)}
+
+			{contentNode}
+
+			{isMounted && (
 				<ImageUploadDialog
 					isOpen={imageDialog.isOpen}
-					onOpenChange={(open) => {
-						if (!open) {
-							imageDialog.closeDialog();
-							return;
-						}
-						imageDialog.setIsOpen(true);
-					}}
+					onOpenChange={imageDialog.setIsOpen}
 					thumbnail={imageDialog.previewUrl}
 					setThumbnail={imageDialog.setPreview}
 					uploadMode="deferred"
@@ -370,7 +530,7 @@ export default function MemoDetailClient({ memo }: MemoDetailClientProps) {
 					assetSearchQuery={assets.searchQuery}
 					onAssetSearchChange={assets.setSearchQuery}
 				/>
-			</section>
+			)}
 		</div>
 	);
 }
