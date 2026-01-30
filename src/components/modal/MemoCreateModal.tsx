@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	Select,
@@ -32,6 +33,14 @@ interface MemoCreateModalProps {
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
 	tagsOptions?: string[];
+	onSubmit?: (payload: {
+		title: string;
+		content: string;
+		tags: string[];
+		visibility: "public" | "secret" | "protected";
+		password?: string;
+		images: CommentImage[];
+	}) => void | Promise<void>;
 }
 
 const normalizeTag = (value: string) =>
@@ -48,6 +57,7 @@ export default function MemoCreateModal({
 	isOpen,
 	onOpenChange,
 	tagsOptions = [],
+	onSubmit,
 }: MemoCreateModalProps) {
 	const { user } = useAuthStore();
 	const [titleInput, setTitleInput] = useState("");
@@ -57,7 +67,9 @@ export default function MemoCreateModal({
 	const [tagInputOpen, setTagInputOpen] = useState(false);
 	const [tags, setTags] = useState<string[]>([]);
 	const [visibility, setVisibility] = useState("public");
+	const [password, setPassword] = useState("");
 	const [images, setImages] = useState<CommentImage[]>([]);
+	const [isMounted, setIsMounted] = useState(false);
 	const tagJustAddedRef = useRef(false);
 	const isComposingRef = useRef(false);
 	const imageDialog = useCommentImageDialog();
@@ -73,6 +85,10 @@ export default function MemoCreateModal({
 		}
 	}, [isOpen]);
 
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
+
 	const resetComposer = () => {
 		setTitleInput("");
 		setContentInput("");
@@ -81,6 +97,7 @@ export default function MemoCreateModal({
 		setTagInputOpen(false);
 		setTags([]);
 		setVisibility("public");
+		setPassword("");
 		setImages([]);
 	};
 
@@ -163,12 +180,15 @@ export default function MemoCreateModal({
 				imageDialog.previewFiles.length > 0 &&
 				imageDialog.previewUrls.length > 0
 			) {
-				imageDialog.addImagesToTarget(setImages);
+				if (imageDialog.addImagesToTarget(setImages)) {
+					toast.success("이미지가 추가되었습니다.");
+				}
 				return;
 			}
 			imageDialog.addSingleImageToTarget(setImages, url);
+			toast.success("이미지가 추가되었습니다.");
 		},
-		[imageDialog],
+		[imageDialog, images.length],
 	);
 
 	useEffect(() => {
@@ -180,6 +200,36 @@ export default function MemoCreateModal({
 			});
 		};
 	}, [images]);
+
+	const handleSubmit = async () => {
+		if (!contentInput.trim()) {
+			toast.error("내용을 입력해주세요.");
+			return;
+		}
+		if (visibility === "protected" && !password.trim()) {
+			toast.error("보호글 비밀번호를 입력해주세요.");
+			return;
+		}
+		if (onSubmit) {
+			try {
+				await onSubmit({
+					title: titleInput.trim() || "제목 없음",
+					content: contentInput.trim(),
+					tags,
+					visibility: visibility as "public" | "secret" | "protected",
+					password: visibility === "protected" ? password.trim() : undefined,
+					images,
+				});
+				onOpenChange(false);
+			} catch (error) {
+				const message =
+					error instanceof Error ? error.message : "메모 작성에 실패했습니다.";
+				toast.error(message);
+			}
+			return;
+		}
+		onOpenChange(false);
+	};
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -220,13 +270,13 @@ export default function MemoCreateModal({
 
 						<div className="space-y-2">
 							<label className="text-xs text-sub-text">내용</label>
-							<textarea
-								value={contentInput}
-								onChange={(e) => setContentInput(e.target.value)}
-								placeholder="내용을 입력하세요"
-								rows={8}
-								className="w-full rounded-card border-card bg-card px-3 py-2 text-sm text-main-text resize-none"
-							/>
+						<Textarea
+							value={contentInput}
+							onChange={(e) => setContentInput(e.target.value)}
+							placeholder="내용을 입력하세요"
+							rows={8}
+							className="resize-none"
+						/>
 						</div>
 
 						<div className="flex items-center justify-between">
@@ -255,6 +305,18 @@ export default function MemoCreateModal({
 								</Select>
 							</div>
 						</div>
+						{visibility === "protected" && (
+							<div className="space-y-2">
+								<label className="text-xs text-sub-text">비밀번호</label>
+								<Input
+									type="password"
+									value={password}
+									onChange={(e) => setPassword(e.target.value)}
+									placeholder="보호글 비밀번호"
+									className="border-card bg-card backdrop-blur-card rounded-card text-main-text"
+								/>
+							</div>
+						)}
 						{images.length > 0 && (
 							<div className="flex flex-wrap gap-2">
 								{images.map((image) => (
@@ -413,45 +475,41 @@ export default function MemoCreateModal({
 					<span className="text-xs text-sub-text">
 						태그 {tags.length.toLocaleString()}개
 					</span>
-					<Button type="button" onClick={() => onOpenChange(false)}>
+					<Button type="button" onClick={handleSubmit}>
 						작성
 					</Button>
 				</DialogFooter>
-				<ImageUploadDialog
-					isOpen={imageDialog.isOpen}
-					onOpenChange={(open) => {
-						if (!open) {
-							imageDialog.closeDialog();
-							return;
+				{isMounted && (
+					<ImageUploadDialog
+						isOpen={imageDialog.isOpen}
+						onOpenChange={imageDialog.setIsOpen}
+						thumbnail={imageDialog.previewUrl}
+						setThumbnail={imageDialog.setPreview}
+						uploadMode="deferred"
+						onFileSelect={(file, previewUrl) => {
+							imageDialog.setMultipleFiles([file], [previewUrl]);
+						}}
+						onFilesSelect={(files, previewUrls) => {
+							imageDialog.setMultipleFiles(files, previewUrls);
+						}}
+						onUpload={handleImageUpload}
+						rightContent={
+							<AssetGrid
+								assets={assets.assets}
+								loading={assets.loading}
+								error={assets.error}
+								selectedUrl={imageDialog.previewUrl}
+								onSelect={(asset) => imageDialog.setPreview(asset.url)}
+								aspectClassName="aspect-square"
+								imageClassName="w-full h-full object-contain"
+								gridTemplateColumns="repeat(3, minmax(0, 1fr))"
+							/>
 						}
-						imageDialog.setIsOpen(true);
-					}}
-					thumbnail={imageDialog.previewUrl}
-					setThumbnail={imageDialog.setPreview}
-					uploadMode="deferred"
-					onFileSelect={(file, previewUrl) => {
-						imageDialog.setMultipleFiles([file], [previewUrl]);
-					}}
-					onFilesSelect={(files, previewUrls) => {
-						imageDialog.setMultipleFiles(files, previewUrls);
-					}}
-					onUpload={handleImageUpload}
-					rightContent={
-						<AssetGrid
-							assets={assets.assets}
-							loading={assets.loading}
-							error={assets.error}
-							selectedUrl={imageDialog.previewUrl}
-							onSelect={(asset) => imageDialog.setPreview(asset.url)}
-							aspectClassName="aspect-square"
-							imageClassName="w-full h-full object-contain"
-							gridTemplateColumns="repeat(3, minmax(0, 1fr))"
-						/>
-					}
-					enableAssetSearch={true}
-					assetSearchQuery={assets.searchQuery}
-					onAssetSearchChange={assets.setSearchQuery}
-				/>
+						enableAssetSearch={true}
+						assetSearchQuery={assets.searchQuery}
+						onAssetSearchChange={assets.setSearchQuery}
+					/>
+				)}
 			</DialogContent>
 		</Dialog>
 	);
