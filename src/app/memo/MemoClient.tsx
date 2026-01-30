@@ -14,6 +14,7 @@ import {
 	uploadMemoImages,
 } from "@/queries/memo";
 import type { CommentImage } from "@/hooks/comment/useCommentForm";
+import { dateConvert } from "@/lib/date";
 
 export default function MemoClient() {
 	const router = useRouter();
@@ -213,7 +214,9 @@ export default function MemoClient() {
 									<span>{memo.author?.name ?? "게스트"}</span>
 								</div>
 
-								<span>{memo.createdAt}</span>
+								<span>
+									{memo.createdAt ? dateConvert(memo.createdAt) : ""}
+								</span>
 							</div>
 						</article>
 					))

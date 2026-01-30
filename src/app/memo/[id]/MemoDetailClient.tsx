@@ -2,12 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-	ArrowLeft,
-	ImagePlus,
-	Lock,
-	Send,
-} from "lucide-react";
+import { ArrowLeft, ImagePlus, Lock, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +20,8 @@ import AssetGrid from "@/components/asset/AssetGrid";
 import { useAssets } from "@/hooks/guestbook/useAssets";
 import { useCommentImageDialog } from "@/hooks/comment/useImageDialog";
 import type { CommentImage } from "@/hooks/comment/useCommentForm";
+import { dateTimeConvert } from "@/lib/date";
+import ImageSlideModal from "@/components/modal/ImageSlideModal";
 
 interface MemoDetailClientProps {
 	memoId: string;
@@ -44,6 +41,9 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isMounted, setIsMounted] = useState(false);
 	const messageRef = useRef<HTMLTextAreaElement | null>(null);
+	const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+	const [imageModalIndex, setImageModalIndex] = useState(0);
+	const [imageModalImages, setImageModalImages] = useState<string[]>([]);
 
 	const imageDialog = useCommentImageDialog();
 	const assets = useAssets(imageDialog.isOpen);
@@ -104,9 +104,11 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 	};
 
 	const handleImageDialogOpen = useCallback(() => {
-		if (!imageDialog.openDialog("create", images.length)) {
-			toast.error("이미지는 최대 8개까지 첨부할 수 있어요.");
+		if (images.length >= 4) {
+			toast.error("이미지는 최대 4개까지 첨부할 수 있어요.");
+			return;
 		}
+		imageDialog.openDialog("create", images.length);
 	}, [imageDialog, images.length]);
 
 	const removeImage = useCallback((id: string) => {
@@ -122,8 +124,8 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 	const handleImageUpload = useCallback(
 		(url: string) => {
 			if (!imageDialog.target || !url) return;
-			if (images.length >= 8) {
-				toast.error("이미지는 최대 8개까지 첨부할 수 있어요.");
+			if (images.length >= 4) {
+				toast.error("이미지는 최대 4개까지 첨부할 수 있어요.");
 				return;
 			}
 			if (
@@ -151,6 +153,12 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 		};
 	}, [images]);
 
+	const openImageModal = useCallback((urls: string[], index: number) => {
+		setImageModalImages(urls);
+		setImageModalIndex(index);
+		setIsImageModalOpen(true);
+	}, []);
+
 	const handleMessageChange = (value: string) => {
 		setMessage(value);
 		if (!messageRef.current) return;
@@ -165,9 +173,7 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 			const fileImages = images.filter((img) => img.file);
 			const uploadedUrls =
 				fileImages.length > 0
-					? await uploadMemoImages(
-							fileImages.map((img) => img.file as File),
-						)
+					? await uploadMemoImages(fileImages.map((img) => img.file as File))
 					: [];
 			let uploadIndex = 0;
 			const finalImageUrls = images.reduce<string[]>((acc, image) => {
@@ -204,12 +210,8 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 	const replies = useMemo(() => memo?.replies ?? [], [memo?.replies]);
 
 	const contentNode = (() => {
-		if (isLoading && !memo) {
-			return <div className="text-sm text-sub-text">로딩 중...</div>;
-		}
-
 		if (!memo) {
-			return <div className="text-sm text-sub-text">메모를 찾을 수 없습니다.</div>;
+			return null;
 		}
 
 		if (requiresSecretAccess) {
@@ -288,7 +290,9 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 								)}
 							</div>
 							<span>{memo.author?.name ?? "게스트"}</span>
-							<span>{memo.createdAt}</span>
+							<span>
+								{memo.createdAt ? dateTimeConvert(memo.createdAt) : ""}
+							</span>
 						</div>
 					</div>
 
@@ -301,11 +305,27 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 					</div>
 
 					{memo.imageUrls && memo.imageUrls.length > 0 && (
-						<div className="grid grid-cols-3 gap-2 mt-4">
-							{memo.imageUrls.map((url, index) => (
-								<div
+						<div
+							className={cn(
+								"grid gap-2 mt-4",
+								memo.imageUrls.length === 1 && "grid-cols-1",
+								memo.imageUrls.length === 2 && "grid-cols-2",
+								memo.imageUrls.length >= 3 && "grid-cols-2 grid-rows-2",
+							)}
+						>
+							{memo.imageUrls.slice(0, 4).map((url, index) => (
+								<button
 									key={`${url}-${index}`}
-									className="relative w-full aspect-square rounded-lg border border-card overflow-hidden"
+									type="button"
+									onClick={() => openImageModal(memo.imageUrls ?? [], index)}
+									className={cn(
+										"relative rounded-card border border-card overflow-hidden text-left",
+										memo.imageUrls.length === 1
+											? "aspect-[4/3]"
+											: "aspect-square",
+										memo.imageUrls.length === 3 && index === 0 && "row-span-2",
+									)}
+									aria-label={`이미지 ${index + 1} 확대 보기`}
 								>
 									{/* eslint-disable-next-line @next/next/no-img-element */}
 									<img
@@ -313,7 +333,7 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 										alt="첨부 이미지"
 										className="absolute inset-0 w-full h-full object-cover"
 									/>
-								</div>
+								</button>
 							))}
 						</div>
 					)}
@@ -334,7 +354,6 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 
 				{replies.length > 0 && (
 					<>
-						<hr className="border-card-border" />
 						<div>
 							{replies.map((reply) => (
 								<div key={reply.id} className="p-5 border-t border-card-border">
@@ -355,18 +374,39 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 												)}
 											</div>
 											<span>{reply.author?.name ?? "게스트"}</span>
-											<span>{reply.createdAt}</span>
+											<span>
+												{reply.createdAt ? dateTimeConvert(reply.createdAt) : ""}
+											</span>
 										</div>
 									</div>
 									<div className="text-sm text-main-text whitespace-pre-line leading-relaxed mt-2.5">
 										{reply.content}
 									</div>
 									{reply.imageUrls && reply.imageUrls.length > 0 && (
-										<div className="flex flex-wrap gap-2 mt-3">
-											{reply.imageUrls.map((url, index) => (
-												<div
+										<div
+											className={cn(
+												"grid gap-2 mt-3",
+												reply.imageUrls.length === 1 && "grid-cols-1",
+												reply.imageUrls.length === 2 && "grid-cols-2",
+												reply.imageUrls.length >= 3 &&
+													"grid-cols-2 grid-rows-2",
+											)}
+										>
+											{reply.imageUrls.slice(0, 4).map((url, index) => (
+												<button
 													key={`${reply.id}-${index}`}
-													className="relative w-14 h-14 rounded-lg border border-card overflow-hidden"
+													type="button"
+													onClick={() => openImageModal(reply.imageUrls ?? [], index)}
+													className={cn(
+														"relative rounded-lg border border-card overflow-hidden text-left",
+														reply.imageUrls.length === 1
+															? "aspect-[4/3]"
+															: "aspect-square",
+														reply.imageUrls.length === 3 &&
+															index === 0 &&
+															"row-span-2",
+													)}
+													aria-label={`이미지 ${index + 1} 확대 보기`}
 												>
 													{/* eslint-disable-next-line @next/next/no-img-element */}
 													<img
@@ -374,7 +414,7 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 														alt="첨부 이미지"
 														className="absolute inset-0 w-full h-full object-cover"
 													/>
-												</div>
+												</button>
 											))}
 										</div>
 									)}
@@ -395,7 +435,6 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 
 				{isOwner && (
 					<>
-						<hr className="border-card-border" />
 						<div className="border-t border-card-border p-3 bg-card-bg">
 							{isAuthLoading ? (
 								<div className="text-xs text-sub-text">로딩 중...</div>
@@ -444,7 +483,7 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 											</button>
 											{images.length > 0 && (
 												<span className="text-xs text-sub-text">
-													{images.length}/8
+													{images.length}/4
 												</span>
 											)}
 										</div>
@@ -452,10 +491,10 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 
 									{images.length > 0 && (
 										<div className="flex flex-wrap gap-2">
-											{images.map((image) => (
+											{images.slice(0, 4).map((image) => (
 												<div
 													key={image.id}
-													className="relative w-12 h-12 rounded-lg border border-card overflow-hidden"
+													className="relative w-12 h-12 rounded-card border border-card overflow-hidden"
 												>
 													{/* eslint-disable-next-line @next/next/no-img-element */}
 													<img
@@ -529,6 +568,14 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 					enableAssetSearch={true}
 					assetSearchQuery={assets.searchQuery}
 					onAssetSearchChange={assets.setSearchQuery}
+				/>
+			)}
+			{imageModalImages.length > 0 && (
+				<ImageSlideModal
+					isOpen={isImageModalOpen}
+					onOpenChange={setIsImageModalOpen}
+					images={imageModalImages}
+					initialIndex={imageModalIndex}
 				/>
 			)}
 		</div>
