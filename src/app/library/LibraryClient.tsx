@@ -56,7 +56,6 @@ export default function LibraryClient({
 	const searchParams = useSearchParams();
 	const [isCardPrefsLoaded, setIsCardPrefsLoaded] = useState(false);
 	const skipNextQueryUpdateRef = useRef(false);
-	const listTopRef = useRef<HTMLDivElement | null>(null);
 
 	const defaultLibrarySettings = useMemo(
 		() => ({

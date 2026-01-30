@@ -24,6 +24,7 @@ export default function GalleryClient() {
 
 	// 설정 상태
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [isSaving, setIsSaving] = useState(false);
 
 	// 모달 상태
