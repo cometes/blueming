@@ -51,7 +51,7 @@ const VISIBILITY_OPTIONS = [
 	{ value: "secret", label: "비밀글" },
 	{ value: "protected", label: "보호글" },
 ];
-const MAX_IMAGE_COUNT = 8;
+const MAX_IMAGE_COUNT = 4;
 
 export default function MemoCreateModal({
 	isOpen,
@@ -154,9 +154,11 @@ export default function MemoCreateModal({
 	};
 
 	const handleImageDialogOpen = useCallback(() => {
-		if (!imageDialog.openDialog("create", images.length)) {
-			toast.error("이미지는 최대 8개까지 첨부할 수 있어요.");
+		if (images.length >= MAX_IMAGE_COUNT) {
+			toast.error("이미지는 최대 4개까지 첨부할 수 있어요.");
+			return;
 		}
+		imageDialog.openDialog("create", images.length);
 	}, [imageDialog, images.length]);
 
 	const removeImage = useCallback((id: string) => {
@@ -173,7 +175,7 @@ export default function MemoCreateModal({
 		(url: string) => {
 			if (!imageDialog.target || !url) return;
 			if (images.length >= MAX_IMAGE_COUNT) {
-				toast.error("이미지는 최대 8개까지 첨부할 수 있어요.");
+				toast.error("이미지는 최대 4개까지 첨부할 수 있어요.");
 				return;
 			}
 			if (
@@ -319,7 +321,7 @@ export default function MemoCreateModal({
 						)}
 						{images.length > 0 && (
 							<div className="flex flex-wrap gap-2">
-								{images.map((image) => (
+								{images.slice(0, 4).map((image) => (
 									<div
 										key={image.id}
 										className="relative w-12 h-12 rounded-card border border-card overflow-hidden"
@@ -482,7 +484,13 @@ export default function MemoCreateModal({
 				{isMounted && (
 					<ImageUploadDialog
 						isOpen={imageDialog.isOpen}
-						onOpenChange={imageDialog.setIsOpen}
+						onOpenChange={(open) => {
+							if (!open) {
+								imageDialog.closeDialog();
+							} else {
+								imageDialog.setIsOpen(true);
+							}
+						}}
 						thumbnail={imageDialog.previewUrl}
 						setThumbnail={imageDialog.setPreview}
 						uploadMode="deferred"

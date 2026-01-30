@@ -135,13 +135,18 @@ export default function ImageUploadDialog({
 	const handleUpload = () => {
 		if (!thumbnail) return;
 
-		onUpload(thumbnail);
+		const currentThumbnail = thumbnail;
 
 		if (uploadMode === "immediate") {
 			setThumbnail("");
 		}
 
 		onOpenChange(false);
+
+		// Dialog가 닫힌 후 상태 업데이트를 수행하여 DOM 충돌 방지
+		setTimeout(() => {
+			onUpload(currentThumbnail);
+		}, 0);
 	};
 
 	return (
