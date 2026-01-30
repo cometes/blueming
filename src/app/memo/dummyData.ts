@@ -34,8 +34,7 @@ export const dummyMemos: Memo[] = [
 	{
 		id: "memo-2",
 		title: "붙임취씨",
-		content:
-			"여백 붙여넣기\n\n중국어공부\n드럼학원\n춤학원",
+		content: "여백 붙여넣기\n\n중국어공부\n드럼학원\n춤학원",
 		author: "취",
 		tags: ["최신글", "취"],
 		createdAt: "2023.02.15",
@@ -44,8 +43,7 @@ export const dummyMemos: Memo[] = [
 	{
 		id: "memo-3",
 		title: "이런 식으로 아무말을 해봐",
-		content:
-			"내용내용~\n더많이\n더많이많이2",
+		content: "내용내용~\n더많이\n더많이많이2",
 		author: "무공",
 		tags: ["최신글", "무공"],
 		createdAt: "2023.02.14",
@@ -76,8 +74,7 @@ export const dummyMemos: Memo[] = [
 	{
 		id: "memo-5",
 		title: "2고정된 메모",
-		content:
-			"요즘 중독성 쩌는 넠 너너너넠 넉 넉",
+		content: "요즘 중독성 쩌는 넠 너너너넠 넉 넉",
 		author: "무공",
 		tags: ["최신글", "무공"],
 		createdAt: "2023.02.12",
@@ -86,8 +83,7 @@ export const dummyMemos: Memo[] = [
 	{
 		id: "memo-6",
 		title: "제목 없음",
-		content:
-			"멤버 공개 게시글입니다.",
+		content: "멤버 공개 게시글입니다.",
 		author: "취",
 		tags: ["최신글", "취"],
 		createdAt: "2023.02.11",
@@ -97,7 +93,7 @@ export const dummyMemos: Memo[] = [
 		id: "memo-7",
 		title: "긴타래긴타래",
 		content:
-			"정기회의 회기는 100일을, 임시회의 회기는 30일을 초과할 수 없다.\n\n혼인과 가족생활은 개인의 존엄과 양성의 평등을 기초로 성립되고 유지되어야 하며, 국가는 이를 보장한다.\n\n대통령은 내란 또는 외환의 죄를 범한 경우를 제외하고는 재직중 형사상의 소추를 받지 아니한다.",
+			"정기회의 회기는 100일을, 임시회의 회기는 30일을 초과할 수 없다. 혼인과 가족생활은 개인의 존엄과 양성의 평등을 기초로 성립되고 유지되어야 하며, 국가는 이를 보장한다. 대통령은 내란 또는 외환의 죄를 범한 경우를 제외하고는 재직중 형사상의 소추를 받지 아니한다. 국가는 여자의 복지와 권익의 향상을 위하여 노력하여야 한다. 헌법개정안이 제2항의 찬성을 얻은 때에는 헌법개정은 확정되며, 대통령은 즉시 이를 공포하여야 한다.국회는 의원의 자격을 심사하며, 의원을 징계할 수 있다. 모든 국민은 그 보호하는 자녀에게 적어도 초등교육과 법률이 정하는 교육을 받게 할 의무를 진다. 국가는 사회보장·사회복지의 증진에 노력할 의무를 진다.",
 		author: "무공",
 		tags: ["최신글", "무공"],
 		createdAt: "2023.02.10",
@@ -129,8 +125,7 @@ export const dummyMemos: Memo[] = [
 	{
 		id: "memo-8",
 		title: "메모오오오",
-		content:
-			"간단한 메모 내용입니다.",
+		content: "간단한 메모 내용입니다.",
 		author: "무공",
 		tags: ["최신글", "무공"],
 		createdAt: "2023.02.09",
@@ -139,8 +134,7 @@ export const dummyMemos: Memo[] = [
 	{
 		id: "memo-9",
 		title: "주토피아2",
-		content:
-			"보고왔따",
+		content: "보고왔따",
 		author: "무공",
 		tags: ["최신글", "무공"],
 		createdAt: "2023.02.08",
@@ -149,8 +143,7 @@ export const dummyMemos: Memo[] = [
 	{
 		id: "memo-10",
 		title: "테스트 메모",
-		content:
-			"테스트 344444",
+		content: "테스트 344444",
 		author: "취",
 		tags: ["최신글", "취"],
 		createdAt: "2023.02.07",

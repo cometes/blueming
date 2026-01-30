@@ -14,8 +14,8 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { useAdmin } from "@/hooks/auth/UseAdmin";
 import type { GalleryImage, GallerySettings } from "@/types/gallery";
 import { DEFAULT_GALLERY_SETTINGS } from "@/types/gallery";
-import { apiClient } from "@/queries/apiClient";
 import { createGalleryImage, fetchGalleryImages } from "@/queries/gallery";
+import { setSettingsGallery } from "@/queries/set/setSettingsGallery";
 
 export default function GalleryClient() {
 	const searchParams = useSearchParams();
@@ -124,9 +124,7 @@ export default function GalleryClient() {
 			setIsSaving(true);
 
 			// API 호출하여 설정 저장
-			await apiClient.patch("/settings", {
-				gallery: newSettings,
-			});
+			await setSettingsGallery(newSettings);
 
 			// Context 업데이트
 			if (updateGallery) {
@@ -147,37 +145,37 @@ export default function GalleryClient() {
 		}
 	};
 
-	useEffect(() => {
-		let isActive = true;
-		fetchGalleryImages()
-			.then((data) => {
-				if (!isActive) return;
-				setImages(Array.isArray(data.items) ? data.items : []);
+	const loadGalleryImages = useCallback(
+		(query: string) => {
+			let isActive = true;
+			fetchGalleryImages({
+				query,
+				sort: currentSettings.behavior?.sortOrder ?? "latest",
+				page: 1,
+				limit: 24,
 			})
-			.catch(() => {
-				if (!isActive) return;
-				toast.error("갤러리 데이터를 불러오지 못했습니다.");
-				setImages([]);
-			})
-			.finally(() => {
-				if (!isActive) return;
-			});
-		return () => {
-			isActive = false;
-		};
-	}, []);
+				.then((data) => {
+					if (!isActive) return;
+					setImages(Array.isArray(data.items) ? data.items : []);
+				})
+				.catch(() => {
+					if (!isActive) return;
+					toast.error("갤러리 데이터를 불러오지 못했습니다.");
+					setImages([]);
+				});
+			return () => {
+				isActive = false;
+			};
+		},
+		[currentSettings.behavior?.sortOrder],
+	);
 
-	const normalizedQuery = appliedQuery.trim().toLowerCase();
-	const filteredImages = useMemo(() => {
-		if (!normalizedQuery) return images;
-		return images.filter((image) => {
-			const tags = Array.isArray(image.tags) ? image.tags.join(" ") : "";
-			const haystack = [image.title, image.category, tags]
-				.join(" ")
-				.toLowerCase();
-			return haystack.includes(normalizedQuery);
-		});
-	}, [images, normalizedQuery]);
+	useEffect(() => {
+		const cleanup = loadGalleryImages(appliedQuery.trim());
+		return () => cleanup?.();
+	}, [appliedQuery, loadGalleryImages]);
+
+	const filteredImages = useMemo(() => images, [images]);
 
 	const handleCreateSubmit = useCallback(async (payload: GalleryCreatePayload) => {
 		try {
