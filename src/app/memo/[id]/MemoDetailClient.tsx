@@ -31,6 +31,7 @@ export default function MemoDetailClient({ memoId }: MemoDetailClientProps) {
 	const router = useRouter();
 	const { user, isLoading: isAuthLoading } = useAuthStore();
 	const [memo, setMemo] = useState<MemoDetail | null>(null);
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [isLoading, setIsLoading] = useState(true);
 	const [password, setPassword] = useState("");
 	const [passwordError, setPasswordError] = useState("");

@@ -40,37 +40,65 @@ function PaginationItem({ ...props }: React.ComponentProps<"li">) {
 type PaginationLinkProps = {
 	isActive?: boolean;
 	href?: string;
-} & Pick<React.ComponentProps<typeof Button>, "size"> &
-	React.ComponentProps<"a">;
+	onClick?: React.MouseEventHandler<HTMLElement>;
+	children?: React.ReactNode;
+} & Pick<React.ComponentProps<typeof Button>, "size"> & {
+	className?: string;
+	"aria-label"?: string;
+};
 
 function PaginationLink({
 	className,
 	isActive,
 	size = "icon",
 	href,
+	onClick,
+	children,
 	...props
 }: PaginationLinkProps) {
-	const Comp = href ? "a" : "button";
+	const sharedClassName = cn(
+		buttonVariants({
+			variant: isActive ? "outline" : "ghost",
+			size,
+		}),
+		className,
+		isActive
+			? "bg-card-bg border-card text-theme-primary hover:bg-theme-primary hover:text-gray-200 "
+			: "hover:bg-theme-primary hover:text-gray-200",
+		"text-gray-200 hover:border-none"
+	);
+	const sharedStyle = { transition: "background-color 200ms, color 200ms, border-color 200ms" };
+
+	if (href) {
+		return (
+			<a
+				href={href}
+				aria-current={isActive ? "page" : undefined}
+				data-slot="pagination-link"
+				data-active={isActive}
+				className={sharedClassName}
+				style={sharedStyle}
+				onClick={onClick as React.MouseEventHandler<HTMLAnchorElement>}
+				{...props}
+			>
+				{children}
+			</a>
+		);
+	}
+
 	return (
-		<Comp
+		<button
+			type="button"
 			aria-current={isActive ? "page" : undefined}
 			data-slot="pagination-link"
 			data-active={isActive}
-			className={cn(
-				buttonVariants({
-					variant: isActive ? "outline" : "ghost",
-					size,
-				}),
-				className,
-				isActive
-					? "bg-card-bg border-card text-theme-primary hover:bg-theme-primary hover:text-gray-200 "
-					: "hover:bg-theme-primary hover:text-gray-200",
-				"text-gray-200 hover:border-none"
-			)}
-			style={{ transition: "background-color 200ms, color 200ms, border-color 200ms" }}
-			{...(href ? { href } : { type: "button" })}
+			className={sharedClassName}
+			style={sharedStyle}
+			onClick={onClick as React.MouseEventHandler<HTMLButtonElement>}
 			{...props}
-		/>
+		>
+			{children}
+		</button>
 	);
 }
 
