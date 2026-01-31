@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Search, Settings, X } from "lucide-react";
-import AdminOnly from "@/components/common/AdminOnly";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAdmin } from "@/hooks/auth/UseAdmin";
 import { useMoveToPage } from "@/hooks/useMoveToPage";
 import LibrarySettingsDialog from "@/components/modal/LibrarySettingsDialog";
 import { setSettingsLibrary } from "@/queries/set/setSettingsLibrary";
@@ -27,6 +27,7 @@ interface LibraryItem {
 	tags?: string[];
 	thumbnail?: string;
 	pinned?: boolean;
+	commentCount?: number;
 	allow?: "all" | "password" | "secret";
 }
 
@@ -59,6 +60,7 @@ export default function LibraryClient({
 	const [isCardPrefsLoaded, setIsCardPrefsLoaded] = useState(
 		initialIsCardOn !== undefined
 	);
+	const { isAdmin } = useAdmin();
 	const skipNextQueryUpdateRef = useRef(false);
 
 	const defaultLibrarySettings = useMemo(
@@ -307,42 +309,48 @@ export default function LibraryClient({
 		return currentPageSafe > 1 ? `?page=${currentPageSafe}` : "";
 	}, [currentPageSafe]);
 
+	const canWrite = writePermission === "admin" ? isAdmin : true;
+	const showSettingsButton = isAdmin;
+	const hasRightButtons = showSettingsButton || canWrite;
+
 	return (
 		<>
 			<div className="shrink-0 w-full max-w-2xl mt-[90px] mb-[40px] mx-auto">
 				<div className="flex justify-center items-center gap-2.5">
-					<div className="relative flex rounded-card bg-transparent p-1">
-						<div
-							className={cn(
-								"absolute top-1 w-10 h-10 rounded-card bg-card border border-card transition-all duration-300 ease-in-out shadow-sm",
-								isCardOn ? "translate-x-10" : "translate-x-0",
-							)}
-						/>
-						<button
-							className="relative z-10 w-10 h-10 rounded-card p-2.5 cursor-pointer flex flex-col justify-between transition-colors duration-300"
-							onClick={() => {
-								setIsCardOn(false);
-								setIsSeriesOn(false);
-								updateTabParam(false);
-							}}
-						>
-							<span className="w-full h-[3px] rounded-[1px] bg-[#dee2e6]" />
-							<span className="w-full h-[3px] rounded-[1px] bg-[#dee2e6]" />
-							<span className="w-full h-[3px] rounded-[1px] bg-[#dee2e6]" />
-						</button>
-						<button
-							className="relative z-10 w-10 h-10 rounded-card p-2.5 cursor-pointer grid grid-cols-2 gap-0.5 transition-colors duration-300"
-							onClick={() => {
-								setIsCardOn(true);
-								setIsSeriesOn(false);
-								updateTabParam(false);
-							}}
-						>
-							<span className="w-full h-full rounded-[1px] bg-[#dee2e6]" />
-							<span className="w-full h-full rounded-[1px] bg-[#dee2e6]" />
-							<span className="w-full h-full rounded-[1px] bg-[#dee2e6]" />
-							<span className="w-full h-full rounded-[1px] bg-[#dee2e6]" />
-						</button>
+					<div className="flex items-center justify-end w-[150px]">
+						<div className="relative flex rounded-card bg-transparent p-1">
+							<div
+								className={cn(
+									"absolute top-1 w-10 h-10 rounded-card bg-card border border-card transition-all duration-300 ease-in-out shadow-sm",
+									isCardOn ? "translate-x-10" : "translate-x-0",
+								)}
+							/>
+							<button
+								className="relative z-10 w-10 h-10 rounded-card p-2.5 cursor-pointer flex flex-col justify-between transition-colors duration-300"
+								onClick={() => {
+									setIsCardOn(false);
+									setIsSeriesOn(false);
+									updateTabParam(false);
+								}}
+							>
+								<span className="w-full h-[3px] rounded-[1px] bg-[#dee2e6]" />
+								<span className="w-full h-[3px] rounded-[1px] bg-[#dee2e6]" />
+								<span className="w-full h-[3px] rounded-[1px] bg-[#dee2e6]" />
+							</button>
+							<button
+								className="relative z-10 w-10 h-10 rounded-card p-2.5 cursor-pointer grid grid-cols-2 gap-0.5 transition-colors duration-300"
+								onClick={() => {
+									setIsCardOn(true);
+									setIsSeriesOn(false);
+									updateTabParam(false);
+								}}
+							>
+								<span className="w-full h-full rounded-[1px] bg-[#dee2e6]" />
+								<span className="w-full h-full rounded-[1px] bg-[#dee2e6]" />
+								<span className="w-full h-full rounded-[1px] bg-[#dee2e6]" />
+								<span className="w-full h-full rounded-[1px] bg-[#dee2e6]" />
+							</button>
+						</div>
 					</div>
 					<div className="flex items-center w-fit h-full">
 						<Input
@@ -370,7 +378,7 @@ export default function LibraryClient({
 							endIconAriaLabel="검색어 지우기"
 						/>
 					</div>
-					<AdminOnly>
+					{showSettingsButton ? (
 						<LibrarySettingsDialog
 							isOpen={isDialogOpen}
 							onOpenChange={setIsDialogOpen}
@@ -384,29 +392,27 @@ export default function LibraryClient({
 							setTempWritePermission={setTempWritePermission}
 							onSave={handleSaveSettings}
 							trigger={
-								<Button className="bg-card border-card text-main-text rounded-full w-10 h-10 hover:border-transparent">
+								<Button
+									className="bg-card border-card text-main-text rounded-full w-10 h-10 hover:border-transparent"
+									style={{
+										transition:
+											"background-color 0.2s ease-out, color 0.2s ease-out, border-color 0.2s ease-out",
+									}}
+								>
 									<Settings />
 								</Button>
 							}
 						/>
-					</AdminOnly>
-					{writePermission === "admin" ? (
-						<AdminOnly>
-							<Button
-								onClick={onClickMoveToPage("/library/new/")}
-								className="bg-theme-primary hover:bg-theme-primary/90"
-							>
-								<Plus size={14} />새 글쓰기
-							</Button>
-						</AdminOnly>
-					) : (
+					) : null}
+					{canWrite ? (
 						<Button
 							onClick={onClickMoveToPage("/library/new/")}
 							className="bg-theme-primary hover:bg-theme-primary/90"
 						>
 							<Plus size={14} />새 글쓰기
 						</Button>
-					)}
+					) : null}
+					{!hasRightButtons ? <div className="w-[150px]" /> : null}
 				</div>
 				<div className="TabWrap w-fit mx-auto mt-7">
 					<div className="TabBox flex justify-center">

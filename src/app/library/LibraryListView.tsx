@@ -25,6 +25,7 @@ interface LibraryItem {
 	tags?: string[];
 	thumbnail?: string;
 	pinned?: boolean;
+	commentCount?: number;
 	allow?: "all" | "password" | "secret";
 }
 
@@ -72,7 +73,7 @@ export default function LibraryListView({
 	return (
 		<>
 			<div className="mt-3 flex items-center justify-between">
-				<span className="text-sm text-sub-text">
+				<span className="text-sm text-sub-text font-title">
 					총 {listTotalCount + pinnedItems.length}개
 				</span>
 				<button
@@ -86,7 +87,7 @@ export default function LibraryListView({
 									: "latest",
 						)
 					}
-					className="text-theme-primary font-medium inline-flex items-center gap-1 hover:opacity-70 cursor-pointer"
+					className="text-theme-primary font-medium inline-flex items-center gap-1 hover:opacity-70 cursor-pointer font-title"
 					style={{ transition: "opacity 0.2s ease-out" }}
 				>
 					<ArrowUpDown size={14} className="text-theme-primary" />
@@ -103,7 +104,7 @@ export default function LibraryListView({
 				) : (
 					<>
 						{pinnedItems.length > 0 && (
-							<div className="rounded-card border-card bg-card mb-4">
+							<div className="rounded-card border-card bg-card backdrop-blur-card mb-4">
 								{/* <div className="px-4 py-3 border-b border-card-bg text-sm font-medium text-main-text">
 							공지
 						</div> */}
@@ -160,8 +161,8 @@ export default function LibraryListView({
 								<>
 									{listItems.map((el) => (
 										<ItemGallery
-											data={el}
 											key={el.id}
+											data={el}
 											detailQuery={detailQuery}
 										/>
 									))}
@@ -171,8 +172,8 @@ export default function LibraryListView({
 								<>
 									{listItems.map((el) => (
 										<ItemListWithImage
-											data={el}
 											key={el.id}
+											data={el}
 											detailQuery={detailQuery}
 										/>
 									))}
@@ -181,7 +182,11 @@ export default function LibraryListView({
 							{!isCardOn && layoutType === "list" && (
 								<>
 									{listItems.map((el) => (
-										<ItemList data={el} key={el.id} detailQuery={detailQuery} />
+										<ItemList
+											key={el.id}
+											data={el}
+											detailQuery={detailQuery}
+										/>
 									))}
 								</>
 							)}

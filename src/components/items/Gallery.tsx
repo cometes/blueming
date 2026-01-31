@@ -56,18 +56,18 @@ export default function ItemGallery({
 						{data.allow === "password" && (
 							<Lock size={14} className="text-white shrink-0" />
 						)}
-						<p className="GalleryTitle text-lg font-medium break-keep overflow-hidden text-ellipsis text-white">
+						<p className="GalleryTitle font-medium break-keep overflow-hidden text-ellipsis text-white font-title">
 							{data.title}
 						</p>
 					</div>
-					<span className="GalleryDate block ml-2 whitespace-nowrap text-gray-500 text-sm">
+					<span className="GalleryDate block ml-2 whitespace-nowrap text-gray-500 text-xs">
 						{dateConvert(data.createdAt)}
 					</span>
 				</div>
-				<div className="GalleryTagBox mt-2 z-20">
+				<div className="GalleryTagBox z-20">
 					{/* 태그 */}
 					{data.tags?.length > 0 && (
-						<div className="flex flex-wrap gap-2 mt-1.5">
+						<div className="flex flex-wrap gap-2 mt-1">
 							{data.tags.slice(0, 3).map((tag, index) => (
 								<Badge
 									key={index}

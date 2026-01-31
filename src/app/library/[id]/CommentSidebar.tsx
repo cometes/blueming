@@ -483,7 +483,11 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 								rows={2}
 								className="w-full rounded-card border-card bg-card px-3 py-2 pr-10 text-sm text-main-text resize-none"
 								onKeyDown={(e) => {
-									if (e.key === "Enter" && !e.shiftKey && canSubmit) {
+									if (
+										e.key === "Enter" &&
+										(e.ctrlKey || e.metaKey) &&
+										canSubmit
+									) {
 										e.preventDefault();
 										handleCreate();
 									}

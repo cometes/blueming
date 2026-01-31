@@ -11,6 +11,7 @@ interface LibraryItem {
 	tags?: string[];
 	thumbnail?: string;
 	pinned?: boolean;
+	commentCount?: number;
 	allow?: "all" | "password" | "secret";
 }
 

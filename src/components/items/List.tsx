@@ -2,6 +2,8 @@ import { useMoveToPage } from "@/hooks/useMoveToPage";
 import { dateConvert } from "@/lib/date";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Fragment } from "react";
+import type { ReactNode } from "react";
 import { CircleSlash, MessageCircle, Lock } from "lucide-react";
 
 interface ItemListProps {
@@ -15,6 +17,7 @@ interface ItemListProps {
 		tags?: string[];
 		thumbnail?: string;
 		pinned?: boolean;
+		commentCount?: number;
 		allow?: "all" | "password" | "secret";
 	};
 	detailQuery?: string;
@@ -23,6 +26,31 @@ interface ItemListProps {
 export default function ItemList({ data, detailQuery = "" }: ItemListProps) {
 	const { onClickMoveToPage } = useMoveToPage();
 	const detailPath = `/library/${data.slug || data.id}${detailQuery}`;
+	const hasComments = (data.commentCount ?? 0) > 0;
+	const metaItems: ReactNode[] = [];
+	if (data.author) {
+		metaItems.push(
+			<span key="author" className="font-medium text-main-text">
+				{data.author}
+			</span>
+		);
+	}
+	if (hasComments) {
+		metaItems.push(
+			<span key="comments" className="inline-flex items-center gap-1">
+				<MessageCircle className="w-4 h-4" aria-hidden="true" />
+				<span>{data.commentCount}</span>
+			</span>
+		);
+	}
+	metaItems.push(
+		<time
+			key="date"
+			className="text-xs text-sub-text font-medium tracking-wide"
+		>
+			{dateConvert(data.createdAt)}
+		</time>
+	);
 
 	return (
 		<article
@@ -71,17 +99,12 @@ export default function ItemList({ data, detailQuery = "" }: ItemListProps) {
 						)}
 					</div>
 					<div className="mt-2 flex items-center gap-2 text-xs text-sub-text">
-						{data.author && (
-							<span className="font-medium text-main-text">{data.author}</span>
-						)}
-						<span className="text-border">•</span>
-						<span className="inline-flex items-center gap-1">
-							<MessageCircle className="w-4 h-4" aria-hidden="true" />
-						</span>
-						<span className="text-border">•</span>
-						<time className="text-xs text-sub-text font-medium tracking-wide">
-							{dateConvert(data.createdAt)}
-						</time>
+						{metaItems.map((item, index) => (
+							<Fragment key={index}>
+								{index > 0 ? <span className="text-border">•</span> : null}
+								{item}
+							</Fragment>
+						))}
 					</div>
 
 					{/* 태그 */}
