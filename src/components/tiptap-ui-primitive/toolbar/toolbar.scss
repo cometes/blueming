@@ -39,13 +39,9 @@
     padding: 0 0.5rem;
     flex-wrap: nowrap;
 
-    // 데스크톱: 기본 overflow hidden, 호버 시 스크롤 가능
-    overflow: hidden;
-
-    &:hover {
-      overflow-x: auto;
-      overscroll-behavior-x: contain;
-    }
+    // 데스크톱: 항상 가로 스크롤 가능 (스크롤바는 숨김)
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
 
     // 스크롤바 숨김
     scrollbar-width: none;

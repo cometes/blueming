@@ -9,6 +9,10 @@ export interface CreateLibraryPayload {
 	summary?: string;
 	tags?: string[];
 	series?: string;
+	backgroundType?: "default" | "color" | "image";
+	backgroundColor?: string;
+	backgroundImage?: string;
+	enableBackdrop?: boolean;
 	visibility: "all" | "password" | "secret";
 	password?: string;
 	thumbnail?: string;
@@ -43,6 +47,10 @@ export const createLibraryPost = async (
 				summary: payload.summary,
 				tags: payload.tags,
 				series: payload.series,
+				backgroundType: payload.backgroundType,
+				backgroundColor: payload.backgroundColor,
+				backgroundImage: payload.backgroundImage,
+				enableBackdrop: payload.enableBackdrop,
 				allow,
 				password: allow === "password" ? payload.password : null,
 				thumbnail: payload.thumbnail,

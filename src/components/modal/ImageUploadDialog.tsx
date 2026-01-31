@@ -49,6 +49,7 @@ export default function ImageUploadDialog({
 }: ImageUploadDialogProps) {
 	const [isUploading, setIsUploading] = useState(false);
 	const [internalSearchQuery, setInternalSearchQuery] = useState("");
+	const [urlInput, setUrlInput] = useState("");
 
 	const isControlledSearch = typeof onAssetSearchChange === "function";
 	const searchQuery = enableAssetSearch
@@ -132,6 +133,16 @@ export default function ImageUploadDialog({
 		}
 	};
 
+	const handleApplyUrl = () => {
+		const nextUrl = urlInput.trim();
+		if (!nextUrl) {
+			toast.error("이미지 URL을 입력해주세요.");
+			return;
+		}
+		setThumbnail(nextUrl);
+		setUrlInput("");
+	};
+
 	const handleUpload = () => {
 		if (!thumbnail) return;
 
@@ -200,6 +211,23 @@ export default function ImageUploadDialog({
 				disabled={isUploading}
 				className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
 			/>
+						</div>
+					</div>
+					<div>
+						<div className="text-xs font-semibold text-main-text mb-2">
+							URL로 업로드
+						</div>
+						<div className="flex items-center gap-2">
+							<Input
+								type="text"
+								placeholder="https://example.com/image.jpg"
+								value={urlInput}
+								onChange={(e) => setUrlInput(e.target.value)}
+								className="flex-1 rounded-card border-card bg-card-bg"
+							/>
+							<Button type="button" variant="outline" onClick={handleApplyUrl}>
+								적용
+							</Button>
 						</div>
 					</div>
 					{rightContent ? (

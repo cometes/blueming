@@ -24,39 +24,6 @@ const mergeRefs = <T,>(
   }
 }
 
-const useObserveVisibility = (
-  ref: React.RefObject<HTMLElement | null>,
-  callback: () => void
-): void => {
-  React.useEffect(() => {
-    const element = ref.current
-    if (!element) return
-
-    let isMounted = true
-
-    if (isMounted) {
-      requestAnimationFrame(callback)
-    }
-
-    const observer = new MutationObserver(() => {
-      if (isMounted) {
-        requestAnimationFrame(callback)
-      }
-    })
-
-    observer.observe(element, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-    })
-
-    return () => {
-      isMounted = false
-      observer.disconnect()
-    }
-  }, [ref, callback])
-}
-
 const useToolbarKeyboardNav = (
   toolbarRef: React.RefObject<HTMLDivElement | null>
 ): void => {
@@ -154,168 +121,10 @@ const useToolbarKeyboardNav = (
   }, [toolbarRef])
 }
 
-const useToolbarVisibility = (
-  ref: React.RefObject<HTMLDivElement | null>
-): boolean => {
-  const [isVisible, setIsVisible] = React.useState(true)
-  const isMountedRef = React.useRef(false)
-
-  React.useEffect(() => {
-    isMountedRef.current = true
-    return () => {
-      isMountedRef.current = false
-    }
-  }, [])
-
-  const checkVisibility = React.useCallback(() => {
-    if (!isMountedRef.current) return
-
-    const toolbar = ref.current
-    if (!toolbar) return
-
-    // Check if any group has visible children
-    const hasVisibleChildren = Array.from(toolbar.children).some((child) => {
-      if (!(child instanceof HTMLElement)) return false
-      if (child.getAttribute("role") === "group") {
-        return child.children.length > 0
-      }
-      return false
-    })
-
-    setIsVisible(hasVisibleChildren)
-  }, [ref])
-
-  useObserveVisibility(ref, checkVisibility)
-  return isVisible
-}
-
-const useGroupVisibility = (
-  ref: React.RefObject<HTMLDivElement | null>
-): boolean => {
-  const [isVisible, setIsVisible] = React.useState(true)
-  const isMountedRef = React.useRef(false)
-
-  React.useEffect(() => {
-    isMountedRef.current = true
-    return () => {
-      isMountedRef.current = false
-    }
-  }, [])
-
-  const checkVisibility = React.useCallback(() => {
-    if (!isMountedRef.current) return
-
-    const group = ref.current
-    if (!group) return
-
-    const hasVisibleChildren = Array.from(group.children).some((child) => {
-      if (!(child instanceof HTMLElement)) return false
-      return true
-    })
-
-    setIsVisible(hasVisibleChildren)
-  }, [ref])
-
-  useObserveVisibility(ref, checkVisibility)
-  return isVisible
-}
-
-const useSeparatorVisibility = (
-  ref: React.RefObject<HTMLDivElement | null>
-): boolean => {
-  const [isVisible, setIsVisible] = React.useState(true)
-  const isMountedRef = React.useRef(false)
-
-  React.useEffect(() => {
-    isMountedRef.current = true
-    return () => {
-      isMountedRef.current = false
-    }
-  }, [])
-
-  const checkVisibility = React.useCallback(() => {
-    if (!isMountedRef.current) return
-
-    const separator = ref.current
-    if (!separator) return
-
-    const prevSibling = separator.previousElementSibling as HTMLElement
-    const nextSibling = separator.nextElementSibling as HTMLElement
-
-    if (!prevSibling || !nextSibling) {
-      setIsVisible(false)
-      return
-    }
-
-    const areBothGroups =
-      prevSibling.getAttribute("role") === "group" &&
-      nextSibling.getAttribute("role") === "group"
-
-    const haveBothChildren =
-      prevSibling.children.length > 0 && nextSibling.children.length > 0
-
-    setIsVisible(areBothGroups && haveBothChildren)
-  }, [ref])
-
-  useObserveVisibility(ref, checkVisibility)
-  return isVisible
-}
-
 export const Toolbar = React.forwardRef<HTMLDivElement, ToolbarProps>(
   ({ children, className, variant = "fixed", ...props }, ref) => {
     const toolbarRef = React.useRef<HTMLDivElement>(null)
-    const isVisible = useToolbarVisibility(toolbarRef)
-    const bodyOverflowRef = React.useRef<string>("")
-
     useToolbarKeyboardNav(toolbarRef)
-
-    React.useEffect(() => {
-      const toolbar = toolbarRef.current
-      if (!toolbar) return
-
-      let rafId: number | null = null
-      let lastOffset = -1
-
-      const applyOffset = () => {
-        rafId = null
-        const vv = typeof window !== "undefined" ? window.visualViewport : null
-        if (!vv) {
-          if (lastOffset !== 0) {
-            document.documentElement.style.setProperty("--tt-keyboard-offset", "0px")
-            lastOffset = 0
-          }
-          return
-        }
-        const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
-        if (offset !== lastOffset) {
-          document.documentElement.style.setProperty("--tt-keyboard-offset", `${offset}px`)
-          lastOffset = offset
-        }
-      }
-
-      const updateKeyboardOffset = () => {
-        if (rafId !== null) return
-        rafId = window.requestAnimationFrame(applyOffset)
-      }
-
-      updateKeyboardOffset()
-
-      const vv = window.visualViewport
-      if (!vv) return
-
-      vv.addEventListener("resize", updateKeyboardOffset)
-      vv.addEventListener("scroll", updateKeyboardOffset)
-
-      return () => {
-        vv.removeEventListener("resize", updateKeyboardOffset)
-        vv.removeEventListener("scroll", updateKeyboardOffset)
-        if (rafId !== null) {
-          window.cancelAnimationFrame(rafId)
-        }
-      }
-    }, [])
-
-    if (!isVisible) return null
 
     return (
       <div
@@ -324,15 +133,6 @@ export const Toolbar = React.forwardRef<HTMLDivElement, ToolbarProps>(
         aria-label="툴바"
         data-variant={variant}
         className={`tiptap-toolbar ${className || ""}`}
-        onMouseEnter={() => {
-          if (typeof document === "undefined") return
-          bodyOverflowRef.current = document.body.style.overflow
-          document.body.style.overflow = "hidden"
-        }}
-        onMouseLeave={() => {
-          if (typeof document === "undefined") return
-          document.body.style.overflow = bodyOverflowRef.current
-        }}
         onWheel={(event) => {
           if (!toolbarRef.current) return
           const el = toolbarRef.current
@@ -354,14 +154,9 @@ Toolbar.displayName = "Toolbar"
 
 export const ToolbarGroup = React.forwardRef<HTMLDivElement, BaseProps>(
   ({ children, className, ...props }, ref) => {
-    const groupRef = React.useRef<HTMLDivElement>(null)
-    const isVisible = useGroupVisibility(groupRef)
-
-    if (!isVisible) return null
-
     return (
       <div
-        ref={mergeRefs([groupRef, ref])}
+        ref={ref}
         role="group"
         className={`tiptap-toolbar-group ${className || ""}`}
         {...props}
@@ -376,14 +171,9 @@ ToolbarGroup.displayName = "ToolbarGroup"
 
 export const ToolbarSeparator = React.forwardRef<HTMLDivElement, BaseProps>(
   ({ ...props }, ref) => {
-    const separatorRef = React.useRef<HTMLDivElement>(null)
-    const isVisible = useSeparatorVisibility(separatorRef)
-
-    if (!isVisible) return null
-
     return (
       <Separator
-        ref={mergeRefs([separatorRef, ref])}
+        ref={ref}
         orientation="vertical"
         decorative
         {...props}

@@ -3,7 +3,6 @@
 import * as React from "react";
 
 // --- UI Primitives ---
-import { Button } from "@/components/tiptap-ui-primitive/button";
 import { Spacer } from "@/components/tiptap-ui-primitive/spacer";
 import {
 	Toolbar,
@@ -21,31 +20,16 @@ import { TextBackgroundColorButton } from "@/components/tiptap-ui/text-backgroun
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu";
 import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button";
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button";
-import { ColorHighlightPopoverContent } from "@/components/tiptap-ui/color-highlight-popover";
-import {
-	LinkPopover,
-	LinkContent,
-	LinkButton,
-} from "@/components/tiptap-ui/link-popover";
+import { LinkPopover } from "@/components/tiptap-ui/link-popover";
 import { MarkButton } from "@/components/tiptap-ui/mark-button";
 import { TextAlignDropdownMenu } from "@/components/tiptap-ui/text-align-dropdown-menu";
 
 // --- Icons ---
-import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon";
-import { HighlighterIcon } from "@/components/tiptap-icons/highlighter-icon";
-import { LinkIcon } from "@/components/tiptap-icons/link-icon";
-
-// --- Hooks ---
-import { useMobile } from "@/hooks/use-mobile";
 import type { Editor } from "@tiptap/react";
 
 const MainToolbarContent = ({
-	onLinkClick,
-	isMobile,
 	editor,
 }: {
-	onLinkClick: () => void;
-	isMobile: boolean;
 	editor: Editor | null;
 }) => {
 	return (
@@ -80,11 +64,7 @@ const MainToolbarContent = ({
 				<BlockquoteButton editor={editor} />
 				<MarkButton type="code" editor={editor} />
 				<CodeBlockButton editor={editor} />
-				{!isMobile ? (
-					<LinkPopover editor={editor} />
-				) : (
-					<LinkButton onClick={onLinkClick} />
-				)}
+				<LinkPopover editor={editor} />
 			</ToolbarGroup>
 
 			<ToolbarGroup>
@@ -108,68 +88,14 @@ const MainToolbarContent = ({
 	);
 };
 
-const MobileToolbarContent = ({
-	type,
-	onBack,
-	editor,
-}: {
-	type: "highlighter" | "link";
-	onBack: () => void;
-	editor: Editor | null;
-}) => (
-	<>
-		<ToolbarGroup>
-			<Button data-style="ghost" onClick={onBack}>
-				<ArrowLeftIcon className="tiptap-button-icon" />
-				{type === "highlighter" ? (
-					<HighlighterIcon className="tiptap-button-icon" />
-				) : (
-					<LinkIcon className="tiptap-button-icon" />
-				)}
-			</Button>
-		</ToolbarGroup>
-
-		<ToolbarSeparator />
-
-		{type === "highlighter" ? (
-			<ColorHighlightPopoverContent editor={editor} />
-		) : (
-			<LinkContent editor={editor} />
-		)}
-	</>
-);
-
 export interface TiptapToolbarProps {
 	editor: Editor | null;
 }
 
 export default function TiptapToolbar({ editor }: TiptapToolbarProps) {
-	const isMobile = useMobile();
-	const [mobileView, setMobileView] = React.useState<
-		"main" | "highlighter" | "link"
-	>("main");
-
-	React.useEffect(() => {
-		if (!isMobile && mobileView !== "main") {
-			setMobileView("main");
-		}
-	}, [isMobile, mobileView]);
-
 	return (
 		<Toolbar>
-			{mobileView === "main" ? (
-				<MainToolbarContent
-					onLinkClick={() => setMobileView("link")}
-					isMobile={isMobile}
-					editor={editor}
-				/>
-			) : (
-				<MobileToolbarContent
-					type={mobileView === "highlighter" ? "highlighter" : "link"}
-					onBack={() => setMobileView("main")}
-					editor={editor}
-				/>
-			)}
+			<MainToolbarContent editor={editor} />
 		</Toolbar>
 	);
 }
