@@ -37,6 +37,7 @@ interface LibraryClientProps {
 	seriesData: LibraryItem[];
 	tagData?: string[];
 	initialPage: number;
+	initialIsCardOn?: boolean;
 }
 
 export default function LibraryClient({
@@ -46,15 +47,18 @@ export default function LibraryClient({
 	seriesData,
 	tagData,
 	initialPage,
+	initialIsCardOn,
 }: LibraryClientProps) {
 	const { library, updateLibrary, refreshSettings } = useSettings();
 	const [isSeriesOn, setIsSeriesOn] = useState(false);
-	const [isCardOn, setIsCardOn] = useState(false);
+	const [isCardOn, setIsCardOn] = useState(initialIsCardOn ?? false);
 	const { onClickMoveToPage } = useMoveToPage();
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
-	const [isCardPrefsLoaded, setIsCardPrefsLoaded] = useState(false);
+	const [isCardPrefsLoaded, setIsCardPrefsLoaded] = useState(
+		initialIsCardOn !== undefined
+	);
 	const skipNextQueryUpdateRef = useRef(false);
 
 	const defaultLibrarySettings = useMemo(
@@ -165,13 +169,16 @@ export default function LibraryClient({
 
 	// 로컬 스토리지에서 카드 뷰 상태 불러오기
 	useEffect(() => {
+		if (initialIsCardOn !== undefined) {
+			setIsCardPrefsLoaded(true);
+			return;
+		}
 		const savedIsCardOn = localStorage.getItem("isCardOn");
-
 		if (savedIsCardOn !== null) {
 			setIsCardOn(savedIsCardOn === "true");
 		}
 		setIsCardPrefsLoaded(true);
-	}, []);
+	}, [initialIsCardOn]);
 
 	// 카드 뷰 상태 변경 시 로컬 스토리지에 저장
 	useEffect(() => {
@@ -179,6 +186,7 @@ export default function LibraryClient({
 			return;
 		}
 		localStorage.setItem("isCardOn", isCardOn.toString());
+		document.cookie = `library_card_on=${isCardOn}; path=/; max-age=31536000`;
 	}, [isCardOn, isCardPrefsLoaded]);
 
 	useEffect(() => {
