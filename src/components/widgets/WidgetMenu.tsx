@@ -179,6 +179,7 @@ export default function WidgetMenu() {
 				onMenuClick={handleMenuClick}
 				onSubMenuClick={handleSubMenuClick}
 				getItemBackgroundStyle={getItemBackgroundStyle}
+				className="hidden sm:flex"
 			/>
 			<WidgetMenuIconBar
 				design={design}
@@ -187,6 +188,7 @@ export default function WidgetMenu() {
 				openFolders={openFolders}
 				onMenuClick={handleMenuClick}
 				onSubMenuClick={handleSubMenuClick}
+				className="hidden sm:flex"
 			/>
 		</>
 	);

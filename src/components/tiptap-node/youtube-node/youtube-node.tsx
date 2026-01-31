@@ -7,7 +7,7 @@ import { YoutubeNodeView } from "@/components/tiptap-extension/youtube-node-view
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     youtube: {
-      setYoutubeVideo: (options: { src: string; width?: number; height?: number }) => ReturnType
+      setYoutubeVideo: (options: { src: string; width?: number | string; height?: number }) => ReturnType
     }
   }
 }
@@ -24,7 +24,18 @@ export const CustomYoutubeNode = Node.create({
         default: null,
       },
       width: {
-        default: 640,
+        default: "100%",
+        parseHTML: element => {
+          const width = element.getAttribute("width")
+          if (!width) return null
+          if (width.trim().endsWith("%")) return width.trim()
+          const parsed = parseInt(width, 10)
+          return Number.isNaN(parsed) ? null : parsed
+        },
+        renderHTML: attributes => {
+          if (!attributes.width) return {}
+          return { width: String(attributes.width) }
+        },
       },
       height: {
         default: 480,
@@ -67,13 +78,13 @@ export const CustomYoutubeNode = Node.create({
   addCommands() {
     return {
       setYoutubeVideo:
-        (options: { src: string; width?: number; height?: number }) =>
+        (options: { src: string; width?: number | string; height?: number }) =>
         ({ commands }) => {
           return commands.insertContent({
             type: this.name,
             attrs: {
               src: options.src,
-              width: options.width || 640,
+              width: options.width || "100%",
               height: options.height || 480,
             },
           })

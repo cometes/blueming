@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import type { CSSProperties } from "react";
 import ItemCard from "@/components/items/Card";
 
 interface LibraryItem {
@@ -26,10 +27,11 @@ export default function LibrarySeriesView({
 }: LibrarySeriesViewProps) {
 	return (
 		<div
-			className={cn("grid gap-2.5 mt-10", `grid-cols-${postsPerRow}`)}
-			style={{
-				gridTemplateColumns: `repeat(${postsPerRow}, minmax(0, 1fr))`,
-			}}
+			className={cn(
+				"grid gap-1.5 md:gap-2 mt-10",
+				"grid-cols-2 sm:grid-cols-2 md:[grid-template-columns:repeat(var(--library-cols),minmax(0,1fr))]"
+			)}
+			style={{ ["--library-cols"]: postsPerRow } as CSSProperties}
 		>
 			{seriesItems.map((el) => (
 				<ItemCard data={el} key={el.id} />

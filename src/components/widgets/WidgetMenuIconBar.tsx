@@ -8,6 +8,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import MenuAuthButton from "@/components/common/MenuAuthButton";
+import { cn } from "@/lib/utils";
 import type { MenuDesign, MenuItem, OpenFolders } from "./widgetMenuTypes";
 import {
 	Bell,
@@ -28,6 +29,7 @@ type Props = {
 	openFolders: OpenFolders;
 	onMenuClick: (item: MenuItem) => (e: React.MouseEvent) => void;
 	onSubMenuClick: (parentId: string, subMenuName: string) => void;
+	className?: string;
 };
 
 const renderIconBarLogo = (design: MenuDesign) => {
@@ -82,10 +84,14 @@ export default function WidgetMenuIconBar({
 	openFolders,
 	onMenuClick,
 	onSubMenuClick,
+	className,
 }: Props) {
 	return (
 		<aside
-			className="menu-iconbar h-dvh flex flex-col items-center shrink-0 sticky top-0 overflow-visible"
+			className={cn(
+				"menu-iconbar h-dvh flex flex-col items-center shrink-0 sticky top-0 overflow-visible",
+				className,
+			)}
 			style={iconBarStyle}
 		>
 			<TooltipProvider delayDuration={150}>

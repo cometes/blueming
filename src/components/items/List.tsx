@@ -84,7 +84,7 @@ export default function ItemList({ data, detailQuery = "" }: ItemListProps) {
 							<h3
 								className={cn(
 									"text-lg font-semibold text-main-text leading-tight",
-									"line-clamp-2 group-hover:text-theme-primary font-title"
+									"line-clamp-1 md:line-clamp-2 group-hover:text-theme-primary font-title"
 								)}
 								style={{ transition: "color 0.2s ease-out" }}
 							>
@@ -110,12 +110,12 @@ export default function ItemList({ data, detailQuery = "" }: ItemListProps) {
 					{/* 태그 */}
 					{data.tags?.length > 0 && (
 						<div className="flex flex-wrap gap-2 pt-1 mt-1.5">
-							{data.tags.slice(0, 3).map((tag, index) => (
+							{data.tags.slice(0, 2).map((tag, index) => (
 								<Badge
 									key={index}
 									variant="secondary"
 									className={cn(
-										"px-2.5 text-xs font-medium rounded-full",
+										"px-2.5 text-xs font-medium rounded-full md:hidden",
 										"bg-theme-primary/10 text-theme-primary border-theme-primary/20",
 										"hover:bg-theme-primary/20"
 									)}
@@ -127,10 +127,35 @@ export default function ItemList({ data, detailQuery = "" }: ItemListProps) {
 									{tag}
 								</Badge>
 							))}
+							{data.tags.slice(0, 3).map((tag, index) => (
+								<Badge
+									key={`md-${index}`}
+									variant="secondary"
+									className={cn(
+										"px-2.5 text-xs font-medium rounded-full hidden md:inline-flex",
+										"bg-theme-primary/10 text-theme-primary border-theme-primary/20",
+										"hover:bg-theme-primary/20"
+									)}
+									style={{
+										transition:
+											"background-color 0.2s ease-out, color 0.2s ease-out, border-color 0.2s ease-out",
+									}}
+								>
+									{tag}
+								</Badge>
+							))}
+							{data.tags.length > 2 && (
+								<Badge
+									variant="outline"
+									className="px-2.5 text-xs font-medium rounded-full text-sub-text md:hidden"
+								>
+									+{data.tags.length - 2}
+								</Badge>
+							)}
 							{data.tags.length > 3 && (
 								<Badge
 									variant="outline"
-									className="px-2.5 text-xs font-medium rounded-full text-sub-text"
+									className="px-2.5 text-xs font-medium rounded-full text-sub-text hidden md:inline-flex"
 								>
 									+{data.tags.length - 3}
 								</Badge>

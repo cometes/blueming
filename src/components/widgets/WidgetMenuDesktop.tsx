@@ -17,6 +17,7 @@ type Props = {
 	onMenuClick: (item: MenuItem) => (e: React.MouseEvent) => void;
 	onSubMenuClick: (parentId: string, subMenuName: string) => void;
 	getItemBackgroundStyle: (image?: string) => React.CSSProperties;
+	className?: string;
 };
 
 const renderLogo = (design: MenuDesign) => {
@@ -67,6 +68,7 @@ export default function WidgetMenuDesktop({
 	onMenuClick,
 	onSubMenuClick,
 	getItemBackgroundStyle,
+	className,
 }: Props) {
 	return (
 		<aside
@@ -75,6 +77,7 @@ export default function WidgetMenuDesktop({
 				"transition-[width] duration-300 ease-in-out",
 				design?.bgType === "없음" && "bg-transparent",
 				"bg-center bg-no-repeat bg-cover",
+				className,
 			)}
 			style={asideBackgroundStyle}
 		>

@@ -315,7 +315,7 @@ export default function LibraryClient({
 
 	return (
 		<>
-			<div className="shrink-0 w-full max-w-2xl mt-[90px] mb-[40px] mx-auto">
+			<div className="w-full max-w-full md:max-w-2xl mt-[90px] mb-[40px] mx-auto md:px-0">
 				<div className="flex justify-center items-center gap-2.5">
 					<div className="flex items-center justify-end w-[150px]">
 						<div className="relative flex rounded-card bg-transparent p-1">
@@ -414,7 +414,7 @@ export default function LibraryClient({
 					) : null}
 					{!hasRightButtons ? <div className="w-[150px]" /> : null}
 				</div>
-				<div className="TabWrap w-fit mx-auto mt-7">
+				<div className="TabWrap w-fit mx-auto mt-2.5 sm:mt-7">
 					<div className="TabBox flex justify-center">
 						<button
 							className={cn(

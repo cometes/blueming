@@ -21,7 +21,7 @@ function getVideoId(url: string): string | null {
 export const YoutubeNodeView: React.FC<NodeViewProps> = ({ node, editor, selected, getPos, updateAttributes }) => {
   const align = node.attrs['data-align'] || 'left'
   const src = node.attrs.src
-  const initialWidth = node.attrs.width || 640
+  const initialWidth = node.attrs.width || "100%"
   const videoId = getVideoId(src)
   const thumbnailUrl = videoId
     ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
@@ -29,9 +29,14 @@ export const YoutubeNodeView: React.FC<NodeViewProps> = ({ node, editor, selecte
   const embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}` : src
 
   const [isResizing, setIsResizing] = React.useState(false)
-  const [currentWidth, setCurrentWidth] = React.useState<number | null>(initialWidth)
-  const currentWidthRef = React.useRef<number | null>(initialWidth)
+  const [currentWidth, setCurrentWidth] = React.useState<number | null>(
+    typeof initialWidth === "number" ? initialWidth : null
+  )
+  const currentWidthRef = React.useRef<number | null>(
+    typeof initialWidth === "number" ? initialWidth : null
+  )
   const containerRef = React.useRef<HTMLDivElement>(null)
+  const wrapperRef = React.useRef<HTMLDivElement>(null)
   const startXRef = React.useRef<number>(0)
   const startWidthRef = React.useRef<number>(0)
 
@@ -67,7 +72,16 @@ export const YoutubeNodeView: React.FC<NodeViewProps> = ({ node, editor, selecte
     const handleMouseUp = () => {
       setIsResizing(false)
       if (currentWidthRef.current !== null && updateAttributes) {
-        updateAttributes({ width: currentWidthRef.current })
+        const containerWidth =
+          wrapperRef.current?.parentElement?.clientWidth ||
+          wrapperRef.current?.clientWidth ||
+          0
+        if (containerWidth > 0) {
+          const percent = Math.max(20, Math.min(100, Math.round((currentWidthRef.current / containerWidth) * 100)))
+          updateAttributes({ width: `${percent}%` })
+        } else {
+          updateAttributes({ width: currentWidthRef.current })
+        }
       }
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
@@ -77,16 +91,41 @@ export const YoutubeNodeView: React.FC<NodeViewProps> = ({ node, editor, selecte
     document.addEventListener('mouseup', handleMouseUp)
   }, [updateAttributes])
 
-  const containerStyle: React.CSSProperties = React.useMemo(() => {
-    if (currentWidth !== null) {
-      return { width: `${currentWidth}px`, maxWidth: '100%' }
+  const boxStyle: React.CSSProperties = React.useMemo(() => {
+    if (isResizing && currentWidth !== null) {
+      return { width: `${currentWidth}px`, maxWidth: "100%" }
     }
-    return { width: `${initialWidth}px`, maxWidth: '100%' }
-  }, [currentWidth, initialWidth])
+    if (typeof node.attrs.width === "number") {
+      return { width: `${node.attrs.width}px`, maxWidth: "100%" }
+    }
+    if (typeof node.attrs.width === "string") {
+      return { width: node.attrs.width, maxWidth: "100%" }
+    }
+    return { width: "100%", maxWidth: "100%" }
+  }, [currentWidth, node.attrs.width, isResizing])
+
+  const containerStyle: React.CSSProperties = React.useMemo(() => {
+    return { width: "100%", maxWidth: "100%", aspectRatio: "16 / 9" }
+  }, [])
+
+  React.useEffect(() => {
+    if (!editor?.isEditable) return
+    if (typeof node.attrs.width === "number" && updateAttributes) {
+      const containerWidth =
+        wrapperRef.current?.parentElement?.clientWidth ||
+        wrapperRef.current?.clientWidth ||
+        0
+      if (containerWidth > 0) {
+        const percent = Math.max(20, Math.min(100, Math.round((node.attrs.width / containerWidth) * 100)))
+        updateAttributes({ width: `${percent}%` })
+      }
+    }
+  }, [editor?.isEditable, node.attrs.width, updateAttributes])
 
   return (
     <NodeViewWrapper
       as="div"
+      ref={wrapperRef}
       className={`youtube-wrapper youtube-align-${align}`}
       data-align={align}
       contentEditable={false}
@@ -95,6 +134,7 @@ export const YoutubeNodeView: React.FC<NodeViewProps> = ({ node, editor, selecte
       <div
         className={`youtube-box ${selected ? 'ProseMirror-selectednode' : ''} ${isResizing ? 'is-resizing' : ''}`}
         data-drag-handle
+        style={boxStyle}
       >
         {selected && editor.isEditable && (
           <ImageBubbleMenu editor={editor} currentAlign={align} nodeType="youtube" />
@@ -119,7 +159,7 @@ export const YoutubeNodeView: React.FC<NodeViewProps> = ({ node, editor, selecte
                 data-youtube-thumbnail="true"
                 data-youtube-src={src}
                 width="100%"
-                height={currentWidth ? Math.round(currentWidth * 0.5625) : Math.round(initialWidth * 0.5625)}
+                height="100%"
                 className="youtube-thumbnail-image"
                 alt="YouTube video thumbnail"
               />
@@ -140,7 +180,7 @@ export const YoutubeNodeView: React.FC<NodeViewProps> = ({ node, editor, selecte
               src={embedUrl}
               title="YouTube video"
               width="100%"
-              height={currentWidth ? Math.round(currentWidth * 0.5625) : Math.round(initialWidth * 0.5625)}
+              height="100%"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
               style={{ border: 0, display: "block" }}

@@ -25,7 +25,10 @@ export const CustomImage = Image.extend({
         default: null,
         parseHTML: element => {
           const width = element.getAttribute('width')
-          return width ? parseInt(width, 10) : null
+          if (!width) return null
+          if (width.trim().endsWith('%')) return width.trim()
+          const parsed = parseInt(width, 10)
+          return Number.isNaN(parsed) ? null : parsed
         },
         renderHTML: attributes => {
           if (!attributes.width) {

@@ -21,9 +21,10 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 
 	const [isResizing, setIsResizing] = React.useState(false);
 	const [currentWidth, setCurrentWidth] = React.useState<number | null>(
-		initialWidth
+		typeof initialWidth === "number" ? initialWidth : null
 	);
 	const imgRef = React.useRef<HTMLImageElement>(null);
+	const wrapperRef = React.useRef<HTMLDivElement>(null);
 	const startXRef = React.useRef<number>(0);
 	const startWidthRef = React.useRef<number>(0);
 
@@ -36,9 +37,16 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 			// Only set initial width if not already set
 			if (node.attrs.width === null && updateAttributes) {
 				const naturalWidth = img.naturalWidth;
-				const containerWidth = img.parentElement?.clientWidth || naturalWidth;
+				const containerWidth =
+					wrapperRef.current?.parentElement?.clientWidth ||
+					wrapperRef.current?.clientWidth ||
+					naturalWidth;
 				const initialWidth = Math.min(naturalWidth, containerWidth);
-				updateAttributes({ width: initialWidth });
+				const percent = Math.max(
+					10,
+					Math.min(100, Math.round((initialWidth / containerWidth) * 100))
+				);
+				updateAttributes({ width: `${percent}%` });
 			}
 		};
 
@@ -57,9 +65,29 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 			node.attrs.width !== null &&
 			!isResizing
 		) {
-			setCurrentWidth(node.attrs.width);
+			if (typeof node.attrs.width === "number") {
+				setCurrentWidth(node.attrs.width);
+			} else {
+				setCurrentWidth(null);
+			}
 		}
 	}, [node.attrs.width, isResizing]);
+
+	React.useEffect(() => {
+		if (!editor?.isEditable) return;
+		if (typeof node.attrs.width !== "number" || !updateAttributes) return;
+		const containerWidth =
+			wrapperRef.current?.parentElement?.clientWidth ||
+			wrapperRef.current?.clientWidth ||
+			0;
+		if (containerWidth > 0) {
+			const percent = Math.max(
+				10,
+				Math.min(100, Math.round((node.attrs.width / containerWidth) * 100))
+			);
+			updateAttributes({ width: `${percent}%` });
+		}
+	}, [editor?.isEditable, node.attrs.width, updateAttributes]);
 
 	const handleWrapperClick = React.useCallback(
 		(e: React.MouseEvent) => {
@@ -103,7 +131,19 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 			const handleMouseUp = () => {
 				setIsResizing(false);
 				if (updateAttributes && lastWidth !== startWidthRef.current) {
-					updateAttributes({ width: lastWidth });
+					const containerWidth =
+						wrapperRef.current?.parentElement?.clientWidth ||
+						wrapperRef.current?.clientWidth ||
+						0;
+					if (containerWidth > 0) {
+						const percent = Math.max(
+							10,
+							Math.min(100, Math.round((lastWidth / containerWidth) * 100))
+						);
+						updateAttributes({ width: `${percent}%` });
+					} else {
+						updateAttributes({ width: lastWidth });
+					}
 				}
 				document.removeEventListener("mousemove", handleMouseMove);
 				document.removeEventListener("mouseup", handleMouseUp);
@@ -115,21 +155,25 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 		[updateAttributes]
 	);
 
-	// Use node.attrs.width for the actual width, currentWidth only for preview during resize
-	const imgStyle: React.CSSProperties = React.useMemo(() => {
-		const width = isResizing ? currentWidth : node.attrs.width || currentWidth;
-		if (width !== null && width !== undefined) {
-			let widthValue = "";
-			if (typeof width === "number") {
-				widthValue = `${width}px`;
-			} else {
-				const raw = String(width).trim();
-				widthValue = /^\d+(\.\d+)?$/.test(raw) ? `${raw}px` : raw;
+	const boxStyle: React.CSSProperties = React.useMemo(() => {
+		if (isResizing && currentWidth !== null) {
+			return { width: `${currentWidth}px`, maxWidth: "100%" };
+		}
+		const widthAttr = node.attrs.width;
+		if (widthAttr !== null && widthAttr !== undefined) {
+			if (typeof widthAttr === "number") {
+				return { width: `${widthAttr}px`, maxWidth: "100%" };
 			}
+			const raw = String(widthAttr).trim();
+			const widthValue = /^\d+(\.\d+)?$/.test(raw) ? `${raw}px` : raw;
 			return { width: widthValue, maxWidth: "100%" };
 		}
-		return {};
+		return { width: "100%", maxWidth: "100%" };
 	}, [currentWidth, node.attrs.width, isResizing]);
+
+	const imgStyle: React.CSSProperties = React.useMemo(() => {
+		return { width: "100%", maxWidth: "100%", height: "auto" };
+	}, []);
 
 	return (
 		<NodeViewWrapper
@@ -138,11 +182,13 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 			data-align={align}
 			contentEditable={false}
 			onClick={handleWrapperClick}
+			ref={wrapperRef}
 		>
 			<div
 				className={`image-box ${selected ? "ProseMirror-selectednode" : ""} ${
 					isResizing ? "is-resizing" : ""
 				}`}
+				style={boxStyle}
 			>
 				{selected && editor.isEditable && (
 					<ImageBubbleMenu editor={editor} currentAlign={align} />

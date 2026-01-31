@@ -98,16 +98,21 @@ export default function LibrarySettingsDialog({
 							</div>
 							<div>
 								<p className="font-title">카드뷰 칼럼 수</p>
-								<Input
-									type="number"
-									value={tempPostsPerRow}
-									onChange={(e) =>
-										setTempPostsPerRow(parseInt(e.target.value) || 1)
-									}
-									min={1}
-									max={6}
-									className="w-20 mt-2 bg-card border-card rounded-card text-main-text"
-								/>
+								<div className="flex gap-1 mt-2">
+									{[2, 3, 4, 5, 6].map((col) => (
+										<Button
+											key={col}
+											variant={tempPostsPerRow === col ? "default" : "ghost"}
+											onClick={() => setTempPostsPerRow(col)}
+											className="flex-1 px-3"
+										>
+											{col}
+										</Button>
+									))}
+								</div>
+								<p className="text-xs text-sub-text mt-1.5">
+									모바일/태블릿은 자동으로 조정됩니다
+								</p>
 							</div>
 							<div>
 								<p className="font-title">게시글 작성 권한</p>
