@@ -6,7 +6,6 @@ export interface CreateLibraryPayload {
 	subtitle?: string;
 	content: string;
 	slug?: string;
-	summary?: string;
 	tags?: string[];
 	series?: string;
 	backgroundType?: "default" | "color" | "image";
@@ -44,7 +43,6 @@ export const createLibraryPost = async (
 				subtitle: payload.subtitle,
 				content: payload.content,
 				slug,
-				summary: payload.summary,
 				tags: payload.tags,
 				series: payload.series,
 				backgroundType: payload.backgroundType,

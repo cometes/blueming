@@ -77,7 +77,7 @@ export default function CreateModalRightPanel({
 	onCancel,
 }: CreateModalRightPanelProps) {
 	return (
-		<div className="w-1/2">
+		<div className="w-full md:w-1/2">
 			<div className="flex flex-col justify-between h-full">
 				{tagOpen ? (
 					<section className="space-y-6">
@@ -307,7 +307,7 @@ export default function CreateModalRightPanel({
 										})
 									}
 									className={cn(
-										"flex-1 h-10 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10",
+										"flex-1 h-9 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10",
 										value.visibility === "all"
 											? "bg-theme-primary text-white border-2 border-theme-primary"
 											: "border-2 border-card"
@@ -327,7 +327,7 @@ export default function CreateModalRightPanel({
 										})
 									}
 									className={cn(
-										"flex-1 h-10 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10",
+										"flex-1 h-9 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10",
 										value.visibility === "password"
 											? "bg-theme-primary text-white border-2 border-theme-primary"
 											: "border-2 border-card"
@@ -348,7 +348,7 @@ export default function CreateModalRightPanel({
 										})
 									}
 									className={cn(
-										"flex-1 h-10 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10",
+										"flex-1 h-9 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10",
 										value.visibility === "secret"
 											? "bg-theme-primary text-white border-2 border-theme-primary"
 											: "border-2 border-card"
@@ -455,7 +455,7 @@ export default function CreateModalRightPanel({
 									variant="outline"
 									onClick={() => setTagOpen(true)}
 									disabled={value.tags.length >= MAX_TAGS}
-									className="w-full h-10 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10 disabled:opacity-50 disabled:cursor-not-allowed"
+									className="w-full h-9 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10 disabled:opacity-50 disabled:cursor-not-allowed"
 									style={{ transition: "all 0.3s ease-in-out" }}
 								>
 									<Plus size={16} className="mr-2" />
@@ -493,7 +493,7 @@ export default function CreateModalRightPanel({
 									type="button"
 									variant="outline"
 									onClick={() => setSeriesOpen(true)}
-									className="w-full h-10 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+									className="w-full h-9 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
 									style={{ transition: "all 0.3s ease-in-out" }}
 								>
 									시리즈에 추가하기

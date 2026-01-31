@@ -70,7 +70,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 								type="button"
 								onClick={onEndIconClick}
 								aria-label={endIconAriaLabel || "Clear"}
-								className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+								className="flex items-center justify-center text-muted-foreground hover:text-theme-primary transition-colors"
 							>
 								<EndIcon size={18} />
 							</button>

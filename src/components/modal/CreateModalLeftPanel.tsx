@@ -23,14 +23,14 @@ export default function CreateModalLeftPanel({
 	onOpenBackgroundDialog,
 }: CreateModalLeftPanelProps) {
 	return (
-		<div className="w-1/2">
+		<div className="w-full md:w-1/2">
 			<h3 className="text-2xl font-semibold text-main-text mb-4 font-title">
 				포스트 미리보기
 			</h3>
 			<section className="space-y-4">
-				<div className="rounded-card bg-muted/20 flex flex-col items-center gap-4">
+				<div className="rounded-card flex flex-col items-center gap-4">
 					{value.thumbnail ? (
-						<div className="relative w-full aspect-video overflow-hidden rounded-card border border-card">
+						<div className="relative w-full aspect-[2/1] overflow-hidden rounded-card border border-card">
 							<img
 								src={value.thumbnail}
 								alt="썸네일 미리보기"
@@ -55,7 +55,7 @@ export default function CreateModalLeftPanel({
 						<button
 							type="button"
 							onClick={onOpenThumbnailDialog}
-							className="w-full aspect-video border border-dashed border-card text-sub-text rounded-card flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-theme-primary/60 transition-colors"
+							className="w-full aspect-[2/1] border border-dashed border-card text-sub-text rounded-card flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-theme-primary/60 transition-colors"
 						>
 							<ImagePlus size={40} className="text-sub-text" />
 							<span className="text-sm text-theme-primary">썸네일 업로드</span>
@@ -77,10 +77,10 @@ export default function CreateModalLeftPanel({
 								})
 							}
 							className={cn(
-								"flex-1 h-10 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10",
+								"flex-1 h-9 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10",
 								(value.backgroundType ?? "default") === "default"
 									? "bg-theme-primary text-white border-2 border-theme-primary"
-									: "border-2 border-card"
+									: "border-2 border-card",
 							)}
 							style={{ transition: "all 0.3s ease-in-out" }}
 						>
@@ -97,10 +97,10 @@ export default function CreateModalLeftPanel({
 								});
 							}}
 							className={cn(
-								"flex-1 h-10 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10",
+								"flex-1 h-9 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10",
 								value.backgroundType === "color"
 									? "bg-theme-primary text-white border-2 border-theme-primary"
-									: "border-2 border-card"
+									: "border-2 border-card",
 							)}
 							style={{ transition: "all 0.3s ease-in-out" }}
 						>
@@ -116,10 +116,10 @@ export default function CreateModalLeftPanel({
 								})
 							}
 							className={cn(
-								"flex-1 h-10 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10",
+								"flex-1 h-9 rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10",
 								value.backgroundType === "image"
 									? "bg-theme-primary text-white border-2 border-theme-primary"
-									: "border-2 border-card"
+									: "border-2 border-card",
 							)}
 							style={{ transition: "all 0.3s ease-in-out" }}
 						>
@@ -137,7 +137,7 @@ export default function CreateModalLeftPanel({
 										backgroundColor: nextColor,
 									})
 								}
-								className="h-10 w-10"
+								className="h-9 w-10"
 							/>
 							<Input
 								type="text"
@@ -157,7 +157,7 @@ export default function CreateModalLeftPanel({
 					{value.backgroundType === "image" && (
 						<div className="mt-4 space-y-3">
 							{value.backgroundImage ? (
-								<div className="relative w-full aspect-video overflow-hidden rounded-card border border-card">
+								<div className="relative w-full aspect-[2/1] overflow-hidden rounded-card border border-card">
 									<img
 										src={value.backgroundImage}
 										alt="배경 이미지 미리보기"
@@ -182,7 +182,7 @@ export default function CreateModalLeftPanel({
 								<button
 									type="button"
 									onClick={onOpenBackgroundDialog}
-									className="w-full aspect-video border border-dashed border-card text-sub-text rounded-card flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-theme-primary/60 transition-colors"
+									className="w-full aspect-[2/1] border border-dashed border-card text-sub-text rounded-card flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-theme-primary/60 transition-colors"
 								>
 									<ImagePlus size={36} className="text-sub-text" />
 									<span className="text-sm text-theme-primary">
