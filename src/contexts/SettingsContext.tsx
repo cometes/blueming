@@ -232,6 +232,11 @@ interface PhotoboardSettings {
 	writePermission?: "admin" | "member";
 }
 
+interface MemoSettings {
+	postsPerRow?: number;
+	writePermission?: "admin" | "member";
+}
+
 // Main Settings
 interface MainSettings {
 	customLayout?: CustomLayout;
@@ -243,6 +248,7 @@ interface MainSettings {
 	imageWidget?: ImageWidgetSettings;
 	weatherClock?: WeatherClockSettings;
 	photoboard?: PhotoboardSettings;
+	memo?: MemoSettings;
 }
 
 interface LibrarySettings {
@@ -311,6 +317,7 @@ export type {
 	ImageWidgetSettings,
 	WeatherClockSettings,
 	PhotoboardSettings,
+	MemoSettings,
 	MenuItem,
 	SubMenu,
 	MenuDesign,

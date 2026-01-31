@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 import { apiClient } from "@/queries/apiClient";
 import {
 	fetchLibraryList,
@@ -13,6 +14,10 @@ export default async function LibararyListPage({
 	searchParams?: Promise<{ page?: string }>;
 }) {
 	try {
+		const cookieStore = await cookies();
+		const cardCookie = cookieStore.get("library_card_on")?.value;
+		const initialIsCardOn = cardCookie === "true";
+
 		const params = searchParams ? await searchParams : undefined;
 		const parsedPage = Number(params?.page);
 		const currentPage =
@@ -50,6 +55,7 @@ export default async function LibararyListPage({
 					seriesData={seriesData}
 					tagData={Array.isArray(tagData) ? tagData : []}
 					initialPage={currentPage}
+					initialIsCardOn={initialIsCardOn}
 				/>
 			</Suspense>
 		);
@@ -63,6 +69,7 @@ export default async function LibararyListPage({
 					seriesData={[]}
 					tagData={[]}
 					initialPage={1}
+					initialIsCardOn={false}
 				/>
 			</Suspense>
 		);

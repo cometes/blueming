@@ -1,4 +1,5 @@
 import MemoDetailClient from "./MemoDetailClient";
+import { fetchMemoDetailServer } from "@/queries/memo";
 
 interface MemoDetailPageProps {
 	params: Promise<{
@@ -8,5 +9,6 @@ interface MemoDetailPageProps {
 
 export default async function MemoDetailPage({ params }: MemoDetailPageProps) {
 	const { id } = await params;
-	return <MemoDetailClient memoId={id} />;
+	const initialMemo = await fetchMemoDetailServer(id);
+	return <MemoDetailClient memoId={id} initialMemo={initialMemo ?? undefined} />;
 }

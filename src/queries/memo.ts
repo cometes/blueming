@@ -62,6 +62,22 @@ export const fetchMemoList = async (params: MemoListParams = {}) => {
 	return response.data;
 };
 
+export const fetchMemoListServer = async (params: MemoListParams = {}) => {
+	try {
+		const query = params.query ? `q=${encodeURIComponent(params.query)}` : "q=";
+		const page = params.page ?? 1;
+		const limit = params.limit ?? 24;
+		const url = `${API_BASE}/memo?page=${page}&limit=${limit}&${query}`;
+		const response = await fetch(url, { next: { revalidate: 60 } });
+		if (!response.ok) {
+			return { items: [], total: 0, page, limit };
+		}
+		return (await response.json()) as MemoListResponse;
+	} catch {
+		return { items: [], total: 0, page: params.page ?? 1, limit: params.limit ?? 24 };
+	}
+};
+
 export const fetchMemoDetail = async (
 	id: string,
 	options: { password?: string; includeAuth?: boolean } = {}
@@ -80,6 +96,20 @@ export const fetchMemoDetail = async (
 		headers,
 	});
 	return response.data;
+};
+
+export const fetchMemoDetailServer = async (id: string) => {
+	try {
+		const response = await fetch(`${API_BASE}/memo/${id}`, {
+			next: { revalidate: 60 },
+		});
+		if (!response.ok) {
+			return null;
+		}
+		return (await response.json()) as MemoDetail;
+	} catch {
+		return null;
+	}
 };
 
 export const createMemo = async (payload: {
@@ -116,6 +146,77 @@ export const createMemoReply = async (
 	} catch (error) {
 		throw new Error(
 			getApiErrorMessage(error, "답글 작성에 실패했습니다.")
+		);
+	}
+};
+
+export const updateMemoReply = async (
+	id: string,
+	replyId: string,
+	payload: { content: string; imageUrls?: string[] }
+) => {
+	try {
+		const headers = await getAuthHeader();
+		const response = await apiClient.patch(
+			`/memo/${id}/replies/${replyId}`,
+			payload,
+			{ headers }
+		);
+		return response.data as { id: string };
+	} catch (error) {
+		throw new Error(
+			getApiErrorMessage(error, "답글 수정에 실패했습니다.")
+		);
+	}
+};
+
+export const deleteMemoReply = async (id: string, replyId: string) => {
+	try {
+		const headers = await getAuthHeader();
+		const response = await apiClient.delete(
+			`/memo/${id}/replies/${replyId}`,
+			{ headers }
+		);
+		return response.data as { success?: boolean };
+	} catch (error) {
+		throw new Error(
+			getApiErrorMessage(error, "답글 삭제에 실패했습니다.")
+		);
+	}
+};
+
+export const updateMemo = async (
+	id: string,
+	payload: {
+		title: string;
+		content: string;
+		tags?: string[];
+		visibility: MemoVisibility;
+		password?: string;
+		imageUrls?: string[];
+	}
+) => {
+	try {
+		const headers = await getAuthHeader();
+		const response = await apiClient.patch<MemoItem>(`/memo/${id}`, payload, {
+			headers,
+		});
+		return response.data;
+	} catch (error) {
+		throw new Error(
+			getApiErrorMessage(error, "메모 수정에 실패했습니다.")
+		);
+	}
+};
+
+export const deleteMemo = async (id: string) => {
+	try {
+		const headers = await getAuthHeader();
+		const response = await apiClient.delete(`/memo/${id}`, { headers });
+		return response.data as { success?: boolean };
+	} catch (error) {
+		throw new Error(
+			getApiErrorMessage(error, "메모 삭제에 실패했습니다.")
 		);
 	}
 };

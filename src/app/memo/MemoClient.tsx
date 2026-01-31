@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Plus, Search, Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,14 +15,69 @@ import {
 } from "@/queries/memo";
 import type { CommentImage } from "@/hooks/comment/useCommentForm";
 import { dateConvert } from "@/lib/date";
+import AdminOnly from "@/components/common/AdminOnly";
+import { useSettings } from "@/contexts/SettingsContext";
+import { setSettingsMainMemo } from "@/queries/set/setSettingsMainMemo";
+import { useAdmin } from "@/hooks/auth/UseAdmin";
+import PhotoboardSettingsDialog from "@/components/modal/PhotoboardSettingsDialog";
 
-export default function MemoClient() {
+interface MemoClientProps {
+	initialMemos?: MemoItem[];
+}
+
+export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 	const router = useRouter();
+	const { main, updateMain, refreshSettings } = useSettings();
+	const { isAdmin } = useAdmin();
 	const [searchInput, setSearchInput] = useState("");
 	const [appliedQuery, setAppliedQuery] = useState("");
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
-	const [memos, setMemos] = useState<MemoItem[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
+	const [memos, setMemos] = useState<MemoItem[]>(initialMemos);
+	const [isLoading, setIsLoading] = useState(initialMemos.length === 0);
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const hasLoadedRef = useRef(false);
+
+	const defaultMemoSettings = useMemo(
+		() => ({
+			postsPerRow: 3,
+			writePermission: "member" as const,
+		}),
+		[],
+	);
+
+	const resolvedMemoSettings = useMemo(
+		() => ({
+			...defaultMemoSettings,
+			...(main?.memo || {}),
+		}),
+		[defaultMemoSettings, main],
+	);
+
+	const [postsPerRow, setPostsPerRow] = useState(
+		resolvedMemoSettings.postsPerRow,
+	);
+	const [writePermission, setWritePermission] = useState<"admin" | "member">(
+		resolvedMemoSettings.writePermission,
+	);
+	const [tempPostsPerRow, setTempPostsPerRow] = useState(postsPerRow);
+	const [tempWritePermission, setTempWritePermission] =
+		useState(writePermission);
+
+	useEffect(() => {
+		const { postsPerRow: newRows, writePermission: newPermission } =
+			resolvedMemoSettings;
+		setPostsPerRow((prev) => (newRows !== prev ? newRows : prev));
+		setWritePermission((prev) =>
+			newPermission !== prev ? newPermission : prev,
+		);
+	}, [resolvedMemoSettings]);
+
+	useEffect(() => {
+		if (isDialogOpen) {
+			setTempPostsPerRow(postsPerRow);
+			setTempWritePermission(writePermission);
+		}
+	}, [isDialogOpen, postsPerRow, writePermission]);
 
 	const normalizedQuery = appliedQuery.trim().toLowerCase();
 	const filteredMemos = useMemo(() => {
@@ -45,8 +100,25 @@ export default function MemoClient() {
 		router.push(`/memo/${id}`);
 	};
 	const handleCompose = () => setIsCreateOpen(true);
-	const handleOpenSettings = () => {
-		// TODO: 메모 설정 다이얼로그 연결 예정
+
+	const handleSaveSettings = async () => {
+		try {
+			const payload = {
+				postsPerRow: tempPostsPerRow,
+				writePermission: tempWritePermission,
+			};
+			await setSettingsMainMemo(payload);
+			updateMain?.({ memo: payload });
+			await refreshSettings?.({ broadcast: true });
+			setPostsPerRow(payload.postsPerRow);
+			setWritePermission(payload.writePermission);
+			setIsDialogOpen(false);
+			toast.success("저장되었습니다.");
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : "저장에 실패했습니다.";
+			toast.error(message);
+		}
 	};
 
 	const loadMemos = useCallback(async (query: string) => {
@@ -63,8 +135,14 @@ export default function MemoClient() {
 	}, []);
 
 	useEffect(() => {
+		if (!appliedQuery && initialMemos.length > 0 && !hasLoadedRef.current) {
+			setMemos(initialMemos);
+			setIsLoading(false);
+			hasLoadedRef.current = true;
+			return;
+		}
 		loadMemos(appliedQuery.trim());
-	}, [appliedQuery, loadMemos]);
+	}, [appliedQuery, loadMemos, initialMemos]);
 
 	const handleSubmitMemo = async (payload: {
 		title: string;
@@ -106,6 +184,17 @@ export default function MemoClient() {
 		toast.success("메모가 등록되었습니다.");
 	};
 
+	const clampedPostsPerRow = Math.min(Math.max(postsPerRow, 1), 6);
+	const columnsClass =
+		{
+			1: "columns-1 sm:columns-1 lg:columns-1",
+			2: "columns-1 sm:columns-2 lg:columns-2",
+			3: "columns-1 sm:columns-2 lg:columns-3",
+			4: "columns-1 sm:columns-2 lg:columns-4",
+			5: "columns-1 sm:columns-2 lg:columns-5",
+			6: "columns-1 sm:columns-2 lg:columns-6",
+		}[clampedPostsPerRow] ?? "columns-1 sm:columns-2 lg:columns-3";
+
 	return (
 		<div className="shrink-0 w-full max-w-2xl mt-[90px] mb-[40px] mx-auto">
 			<header className="mb-10 flex items-center justify-center">
@@ -135,25 +224,45 @@ export default function MemoClient() {
 							endIconAriaLabel="검색어 지우기"
 						/>
 					</div>
-					<Button
-						type="button"
-						onClick={handleOpenSettings}
-						className="bg-card border-card text-main-text rounded-full w-10 h-10 hover:border-transparent"
-						aria-label="메모 설정"
-					>
-						<Settings />
-					</Button>
-					<Button
-						type="button"
-						onClick={handleCompose}
-						className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
-					>
-						<Plus size={16} />새 글쓰기
-					</Button>
+					<AdminOnly>
+						<PhotoboardSettingsDialog
+							isOpen={isDialogOpen}
+							onOpenChange={setIsDialogOpen}
+							tempPostsPerRow={tempPostsPerRow}
+							setTempPostsPerRow={setTempPostsPerRow}
+							tempWritePermission={tempWritePermission}
+							setTempWritePermission={setTempWritePermission}
+							onSave={handleSaveSettings}
+							trigger={
+								<Button className="bg-card border-card text-main-text rounded-full w-10 h-10 hover:border-transparent">
+									<Settings />
+								</Button>
+							}
+						/>
+					</AdminOnly>
+					{writePermission === "admin" ? (
+						<AdminOnly>
+							<Button
+								type="button"
+								onClick={handleCompose}
+								className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
+							>
+								<Plus size={16} />새 글쓰기
+							</Button>
+						</AdminOnly>
+					) : (
+						<Button
+							type="button"
+							onClick={handleCompose}
+							className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
+						>
+							<Plus size={16} />새 글쓰기
+						</Button>
+					)}
 				</div>
 			</header>
 
-			<section className="columns-1 sm:columns-2 lg:columns-3 gap-2.5 [column-fill:_balance]">
+			<section className={`${columnsClass} gap-2.5 [column-fill:_balance]`}>
 				{isLoading && memos.length === 0 ? (
 					<div className="text-sm text-sub-text">로딩 중...</div>
 				) : (

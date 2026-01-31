@@ -9,7 +9,7 @@ import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import AssetGrid from "@/components/asset/AssetGrid";
 import { useAssets } from "@/hooks/guestbook/useAssets";
 import { useCommentImageDialog } from "@/hooks/comment/useImageDialog";
-import type { CommentImage } from "@/hooks/comment/useCommentForm";
+import { createImageId, type CommentImage } from "@/hooks/comment/useCommentForm";
 import {
 	Dialog,
 	DialogContent,
@@ -33,6 +33,15 @@ interface MemoCreateModalProps {
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
 	tagsOptions?: string[];
+	mode?: "create" | "edit";
+	initialValues?: {
+		title?: string;
+		content?: string;
+		tags?: string[];
+		visibility?: "public" | "secret" | "protected";
+		password?: string;
+		imageUrls?: string[];
+	};
 	onSubmit?: (payload: {
 		title: string;
 		content: string;
@@ -57,6 +66,8 @@ export default function MemoCreateModal({
 	isOpen,
 	onOpenChange,
 	tagsOptions = [],
+	mode = "create",
+	initialValues,
 	onSubmit,
 }: MemoCreateModalProps) {
 	const { user } = useAuthStore();
@@ -84,6 +95,26 @@ export default function MemoCreateModal({
 			resetComposer();
 		}
 	}, [isOpen]);
+
+	useEffect(() => {
+		if (!isOpen || !initialValues) return;
+		setTitleInput(initialValues.title ?? "");
+		setContentInput(initialValues.content ?? "");
+		setTagInput("");
+		setTagSearchInput("");
+		setTagInputOpen(false);
+		setTags(Array.isArray(initialValues.tags) ? initialValues.tags : []);
+		setVisibility(initialValues.visibility ?? "public");
+		setPassword(initialValues.password ?? "");
+		setImages(
+			Array.isArray(initialValues.imageUrls)
+				? initialValues.imageUrls.map((url) => ({
+						id: createImageId(),
+						url,
+					}))
+				: [],
+		);
+	}, [isOpen, initialValues]);
 
 	useEffect(() => {
 		setIsMounted(true);
@@ -208,7 +239,8 @@ export default function MemoCreateModal({
 			toast.error("내용을 입력해주세요.");
 			return;
 		}
-		if (visibility === "protected" && !password.trim()) {
+		const isEditProtected = mode === "edit" && initialValues?.visibility === "protected";
+		if (visibility === "protected" && !password.trim() && !isEditProtected) {
 			toast.error("보호글 비밀번호를 입력해주세요.");
 			return;
 		}
@@ -238,7 +270,7 @@ export default function MemoCreateModal({
 			<DialogContent className="max-w-3xl md:max-w-3xl w-full bg-card border-card rounded-card backdrop-blur-card p-0 overflow-hidden text-main-text gap-0">
 				<DialogHeader className="p-4 border-b border-card-border">
 					<DialogTitle className="text-[20px] font-semibold font-title">
-						새 메모
+						{mode === "edit" ? "메모 수정" : "새 메모"}
 					</DialogTitle>
 				</DialogHeader>
 				<div className="flex flex-col md:flex-row items-stretch min-h-0">
@@ -478,7 +510,7 @@ export default function MemoCreateModal({
 						태그 {tags.length.toLocaleString()}개
 					</span>
 					<Button type="button" onClick={handleSubmit}>
-						작성
+						{mode === "edit" ? "수정" : "작성"}
 					</Button>
 				</DialogFooter>
 				{isMounted && (
