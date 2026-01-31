@@ -265,8 +265,55 @@ export const Toolbar = React.forwardRef<HTMLDivElement, ToolbarProps>(
   ({ children, className, variant = "fixed", ...props }, ref) => {
     const toolbarRef = React.useRef<HTMLDivElement>(null)
     const isVisible = useToolbarVisibility(toolbarRef)
+    const bodyOverflowRef = React.useRef<string>("")
 
     useToolbarKeyboardNav(toolbarRef)
+
+    React.useEffect(() => {
+      const toolbar = toolbarRef.current
+      if (!toolbar) return
+
+      let rafId: number | null = null
+      let lastOffset = -1
+
+      const applyOffset = () => {
+        rafId = null
+        const vv = typeof window !== "undefined" ? window.visualViewport : null
+        if (!vv) {
+          if (lastOffset !== 0) {
+            document.documentElement.style.setProperty("--tt-keyboard-offset", "0px")
+            lastOffset = 0
+          }
+          return
+        }
+        const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+        if (offset !== lastOffset) {
+          document.documentElement.style.setProperty("--tt-keyboard-offset", `${offset}px`)
+          lastOffset = offset
+        }
+      }
+
+      const updateKeyboardOffset = () => {
+        if (rafId !== null) return
+        rafId = window.requestAnimationFrame(applyOffset)
+      }
+
+      updateKeyboardOffset()
+
+      const vv = window.visualViewport
+      if (!vv) return
+
+      vv.addEventListener("resize", updateKeyboardOffset)
+      vv.addEventListener("scroll", updateKeyboardOffset)
+
+      return () => {
+        vv.removeEventListener("resize", updateKeyboardOffset)
+        vv.removeEventListener("scroll", updateKeyboardOffset)
+        if (rafId !== null) {
+          window.cancelAnimationFrame(rafId)
+        }
+      }
+    }, [])
 
     if (!isVisible) return null
 
@@ -277,6 +324,24 @@ export const Toolbar = React.forwardRef<HTMLDivElement, ToolbarProps>(
         aria-label="툴바"
         data-variant={variant}
         className={`tiptap-toolbar ${className || ""}`}
+        onMouseEnter={() => {
+          if (typeof document === "undefined") return
+          bodyOverflowRef.current = document.body.style.overflow
+          document.body.style.overflow = "hidden"
+        }}
+        onMouseLeave={() => {
+          if (typeof document === "undefined") return
+          document.body.style.overflow = bodyOverflowRef.current
+        }}
+        onWheel={(event) => {
+          if (!toolbarRef.current) return
+          const el = toolbarRef.current
+          if (el.scrollWidth <= el.clientWidth) return
+          if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+            el.scrollLeft += event.deltaY
+            event.preventDefault()
+          }
+        }}
         {...props}
       >
         {children}

@@ -36,12 +36,18 @@
     z-index: 10;
     width: 100%;
     min-height: var(--tt-toolbar-height);
-    // background: var(--tt-toolbar-bg-color);
-    // border-bottom: 1px solid var(--tt-toolbar-border-color);
     padding: 0 0.5rem;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+
+    // 데스크톱: 기본 overflow hidden, 호버 시 스크롤 가능
+    overflow: hidden;
+
+    &:hover {
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+    }
+
+    // 스크롤바 숨김
     scrollbar-width: none;
     -ms-overflow-style: none;
 
@@ -49,20 +55,20 @@
       display: none;
     }
 
-    @media (max-width: 480px) {
-      position: fixed;
-      top: auto;
-      bottom: 0;
-      height: calc(var(--tt-toolbar-height) + var(--tt-safe-area-bottom));
-      border-top: 1px solid var(--tt-toolbar-border-color);
-      border-bottom: none;
-      padding: 0 0.5rem var(--tt-safe-area-bottom);
-      flex-wrap: nowrap;
-      justify-content: flex-start;
+    .tiptap-toolbar-group {
+      flex: 0 0 auto;
+    }
 
-      .tiptap-toolbar-group {
-        flex: 0 0 auto;
-      }
+    // 모바일(sm 이하): 하단 고정 + 터치 스크롤
+    @media (max-width: 639.98px) {
+      position: relative;
+      top: auto;
+      height: calc(var(--tt-toolbar-height) + var(--tt-safe-area-bottom));
+      padding: 0 0.5rem var(--tt-safe-area-bottom);
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      -webkit-overflow-scrolling: touch;
+      justify-content: flex-start;
     }
   }
 

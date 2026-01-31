@@ -98,7 +98,7 @@ export default function LibararyNewClient({
 		immediatelyRender: false,
 		editorProps: {
 			attributes: {
-				class: "prose max-w-none focus:outline-none min-h-[400px] p-4",
+				class: "prose max-w-none focus:outline-none min-h-[400px] p-0",
 			},
 		},
 	});
@@ -304,32 +304,48 @@ export default function LibararyNewClient({
 			<div className="w-full min-h-dvh">
 				{/* Header */}
 				<header className="Header w-full h-[60px] border-b border-card-bg backdrop-blur-card fixed top-0 left-0 z-50">
-					<div className="HeaderContainer px-20 h-full flex justify-between items-center">
+					<div
+						className={cn(
+							"HeaderContainer h-full flex justify-between items-center",
+							"px-4 sm:px-6",
+						)}
+					>
 						<Button variant="ghost" onClick={onClickMoveToPage("/library/")}>
 							뒤로가기
 						</Button>
-						{/* Tiptap Toolbar */}
-						<TiptapToolbar editor={editor} />
+						{/* Tiptap Toolbar - 데스크톱에서만 헤더에 표시 */}
+						<div className="flex-1 mx-4 overflow-hidden hidden sm:flex">
+							<TiptapToolbar editor={editor} />
+						</div>
 						<Button onClick={handleOpenMeta}>
 							{mode === "edit" ? "수정하기" : "글쓰기"}
 						</Button>
 					</div>
 				</header>
+				{/* Mobile Toolbar - 모바일에서 하단 고정 */}
+				<div className="z-50 sm:hidden bg-card border-t border-card-border backdrop-blur-card fixed left-0 right-0 bottom-[calc(var(--tt-safe-area-bottom)+var(--tt-keyboard-offset,0px))]">
+					<TiptapToolbar editor={editor} />
+				</div>
 				{/* Body */}
-				<div className="Container pt-[150px] pb-[100px] px-[60px] bg-card backdrop-blur-card w-[900px] min-h-dvh border-card flex flex-col m-auto">
+				<div
+					className={cn(
+						"Container pt-[100px] md:pt-[120px] px-6 md:px-12 bg-card backdrop-blur-card max-w-2xl min-h-dvh border-card flex flex-col m-auto",
+						"pb-[120px] sm:pb-[100px]",
+					)}
+				>
 					<div className="TitleWrap relative">
 						<input
 							type="text"
 							placeholder="제목을 입력해주세요."
 							value={title}
 							onChange={(e) => setTitle(e.target.value)}
-							className="text-4xl border-none border-transparent text-main-text bg-background-none w-full placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 focus-visible:border-transparent p-0 font-title"
+							className="text-2xl md:text-3xl border-none border-transparent text-main-text bg-background-none w-full placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 focus-visible:border-transparent p-0 font-title"
 						/>
 					</div>
 					<div className="flex items-center mt-5">
 						<span
 							className={cn(
-								"SubTitleIconBox flex items-center justify-center  w-6 h-6  bg-gray-300 border border-gray-400 text-gray-400 rounded-[3px] cursor-pointer",
+								"SubTitleIconBox flex items-center justify-center w-[18px] h-[18px] sm:w-6 sm:h-6 bg-gray-300 border border-gray-400 text-gray-400 rounded-[3px] cursor-pointer",
 							)}
 							style={{ transition: "all 300ms ease" }}
 							onClick={() => {
@@ -341,7 +357,7 @@ export default function LibararyNewClient({
 						<div
 							className={cn(
 								"SubTitleWrap relative overflow-hidden",
-								subOpen ? "flex-1 min-w-0" : "flex-none"
+								subOpen ? "flex-1 min-w-0" : "flex-none",
 							)}
 							style={{
 								maxWidth: subOpen ? "100%" : "0px",
@@ -358,14 +374,14 @@ export default function LibararyNewClient({
 								value={subtitle}
 								onChange={(e) => setSubtitle(e.target.value)}
 								onFocus={() => setSubOpen(true)}
-								className="text-lg border-0 text-sub-text w-full bg-background-none placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 pl-3"
+								className="text-sm md:text-base border-0 text-sub-text w-full bg-background-none placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 pl-1"
 								style={{ transition: "all 300ms ease" }}
 							/>
 						</div>
 					</div>
 
-					<Separator className="mt-7" />
-					<div className="EditorBox pt-12 relative flex flex-col grow min-h-[400px]">
+					<hr className="mt-7 border-gray-600" />
+					<div className="EditorBox pt-8 relative flex flex-col grow min-h-[400px]">
 						{needsPasswordForEdit && (
 							<div className="mb-6 p-4 rounded-card border-card bg-card-bg">
 								<p className="text-main-text text-sm">
@@ -393,10 +409,10 @@ export default function LibararyNewClient({
 							</div>
 						)}
 						{/* Editor Content */}
-						<div className="mt-4 flex-1">
+						<div className="flex-1">
 							<EditorContent
 								editor={editor}
-								className="prose max-w-none focus:outline-none w-full"
+								className="prose max-w-none focus:outline-none w-full h-full"
 							/>
 						</div>
 					</div>
