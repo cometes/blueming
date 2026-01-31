@@ -18,7 +18,6 @@ import { dateConvert } from "@/lib/date";
 import AdminOnly from "@/components/common/AdminOnly";
 import { useSettings } from "@/contexts/SettingsContext";
 import { setSettingsMainMemo } from "@/queries/set/setSettingsMainMemo";
-import { useAdmin } from "@/hooks/auth/UseAdmin";
 import PhotoboardSettingsDialog from "@/components/modal/PhotoboardSettingsDialog";
 
 interface MemoClientProps {
@@ -28,7 +27,6 @@ interface MemoClientProps {
 export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 	const router = useRouter();
 	const { main, updateMain, refreshSettings } = useSettings();
-	const { isAdmin } = useAdmin();
 	const [searchInput, setSearchInput] = useState("");
 	const [appliedQuery, setAppliedQuery] = useState("");
 	const [isCreateOpen, setIsCreateOpen] = useState(false);

@@ -255,7 +255,7 @@ interface LibrarySettings {
 	layoutType: "list" | "listWithImage";
 	postsPerPage: number;
 	postsPerRow: number;
-	writePermission: "admin" | "member";
+	writePermission: "admin" | "manager" | "member";
 }
 
 // Root Settings Context
