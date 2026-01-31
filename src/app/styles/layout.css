@@ -1,15 +1,15 @@
 /* Menu responsive toggle */
-.menu-desktop {
-	display: flex;
-}
+.menu-desktop,
 .menu-iconbar {
 	display: none;
 }
-@media (max-width: 1000px) {
-	.menu-desktop {
-		display: none;
-	}
+@media (min-width: 640px) and (max-width: 999.98px) {
 	.menu-iconbar {
+		display: flex;
+	}
+}
+@media (min-width: 1000px) {
+	.menu-desktop {
 		display: flex;
 	}
 }

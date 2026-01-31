@@ -51,7 +51,8 @@ export default function Layout({ children }: LayoutProps) {
 	const isSettingPage = pathname.startsWith("/setting");
 	const isLibrarySeries = pathname.startsWith("/library/series");
 	const isLibraryWrite = pathname === "/library/new";
-	const isLibraryEdit = pathname.startsWith("/library/") && pathname.endsWith("/edit");
+	const isLibraryEdit =
+		pathname.startsWith("/library/") && pathname.endsWith("/edit");
 	const isLibraryDetail =
 		pathname.startsWith("/library/") &&
 		!isLibraryWrite &&
@@ -59,7 +60,8 @@ export default function Layout({ children }: LayoutProps) {
 		!isLibrarySeries;
 	const isGalleryPage = pathname.startsWith("/gallery");
 
-	const showMenu = !isSettingPage && !isLibraryDetail && !isLibraryWrite && !isLibraryEdit;
+	const showMenu =
+		!isSettingPage && !isLibraryDetail && !isLibraryWrite && !isLibraryEdit;
 	const showHeader = isSettingPage || isLibraryDetail;
 
 	// 일반 페이지의 경우 기본 레이아웃 구조 적용
@@ -70,7 +72,7 @@ export default function Layout({ children }: LayoutProps) {
 					className={cn(
 						"flex justify-between items-center px-6 py-0 w-full h-12",
 						"fixed top-0 left-0 border-b border-card-bg z-50",
-						"backdrop-blur-sm"
+						"backdrop-blur-sm",
 					)}
 				>
 					{general?.general.logoType !== "없음" && (
@@ -105,17 +107,17 @@ export default function Layout({ children }: LayoutProps) {
 					isStickerBoardEditPage
 						? "max-w-none px-0 h-auto"
 						: isMainPage
-						? "max-w-7xl px-5 h-dvh"
-						: isGalleryPage
-						? "max-w-none h-auto px-5"
-						: "max-w-5xl px-5 h-auto"
+							? "max-w-7xl px-2.5 md:px-5 h-dvh"
+							: isGalleryPage
+								? "max-w-none h-auto px-2.5 md:px-5"
+								: "max-w-5xl px-2.5 md:px-5 h-auto",
 				)}
 			>
-			<div className="w-full h-full flex items-start justify-center gap-6 relative">
-				{showMenu && !isMenuRightAligned && <WidgetMenu />}
-				{children}
-				{showMenu && isMenuRightAligned && <WidgetMenu />}
-			</div>
+				<div className="w-full h-full flex items-start justify-center gap-4 md:gap-6 relative">
+					{showMenu && !isMenuRightAligned && <WidgetMenu />}
+					{children}
+					{showMenu && isMenuRightAligned && <WidgetMenu />}
+				</div>
 			</div>
 			<BackgroundEffect />
 		</>

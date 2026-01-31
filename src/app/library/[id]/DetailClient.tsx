@@ -28,6 +28,7 @@ import {
 	TooltipTrigger,
 } from "@/components/tiptap-ui-primitive/tooltip/tooltip";
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import { BulletList } from "@tiptap/extension-bullet-list";
@@ -77,6 +78,12 @@ export default function DetailClient({ detailData }) {
 	const [secretAuthChecked, setSecretAuthChecked] = useState(false);
 	const [secretAccessGranted, setSecretAccessGranted] = useState(false);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+	const authorName = localDetail?.author || "익명";
+	const authorPhotoURL =
+		typeof localDetail?.authorPhotoURL === "string"
+			? localDetail.authorPhotoURL
+			: "";
+	const authorInitial = authorName.trim().charAt(0) || "익";
 	const ownerId =
 		localDetail?.authorId ??
 		localDetail?.author?.id ??
@@ -376,9 +383,9 @@ export default function DetailClient({ detailData }) {
 	return (
 		<>
 			{sidebarDrawer}
-			<div className="Wrapper min-h-100vh">
+			<div className="Wrapper min-h-100vh w-full">
 				<div
-					className="Container relative w-3xl min-h-dvh m-auto bg-card backdrop-blur-card border-card px-6 pt-10 pb-10 flex flex-col justify-between"
+					className="Container relative w-full max-w-2xl min-h-dvh m-auto bg-card backdrop-blur-card border-card px-6 pt-10 pb-10 flex flex-col justify-between"
 					style={{ borderTop: "none", borderBottom: "none" }}
 				>
 					{requiresPassword && !authChecked ? (
@@ -464,113 +471,122 @@ export default function DetailClient({ detailData }) {
 						</div>
 					) : (
 						<div>
-							<div>
-								<Button onClick={onClickMoveToPage(listPath)} className="mt-10">
-									목록으로
-								</Button>
+							<div className="flex items-center justify-between mt-10">
+								<Button onClick={onClickMoveToPage(listPath)}>목록으로</Button>
+								{isAdmin ? (
+									<div className="flex items-center gap-3">
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<button
+													type="button"
+													onClick={handleTogglePin}
+													className={cn(
+														"w-8 h-8 rounded-full flex items-center justify-center border border-card cursor-pointer",
+														isPinned
+															? "text-theme-primary"
+															: "text-sub-text",
+													)}
+													style={{ transition: "color 200ms ease-out" }}
+													aria-label="공지로 설정"
+												>
+													<Pin size={16} />
+												</button>
+											</TooltipTrigger>
+											<TooltipContent className="text-xs">
+												{isPinned ? "공지 해제" : "공지로 설정"}
+											</TooltipContent>
+										</Tooltip>
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<button
+													type="button"
+													onClick={onClickMoveToPage(
+														`/library/${localDetail?.id}/edit`,
+													)}
+													className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
+													style={{ transition: "color 200ms ease-out" }}
+													aria-label="수정"
+												>
+													<Pencil size={16} />
+												</button>
+											</TooltipTrigger>
+											<TooltipContent className="text-xs">수정</TooltipContent>
+										</Tooltip>
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<button
+													type="button"
+													onClick={handleDelete}
+													className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
+													style={{ transition: "color 200ms ease-out" }}
+													aria-label="삭제"
+												>
+													<Trash2 size={16} />
+												</button>
+											</TooltipTrigger>
+											<TooltipContent className="text-xs">삭제</TooltipContent>
+										</Tooltip>
+									</div>
+								) : (
+									<div />
+								)}
 							</div>
 							<div className="TitleWrap mt-15">
-								<h1 className="Title text-3xl text-main-text font-bold tracking-normal font-title">
+								<h1 className="Title text-2xl text-main-text font-bold tracking-normal font-title">
 									{localDetail?.title}
 								</h1>
-								<h2 className="Subtitle text-lg text-sub-text mt-2 font-medium">
+								<h2 className="Subtitle text-sm text-sub-text mt-1 font-medium">
 									{localDetail?.subtitle}
 								</h2>
-								<div className="EditWrap flex items-center mt-10">
-									{localDetail?.tags?.length > 0 && (
-										<div className="TagBox flex">
-											{/* 태그 */}
-											{localDetail.tags?.length > 0 && (
-												<div className="flex flex-wrap gap-2 mt-1.5">
-													{localDetail.tags.map((tag, index) => (
-														<Badge
-															key={index}
-															variant="secondary"
-															className={cn(
-																"px-3 text-xs font-medium rounded-full",
-																"bg-theme-primary/10 text-theme-primary border-theme-primary/20",
-																"hover:bg-theme-primary/20",
-															)}
-															style={{
-																transition:
-																	"background-color 200ms, color 200ms, border-color 200ms",
-															}}
-														>
-															{tag}
-														</Badge>
-													))}
-												</div>
-											)}
+								<div className="mt-4 flex items-center gap-2 text-sm text-sub-text">
+									{authorPhotoURL ? (
+										<div className="relative w-8 h-8 rounded-full overflow-hidden border border-card">
+											<Image
+												src={authorPhotoURL}
+												alt={authorName}
+												fill
+												className="object-cover"
+											/>
+										</div>
+									) : (
+										<div className="w-8 h-8 rounded-full bg-card-bg border border-card flex items-center justify-center text-xs font-medium text-main-text">
+											{authorInitial}
 										</div>
 									)}
-
-									<div className="EditBox flex gap-4 items-center ml-auto">
-										<span className="CreatedAt text-sub-text">
-											{dateTimeConvert(localDetail?.createdAt)}
-										</span>
-										{isAdmin && (
-											<div className="flex items-center gap-3">
-												<Tooltip>
-													<TooltipTrigger asChild>
-														<button
-															type="button"
-															onClick={handleTogglePin}
-															className={cn(
-																"w-8 h-8 rounded-full flex items-center justify-center border border-card cursor-pointer",
-																isPinned
-																	? "text-theme-primary"
-																	: "text-sub-text",
-															)}
-															style={{ transition: "color 200ms ease-out" }}
-															aria-label="공지로 설정"
-														>
-															<Pin size={16} />
-														</button>
-													</TooltipTrigger>
-													<TooltipContent className="text-xs">
-														{isPinned ? "공지 해제" : "공지로 설정"}
-													</TooltipContent>
-												</Tooltip>
-												<Tooltip>
-													<TooltipTrigger asChild>
-														<button
-															type="button"
-															onClick={onClickMoveToPage(
-																`/library/${localDetail?.id}/edit`,
-															)}
-															className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
-															style={{ transition: "color 200ms ease-out" }}
-															aria-label="수정"
-														>
-															<Pencil size={16} />
-														</button>
-													</TooltipTrigger>
-													<TooltipContent className="text-xs">
-														수정
-													</TooltipContent>
-												</Tooltip>
-												<Tooltip>
-													<TooltipTrigger asChild>
-														<button
-															type="button"
-															onClick={handleDelete}
-															className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
-															style={{ transition: "color 200ms ease-out" }}
-															aria-label="삭제"
-														>
-															<Trash2 size={16} />
-														</button>
-													</TooltipTrigger>
-													<TooltipContent className="text-xs">
-														삭제
-													</TooltipContent>
-												</Tooltip>
+									<span className="font-medium text-main-text">
+										{authorName}
+									</span>
+									<span className="text-border">•</span>
+									<span>{dateTimeConvert(localDetail?.createdAt)}</span>
+								</div>
+								{localDetail?.tags?.length > 0 && (
+									<div className="TagBox flex mt-4">
+										{/* 태그 */}
+										{localDetail.tags?.length > 0 && (
+											<div className="flex flex-wrap gap-2">
+												{localDetail.tags.map((tag, index) => (
+													<Badge
+														key={index}
+														variant="secondary"
+														className={cn(
+															"px-3 text-xs font-medium rounded-full",
+															"bg-theme-primary/10 text-theme-primary border-theme-primary/20",
+															"hover:bg-theme-primary/20",
+														)}
+														style={{
+															transition:
+																"background-color 200ms, color 200ms, border-color 200ms",
+														}}
+													>
+														{tag}
+													</Badge>
+												))}
 											</div>
 										)}
 									</div>
-								</div>
+								)}
 							</div>
-							<Separator className="mb-[60px] mt-7 bg-card-border" />
+							<Separator className="my-7 bg-card-border" />
 							{!parsedContent || !editor || editor.isEmpty ? (
 								<p className="text-sub-text">내용이 없습니다.</p>
 							) : (
@@ -582,7 +598,7 @@ export default function DetailClient({ detailData }) {
 						<div className="PrevNextWrap flex justify-between mt-24">
 							{localDetail?.prevPost ? (
 								<div
-									className="PrevNextBox prev flex-none flex items-center cursor-pointer rounded-card max-w-52 p-3 border-card bg-card-bg overflow-hidden group min-w-48"
+									className="PrevNextBox prev flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 p-2 md:max-w-44 md:min-w-40 md:p-2.5 lg:max-w-52 lg:min-w-48 lg:p-3 border-card bg-card-bg overflow-hidden group"
 									onClick={onClickMoveToPage(
 										`/library/${
 											localDetail?.prevPost?.slug || localDetail?.prevPost?.id
@@ -590,12 +606,14 @@ export default function DetailClient({ detailData }) {
 									)}
 								>
 									<div
-										className="PrevNextIconBox prevIcon w-12 h-12 flex-none flex items-center justify-center rounded-full bg-gray-300 group-hover:-translate-x-1"
+										className="PrevNextIconBox prevIcon w-6 h-6 md:w-9 md:h-9 lg:w-12 lg:h-12 flex-none flex items-center justify-center rounded-full bg-gray-300 group-hover:-translate-x-1"
 										style={{ transition: "all 300ms ease-in-out" }}
 									>
-										<ChevronLeft size={20} className="text-gray-600" />
+										<ChevronLeft size={16} className="text-gray-600 md:hidden" />
+										<ChevronLeft size={18} className="text-gray-600 hidden md:block lg:hidden" />
+										<ChevronLeft size={20} className="text-gray-600 hidden lg:block" />
 									</div>
-									<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 48px)] pl-3.5">
+									<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 24px)] md:w-[calc(100% - 36px)] lg:w-[calc(100% - 48px)] pl-2 md:pl-3.5">
 										<span className="PrevNextText text-xs text-sub-text">
 											이전 글
 										</span>
@@ -612,7 +630,7 @@ export default function DetailClient({ detailData }) {
 							)}
 							{localDetail?.nextPost ? (
 								<div
-									className="PrevNextBox next flex-none flex items-center cursor-pointer rounded-card max-w-52 p-3 border-card bg-card-bg overflow-hidden flex-row-reverse group min-w-48"
+									className="PrevNextBox next flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 p-2 md:max-w-44 md:min-w-40 md:p-2.5 lg:max-w-52 lg:min-w-48 lg:p-3 border-card bg-card-bg overflow-hidden flex-row-reverse group"
 									onClick={onClickMoveToPage(
 										`/library/${
 											localDetail?.nextPost?.slug || localDetail?.nextPost?.id
@@ -620,12 +638,14 @@ export default function DetailClient({ detailData }) {
 									)}
 								>
 									<div
-										className="PrevNextIconBox nextIcon w-12 h-12 flex-none flex items-center justify-center rounded-full bg-gray-300 group-hover:translate-x-1"
+										className="PrevNextIconBox nextIcon w-6 h-6 md:w-9 md:h-9 lg:w-12 lg:h-12 flex-none flex items-center justify-center rounded-full bg-gray-300 group-hover:translate-x-1"
 										style={{ transition: "all 300ms ease-in-out" }}
 									>
-										<ChevronRight size={20} className="text-gray-600" />
+										<ChevronRight size={16} className="text-gray-600 md:hidden" />
+										<ChevronRight size={18} className="text-gray-600 hidden md:block lg:hidden" />
+										<ChevronRight size={20} className="text-gray-600 hidden lg:block" />
 									</div>
-									<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 48px)] pr-3.5 flex flex-col items-end">
+									<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 24px)] md:w-[calc(100% - 36px)] lg:w-[calc(100% - 48px)] pr-2 md:pr-3.5 flex flex-col items-end">
 										<span className="PrevNextText text-xs text-sub-text">
 											다음 글
 										</span>

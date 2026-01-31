@@ -50,10 +50,12 @@ export default function ItemCard(props) {
 						{props.data.series}
 					</p>
 
-					<span className="text-sm font-title">{props.data.postLength}개의 포스트</span>
+					<span className="text-sm font-title">
+						{props.data.postLength}개의 포스트
+					</span>
 				</div>
 
-				<span className="text-sm text-sub-text before:content-'·' mt-1">
+				<span className="text-xs md:text-sm text-sub-text before:content-'·' mt-1">
 					마지막 업데이트 {dateConvert(props.data.lastUpdatedDate)}
 				</span>
 			</div>

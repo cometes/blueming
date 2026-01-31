@@ -90,11 +90,10 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 	}
 
 	return (
-		<div className="shrink-0 w-full max-w-[700px] mt-[90px] mb-[40px] mx-auto">
+		<div className="w-full max-w-2xl mt-[90px] mb-[40px] mx-auto">
 			<Button
 				onClick={onClickMoveToPage("/library?tab=series")}
 				variant="default"
-				className="mb-10"
 			>
 				목록으로
 			</Button>
@@ -103,7 +102,7 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 			<div className="mt-10">
 				{/* Title Image */}
 				<div
-					className="relative w-full min-h-[300px] rounded-card overflow-hidden flex items-end"
+					className="relative w-full min-h-[230px] sm:min-h-[300px] rounded-card overflow-hidden flex items-end"
 					style={
 						seriesMeta.thumbnail && !failedImages.header
 							? {
@@ -115,12 +114,16 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 					}
 				>
 					{/* Title Box */}
-					<div className="flex flex-col justify-between w-full h-full px-8 py-6">
+					<div className="flex flex-col justify-between w-full h-full px-5 py-3 md:px-8 md:py-6">
 						<div>
-							<h1 className="text-3xl font-semibold font-title">{seriesMeta.name}</h1>
-							<p className="mt-1">{seriesMeta.posts.length}개의 포스트</p>
+							<h1 className="text-xl font-semibold font-title sm:text-3xl">
+								{seriesMeta.name}
+							</h1>
+							<p className="mt-1 text-xs sm:text-base">
+								{seriesMeta.posts.length}개의 포스트
+							</p>
 							<div className="flex items-center justify-between mt-3 w-full">
-								<span className="text-sm text-sub-text block">
+								<span className="text-xs sm:text-sm text-sub-text block">
 									마지막 업데이트{" "}
 									{seriesListData.lastUpdatedDate
 										? dateConvert(seriesListData.lastUpdatedDate)
@@ -187,9 +190,6 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 				</div>
 			</div>
 
-			{/* Divider */}
-			{/* <div className="h-px bg-card-border mt-10" /> */}
-
 			{/* Sort Button */}
 			<div className="flex justify-end mt-5">
 				<button
@@ -197,27 +197,30 @@ export default function SeriesClient({ seriesListData }: SeriesClientProps) {
 					onClick={() => {
 						setIsSorted((prev) => !prev);
 					}}
-					className="text-theme-primary font-medium inline-flex items-center gap-1 hover:opacity-70 cursor-pointer"
+					className="text-theme-primary font-medium inline-flex items-center hover:opacity-70 cursor-pointer"
 					style={{ transition: "opacity 0.2s ease-out" }}
 				>
-					{isSorted ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
-					<span className="text-base ml-2">
+					{isSorted ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+					<span className="text-sm ml-2 font-title">
 						{isSorted ? "내림" : "오름"}차순
 					</span>
 				</button>
 			</div>
+
+			<hr className="mt-5 border-card-border" />
+
 			{/* Posts List */}
-			<ul className="border-card rounded-card bg-card mt-5 backdrop-blur-xs">
+			<ul className="mt-10">
 				{sortedData.map((el, index) => (
 					<li
 						key={el.id}
-						className="list-none border-b border-card-border last:border-b-0 p-4"
+						className="list-none mb-3 last:mb-0"
 					>
 						{/* Post Content */}
 						<div className="flex items-center ">
 							{/* Post Image */}
 							<div
-								className="h-[80px] aspect-video bg-card border border-card-border rounded-card cursor-pointer overflow-hidden relative"
+								className="h-[80px] aspect-[5/3] bg-card border border-card-border rounded-card cursor-pointer overflow-hidden relative"
 								onClick={onClickMoveToPage(`/library/${el.slug || el.id}`)}
 							>
 								{el.thumbnail && !failedImages[el.id] ? (

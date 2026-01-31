@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowUpDown, Pin, Lock } from "lucide-react";
+import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import { dateConvert } from "@/lib/date";
 import ItemGallery from "@/components/items/Gallery";
@@ -104,10 +105,7 @@ export default function LibraryListView({
 				) : (
 					<>
 						{pinnedItems.length > 0 && (
-							<div className="rounded-card border-card bg-card backdrop-blur-card mb-4">
-								{/* <div className="px-4 py-3 border-b border-card-bg text-sm font-medium text-main-text">
-							공지
-						</div> */}
+							<div className="rounded-card border-card bg-card backdrop-blur-card mb-3">
 								<div className="divide-y divide-card-bg">
 									{pinnedItems.map((item) => (
 										<button
@@ -143,15 +141,15 @@ export default function LibraryListView({
 							className={cn(
 								"grid",
 								isCardOn
-									? `gap-2.5 grid-cols-${postsPerRow}`
-									: "gap-4 grid-cols-1",
+									? "gap-1.5 md:gap-2.5 grid-cols-2 md:[grid-template-columns:repeat(var(--library-cols),minmax(0,1fr))]"
+									: "gap-2 md:gap-3 grid-cols-1",
 							)}
 							style={
 								isCardOn
-									? {
-											gridTemplateColumns: `repeat(${postsPerRow}, minmax(0, 1fr))`,
+									? ({
+											["--library-cols"]: postsPerRow,
 											transition: "opacity 0.3s ease-out",
-										}
+										} as CSSProperties)
 									: {
 											transition: "opacity 0.3s ease-out",
 										}
@@ -182,11 +180,7 @@ export default function LibraryListView({
 							{!isCardOn && layoutType === "list" && (
 								<>
 									{listItems.map((el) => (
-										<ItemList
-											key={el.id}
-											data={el}
-											detailQuery={detailQuery}
-										/>
+										<ItemList key={el.id} data={el} detailQuery={detailQuery} />
 									))}
 								</>
 							)}

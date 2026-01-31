@@ -107,13 +107,13 @@ export const useYoutubeHandler = (props: YoutubeHandlerProps) => {
       // Move cursor after the selected node
       editor.chain().focus().setTextSelection(to).setYoutubeVideo({
         src: normalizedUrl,
-        width: 640,
+        width: "100%",
         height: 480
       }).run()
     } else {
       editor.commands.setYoutubeVideo({
         src: normalizedUrl,
-        width: 640,
+        width: "100%",
         height: 480
       })
     }

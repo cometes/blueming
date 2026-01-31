@@ -71,7 +71,7 @@ export function formatYoutubeUrl(input: string): string | null {
 export function insertYoutubeVideo(
 	editor: Editor | null,
 	src: string,
-	width?: number,
+	width?: number | string,
 	height?: number
 ): boolean {
 	if (!editor) return false;
@@ -107,7 +107,7 @@ export function insertYoutubeVideo(
 				.setTextSelection(to)
 				.setYoutubeVideo({
 					src,
-					width: width || 640,
+					width: width || "100%",
 					height: height || 480,
 				})
 				.run();
@@ -116,7 +116,7 @@ export function insertYoutubeVideo(
 		return baseChain
 			.setYoutubeVideo({
 				src,
-				width: width || 640,
+				width: width || "100%",
 				height: height || 480,
 			})
 			.run();
