@@ -23,7 +23,6 @@ export const updateLibraryPost = async (
 				subtitle: payload.subtitle,
 				content: payload.content,
 				slug,
-				summary: payload.summary,
 				tags: payload.tags,
 				series: payload.series,
 				backgroundType: payload.backgroundType,

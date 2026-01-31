@@ -58,7 +58,7 @@ export default function LibraryClient({
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const [isCardPrefsLoaded, setIsCardPrefsLoaded] = useState(
-		initialIsCardOn !== undefined
+		initialIsCardOn !== undefined,
 	);
 	const { isAdmin } = useAdmin();
 	const skipNextQueryUpdateRef = useRef(false);
@@ -309,6 +309,16 @@ export default function LibraryClient({
 		return currentPageSafe > 1 ? `?page=${currentPageSafe}` : "";
 	}, [currentPageSafe]);
 
+	const handleTagSelect = useCallback(
+		(tag: string) => {
+			setActiveTag(tag);
+			setSearchQuery("");
+			setAppliedQuery("");
+			setListPage(1);
+		},
+		[setActiveTag, setAppliedQuery, setListPage, setSearchQuery],
+	);
+
 	const canWrite = writePermission === "admin" ? isAdmin : true;
 	const showSettingsButton = isAdmin;
 	const hasRightButtons = showSettingsButton || canWrite;
@@ -317,7 +327,7 @@ export default function LibraryClient({
 		<>
 			<div className="w-full max-w-full md:max-w-2xl mt-[90px] mb-[40px] mx-auto md:px-0">
 				<div className="flex justify-center items-center gap-2.5">
-					<div className="flex items-center justify-end w-[150px]">
+					<div className="flex items-center justify-end sm:w-[150px]">
 						<div className="relative flex rounded-card bg-transparent p-1">
 							<div
 								className={cn(
@@ -362,6 +372,8 @@ export default function LibraryClient({
 							onKeyDown={(e) => {
 								if (e.key === "Enter") {
 									e.preventDefault();
+									setActiveTag("전체");
+									setListPage(1);
 									setAppliedQuery(searchQuery.trim());
 								}
 							}}
@@ -405,12 +417,20 @@ export default function LibraryClient({
 						/>
 					) : null}
 					{canWrite ? (
-						<Button
-							onClick={onClickMoveToPage("/library/new/")}
-							className="bg-theme-primary hover:bg-theme-primary/90"
-						>
-							<Plus size={14} />새 글쓰기
-						</Button>
+						<>
+							<Button
+								onClick={onClickMoveToPage("/library/new/")}
+								className="bg-theme-primary hover:bg-theme-primary/90 hidden sm:block"
+							>
+								<Plus size={14} />새 글쓰기
+							</Button>
+							<Button
+								onClick={onClickMoveToPage("/library/new/")}
+								className="w-10 h-10 bg-theme-primary hover:bg-theme-primary/90 block sm:hidden"
+							>
+								<Plus size={14} />
+							</Button>
+						</>
 					) : null}
 					{!hasRightButtons ? <div className="w-[150px]" /> : null}
 				</div>
@@ -464,7 +484,7 @@ export default function LibraryClient({
 						postsPerRow={postsPerRow}
 						tagOptions={tagOptions}
 						activeTag={activeTag}
-						setActiveTag={setActiveTag}
+						setActiveTag={handleTagSelect}
 						sortOrder={sortOrder}
 						setSortOrder={setSortOrder}
 						onClickMoveToPage={onClickMoveToPage}

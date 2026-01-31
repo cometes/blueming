@@ -108,6 +108,21 @@ export default function DetailClient({ detailData }) {
 		typeof localDetail?.enableBackdrop === "boolean"
 			? localDetail.enableBackdrop
 			: true;
+	const backgroundStyle = useMemo(() => {
+		if (backgroundType === "color" && backgroundColor) {
+			return { backgroundColor };
+		}
+		if (backgroundType === "image" && backgroundImage) {
+			return {
+				backgroundImage: `url(${backgroundImage})`,
+				backgroundSize: "cover",
+				backgroundPosition: "center",
+				backgroundRepeat: "no-repeat",
+				backgroundAttachment: "fixed",
+			};
+		}
+		return null;
+	}, [backgroundColor, backgroundImage, backgroundType]);
 	const contentSource =
 		isSecret && !canViewSecret ? null : localDetail?.content;
 	const parsedContent = useMemo(() => {
@@ -404,13 +419,27 @@ export default function DetailClient({ detailData }) {
 
 	const sidebarDrawer = (
 		<div
-			className="fixed top-0 right-0 flex h-screen"
-			style={{
-				zIndex: 60,
-				transform: isSidebarOpen ? "translateX(0)" : "translateX(340px)",
-				transition: "transform 300ms ease-in-out",
-			}}
+			className={cn(
+				"fixed inset-0 z-[60]",
+				isSidebarOpen ? "pointer-events-auto" : "pointer-events-none",
+			)}
 		>
+			<div
+				className={cn(
+					"absolute inset-0 transition-opacity duration-300",
+					isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none",
+				)}
+				onClick={() => setIsSidebarOpen(false)}
+				aria-hidden="true"
+			/>
+			<div
+				className="absolute top-0 right-0 flex h-screen pointer-events-auto"
+				style={{
+					transform: isSidebarOpen ? "translateX(0)" : "translateX(340px)",
+					transition: "transform 300ms ease-in-out",
+				}}
+				onClick={(event) => event.stopPropagation()}
+			>
 			{/* 책갈피 탭 */}
 			<button
 				type="button"
@@ -432,17 +461,25 @@ export default function DetailClient({ detailData }) {
 			<div className="w-[340px] h-full bg-card border-l border-card-border shadow-lg flex flex-col backdrop-blur-card">
 				{localDetail?.id && <CommentSidebar postId={localDetail.id} />}
 			</div>
+			</div>
 		</div>
 	);
 
 	return (
 		<>
+			{backgroundStyle ? (
+				<div
+					aria-hidden="true"
+					className="fixed inset-0 -z-10"
+					style={backgroundStyle}
+				/>
+			) : null}
 			{sidebarDrawer}
 			<div className="Wrapper min-h-100vh w-full">
 				<div
 					className={cn(
 						"Container relative w-full max-w-2xl min-h-dvh m-auto px-6 pt-10 pb-10 flex flex-col justify-between",
-						enableBackdrop ? "bg-card backdrop-blur-card border-card" : ""
+						enableBackdrop ? "bg-card backdrop-blur-card border-card" : "",
 					)}
 					style={{ borderTop: "none", borderBottom: "none" }}
 				>
@@ -539,10 +576,8 @@ export default function DetailClient({ detailData }) {
 													type="button"
 													onClick={handleTogglePin}
 													className={cn(
-														"w-8 h-8 rounded-full flex items-center justify-center border border-card cursor-pointer",
-														isPinned
-															? "text-theme-primary"
-															: "text-sub-text",
+														"w-8 h-8 rounded-full bg-card flex items-center justify-center border border-card cursor-pointer",
+														isPinned ? "text-theme-primary" : "text-sub-text",
 													)}
 													style={{ transition: "color 200ms ease-out" }}
 													aria-label="공지로 설정"
@@ -561,7 +596,7 @@ export default function DetailClient({ detailData }) {
 													onClick={onClickMoveToPage(
 														`/library/${localDetail?.id}/edit`,
 													)}
-													className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
+													className="w-8 h-8 rounded-full bg-card flex items-center justify-center border border-card text-sub-text cursor-pointer"
 													style={{ transition: "color 200ms ease-out" }}
 													aria-label="수정"
 												>
@@ -575,7 +610,7 @@ export default function DetailClient({ detailData }) {
 												<button
 													type="button"
 													onClick={handleDelete}
-													className="w-8 h-8 rounded-full flex items-center justify-center border border-card text-sub-text cursor-pointer"
+													className="w-8 h-8 rounded-full bg-card  flex items-center justify-center border border-card text-sub-text cursor-pointer"
 													style={{ transition: "color 200ms ease-out" }}
 													aria-label="삭제"
 												>
@@ -598,7 +633,7 @@ export default function DetailClient({ detailData }) {
 								</h2>
 								<div className="mt-4 flex items-center gap-2 text-sm text-sub-text">
 									{authorPhotoURL ? (
-										<div className="relative w-8 h-8 rounded-full overflow-hidden border border-card">
+										<div className="relative w-8 h-8 rounded-full overflow-hidden">
 											<Image
 												src={authorPhotoURL}
 												alt={authorName}
@@ -644,7 +679,7 @@ export default function DetailClient({ detailData }) {
 									</div>
 								)}
 							</div>
-							<Separator className="my-7 bg-card-border" />
+							<Separator className="my-7 bg-gray-500" />
 							{!parsedContent || !editor || editor.isEmpty ? (
 								<p className="text-sub-text">내용이 없습니다.</p>
 							) : (
@@ -656,7 +691,7 @@ export default function DetailClient({ detailData }) {
 						<div className="PrevNextWrap flex justify-between mt-24">
 							{localDetail?.prevPost ? (
 								<div
-									className="PrevNextBox prev flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 p-2 md:max-w-44 md:min-w-40 md:p-2.5 lg:max-w-52 lg:min-w-48 lg:p-3 border-card bg-card-bg overflow-hidden group"
+									className="PrevNextBox prev flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 p-2 md:max-w-44 md:min-w-40 md:p-2.5 lg:max-w-52 lg:min-w-48 lg:p-3 border-card bg-card backdrop-blur-card overflow-hidden group"
 									onClick={onClickMoveToPage(
 										`/library/${
 											localDetail?.prevPost?.slug || localDetail?.prevPost?.id
@@ -667,9 +702,18 @@ export default function DetailClient({ detailData }) {
 										className="PrevNextIconBox prevIcon w-6 h-6 md:w-9 md:h-9 lg:w-12 lg:h-12 flex-none flex items-center justify-center rounded-full bg-gray-300 group-hover:-translate-x-1"
 										style={{ transition: "all 300ms ease-in-out" }}
 									>
-										<ChevronLeft size={16} className="text-gray-600 md:hidden" />
-										<ChevronLeft size={18} className="text-gray-600 hidden md:block lg:hidden" />
-										<ChevronLeft size={20} className="text-gray-600 hidden lg:block" />
+										<ChevronLeft
+											size={16}
+											className="text-gray-600 md:hidden"
+										/>
+										<ChevronLeft
+											size={18}
+											className="text-gray-600 hidden md:block lg:hidden"
+										/>
+										<ChevronLeft
+											size={20}
+											className="text-gray-600 hidden lg:block"
+										/>
 									</div>
 									<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 24px)] md:w-[calc(100% - 36px)] lg:w-[calc(100% - 48px)] pl-2 md:pl-3.5">
 										<span className="PrevNextText text-xs text-sub-text">
@@ -688,7 +732,7 @@ export default function DetailClient({ detailData }) {
 							)}
 							{localDetail?.nextPost ? (
 								<div
-									className="PrevNextBox next flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 p-2 md:max-w-44 md:min-w-40 md:p-2.5 lg:max-w-52 lg:min-w-48 lg:p-3 border-card bg-card-bg overflow-hidden flex-row-reverse group"
+									className="PrevNextBox next flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 p-2 md:max-w-44 md:min-w-40 md:p-2.5 lg:max-w-52 lg:min-w-48 lg:p-3 border-card bg-card backdrop-blur-card overflow-hidden flex-row-reverse group"
 									onClick={onClickMoveToPage(
 										`/library/${
 											localDetail?.nextPost?.slug || localDetail?.nextPost?.id
@@ -699,9 +743,18 @@ export default function DetailClient({ detailData }) {
 										className="PrevNextIconBox nextIcon w-6 h-6 md:w-9 md:h-9 lg:w-12 lg:h-12 flex-none flex items-center justify-center rounded-full bg-gray-300 group-hover:translate-x-1"
 										style={{ transition: "all 300ms ease-in-out" }}
 									>
-										<ChevronRight size={16} className="text-gray-600 md:hidden" />
-										<ChevronRight size={18} className="text-gray-600 hidden md:block lg:hidden" />
-										<ChevronRight size={20} className="text-gray-600 hidden lg:block" />
+										<ChevronRight
+											size={16}
+											className="text-gray-600 md:hidden"
+										/>
+										<ChevronRight
+											size={18}
+											className="text-gray-600 hidden md:block lg:hidden"
+										/>
+										<ChevronRight
+											size={20}
+											className="text-gray-600 hidden lg:block"
+										/>
 									</div>
 									<div className="PrevNextTextBox overflow-hidden w-[calc(100% - 24px)] md:w-[calc(100% - 36px)] lg:w-[calc(100% - 48px)] pr-2 md:pr-3.5 flex flex-col items-end">
 										<span className="PrevNextText text-xs text-sub-text">

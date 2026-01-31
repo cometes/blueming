@@ -40,7 +40,6 @@ interface LibraryNewClientProps {
 		subtitle?: string;
 		content: string;
 		slug?: string | null;
-		summary?: string;
 		tags?: string[];
 		series?: string;
 		backgroundType?: "default" | "color" | "image";
@@ -80,7 +79,6 @@ export default function LibararyNewClient({
 		tags: [],
 		series: "",
 		slug: "",
-		summary: "",
 		visibility: "all",
 		password: "",
 		thumbnail: "",
@@ -136,7 +134,6 @@ export default function LibararyNewClient({
 			tags: initialData.tags ?? [],
 			series: initialData.series ?? "",
 			slug: initialData.slug ?? "",
-			summary: initialData.summary ?? "",
 			visibility: initialData.allow ?? "all",
 			password:
 				initialData.allow === "password" ? (initialData.password ?? "") : "",
@@ -166,7 +163,6 @@ export default function LibararyNewClient({
 			tags: data.tags ?? [],
 			series: data.series ?? "",
 			slug: data.slug ?? "",
-			summary: data.summary ?? "",
 			visibility: data.allow ?? "all",
 			password: data.allow === "password" ? (data.password ?? "") : "",
 			thumbnail: data.thumbnail ?? "",
@@ -277,13 +273,12 @@ export default function LibararyNewClient({
 
 		setIsSubmitting(true);
 		try {
-			const payload = {
-				title: title.trim(),
-				subtitle: subtitle.trim() || undefined,
-				content: JSON.stringify(contentJson),
-				slug: metaValue.slug,
-				summary: metaValue.summary,
-				tags: metaValue.tags,
+		const payload = {
+			title: title.trim(),
+			subtitle: subtitle.trim() || undefined,
+			content: JSON.stringify(contentJson),
+			slug: metaValue.slug,
+			tags: metaValue.tags,
 				series: metaValue.series,
 				backgroundType: metaValue.backgroundType,
 				backgroundColor: metaValue.backgroundColor,

@@ -2,12 +2,13 @@
 "use client";
 
 import { useMemo, useState, useEffect, type KeyboardEvent } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import CreateModalLeftPanel from "@/components/modal/CreateModalLeftPanel";
 import CreateModalRightPanel from "@/components/modal/CreateModalRightPanel";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { generateSlug } from "@/lib/slug";
+import { useSettings } from "@/contexts/SettingsContext";
+import { X } from "lucide-react";
 
 type Visibility = "all" | "password" | "secret";
 
@@ -15,7 +16,6 @@ export interface CreateMetaValue {
 	tags: string[];
 	series?: string;
 	slug?: string;
-	summary?: string;
 	visibility: Visibility;
 	password?: string;
 	thumbnail?: string;
@@ -83,6 +83,7 @@ const CreateModal = ({
 	const [passwordTouched, setPasswordTouched] = useState(false);
 	const [thumbnailDialogOpen, setThumbnailDialogOpen] = useState(false);
 	const [backgroundDialogOpen, setBackgroundDialogOpen] = useState(false);
+	const { general } = useSettings();
 
 	const MAX_TAGS = 6;
 
@@ -196,7 +197,8 @@ const CreateModal = ({
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent
-				className="w-full md:max-w-3xl bg-card rounded-card max-h-[90vh] flex flex-col border-card backdrop-blur-card p-0"
+				showCloseButton={false}
+				className="w-full max-w-[95vw] md:max-w-3xl bg-card rounded-card max-h-[90vh] flex flex-col border-card backdrop-blur-card p-0"
 				onInteractOutside={(event) => {
 					const target = event.target as HTMLElement | null;
 					if (
@@ -216,6 +218,12 @@ const CreateModal = ({
 					}
 				}}
 			>
+				<DialogClose
+					className="absolute right-4 top-4 z-[1] rounded-card border border-card bg-card-bg p-2 text-sub-text transition hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+					aria-label="닫기"
+				>
+					<X size={16} />
+				</DialogClose>
 				<ImageUploadDialog
 					isOpen={thumbnailDialogOpen}
 					onOpenChange={setThumbnailDialogOpen}
@@ -252,8 +260,16 @@ const CreateModal = ({
 						})
 					}
 				/>
-				<ScrollArea className="flex-1 px-8 py-8">
-					<div className="flex gap-8">
+				<div
+					className="flex-1 min-h-0 overflow-y-scroll px-4 py-4 sm:px-6 md:px-8 md:py-8"
+					style={{
+						scrollbarColor: `${
+							general?.design?.widget?.borderColor || "#ccc"
+						} transparent`,
+						scrollbarWidth: "thin",
+					}}
+				>
+					<div className="flex flex-col md:flex-row gap-6 md:gap-8">
 						<CreateModalLeftPanel
 							value={value}
 							onChange={onChange}
@@ -262,7 +278,7 @@ const CreateModal = ({
 						/>
 
 						{/* 구분선 */}
-						<div className="w-px bg-card-border"></div>
+						<div className="h-px w-full md:h-auto md:w-px bg-card-border"></div>
 
 						<CreateModalRightPanel
 							tagOpen={tagOpen}
@@ -321,9 +337,8 @@ const CreateModal = ({
 								}
 							}}
 						/>
-
 					</div>
-				</ScrollArea>
+				</div>
 			</DialogContent>
 		</Dialog>
 	);
