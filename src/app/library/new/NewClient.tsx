@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
 import { extensions } from "@/components/editor/TiptapEditor";
 import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
+import { MobileToolbarContainer } from "@/components/tiptap/MobileToolbarContainer";
 import CreateModal, { CreateMetaValue } from "@/components/modal/createModal";
 import { createLibraryPost } from "@/queries/set/createLibrary";
 import { updateLibraryPost } from "@/queries/set/updateLibrary";
@@ -42,6 +43,10 @@ interface LibraryNewClientProps {
 		summary?: string;
 		tags?: string[];
 		series?: string;
+		backgroundType?: "default" | "color" | "image";
+		backgroundColor?: string | null;
+		backgroundImage?: string | null;
+		enableBackdrop?: boolean;
 		allow?: "all" | "password" | "secret";
 		password?: string | null;
 		thumbnail?: string;
@@ -80,6 +85,10 @@ export default function LibararyNewClient({
 		password: "",
 		thumbnail: "",
 		pinned: false,
+		backgroundType: "default",
+		backgroundColor: "#fff",
+		backgroundImage: "",
+		enableBackdrop: true,
 	});
 
 	const initialContent = React.useMemo(() => {
@@ -133,6 +142,13 @@ export default function LibararyNewClient({
 				initialData.allow === "password" ? (initialData.password ?? "") : "",
 			thumbnail: initialData.thumbnail ?? "",
 			pinned: initialData.pinned ?? false,
+			backgroundType: initialData.backgroundType ?? "default",
+			backgroundColor: initialData.backgroundColor ?? "#fff",
+			backgroundImage: initialData.backgroundImage ?? "",
+			enableBackdrop:
+				typeof initialData.enableBackdrop === "boolean"
+					? initialData.enableBackdrop
+					: true,
 		});
 	}, [initialData]);
 
@@ -155,6 +171,11 @@ export default function LibararyNewClient({
 			password: data.allow === "password" ? (data.password ?? "") : "",
 			thumbnail: data.thumbnail ?? "",
 			pinned: data.pinned ?? false,
+			backgroundType: data.backgroundType ?? "default",
+			backgroundColor: data.backgroundColor ?? "#fff",
+			backgroundImage: data.backgroundImage ?? "",
+			enableBackdrop:
+				typeof data.enableBackdrop === "boolean" ? data.enableBackdrop : true,
 		});
 		if (data.content) {
 			setContentOverride(data.content);
@@ -264,6 +285,10 @@ export default function LibararyNewClient({
 				summary: metaValue.summary,
 				tags: metaValue.tags,
 				series: metaValue.series,
+				backgroundType: metaValue.backgroundType,
+				backgroundColor: metaValue.backgroundColor,
+				backgroundImage: metaValue.backgroundImage,
+				enableBackdrop: metaValue.enableBackdrop,
 				visibility: metaValue.visibility,
 				password: metaValue.password,
 				thumbnail: metaValue.thumbnail,
@@ -322,10 +347,10 @@ export default function LibararyNewClient({
 						</Button>
 					</div>
 				</header>
-				{/* Mobile Toolbar - 모바일에서 하단 고정 */}
-				<div className="z-50 sm:hidden bg-card border-t border-card-border backdrop-blur-card fixed left-0 right-0 bottom-[calc(var(--tt-safe-area-bottom)+var(--tt-keyboard-offset,0px))]">
+				{/* Mobile Toolbar - 모바일에서 키보드 상단 고정 */}
+				<MobileToolbarContainer>
 					<TiptapToolbar editor={editor} />
-				</div>
+				</MobileToolbarContainer>
 				{/* Body */}
 				<div
 					className={cn(

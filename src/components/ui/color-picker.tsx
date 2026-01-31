@@ -7,7 +7,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ColorPickerProps {
 	value?: string;
@@ -39,19 +39,22 @@ export function ColorPicker({
 	return (
 		<Popover>
 			<PopoverTrigger asChild>
-				<Button
-					variant="outline"
-					className={
-						className + "block aspect-square rounded-card border-card"
-					}
-					style={{
-						backgroundColor: color,
-					}}
+				<button
+					type="button"
+					className={cn(
+						"block aspect-square rounded-card border border-card bg-transparent focus:outline-none",
+						className
+					)}
+					style={{ backgroundColor: color }}
 				>
 					<span className="sr-only">Pick a color</span>
-				</Button>
+				</button>
 			</PopoverTrigger>
-			<PopoverContent className="w-auto p-0 border-0" align="start">
+			<PopoverContent
+				className="w-auto p-0 border-0 bg-card backdrop-blur-card"
+				align="start"
+				portal={false}
+			>
 				<SketchPicker color={color} onChange={handleChange} />
 			</PopoverContent>
 		</Popover>

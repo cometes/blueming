@@ -92,6 +92,22 @@ export default function DetailClient({ detailData }) {
 	const isOwner = Boolean(ownerId && user?.uid === ownerId);
 	const isSecret = localDetail?.allow === "secret";
 	const canViewSecret = Boolean(isAdmin || isOwner || secretAccessGranted);
+	const backgroundType =
+		typeof localDetail?.backgroundType === "string"
+			? localDetail.backgroundType
+			: "default";
+	const backgroundColor =
+		typeof localDetail?.backgroundColor === "string"
+			? localDetail.backgroundColor
+			: "";
+	const backgroundImage =
+		typeof localDetail?.backgroundImage === "string"
+			? localDetail.backgroundImage
+			: "";
+	const enableBackdrop =
+		typeof localDetail?.enableBackdrop === "boolean"
+			? localDetail.enableBackdrop
+			: true;
 	const contentSource =
 		isSecret && !canViewSecret ? null : localDetail?.content;
 	const parsedContent = useMemo(() => {
@@ -204,6 +220,45 @@ export default function DetailClient({ detailData }) {
 	useEffect(() => {
 		setLocalDetail(detailData);
 	}, [detailData]);
+
+	useEffect(() => {
+		const body = document.body;
+		const prevStyles = {
+			backgroundColor: body.style.backgroundColor,
+			backgroundImage: body.style.backgroundImage,
+			backgroundSize: body.style.backgroundSize,
+			backgroundPosition: body.style.backgroundPosition,
+			backgroundRepeat: body.style.backgroundRepeat,
+			backgroundAttachment: body.style.backgroundAttachment,
+		};
+
+		if (backgroundType === "color" && backgroundColor) {
+			body.style.backgroundColor = backgroundColor;
+			body.style.backgroundImage = "";
+		} else if (backgroundType === "image" && backgroundImage) {
+			body.style.backgroundImage = `url(${backgroundImage})`;
+			body.style.backgroundSize = "cover";
+			body.style.backgroundPosition = "center";
+			body.style.backgroundRepeat = "no-repeat";
+			body.style.backgroundAttachment = "fixed";
+		} else {
+			body.style.backgroundColor = "";
+			body.style.backgroundImage = "";
+			body.style.backgroundSize = "";
+			body.style.backgroundPosition = "";
+			body.style.backgroundRepeat = "";
+			body.style.backgroundAttachment = "";
+		}
+
+		return () => {
+			body.style.backgroundColor = prevStyles.backgroundColor;
+			body.style.backgroundImage = prevStyles.backgroundImage;
+			body.style.backgroundSize = prevStyles.backgroundSize;
+			body.style.backgroundPosition = prevStyles.backgroundPosition;
+			body.style.backgroundRepeat = prevStyles.backgroundRepeat;
+			body.style.backgroundAttachment = prevStyles.backgroundAttachment;
+		};
+	}, [backgroundColor, backgroundImage, backgroundType]);
 
 	const handleDelete = async () => {
 		if (!localDetail?.id) return;
@@ -385,7 +440,10 @@ export default function DetailClient({ detailData }) {
 			{sidebarDrawer}
 			<div className="Wrapper min-h-100vh w-full">
 				<div
-					className="Container relative w-full max-w-2xl min-h-dvh m-auto bg-card backdrop-blur-card border-card px-6 pt-10 pb-10 flex flex-col justify-between"
+					className={cn(
+						"Container relative w-full max-w-2xl min-h-dvh m-auto px-6 pt-10 pb-10 flex flex-col justify-between",
+						enableBackdrop ? "bg-card backdrop-blur-card border-card" : ""
+					)}
 					style={{ borderTop: "none", borderBottom: "none" }}
 				>
 					{requiresPassword && !authChecked ? (
