@@ -60,7 +60,7 @@ export default function LibraryClient({
 	const [isCardPrefsLoaded, setIsCardPrefsLoaded] = useState(
 		initialIsCardOn !== undefined,
 	);
-	const { isAdmin } = useAdmin();
+	const { isAdmin, isManagerOrAdmin, isAuthenticated } = useAdmin();
 	const skipNextQueryUpdateRef = useRef(false);
 
 	const defaultLibrarySettings = useMemo(
@@ -91,7 +91,9 @@ export default function LibraryClient({
 	const [postsPerRow, setPostsPerRow] = useState(
 		resolvedLibrarySettings.postsPerRow,
 	);
-	const [writePermission, setWritePermission] = useState<"admin" | "member">(
+	const [writePermission, setWritePermission] = useState<
+		"admin" | "manager" | "member"
+	>(
 		resolvedLibrarySettings.writePermission,
 	);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -319,7 +321,12 @@ export default function LibraryClient({
 		[setActiveTag, setAppliedQuery, setListPage, setSearchQuery],
 	);
 
-	const canWrite = writePermission === "admin" ? isAdmin : true;
+	const canWrite =
+		writePermission === "admin"
+			? isAdmin
+			: writePermission === "manager"
+				? isManagerOrAdmin
+				: isAuthenticated;
 	const showSettingsButton = isAdmin;
 	const hasRightButtons = showSettingsButton || canWrite;
 
@@ -420,7 +427,7 @@ export default function LibraryClient({
 						<>
 							<Button
 								onClick={onClickMoveToPage("/library/new/")}
-								className="bg-theme-primary hover:bg-theme-primary/90 hidden sm:block"
+								className="bg-theme-primary hover:bg-theme-primary/90 hidden sm:flex"
 							>
 								<Plus size={14} />새 글쓰기
 							</Button>

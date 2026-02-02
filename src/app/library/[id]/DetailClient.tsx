@@ -309,6 +309,9 @@ export default function DetailClient({ detailData }) {
 		localDetail?.allow === "password" && !localDetail?.content;
 	const detailId = localDetail?.slug || localDetail?.id;
 	const requiresSecretAccess = isSecret && !canViewSecret;
+	const canShowComments =
+		(!requiresPassword || Boolean(localDetail?.content)) &&
+		(!requiresSecretAccess || canViewSecret);
 
 	const handleVerifyPassword = async () => {
 		if (!detailId || isVerifying) return;
@@ -459,7 +462,9 @@ export default function DetailClient({ detailData }) {
 			</button>
 			{/* 드로어 본체 */}
 			<div className="w-[340px] h-full bg-card border-l border-card-border shadow-lg flex flex-col backdrop-blur-card">
-				{localDetail?.id && <CommentSidebar postId={localDetail.id} />}
+				{canShowComments && localDetail?.id ? (
+					<CommentSidebar postId={localDetail.id} />
+				) : null}
 			</div>
 			</div>
 		</div>
@@ -474,7 +479,7 @@ export default function DetailClient({ detailData }) {
 					style={backgroundStyle}
 				/>
 			) : null}
-			{sidebarDrawer}
+			{canShowComments ? sidebarDrawer : null}
 			<div className="Wrapper min-h-100vh w-full">
 				<div
 					className={cn(

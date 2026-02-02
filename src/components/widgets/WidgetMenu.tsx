@@ -14,6 +14,7 @@ import type {
 } from "./widgetMenuTypes";
 import WidgetMenuDesktop from "./WidgetMenuDesktop";
 import WidgetMenuIconBar from "./WidgetMenuIconBar";
+import WidgetMenuMobile from "./WidgetMenuMobile";
 
 export default function WidgetMenu() {
 	const { general } = useSettings();
@@ -189,6 +190,14 @@ export default function WidgetMenu() {
 				onMenuClick={handleMenuClick}
 				onSubMenuClick={handleSubMenuClick}
 				className="hidden sm:flex"
+			/>
+			<WidgetMenuMobile
+				design={design}
+				filteredMenuItems={filteredMenuItems}
+				openFolders={openFolders}
+				onMenuClick={handleMenuClick}
+				onSubMenuClick={handleSubMenuClick}
+				getItemBackgroundStyle={getItemBackgroundStyle}
 			/>
 		</>
 	);
