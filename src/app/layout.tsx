@@ -229,12 +229,6 @@ export default async function RootLayout({
 	const fontRegistry = getFontRegistry(settings);
 	const fontFaceCSS = buildFontFaceCSS(fontRegistry);
 	const favicon = settings?.general?.general?.favicon;
-	const backgroundColor = settings?.general?.design?.background?.color ?? "#ffffff";
-	const backgroundImage =
-		settings?.general?.design?.background?.type === "이미지" &&
-		settings?.general?.design?.background?.image
-			? `url("${settings.general.design.background.image}")`
-			: "none";
 
 	return (
 		<html lang="en">
@@ -270,7 +264,7 @@ export default async function RootLayout({
 				) : null}
 				{themeStyle ? <style>{themeStyle}</style> : null}
 			</head>
-			<body style={{ backgroundColor, backgroundImage }}>
+			<body>
 				<Providers initialSettings={settings}>
 					<Layout>{children}</Layout>
 				</Providers>

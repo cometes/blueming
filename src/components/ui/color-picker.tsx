@@ -42,7 +42,7 @@ export function ColorPicker({
 				<button
 					type="button"
 					className={cn(
-						"block aspect-square rounded-card border border-card bg-transparent focus:outline-none",
+						"block h-8 w-8 min-h-[32px] min-w-[32px] rounded-card border border-card bg-transparent focus:outline-none",
 						className
 					)}
 					style={{ backgroundColor: color }}
