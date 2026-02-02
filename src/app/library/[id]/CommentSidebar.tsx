@@ -179,7 +179,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 			}
 			setDialogOpen(true);
 		},
-		[activeComment, closeDialog],
+		[closeDialog],
 	);
 
 	const canSubmit = useMemo(() => {
@@ -293,6 +293,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 	}, [
 		activeComment,
 		closeDialog,
+		dialogImages,
 		dialogMessage,
 		dialogPin,
 		dialogSecret,

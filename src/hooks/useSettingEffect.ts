@@ -54,7 +54,7 @@ export const useSettingEffect = () => {
 		() =>
 			effectSetting.enabled !== baseline.enabled ||
 			effectSetting.type !== baseline.type,
-		[effectSetting, baselineEffect]
+		[effectSetting, baseline.enabled, baseline.type]
 	);
 
 	// Load existing data when effectData changes

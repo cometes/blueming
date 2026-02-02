@@ -154,7 +154,8 @@ export default function LibararyNewClient({
 		!initialData?.content &&
 		!contentOverride;
 
-	const applyDetailData = (data: LibraryNewClientProps["initialData"]) => {
+	const applyDetailData = React.useCallback(
+		(data: LibraryNewClientProps["initialData"]) => {
 		if (!data) return;
 		setTitle(data.title || "");
 		setSubtitle(data.subtitle || "");
@@ -175,7 +176,9 @@ export default function LibararyNewClient({
 		if (data.content) {
 			setContentOverride(data.content);
 		}
-	};
+		},
+		[],
+	);
 
 	const handleVerifyPassword = async () => {
 		if (!initialData?.id || isVerifyingPassword) return;

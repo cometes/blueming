@@ -66,7 +66,7 @@ export default function GalleryImageModal({
 			setIsLoaded(false);
 			setIsError(false);
 		}
-	}, [isOpen, initialIndex, images.length]);
+	}, [isOpen, initialIndex, images.length, activeIndex]);
 
 	// 모달이 닫힐 때 네비게이션 플래그만 리셋 (isLoaded는 유지하여 닫힘 애니메이션 중 스피너 방지)
 	useEffect(() => {

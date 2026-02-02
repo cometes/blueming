@@ -227,7 +227,6 @@ export default function NoticeSettingClient() {
 		);
 	}, [
 		bannerText,
-		editor,
 		currentType,
 		gradientColor,
 		gradientWidth,

@@ -152,18 +152,21 @@ export default function LibraryClient({
 		});
 	};
 
-	const updatePageParam = (nextPage: number) => {
-		const params = new URLSearchParams(searchParams.toString());
-		if (nextPage > 1) {
-			params.set("page", String(nextPage));
-		} else {
-			params.delete("page");
-		}
-		const query = params.toString();
-		router.replace(query ? `${pathname}?${query}` : pathname, {
-			scroll: false,
-		});
-	};
+	const updatePageParam = useCallback(
+		(nextPage: number) => {
+			const params = new URLSearchParams(searchParams.toString());
+			if (nextPage > 1) {
+				params.set("page", String(nextPage));
+			} else {
+				params.delete("page");
+			}
+			const query = params.toString();
+			router.replace(query ? `${pathname}?${query}` : pathname, {
+				scroll: false,
+			});
+		},
+		[pathname, router, searchParams],
+	);
 
 	// URL 쿼리에서 탭 상태 복원
 	useEffect(() => {
@@ -225,7 +228,7 @@ export default function LibraryClient({
 		if (nextPage !== listPage) {
 			updatePageParam(listPage);
 		}
-	}, [isSeriesOn, listPage, pathname, router, searchParams]);
+	}, [isSeriesOn, listPage, updatePageParam, searchParams]);
 
 	const handlePageChange = useCallback(
 		(page: number) => {
@@ -303,7 +306,6 @@ export default function LibraryClient({
 		listPage,
 		seriesPage,
 		listTotalCount,
-		pinnedItems.length,
 		postsPerPage,
 	]);
 
