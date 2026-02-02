@@ -7,7 +7,6 @@ import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
 import { extensions } from "@/components/editor/TiptapEditor";
 import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
