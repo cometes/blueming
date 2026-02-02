@@ -21,6 +21,9 @@ type MenuAuthVariant = "desktop" | "iconbar";
 interface MenuAuthButtonProps {
 	variant?: MenuAuthVariant;
 	className?: string;
+	dropdownPortal?: boolean;
+	dropdownSide?: "top" | "right" | "bottom" | "left";
+	dropdownAlign?: "start" | "center" | "end";
 }
 
 const getInitial = (label?: string | null) => {
@@ -31,6 +34,9 @@ const getInitial = (label?: string | null) => {
 export default function MenuAuthButton({
 	variant = "desktop",
 	className,
+	dropdownPortal = true,
+	dropdownSide = "right",
+	dropdownAlign = "center",
 }: MenuAuthButtonProps) {
 	const router = useRouter();
 	const { isAuthenticated, user, isLoading, handleLogin, handleLogout } =
@@ -130,7 +136,12 @@ export default function MenuAuthButton({
 					)}
 				</button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="center" side="right" sideOffset={8}>
+			<DropdownMenuContent
+				align={dropdownAlign}
+				side={dropdownSide}
+				sideOffset={8}
+				portal={dropdownPortal}
+			>
 				{isAdmin && (
 					<>
 						<DropdownMenuItem
