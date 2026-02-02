@@ -1,5 +1,4 @@
 import axios from "axios";
-import { auth } from "@/lib/Firebase";
 
 export interface GuestbookEntry {
 	id: string;
@@ -38,6 +37,8 @@ interface GuestbookListParams {
 const API_BASE = "https://api-w5buphcleq-du.a.run.app";
 
 const getAuthHeader = async () => {
+	if (typeof window === "undefined") return {};
+	const { auth } = await import("@/lib/Firebase");
 	const currentUser = auth.currentUser;
 	if (!currentUser) return {};
 	const token = await currentUser.getIdToken();
