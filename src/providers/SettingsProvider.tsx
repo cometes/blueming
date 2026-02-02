@@ -24,6 +24,13 @@ export function SettingsProvider({ children, initialSettings }) {
 		}));
 	};
 
+	const updateDesign = (newDesign) => {
+		setGeneral((prev) => ({
+			...prev,
+			design: newDesign,
+		}));
+	};
+
 	const updateMain = (newSettings) => {
 		setMain((prev) => ({
 			...prev,
@@ -104,6 +111,7 @@ export function SettingsProvider({ children, initialSettings }) {
 			library,
 			gallery,
 			updateGeneral,
+			updateDesign,
 			updateMain,
 			updateLibrary,
 			updateGallery,

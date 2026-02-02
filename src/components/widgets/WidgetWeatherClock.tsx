@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useSettings } from "@/contexts/SettingsContext";
 import { getWeather, type WeatherData } from "@/queries/getWeather";
 import { CACHE_POLICY } from "@/queries/cachePolicy";
@@ -18,6 +18,11 @@ export default function WidgetWeatherClock({ onReady }: { onReady?: () => void }
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [currentTime, setCurrentTime] = useState(new Date());
+    const onReadyRef = useRef(onReady);
+
+    useEffect(() => {
+        onReadyRef.current = onReady;
+    }, [onReady]);
 
     const enabled = weatherClockSettings?.enabled ?? true;
     const city = weatherClockSettings?.city || "Seoul";
@@ -26,7 +31,7 @@ export default function WidgetWeatherClock({ onReady }: { onReady?: () => void }
     // Fetch weather data
     useEffect(() => {
         if (!enabled) {
-            onReady?.();
+            onReadyRef.current?.();
             return;
         }
 
@@ -41,14 +46,14 @@ export default function WidgetWeatherClock({ onReady }: { onReady?: () => void }
                 const data = await getWeather(city, { staleTimeMs: WEATHER_REFRESH_MS });
                 if (!isActive || currentId !== requestId) return;
                 setWeather(data);
-                onReady?.();
+                onReadyRef.current?.();
             } catch (err) {
                 if (!isActive || currentId !== requestId) return;
                 console.error("Failed to fetch weather:", err);
                 setError(
                     err instanceof Error ? err.message : "날씨 정보를 불러올 수 없습니다"
                 );
-                onReady?.();
+                onReadyRef.current?.();
             } finally {
                 if (!isActive || currentId !== requestId) return;
                 setIsLoading(false);
@@ -81,7 +86,7 @@ export default function WidgetWeatherClock({ onReady }: { onReady?: () => void }
                 clearInterval(interval);
             }
         };
-    }, [city, enabled, onReady]);
+    }, [city, enabled]);
 
     // Update clock every second
     useEffect(() => {

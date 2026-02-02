@@ -148,6 +148,7 @@ export const useSettingDesign = () => {
     }
   }, [design]);
 
+
   // Helper function to update a specific field in currentDesignSetting
   const updateDesignSetting = (path, value) => {
     setCurrentDesignSetting(prev => {

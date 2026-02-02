@@ -100,6 +100,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 		root.style.setProperty('--bg-color', design.background.color);
 		if (design.background.type === '이미지' && design.background.image) {
 			root.style.setProperty('--bg-image', `url(${design.background.image})`);
+		} else {
+			root.style.removeProperty('--bg-image');
 		}
 		
 		// 위젯 디자인 변수
