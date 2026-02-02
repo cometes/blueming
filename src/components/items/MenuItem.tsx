@@ -132,7 +132,7 @@ export default function WidgetMenu() {
 
 			return true;
 		});
-	}, [menuData.menus, isAdmin]);
+	}, [menuData.menus, isAdmin, isManagerOrAdmin]);
 
 	// Design settings
 	const design: MenuDesign = useMemo(

@@ -116,15 +116,14 @@ const renderSticker = (component: StickerBoardComponent) => {
 export default function WidgetStickerBoard() {
 	const { main } = useSettings();
 	const stickerBoard = main?.stickerBoard;
-	const components = stickerBoard?.components ?? [];
 
 	const visible = useMemo(
 		() =>
-			components
+			(stickerBoard?.components ?? [])
 				.filter((c) => c.isVisible !== false && isPctSticker(c))
 				.slice()
 				.sort((a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0)),
-		[components]
+		[stickerBoard?.components]
 	);
 
 	return (
@@ -144,4 +143,3 @@ export default function WidgetStickerBoard() {
 		</div>
 	);
 }
-

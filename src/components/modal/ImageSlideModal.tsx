@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -28,6 +28,16 @@ export default function ImageSlideModal({
 		setActiveIndex(nextIndex);
 	}, [isOpen, images.length, initialIndex]);
 
+	const handlePrev = useCallback(() => {
+		if (images.length === 0) return;
+		setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
+	}, [images.length]);
+
+	const handleNext = useCallback(() => {
+		if (images.length === 0) return;
+		setActiveIndex((prev) => (prev + 1) % images.length);
+	}, [images.length]);
+
 	useEffect(() => {
 		if (!isOpen || images.length <= 1) return;
 		const handleKeyDown = (event: KeyboardEvent) => {
@@ -42,17 +52,7 @@ export default function ImageSlideModal({
 		};
 		window.addEventListener("keydown", handleKeyDown);
 		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [isOpen, images.length]);
-
-	const handlePrev = () => {
-		if (images.length === 0) return;
-		setActiveIndex((prev) => (prev - 1 + images.length) % images.length);
-	};
-
-	const handleNext = () => {
-		if (images.length === 0) return;
-		setActiveIndex((prev) => (prev + 1) % images.length);
-	};
+	}, [isOpen, images.length, handlePrev, handleNext]);
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>

@@ -170,6 +170,7 @@ export function useStickerManipulation(args: {
 		},
 		[
 			canvasRef,
+			clampStickerToEditorBounds,
 			commitHistoryBase,
 			presentRef,
 			selectedComponent,

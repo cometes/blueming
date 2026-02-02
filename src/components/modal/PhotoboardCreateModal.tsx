@@ -1,6 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ImagePlus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -48,28 +49,7 @@ export default function PhotoboardCreateModal({
 	const avatarUrl = user?.photoURL || "";
 	const isEditMode = mode === "edit";
 
-	useEffect(() => {
-		if (!isOpen) {
-			resetComposer();
-			return;
-		}
-
-		if (isEditMode && post) {
-			setCaptionInput(post.caption);
-			setImageUrl(post.imageUrl);
-			setImageFile(null);
-		}
-	}, [isOpen, isEditMode, post]);
-
-	useEffect(() => {
-		return () => {
-			if (imageUrl.startsWith("blob:")) {
-				URL.revokeObjectURL(imageUrl);
-			}
-		};
-	}, [imageUrl]);
-
-	const resetComposer = () => {
+	const resetComposer = useCallback(() => {
 		setCaptionInput("");
 		setIsDragging(false);
 		setIsProcessing(false);
@@ -81,7 +61,28 @@ export default function PhotoboardCreateModal({
 		if (fileInputRef.current) {
 			fileInputRef.current.value = "";
 		}
-	};
+	}, [imageUrl]);
+
+	useEffect(() => {
+		if (!isOpen) {
+			resetComposer();
+			return;
+		}
+
+		if (isEditMode && post) {
+			setCaptionInput(post.caption);
+			setImageUrl(post.imageUrl);
+			setImageFile(null);
+		}
+	}, [isOpen, isEditMode, post, resetComposer]);
+
+	useEffect(() => {
+		return () => {
+			if (imageUrl.startsWith("blob:")) {
+				URL.revokeObjectURL(imageUrl);
+			}
+		};
+	}, [imageUrl]);
 
 	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -177,7 +178,7 @@ export default function WeatherClockSettingClient() {
 		} finally {
 			setIsGenerating(false);
 		}
-	}, [city]);
+	}, [city, defaultPrompt, prompt]);
 
 	const handleRemoveImage = useCallback(() => {
 		setBackgroundImage("");

@@ -127,7 +127,7 @@ export default function MenuAddModal({
 		});
 	};
 
-	const revokePendingImages = () => {
+	const revokePendingImages = useCallback(() => {
 		if (pendingImages.image) {
 			URL.revokeObjectURL(pendingImages.image.previewUrl);
 		}
@@ -137,13 +137,13 @@ export default function MenuAddModal({
 		Object.values(pendingSubMenuImages).forEach((pending) => {
 			URL.revokeObjectURL(pending.previewUrl);
 		});
-	};
+	}, [pendingImages, pendingSubMenuImages]);
 
-	const resetPendingImages = () => {
+	const resetPendingImages = useCallback(() => {
 		revokePendingImages();
 		setPendingImages({ image: null, iconImage: null });
 		setPendingSubMenuImages({});
-	};
+	}, [revokePendingImages]);
 
 	const handleAdd = async () => {
 		if (!formData.name) return;
@@ -267,13 +267,13 @@ export default function MenuAddModal({
 		) {
 			resetPendingImages();
 		}
-	}, [isModalOpen, pendingImages, pendingSubMenuImages]);
+	}, [isModalOpen, pendingImages, pendingSubMenuImages, resetPendingImages]);
 
 	useEffect(() => {
 		return () => {
 			revokePendingImages();
 		};
-	}, [pendingImages, pendingSubMenuImages]);
+	}, [pendingImages, pendingSubMenuImages, revokePendingImages]);
 
 	return (
 		<Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

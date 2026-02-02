@@ -159,6 +159,17 @@ export default function GuestbookClient({
 		}
 	}, [canSubmit, form, resolvedMode, uploadImages, startCooldown, loadPage]);
 
+	const closeDialog = useCallback(() => {
+		setDialogOpen(false);
+		setActiveEntry(null);
+		dialogImages.forEach((image) => {
+			if (image.url.startsWith("blob:")) {
+				URL.revokeObjectURL(image.url);
+			}
+		});
+		setDialogImages([]);
+	}, [dialogImages]);
+
 	const handleUpdate = useCallback(async () => {
 		if (!activeEntry || !dialogMessage.trim()) return;
 
@@ -185,6 +196,7 @@ export default function GuestbookClient({
 		dialogImages,
 		uploadImages,
 		loadPage,
+		closeDialog,
 	]);
 
 	const handleDelete = useCallback(async () => {
@@ -200,7 +212,7 @@ export default function GuestbookClient({
 		} finally {
 			closeDialog();
 		}
-	}, [activeEntry, dialogPin, loadPage]);
+	}, [activeEntry, dialogPin, loadPage, closeDialog]);
 
 	const openDialog = useCallback(
 		(entry: GuestbookEntry, modeType: "edit" | "delete") => {
@@ -220,17 +232,6 @@ export default function GuestbookClient({
 		},
 		[],
 	);
-
-	const closeDialog = useCallback(() => {
-		setDialogOpen(false);
-		setActiveEntry(null);
-		dialogImages.forEach((image) => {
-			if (image.url.startsWith("blob:")) {
-				URL.revokeObjectURL(image.url);
-			}
-		});
-		setDialogImages([]);
-	}, [dialogImages]);
 
 	const openSecretDialog = useCallback((entry: GuestbookEntry) => {
 		setSecretDialogEntry(entry);

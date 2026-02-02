@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -358,7 +359,6 @@ export default function MemoCreateModal({
 										key={image.id}
 										className="relative w-12 h-12 rounded-card border border-card overflow-hidden"
 									>
-										{/* eslint-disable-next-line @next/next/no-img-element */}
 										<img
 											src={image.url}
 											alt="첨부 이미지"

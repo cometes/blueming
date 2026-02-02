@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -82,7 +81,7 @@ export default function WidgetMenu() {
 
 			return true;
 		});
-	}, [menuData.menus, isAdmin]);
+	}, [menuData.menus, isAdmin, isManagerOrAdmin]);
 
 	const design: MenuDesign = useMemo(
 		() => menuData.design || {},

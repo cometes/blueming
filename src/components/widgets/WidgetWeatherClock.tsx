@@ -81,7 +81,7 @@ export default function WidgetWeatherClock({ onReady }: { onReady?: () => void }
                 clearInterval(interval);
             }
         };
-    }, [city, enabled]);
+    }, [city, enabled, onReady]);
 
     // Update clock every second
     useEffect(() => {

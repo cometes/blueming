@@ -3,7 +3,7 @@
 
 import { useSettings } from "@/contexts/SettingsContext";
 import type { FontRegistryItem } from "@/contexts/SettingsContext";
-import { createContext, useContext, useEffect } from "react";
+import { createContext, useContext, useEffect, useMemo } from "react";
 import { Design, General } from "@/contexts/SettingsContext";
 
 interface ThemeContextType {
@@ -18,69 +18,70 @@ interface ThemeProviderProps {
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+const getFontFormat = (url: string) => {
+	const cleanUrl = url.split("?")[0];
+	const ext = cleanUrl.split(".").pop()?.toLowerCase();
+	switch (ext) {
+		case "woff2":
+			return "woff2";
+		case "woff":
+			return "woff";
+		case "ttf":
+			return "truetype";
+		case "otf":
+			return "opentype";
+		case "eot":
+			return "embedded-opentype";
+		default:
+			return undefined;
+	}
+};
+
+const isFontFileUrl = (url: string) => {
+	const cleanUrl = url.split("?")[0].toLowerCase();
+	return /\.(woff2|woff|ttf|otf|eot)$/.test(cleanUrl);
+};
+
+const buildFontFace = (font: FontRegistryItem) => {
+	const format = getFontFormat(font.url);
+	const formatValue = format ? ` format("${format}")` : "";
+	return `@font-face{font-family:"${font.family}";src:url("${font.url}")${formatValue};font-display:swap;}`;
+};
+
+const syncFontAssets = (fonts: FontRegistryItem[]) => {
+	const head = document.head;
+	if (!head) return;
+
+	head.querySelectorAll("[data-font-registry]").forEach((node) => node.remove());
+
+	fonts.forEach((font) => {
+		if (!font?.url || !font?.family) return;
+		if (font.source === "url" && !isFontFileUrl(font.url)) {
+			const link = document.createElement("link");
+			link.rel = "stylesheet";
+			link.href = font.url;
+			link.setAttribute("data-font-registry", "true");
+			link.setAttribute("data-font-id", font.id || font.family);
+			head.appendChild(link);
+			return;
+		}
+
+		const style = document.createElement("style");
+		style.setAttribute("data-font-registry", "true");
+		style.setAttribute("data-font-id", font.id || font.family);
+		style.textContent = buildFontFace(font);
+		head.appendChild(style);
+	});
+};
+
 export function ThemeProvider({ children }: ThemeProviderProps) {
 	const settings = useSettings();
 	const design = settings.general?.design;
 	const general = settings.general?.general;
-	const fontRegistry = settings.general?.fontRegistry ?? [];
-
-	const getFontFormat = (url: string) => {
-		const cleanUrl = url.split("?")[0];
-		const ext = cleanUrl.split(".").pop()?.toLowerCase();
-		switch (ext) {
-			case "woff2":
-				return "woff2";
-			case "woff":
-				return "woff";
-			case "ttf":
-				return "truetype";
-			case "otf":
-				return "opentype";
-			case "eot":
-				return "embedded-opentype";
-			default:
-				return undefined;
-		}
-	};
-
-	const isFontFileUrl = (url: string) => {
-		const cleanUrl = url.split("?")[0].toLowerCase();
-		return /\.(woff2|woff|ttf|otf|eot)$/.test(cleanUrl);
-	};
-
-	const buildFontFace = (font: FontRegistryItem) => {
-		const format = getFontFormat(font.url);
-		const formatValue = format ? ` format("${format}")` : "";
-		return `@font-face{font-family:"${font.family}";src:url("${font.url}")${formatValue};font-display:swap;}`;
-	};
-
-	const syncFontAssets = (fonts: FontRegistryItem[]) => {
-		const head = document.head;
-		if (!head) return;
-
-		head
-			.querySelectorAll("[data-font-registry]")
-			.forEach((node) => node.remove());
-
-		fonts.forEach((font) => {
-			if (!font?.url || !font?.family) return;
-			if (font.source === "url" && !isFontFileUrl(font.url)) {
-				const link = document.createElement("link");
-				link.rel = "stylesheet";
-				link.href = font.url;
-				link.setAttribute("data-font-registry", "true");
-				link.setAttribute("data-font-id", font.id || font.family);
-				head.appendChild(link);
-				return;
-			}
-
-			const style = document.createElement("style");
-			style.setAttribute("data-font-registry", "true");
-			style.setAttribute("data-font-id", font.id || font.family);
-			style.textContent = buildFontFace(font);
-			head.appendChild(style);
-		});
-	};
+	const fontRegistry = useMemo(
+		() => settings.general?.fontRegistry ?? [],
+		[settings.general?.fontRegistry]
+	);
 
 	const setCSSVariables = (design: Design, general: General) => {
 		const root = document.documentElement;

@@ -99,16 +99,14 @@ export const useLibraryListData = ({
 		loadTags();
 	}, [initialTags]);
 
-	const buildListParams = (): ListParams => ({
-		page: listPage,
-		limit: postsPerPage,
-		sort: sortOrder,
-		tag: activeTag === "전체" ? undefined : activeTag,
-		query: appliedQuery || undefined,
-	});
-
 	const listParams = useMemo(
-		() => buildListParams(),
+		() => ({
+			page: listPage,
+			limit: postsPerPage,
+			sort: sortOrder,
+			tag: activeTag === "전체" ? undefined : activeTag,
+			query: appliedQuery || undefined,
+		}),
 		[listPage, postsPerPage, sortOrder, activeTag, appliedQuery]
 	);
 
@@ -167,7 +165,15 @@ export const useLibraryListData = ({
 		};
 
 		fetchPage();
-	}, [isSeriesOn, refreshList, listPage, postsPerPage, setListPage]);
+	}, [
+		isSeriesOn,
+		refreshList,
+		listPage,
+		postsPerPage,
+		setListPage,
+		listParams,
+		initialHasData,
+	]);
 
 	useEffect(() => {
 		if (!enablePrefetch) {

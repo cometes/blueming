@@ -1,6 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ImagePlus, Loader2, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -57,21 +58,7 @@ export default function GalleryCreateModal({
 	const avatarUrl = user?.photoURL || "";
 	const initial = displayName.trim().charAt(0).toUpperCase();
 
-	useEffect(() => {
-		if (!isOpen) {
-			resetComposer();
-		}
-	}, [isOpen]);
-
-	useEffect(() => {
-		return () => {
-			if (imageUrl.startsWith("blob:")) {
-				URL.revokeObjectURL(imageUrl);
-			}
-		};
-	}, [imageUrl]);
-
-	const resetComposer = () => {
+	const resetComposer = useCallback(() => {
 		setTitleInput("");
 		setTagInput("");
 		setTagSearchInput("");
@@ -87,7 +74,21 @@ export default function GalleryCreateModal({
 		if (fileInputRef.current) {
 			fileInputRef.current.value = "";
 		}
-	};
+	}, [imageUrl]);
+
+	useEffect(() => {
+		if (!isOpen) {
+			resetComposer();
+		}
+	}, [isOpen, resetComposer]);
+
+	useEffect(() => {
+		return () => {
+			if (imageUrl.startsWith("blob:")) {
+				URL.revokeObjectURL(imageUrl);
+			}
+		};
+	}, [imageUrl]);
 
 	const MAX_TAGS = 6;
 

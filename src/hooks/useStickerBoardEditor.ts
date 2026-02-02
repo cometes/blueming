@@ -75,16 +75,19 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 	}, []);
 	const moveableInteractionRef = useRef(false);
 
-	const clampStickerToEditorBounds = (
-		sticker: Pick<
-			StickerBoardComponent,
-			"xPct" | "yPct" | "widthPct" | "heightPct"
-		>
-	) =>
-		clampStickerToEditorBoundsBase(sticker, {
-			canvas: canvasRef.current,
-			bounds: boundsRef.current,
-		});
+	const clampStickerToEditorBounds = useCallback(
+		(
+			sticker: Pick<
+				StickerBoardComponent,
+				"xPct" | "yPct" | "widthPct" | "heightPct"
+			>
+		) =>
+			clampStickerToEditorBoundsBase(sticker, {
+				canvas: canvasRef.current,
+				bounds: boundsRef.current,
+			}),
+		[]
+	);
 
 	const computeAutoSizePct = (component: StickerBoardTextComponent) =>
 		computeAutoSizePctBase(component, {
@@ -121,14 +124,14 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 		return g && isGroupSticker(g) ? g : null;
 	}, [componentsDraft, editingGroupId]);
 
-	const enterGroupEdit = (groupId: number) => {
+	const enterGroupEdit = useCallback((groupId: number) => {
 		setEditingGroupId(groupId);
 		setExpandedGroupIds((prev) => new Set(prev).add(groupId));
-	};
+	}, []);
 
-	const exitGroupEdit = () => {
+	const exitGroupEdit = useCallback(() => {
 		setEditingGroupId(null);
-	};
+	}, []);
 
 	const selectedGroupMeta = useMemo(() => {
 		if (selectedIds.size < 2) return null;
@@ -211,7 +214,7 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 		[selectedComponent]
 	);
 
-	const commitHistoryBase = (base: StickerBoardComponent[] | null) => {
+	const commitHistoryBase = useCallback((base: StickerBoardComponent[] | null) => {
 		if (!base) return;
 		const MAX = 100;
 		setHistoryPast((prev) => {
@@ -219,7 +222,7 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 			return next.length > MAX ? next.slice(next.length - MAX) : next;
 		});
 		setHistoryFuture([]);
-	};
+	}, []);
 
 	type StickerAlignAction =
 		| "left"
@@ -377,14 +380,14 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 		commitHistoryBase(base);
 	};
 
-	const isEditingFormField = (target: EventTarget | null) => {
+	const isEditingFormField = useCallback((target: EventTarget | null) => {
 		const el = target as HTMLElement | null;
 		if (!el) return false;
 		const tag = el.tagName?.toLowerCase();
 		if (tag === "input" || tag === "textarea" || tag === "select") return true;
 		if ((el as HTMLElement).isContentEditable) return true;
 		return false;
-	};
+	}, []);
 
 	const refreshAssets = async (tab: StickerAssetTab = assetTab) => {
 		setAssetsLoading(true);
@@ -736,7 +739,7 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 	// Keep a ref to the latest draft (used by undo/redo)
 	useEffect(() => {
 		presentRef.current = componentsDraft;
-	}, [componentsDraft]);
+	}, [componentsDraft, commitHistoryBase]);
 
 	// Keep a ref to the latest selection (used by keyboard shortcuts)
 	useEffect(() => {
@@ -747,16 +750,19 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 		selectedIdsRef.current = selectedIds;
 	}, [selectedIds]);
 
-	const setSelection = (next: Set<number>, primaryId?: number | null) => {
-		setSelectedIds(next);
-		const nextPrimary =
-			primaryId !== undefined
-				? primaryId
-				: next.size
-					? Array.from(next)[0]
-					: null;
-		setSelectedId(nextPrimary ?? null);
-	};
+	const setSelection = useCallback(
+		(next: Set<number>, primaryId?: number | null) => {
+			setSelectedIds(next);
+			const nextPrimary =
+				primaryId !== undefined
+					? primaryId
+					: next.size
+						? Array.from(next)[0]
+						: null;
+			setSelectedId(nextPrimary ?? null);
+		},
+		[]
+	);
 
 	const getGroupMemberIds = (id: number) => {
 		const target = presentRef.current.find((c) => c.id === id);
@@ -775,7 +781,7 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 		return next;
 	};
 
-	const deleteSelectedSticker = () => {
+	const deleteSelectedSticker = useCallback(() => {
 		const id = selectedIdRef.current;
 		if (!id) return;
 		const target = presentRef.current.find((c) => c.id === id);
@@ -789,9 +795,9 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 			isRestoringHistoryRef.current = false;
 		});
 		commitHistoryBase(base);
-	};
+	}, [commitHistoryBase]);
 
-	const duplicateSelectedSticker = () => {
+	const duplicateSelectedSticker = useCallback(() => {
 		const id = selectedIdRef.current;
 		if (!id) return;
 		const target = presentRef.current.find((c) => c.id === id);
@@ -824,9 +830,9 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 			isRestoringHistoryRef.current = false;
 		});
 		commitHistoryBase(base);
-	};
+	}, [commitHistoryBase]);
 
-	const groupSelection = () => {
+	const groupSelection = useCallback(() => {
 		const ids = Array.from(selectedIdsRef.current);
 		if (ids.length < 2) return;
 
@@ -889,9 +895,9 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 			isRestoringHistoryRef.current = false;
 		});
 		commitHistoryBase(base);
-	};
+	}, [commitHistoryBase, setSelection]);
 
-	const ungroupSelection = () => {
+	const ungroupSelection = useCallback(() => {
 		// Only ungroup when a single group is selected (top-level)
 		const id = selectedIdRef.current;
 		if (!id) return;
@@ -960,9 +966,9 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 			isRestoringHistoryRef.current = false;
 		});
 		commitHistoryBase(base);
-	};
+	}, [commitHistoryBase, setSelection]);
 
-	const moveSelectedZIndex = (
+	const moveSelectedZIndex = useCallback((
 		direction: "forward" | "backward",
 		toEdge: boolean
 	) => {
@@ -1007,7 +1013,7 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 			isRestoringHistoryRef.current = false;
 		});
 		commitHistoryBase(base);
-	};
+	}, [commitHistoryBase]);
 
 	// If selection disappears after undo/redo/delete, clear it
 	useEffect(() => {
@@ -1067,9 +1073,9 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 		}, 250);
 
 		prevDraftRef.current = cloneDraft(componentsDraft);
-	}, [componentsDraft]);
+	}, [componentsDraft, commitHistoryBase]);
 
-	const undo = () => {
+	const undo = useCallback(() => {
 		setHistoryPast((past) => {
 			if (past.length === 0) return past;
 			const prev = past[past.length - 1];
@@ -1083,9 +1089,9 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 			});
 			return nextPast;
 		});
-	};
+	}, []);
 
-	const redo = () => {
+	const redo = useCallback(() => {
 		setHistoryFuture((future) => {
 			if (future.length === 0) return future;
 			const next = future[0];
@@ -1099,7 +1105,7 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 			});
 			return rest;
 		});
-	};
+	}, []);
 
 	// Keyboard shortcuts for undo/redo
 	useEffect(() => {
@@ -1217,7 +1223,20 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 		};
 		window.addEventListener("keydown", onKeyDown);
 		return () => window.removeEventListener("keydown", onKeyDown);
-	}, []);
+	}, [
+		deleteSelectedSticker,
+		duplicateSelectedSticker,
+		editingGroupId,
+		enterGroupEdit,
+		exitGroupEdit,
+		groupSelection,
+		isEditingFormField,
+		moveSelectedZIndex,
+		redo,
+		undo,
+		ungroupSelection,
+		commitHistoryBase,
+	]);
 
 	// Keyboard nudge (Arrow keys) for selected sticker
 	useEffect(() => {
@@ -1286,7 +1305,12 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 			window.removeEventListener("keydown", onKeyDown);
 			window.removeEventListener("keyup", onKeyUp);
 		};
-	}, [selectedId]);
+	}, [
+		selectedId,
+		clampStickerToEditorBounds,
+		commitHistoryBase,
+		isEditingFormField,
+	]);
 
 	// Drag/resize/rotate interactions are handled by react-moveable in the canvas.
 
