@@ -13,9 +13,9 @@ export function SettingsProvider({ children, initialSettings }) {
 	const [loading, setLoading] = useState(!initialSettings);
 	const channelRef = useRef<BroadcastChannel | null>(null);
 	const clientIdRef = useRef(
-		typeof crypto !== "undefined" && "randomUUID" in crypto ?
-			crypto.randomUUID() :
-			`client-${Math.random().toString(36).slice(2, 10)}`
+		typeof crypto !== "undefined" && "randomUUID" in crypto
+			? crypto.randomUUID()
+			: `client-${Math.random().toString(36).slice(2, 10)}`
 	);
 
 	const updateGeneral = (newSettings) => {
@@ -56,37 +56,24 @@ export function SettingsProvider({ children, initialSettings }) {
 	const refreshSettings = useCallback(
 		async (options?: { broadcast?: boolean; noCache?: boolean }) => {
 			try {
-				console.log("[settings] refresh start", {
-					noCache: options?.noCache,
-					broadcast: options?.broadcast,
-				});
-				const noCache = options?.noCache !== false;
 				const settingsPath = `${API_BASE}/settings`;
 				const url =
 					typeof window === "undefined"
 						? new URL(settingsPath, "http://localhost")
 						: new URL(settingsPath, window.location.origin);
-				if (noCache) {
+				if (options?.noCache) {
 					url.searchParams.set("ts", Date.now().toString());
 				}
 				const res = await fetch(url.toString(), {
-					cache: noCache ? "no-store" : "force-cache",
-					headers: noCache ? { "Cache-Control": "no-cache" } : undefined,
+					cache: options?.noCache ? "no-store" : "force-cache",
 				});
 
 				if (!res.ok) {
-					console.warn("[settings] refresh failed", res.status);
 					setLoading(false);
 					return;
 				}
 
 				const data = await res.json();
-				console.log("[settings] refresh success", {
-					hasGeneral: !!data?.general,
-					hasMain: !!data?.main,
-					hasLibrary: !!data?.library,
-					hasGallery: !!data?.gallery,
-				});
 				setGeneral(data?.general || {});
 				setMain(data?.main || {});
 				setLibrary(data?.library || {});
@@ -100,10 +87,9 @@ export function SettingsProvider({ children, initialSettings }) {
 					});
 				}
 			} catch {
-				console.warn("[settings] refresh error");
 				setLoading(false);
-		}
-	},
+			}
+		},
 		[]
 	);
 
@@ -125,7 +111,6 @@ export function SettingsProvider({ children, initialSettings }) {
 			if (event?.data?.source === clientIdRef.current) {
 				return;
 			}
-			console.log("[settings] broadcast refresh");
 			refreshSettings({ broadcast: false });
 		};
 		return () => {
