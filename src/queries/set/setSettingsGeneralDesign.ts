@@ -2,6 +2,7 @@ import axios from "axios";
 import { getAuthHeader } from "@/queries/getAuthHeader";
 import type { Design } from "@/contexts/SettingsContext";
 import { revalidateSettingsCache } from "@/queries/revalidateSettings";
+import { API_BASE } from "@/queries/apiClient";
 
 export type SetSettingsGeneralDesignPayload = Partial<Design>;
 
@@ -22,9 +23,9 @@ export const setSettingsGeneralDesign = async (
 	try {
 		const headers = await getAuthHeader();
 		const response = await axios.post<SetSettingsGeneralDesignResponse>(
-			"https://api-w5buphcleq-du.a.run.app/settings/general/design",
+			`${API_BASE}/settings/general/design`,
 			payload,
-			{ headers }
+			{ headers, withCredentials: true }
 		);
 
 		await revalidateSettingsCache();

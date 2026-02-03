@@ -81,6 +81,7 @@ export const uploadPhotoboardImage = async (file: File) => {
 		method: "POST",
 		headers,
 		body: formData,
+		credentials: "include",
 	});
 
 	if (!response.ok) {

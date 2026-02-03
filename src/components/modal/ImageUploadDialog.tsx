@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { ImagePlus, Upload, Search } from "lucide-react";
 import { toast } from "sonner";
 import { getAuthHeader } from "@/queries/getAuthHeader";
+import { API_BASE } from "@/queries/apiClient";
 import {
 	Dialog,
 	DialogContent,
@@ -99,14 +100,12 @@ export default function ImageUploadDialog({
 			});
 
 			const authHeader = await getAuthHeader();
-			const response = await fetch(
-				"https://api-w5buphcleq-du.a.run.app/images/uploadImage",
-				{
-					method: "POST",
-					headers: authHeader,
-					body: formData,
-				}
-			);
+			const response = await fetch(`${API_BASE}/images/uploadImage`, {
+				method: "POST",
+				headers: authHeader,
+				body: formData,
+				credentials: "include",
+			});
 
 			if (!response.ok) {
 				throw new Error("Upload failed");

@@ -7,14 +7,20 @@ import { Input } from "@/components/ui/input";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { fetchGeminiApiKeyStatus, saveGeminiApiKey } from "@/queries/aiKey";
+import { fetchWeatherApiKeyStatus, saveWeatherApiKey } from "@/queries/weatherKey";
 import { toast } from "sonner";
 
 export default function AccountSettingClient() {
 	const [geminiApiKey, setGeminiApiKey] = useState("");
 	const [keyHint, setKeyHint] = useState<string | null>(null);
+	const [weatherApiKey, setWeatherApiKey] = useState("");
+	const [weatherKeyHint, setWeatherKeyHint] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSaving, setIsSaving] = useState(false);
-	const isDirty = useMemo(() => geminiApiKey.trim().length > 0, [geminiApiKey]);
+	const isDirty = useMemo(
+		() => geminiApiKey.trim().length > 0 || weatherApiKey.trim().length > 0,
+		[geminiApiKey, weatherApiKey]
+	);
 
 	useSettingStatus("account", isDirty ? "dirty" : "saved");
 	useSettingHeaderAction(
@@ -39,12 +45,17 @@ export default function AccountSettingClient() {
 		const fetchStatus = async () => {
 			try {
 				setIsLoading(true);
-				const status = await fetchGeminiApiKeyStatus();
+				const [geminiStatus, weatherStatus] = await Promise.all([
+					fetchGeminiApiKeyStatus(),
+					fetchWeatherApiKeyStatus(),
+				]);
 				if (!mounted) return;
-				setKeyHint(status.keyHint ?? null);
+				setKeyHint(geminiStatus.keyHint ?? null);
+				setWeatherKeyHint(weatherStatus.keyHint ?? null);
 			} catch (error) {
 				if (!mounted) return;
 				setKeyHint(null);
+				setWeatherKeyHint(null);
 				toast.error(
 					error instanceof Error
 						? error.message
@@ -62,13 +73,30 @@ export default function AccountSettingClient() {
 
 	const handleSubmit = async (event: React.FormEvent) => {
 		event.preventDefault();
-		const nextKey = geminiApiKey.trim();
-		if (!nextKey) return;
 		try {
 			setIsSaving(true);
-			const result = await saveGeminiApiKey(nextKey);
-			setKeyHint(result?.keyHint ?? null);
-			setGeminiApiKey("");
+			const geminiNextKey = geminiApiKey.trim();
+			const weatherNextKey = weatherApiKey.trim();
+
+			if (!geminiNextKey && !weatherNextKey) {
+				return;
+			}
+
+			const [geminiResult, weatherResult] = await Promise.all([
+				geminiNextKey ? saveGeminiApiKey(geminiNextKey) : Promise.resolve(null),
+				weatherNextKey
+					? saveWeatherApiKey(weatherNextKey)
+					: Promise.resolve(null),
+			]);
+
+			if (geminiResult) {
+				setKeyHint(geminiResult?.keyHint ?? null);
+				setGeminiApiKey("");
+			}
+			if (weatherResult) {
+				setWeatherKeyHint(weatherResult?.keyHint ?? null);
+				setWeatherApiKey("");
+			}
 			toast.success("API 키가 저장되었습니다.");
 		} catch (error) {
 			toast.error(
@@ -113,6 +141,37 @@ export default function AccountSettingClient() {
 							{keyHint ? (
 								<p className="text-xs text-sub-text">
 									현재 저장된 키: {keyHint}
+								</p>
+							) : null}
+						</div>
+					</div>
+					<div className="section-box flex items-center mt-4">
+						<div className="text-box w-[220px] pr-5">
+							<h3 className="font-medium text-sub-text">
+								OpenWeather API Key
+							</h3>
+							<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+								날씨 위젯에 사용합니다.
+							</p>
+						</div>
+						<div className="flex flex-col gap-2 w-full max-w-md">
+							<Input
+								type="password"
+								value={weatherApiKey}
+								onChange={(event) => setWeatherApiKey(event.target.value)}
+								placeholder={
+									isLoading
+										? "불러오는 중..."
+										: weatherKeyHint
+										? "저장된 키가 있습니다."
+										: "OpenWeather API Key"
+								}
+								className="rounded-card border-card bg-card-bg"
+								disabled={isLoading || isSaving}
+							/>
+							{weatherKeyHint ? (
+								<p className="text-xs text-sub-text">
+									현재 저장된 키: {weatherKeyHint}
 								</p>
 							) : null}
 						</div>

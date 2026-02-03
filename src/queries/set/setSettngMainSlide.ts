@@ -1,5 +1,6 @@
 import { getAuthHeader } from "@/queries/getAuthHeader";
 import { revalidateSettingsCache } from "@/queries/revalidateSettings";
+import { API_BASE } from "@/queries/apiClient";
 
 export interface SlideData {
 	id: string;
@@ -12,13 +13,14 @@ export interface SlideData {
 export const setSettingsMainSlide = async (slides: SlideData[]) => {
 	const authHeader = await getAuthHeader();
 	const result = await fetch(
-		"https://api-w5buphcleq-du.a.run.app/settings/main/slide",
+		`${API_BASE}/settings/main/slide`,
 		{
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
 				...authHeader,
 			},
+			credentials: "include",
 			body: JSON.stringify({ value: slides }),
 		}
 	);

@@ -1,6 +1,5 @@
 import type { StickerAsset, StickerAssetTab } from "@/types/stickerBoard";
-
-const API_BASE = "https://api-w5buphcleq-du.a.run.app";
+import { API_BASE } from "@/queries/apiClient";
 
 const readImageSize = async (file: File): Promise<{ width?: number; height?: number }> => {
 	try {

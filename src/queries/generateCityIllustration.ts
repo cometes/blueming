@@ -1,4 +1,5 @@
 import { getAuthHeader } from "@/queries/getAuthHeader";
+import { API_BASE } from "@/queries/apiClient";
 
 export interface GenerateCityIllustrationRequest {
 	city: string;
@@ -19,13 +20,14 @@ export const generateCityIllustration = async (
 	const authHeader = await getAuthHeader();
 
 	const response = await fetch(
-		"https://api-w5buphcleq-du.a.run.app/ai/generate-city-illustration",
+		`${API_BASE}/ai/generate-city-illustration`,
 		{
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
 				...authHeader,
 			},
+			credentials: "include",
 			body: JSON.stringify(request),
 		}
 	);

@@ -1,4 +1,5 @@
 import { getAuthHeader } from "@/queries/getAuthHeader";
+import { API_BASE } from "@/queries/apiClient";
 
 export interface GeminiApiKeyStatus {
 	hasKey: boolean;
@@ -8,15 +9,13 @@ export interface GeminiApiKeyStatus {
 
 export const fetchGeminiApiKeyStatus = async (): Promise<GeminiApiKeyStatus> => {
 	const authHeader = await getAuthHeader();
-	const response = await fetch(
-		"https://api-w5buphcleq-du.a.run.app/settings/ai-key",
-		{
-			headers: {
-				"Content-Type": "application/json",
-				...authHeader,
-			},
-		}
-	);
+	const response = await fetch(`${API_BASE}/settings/ai-key`, {
+		headers: {
+			"Content-Type": "application/json",
+			...authHeader,
+		},
+		credentials: "include",
+	});
 
 	if (!response.ok) {
 		const errorData = await response.json().catch(() => ({
@@ -30,17 +29,15 @@ export const fetchGeminiApiKeyStatus = async (): Promise<GeminiApiKeyStatus> => 
 
 export const saveGeminiApiKey = async (apiKey: string) => {
 	const authHeader = await getAuthHeader();
-	const response = await fetch(
-		"https://api-w5buphcleq-du.a.run.app/settings/ai-key",
-		{
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				...authHeader,
-			},
-			body: JSON.stringify({ apiKey }),
-		}
-	);
+	const response = await fetch(`${API_BASE}/settings/ai-key`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			...authHeader,
+		},
+		credentials: "include",
+		body: JSON.stringify({ apiKey }),
+	});
 
 	if (!response.ok) {
 		const errorData = await response.json().catch(() => ({

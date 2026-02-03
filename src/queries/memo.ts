@@ -62,22 +62,6 @@ export const fetchMemoList = async (params: MemoListParams = {}) => {
 	return response.data;
 };
 
-export const fetchMemoListServer = async (params: MemoListParams = {}) => {
-	try {
-		const query = params.query ? `q=${encodeURIComponent(params.query)}` : "q=";
-		const page = params.page ?? 1;
-		const limit = params.limit ?? 24;
-		const url = `${API_BASE}/memo?page=${page}&limit=${limit}&${query}`;
-		const response = await fetch(url, { next: { revalidate: 60 } });
-		if (!response.ok) {
-			return { items: [], total: 0, page, limit };
-		}
-		return (await response.json()) as MemoListResponse;
-	} catch {
-		return { items: [], total: 0, page: params.page ?? 1, limit: params.limit ?? 24 };
-	}
-};
-
 export const fetchMemoDetail = async (
 	id: string,
 	options: { password?: string; includeAuth?: boolean } = {}
@@ -96,20 +80,6 @@ export const fetchMemoDetail = async (
 		headers,
 	});
 	return response.data;
-};
-
-export const fetchMemoDetailServer = async (id: string) => {
-	try {
-		const response = await fetch(`${API_BASE}/memo/${id}`, {
-			next: { revalidate: 60 },
-		});
-		if (!response.ok) {
-			return null;
-		}
-		return (await response.json()) as MemoDetail;
-	} catch {
-		return null;
-	}
 };
 
 export const createMemo = async (payload: {
@@ -232,6 +202,7 @@ export const uploadMemoImages = async (files: File[]) => {
 		method: "POST",
 		body: formData,
 		headers,
+		credentials: "include",
 	});
 	if (!response.ok) {
 		throw new Error(`Upload failed: ${response.statusText}`);

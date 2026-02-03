@@ -75,15 +75,15 @@ export default function Layout({ children }: LayoutProps) {
 						"backdrop-blur-sm",
 					)}
 				>
-					{general?.general.logoType !== "없음" && (
+					{general?.general?.logoType !== "없음" && (
 						<div
 							onClick={() => {
 								router.push("/");
 							}}
 							className="cursor-pointer flex items-center"
 						>
-							{general?.general.logoType === "이미지" &&
-							general?.general.logoImage ? (
+							{general?.general?.logoType === "이미지" &&
+							general?.general?.logoImage ? (
 								<Image
 									src={general.general.logoImage}
 									alt="로고"
@@ -93,7 +93,7 @@ export default function Layout({ children }: LayoutProps) {
 								/>
 							) : (
 								<h1 className="text-lg font-title font-bold tracking-normal">
-									{general?.general.logoText}
+									{general?.general?.logoText}
 								</h1>
 							)}
 						</div>

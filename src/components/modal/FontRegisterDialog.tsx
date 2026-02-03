@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import type { FontRegistryItem } from "@/contexts/SettingsContext";
+import { API_BASE } from "@/queries/apiClient";
 
 type FontSource = "url" | "file";
 
@@ -56,7 +57,7 @@ export default function FontRegisterDialog({
 		reset,
 	} = useFileUpload({
 		allowedTypes: ["*/*"],
-		endpoint: "https://api-w5buphcleq-du.a.run.app/images/uploadFont",
+		endpoint: `${API_BASE}/images/uploadFont`,
 		maxSize: 20 * 1024 * 1024,
 	});
 

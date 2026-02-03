@@ -1,4 +1,5 @@
 import { getAuthHeader } from "@/queries/getAuthHeader";
+import { API_BASE } from "@/queries/apiClient";
 
 export interface FontRegistryItem {
 	id: string;
@@ -13,13 +14,14 @@ export const setSettingsGeneralFontRegistry = async (
 ) => {
 	const authHeader = await getAuthHeader();
 	const response = await fetch(
-		"https://api-w5buphcleq-du.a.run.app/settings/general/fontRegistry",
+		`${API_BASE}/settings/general/fontRegistry`,
 		{
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
 				...authHeader,
 			},
+			credentials: "include",
 			body: JSON.stringify({ value: fontRegistry }),
 		}
 	);

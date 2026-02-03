@@ -34,7 +34,10 @@ export const fetchAdminUsers = async (params: UsersListParams = {}) => {
 	});
 	const url = query ? `${API_BASE}/admin/users?${query}` : `${API_BASE}/admin/users`;
 	const headers = await getAuthHeader();
-	const response = await axios.get<UsersListResponse>(url, { headers });
+	const response = await axios.get<UsersListResponse>(url, {
+		headers,
+		withCredentials: true,
+	});
 	return response.data;
 };
 
@@ -42,6 +45,7 @@ export const fetchAdminUser = async (uid: string) => {
 	const headers = await getAuthHeader();
 	const response = await axios.get<User>(`${API_BASE}/admin/users/${uid}`, {
 		headers,
+		withCredentials: true,
 	});
 	return response.data;
 };
@@ -50,6 +54,7 @@ export const fetchUserStats = async () => {
 	const headers = await getAuthHeader();
 	const response = await axios.get<UserStats>(`${API_BASE}/admin/users/stats`, {
 		headers,
+		withCredentials: true,
 	});
 	return response.data;
 };
@@ -59,7 +64,7 @@ export const updateUserStatus = async (uid: string, payload: UpdateUserStatusReq
 	const response = await axios.patch(
 		`${API_BASE}/admin/users/${uid}/status`,
 		payload,
-		{ headers }
+		{ headers, withCredentials: true }
 	);
 	return response.data as { uid: string };
 };
@@ -69,7 +74,7 @@ export const updateUserRole = async (uid: string, payload: UpdateUserRoleRequest
 	const response = await axios.patch(
 		`${API_BASE}/admin/users/${uid}/role`,
 		payload,
-		{ headers }
+		{ headers, withCredentials: true }
 	);
 	return response.data as { uid: string };
 };
@@ -79,7 +84,7 @@ export const approveUser = async (uid: string, payload: ApproveUserRequest) => {
 	const response = await axios.post(
 		`${API_BASE}/admin/users/${uid}/approve`,
 		payload,
-		{ headers }
+		{ headers, withCredentials: true }
 	);
 	return response.data as { uid: string };
 };
@@ -88,6 +93,7 @@ export const deleteUser = async (uid: string) => {
 	const headers = await getAuthHeader();
 	const response = await axios.delete(`${API_BASE}/admin/users/${uid}`, {
 		headers,
+		withCredentials: true,
 	});
 	return response.data as { uid: string };
 };
@@ -96,7 +102,7 @@ export const fetchUserManagementSettings = async () => {
 	const headers = await getAuthHeader();
 	const response = await axios.get<UserManagementSettings>(
 		`${API_BASE}/admin/settings/user-management`,
-		{ headers }
+		{ headers, withCredentials: true }
 	);
 	return response.data;
 };
@@ -108,7 +114,7 @@ export const updateUserManagementSettings = async (
 	const response = await axios.put(
 		`${API_BASE}/admin/settings/user-management`,
 		payload,
-		{ headers }
+		{ headers, withCredentials: true }
 	);
 	return response.data as { ok: boolean };
 };

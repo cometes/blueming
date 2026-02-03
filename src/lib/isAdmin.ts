@@ -1,6 +1,6 @@
 import type { AuthUser } from "@/store/auth/store";
 
-const API_BASE = "https://api-w5buphcleq-du.a.run.app";
+import { API_BASE } from "@/queries/apiClient";
 
 /**
  * 백엔드 API를 통해 관리자 여부를 확인하는 함수

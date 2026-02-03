@@ -19,6 +19,7 @@ export default function WidgetWeatherClock({ onReady }: { onReady?: () => void }
     const [error, setError] = useState<string | null>(null);
     const [currentTime, setCurrentTime] = useState(new Date());
     const onReadyRef = useRef(onReady);
+    const inFlightRef = useRef<AbortController | null>(null);
 
     useEffect(() => {
         onReadyRef.current = onReady;
@@ -41,14 +42,23 @@ export default function WidgetWeatherClock({ onReady }: { onReady?: () => void }
         const fetchWeatherData = async () => {
             const currentId = ++requestId;
             try {
+                if (inFlightRef.current) {
+                    inFlightRef.current.abort();
+                }
+                const controller = new AbortController();
+                inFlightRef.current = controller;
                 setIsLoading(true);
                 setError(null);
-                const data = await getWeather(city, { staleTimeMs: WEATHER_REFRESH_MS });
+                const data = await getWeather(city, {
+                    staleTimeMs: WEATHER_REFRESH_MS,
+                    signal: controller.signal,
+                });
                 if (!isActive || currentId !== requestId) return;
                 setWeather(data);
                 onReadyRef.current?.();
             } catch (err) {
                 if (!isActive || currentId !== requestId) return;
+                if ((err as Error)?.name === "AbortError") return;
                 console.error("Failed to fetch weather:", err);
                 setError(
                     err instanceof Error ? err.message : "날씨 정보를 불러올 수 없습니다"
@@ -81,6 +91,10 @@ export default function WidgetWeatherClock({ onReady }: { onReady?: () => void }
         document.addEventListener("visibilitychange", handleVisibilityChange);
         return () => {
             isActive = false;
+            if (inFlightRef.current) {
+                inFlightRef.current.abort();
+                inFlightRef.current = null;
+            }
             document.removeEventListener("visibilitychange", handleVisibilityChange);
             if (interval) {
                 clearInterval(interval);

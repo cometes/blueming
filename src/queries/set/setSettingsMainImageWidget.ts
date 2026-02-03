@@ -1,5 +1,6 @@
 import { getAuthHeader } from "@/queries/getAuthHeader";
 import { revalidateSettingsCache } from "@/queries/revalidateSettings";
+import { API_BASE } from "@/queries/apiClient";
 
 export interface ImageWidgetSettings {
 	images: string[];
@@ -11,13 +12,14 @@ export const setSettingsMainImageWidget = async (
 ) => {
 	const authHeader = await getAuthHeader();
 	const result = await fetch(
-		"https://api-w5buphcleq-du.a.run.app/settings/main/imageWidget",
+		`${API_BASE}/settings/main/imageWidget`,
 		{
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
 				...authHeader,
 			},
+			credentials: "include",
 			body: JSON.stringify({ value: imageWidget }),
 		}
 	);

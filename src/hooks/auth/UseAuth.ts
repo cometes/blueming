@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useAuthStore, AuthUser } from "@/store/auth/store";
-
-const API_BASE = "https://api-w5buphcleq-du.a.run.app";
+import { API_BASE } from "@/queries/apiClient";
 
 // 로그인 성공 콜백을 위한 전역 변수
 let onLoginSuccessCallback: (() => void) | null = null;
@@ -16,6 +15,7 @@ export const useAuth = () => {
 	// 사용자 정보 가져오기
 	const fetchUser = useCallback(async () => {
 		try {
+			console.log("[auth] fetch user start");
 			const response = await fetch(`${API_BASE}/auth/me`, {
 				method: "GET",
 				credentials: "include",
@@ -23,6 +23,9 @@ export const useAuth = () => {
 
 			if (response.ok) {
 				const data = await response.json();
+				console.log("[auth] fetch user ok", {
+					hasUser: !!data?.user,
+				});
 
 				if (data.user) {
 					const user: AuthUser = {
@@ -48,6 +51,7 @@ export const useAuth = () => {
 				user: null,
 				isLoading: false,
 			});
+			console.log("[auth] fetch user unauthenticated");
 			return false;
 		} catch {
 			setAuthData({
@@ -55,6 +59,7 @@ export const useAuth = () => {
 				user: null,
 				isLoading: false,
 			});
+			console.warn("[auth] fetch user error");
 			return false;
 		}
 	}, [setAuthData]);
@@ -183,6 +188,7 @@ export const useAuth = () => {
 
 	// 초기화 함수
 	const initializeAuth = useCallback(() => {
+		console.log("[auth] initialize");
 		void fetchUser();
 		return () => {};
 	}, [fetchUser]);

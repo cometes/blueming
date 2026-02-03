@@ -1,3 +1,7 @@
+import { getAuthHeader } from "@/queries/getAuthHeader";
+import { revalidateSettingsCache } from "@/queries/revalidateSettings";
+import { API_BASE } from "@/queries/apiClient";
+
 interface CustomLayoutData {
   layout: Array<{
     i: string;
@@ -34,19 +38,26 @@ interface CustomLayoutData {
 export const setCustomLayout = async (value: CustomLayoutData) => {
   const authHeader = await getAuthHeader();
   const result = await fetch(
-    "https://api-w5buphcleq-du.a.run.app/settings/main/customLayout",
+    `${API_BASE}/settings/main/customLayout`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...authHeader
       },
+      credentials: "include",
       body: JSON.stringify({ value }),
       next: {
         revalidateTag: "customLayout"
       }
     } as RequestInit
   );
+
+  if (!result.ok) {
+    const errorData = await result.json().catch(() => ({}));
+    const message = errorData.error || errorData.message || "레이아웃 저장에 실패했습니다.";
+    throw new Error(message);
+  }
 
   const data = await result.json();
 
@@ -55,5 +66,3 @@ export const setCustomLayout = async (value: CustomLayoutData) => {
     data
   };
 };
-import { getAuthHeader } from "@/queries/getAuthHeader";
-import { revalidateSettingsCache } from "@/queries/revalidateSettings";
