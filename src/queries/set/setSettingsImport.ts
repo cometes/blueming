@@ -1,6 +1,7 @@
 import axios from "axios";
 import { getAuthHeader } from "@/queries/getAuthHeader";
 import { revalidateSettingsCache } from "@/queries/revalidateSettings";
+import { API_BASE } from "@/queries/apiClient";
 
 export interface SetSettingsImportPayload {
 	general: unknown;
@@ -28,9 +29,9 @@ export const setSettingsImport = async (
 	try {
 		const headers = await getAuthHeader();
 		const response = await axios.post<SetSettingsImportResponse>(
-			"https://api-w5buphcleq-du.a.run.app/settings/import",
+			`${API_BASE}/settings/import`,
 			payload,
-			{ headers }
+			{ headers, withCredentials: true }
 		);
 
 		await revalidateSettingsCache();

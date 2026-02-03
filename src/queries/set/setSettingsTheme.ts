@@ -1,17 +1,19 @@
 import axios from "axios";
 import { getAuthHeader } from "@/queries/getAuthHeader";
 import { revalidateSettingsCache } from "@/queries/revalidateSettings";
+import { API_BASE } from "@/queries/apiClient";
 
 export const setSettingsTheme = async (value: unknown) => {
   const authHeader = await getAuthHeader();
   const result = await axios.post(
-    "https://api-w5buphcleq-du.a.run.app/settings/general/theme",
+    `${API_BASE}/settings/general/theme`,
     value,
     {
       headers: {
         "Content-Type": "application/json",
         ...authHeader
-      }
+      },
+      withCredentials: true
     }
   );
 
@@ -25,11 +27,12 @@ export const setSettingsTheme = async (value: unknown) => {
 
 export const getSettingsTheme = async () => {
   const result = await axios.get(
-    "https://api-w5buphcleq-du.a.run.app/settings/general/theme",
+    `${API_BASE}/settings/general/theme`,
     {
       headers: {
         "Content-Type": "application/json"
-      }
+      },
+      withCredentials: true
     }
   );
 
@@ -43,12 +46,13 @@ export const getSettingsTheme = async () => {
 export const deleteSettingsTheme = async (themeId: string) => {
   const authHeader = await getAuthHeader();
   const result = await axios.delete(
-    `https://api-w5buphcleq-du.a.run.app/settings/general/theme/${themeId}`,
+    `${API_BASE}/settings/general/theme/${themeId}`,
     {
       headers: {
         "Content-Type": "application/json",
         ...authHeader
-      }
+      },
+      withCredentials: true
     }
   );
 

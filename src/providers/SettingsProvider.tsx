@@ -3,6 +3,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { SettingsContext } from "@/contexts/SettingsContext";
+import { API_BASE } from "@/queries/apiClient";
 
 export function SettingsProvider({ children, initialSettings }) {
 	const [general, setGeneral] = useState(initialSettings?.general || {});
@@ -56,9 +57,7 @@ export function SettingsProvider({ children, initialSettings }) {
 		async (options?: { broadcast?: boolean; noCache?: boolean }) => {
 			try {
 				const noCache = options?.noCache !== false;
-				const url = new URL(
-					"https://api-w5buphcleq-du.a.run.app/settings"
-				);
+				const url = new URL(`${API_BASE}/settings`);
 				if (noCache) {
 					url.searchParams.set("ts", Date.now().toString());
 				}

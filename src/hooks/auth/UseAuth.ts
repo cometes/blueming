@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useAuthStore, AuthUser } from "@/store/auth/store";
-
-const API_BASE = "https://api-w5buphcleq-du.a.run.app";
+import { API_BASE } from "@/queries/apiClient";
 
 // 로그인 성공 콜백을 위한 전역 변수
 let onLoginSuccessCallback: (() => void) | null = null;

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Layout from "@/components/layout/Layout";
 import Providers from "@/providers/Providers";
+import { API_BASE } from "@/queries/apiClient";
 
 const SETTINGS_REVALIDATE_SECONDS = 60 * 60;
 
@@ -169,7 +170,7 @@ const buildFontFaceCSS = (fonts: FontRegistryItem[]) =>
 
 async function getSettings(): Promise<AppSettings | null> {
 	try {
-		const res = await fetch("https://api-w5buphcleq-du.a.run.app/settings", {
+		const res = await fetch(`${API_BASE}/settings`, {
 			next: { revalidate: SETTINGS_REVALIDATE_SECONDS, tags: ["settings"] },
 		});
 

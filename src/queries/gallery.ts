@@ -87,6 +87,7 @@ export const uploadGalleryImage = async (file: File) => {
 		method: "POST",
 		headers,
 		body: formData,
+		credentials: "include",
 	});
 
 	if (!response.ok) {

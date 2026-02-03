@@ -1,4 +1,5 @@
 import axios from "axios";
+import { API_BASE } from "@/queries/apiClient";
 
 export interface GuestbookEntry {
 	id: string;
@@ -33,8 +34,6 @@ interface GuestbookListParams {
 	page?: number;
 	limit?: number;
 }
-
-const API_BASE = "https://api-w5buphcleq-du.a.run.app";
 
 export const fetchGuestbookList = async (
 	params: GuestbookListParams = {}

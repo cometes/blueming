@@ -2,6 +2,7 @@ import axios from "axios";
 import { getAuthHeader } from "@/queries/getAuthHeader";
 import type { Menu } from "@/contexts/SettingsContext";
 import { revalidateSettingsCache } from "@/queries/revalidateSettings";
+import { API_BASE } from "@/queries/apiClient";
 
 export interface SetSettingsGeneralMenuResponse {
 	general: {
@@ -20,9 +21,9 @@ export const setSettingsGeneralMenu = async (
 	try {
 		const headers = await getAuthHeader();
 		const response = await axios.post<SetSettingsGeneralMenuResponse>(
-			"https://api-w5buphcleq-du.a.run.app/settings/general/menu",
+			`${API_BASE}/settings/general/menu`,
 			payload,
-			{ headers }
+			{ headers, withCredentials: true }
 		);
 
 		await revalidateSettingsCache();

@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { getAuthHeader } from "@/queries/getAuthHeader";
+import { API_BASE } from "@/queries/apiClient";
 
 export interface FileUploadOptions {
   maxSize?: number; // 바이트 단위, 기본값: 10MB
@@ -24,7 +25,7 @@ export interface UseFileUploadReturn {
 const DEFAULT_OPTIONS: Required<FileUploadOptions> = {
   maxSize: 10 * 1024 * 1024, // 10MB
   allowedTypes: ["image/*"],
-  endpoint: "https://api-w5buphcleq-du.a.run.app/images/uploadImage",
+  endpoint: `${API_BASE}/images/uploadImage`,
 };
 
 export const useFileUpload = (options?: FileUploadOptions): UseFileUploadReturn => {
@@ -90,6 +91,7 @@ export const useFileUpload = (options?: FileUploadOptions): UseFileUploadReturn 
         method: "POST",
         headers: authHeader,
         body: formData,
+        credentials: "include",
       });
 
       if (!response.ok) {

@@ -1,4 +1,5 @@
 import { CACHE_POLICY } from "@/queries/cachePolicy";
+import { API_BASE } from "@/queries/apiClient";
 
 export interface WeatherData {
 	city: string;
@@ -39,7 +40,7 @@ export const getWeather = async (
 	}
 
 	const response = await fetch(
-		`https://api-w5buphcleq-du.a.run.app/weather/${encodeURIComponent(city)}`,
+		`${API_BASE}/weather/${encodeURIComponent(city)}`,
 		{
 			method: "GET",
 			headers: {

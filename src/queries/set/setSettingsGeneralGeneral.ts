@@ -2,6 +2,7 @@ import axios from "axios";
 import { getAuthHeader } from "@/queries/getAuthHeader";
 import type { General } from "@/contexts/SettingsContext";
 import { revalidateSettingsCache } from "@/queries/revalidateSettings";
+import { API_BASE } from "@/queries/apiClient";
 
 export type SetSettingsGeneralGeneralPayload = Partial<General>;
 
@@ -22,9 +23,9 @@ export const setSettingsGeneralGeneral = async (
 	try {
 		const headers = await getAuthHeader();
 		const response = await axios.post<SetSettingsGeneralGeneralResponse>(
-			"https://api-w5buphcleq-du.a.run.app/settings/general/general",
+			`${API_BASE}/settings/general/general`,
 			payload,
-			{ headers }
+			{ headers, withCredentials: true }
 		);
 
 		await revalidateSettingsCache();

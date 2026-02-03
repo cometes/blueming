@@ -1,5 +1,6 @@
 import { getAuthHeader } from "@/queries/getAuthHeader";
 import { revalidateSettingsCache } from "@/queries/revalidateSettings";
+import { API_BASE } from "@/queries/apiClient";
 
 interface MarqueeSettings {
 	type: string;
@@ -24,13 +25,14 @@ export interface NoticeData {
 export const setSettingsNotice = async (noticeData: NoticeData) => {
 	const authHeader = await getAuthHeader();
 	const result = await fetch(
-		"https://api-w5buphcleq-du.a.run.app/settings/main/notice",
+		`${API_BASE}/settings/main/notice`,
 		{
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
 				...authHeader,
 			},
+			credentials: "include",
 			body: JSON.stringify({ value: noticeData }),
 		}
 	);

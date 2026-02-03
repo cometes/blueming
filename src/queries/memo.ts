@@ -232,6 +232,7 @@ export const uploadMemoImages = async (files: File[]) => {
 		method: "POST",
 		body: formData,
 		headers,
+		credentials: "include",
 	});
 	if (!response.ok) {
 		throw new Error(`Upload failed: ${response.statusText}`);
