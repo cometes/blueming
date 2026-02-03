@@ -6,10 +6,12 @@ export default function LoginButton() {
 		useAuth();
 
 	const onLoginClick = async () => {
-		const result = await handleLogin();
-		if (result.success) {
-			alert(result.message);
-		} else {
+		const result = await handleLogin(
+			() => alert("로그인되었습니다."),
+			() => alert("로그인에 실패했습니다.")
+		);
+		// 팝업이 차단된 경우에만 즉시 에러 표시
+		if (result.success === false) {
 			alert(result.message);
 		}
 	};

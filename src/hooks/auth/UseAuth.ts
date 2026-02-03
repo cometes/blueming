@@ -1,103 +1,37 @@
-import { useCallback } from "react";
-import {
-	signInWithPopup,
-	signOut,
-	onAuthStateChanged,
-	setPersistence,
-	browserLocalPersistence,
-} from "firebase/auth";
-import { auth, provider } from "@/lib/Firebase";
+import { useCallback, useEffect, useRef } from "react";
 import { useAuthStore, AuthUser } from "@/store/auth/store";
-import { checkAdminClaims, getRoleClaims } from "@/lib/isAdmin";
-import axios from "axios";
+
+const API_BASE = "https://api-w5buphcleq-du.a.run.app";
+
+// 로그인 성공 콜백을 위한 전역 변수
+let onLoginSuccessCallback: (() => void) | null = null;
+let onLoginFailCallback: (() => void) | null = null;
 
 export const useAuth = () => {
 	const { isAuthenticated, user, isLoading, setAuthData, clearAuth } =
 		useAuthStore();
+	const popupRef = useRef<Window | null>(null);
+	const popupCheckIntervalRef = useRef<number | null>(null);
 
-	// 로그인 함수
-	const handleLogin = useCallback(async () => {
+	// 사용자 정보 가져오기
+	const fetchUser = useCallback(async () => {
 		try {
-			setAuthData({ isLoading: true });
+			const response = await fetch(`${API_BASE}/auth/me`, {
+				method: "GET",
+				credentials: "include",
+			});
 
-			// Firebase 세션 지속성 설정
-			await setPersistence(auth, browserLocalPersistence);
+			if (response.ok) {
+				const data = await response.json();
 
-			// Firebase에서 Google 로그인
-			const result = await signInWithPopup(auth, provider);
-
-			// Firebase ID 토큰 가져오기
-			const idToken = await result.user.getIdToken();
-
-			// 백엔드 인증 (선택사항 - 필요시에만)
-			try {
-				await axios.post(
-					"https://api-w5buphcleq-du.a.run.app/user/login",
-					{},
-					{
-						headers: {
-							Authorization: `Bearer ${idToken}`,
-						},
-						withCredentials: true,
-					}
-				);
-			} catch {
-				// 백엔드 실패해도 Firebase 인증은 유지
-			}
-
-			// onAuthStateChanged에서 상태 업데이트가 되므로 로딩만 해제
-			// 사용자 상태는 onAuthStateChanged 콜백에서 설정됨
-			setAuthData({ isLoading: false });
-
-			return { success: true, message: "로그인 성공!" };
-		} catch {
-			// Firebase 세션 정리
-			await signOut(auth);
-			clearAuth();
-
-			return {
-				success: false,
-				message: "로그인에 실패했습니다. 다시 시도해주세요.",
-			};
-		}
-	}, [setAuthData, clearAuth]);
-
-	// 로그아웃 함수
-	const handleLogout = useCallback(async () => {
-		try {
-			// Firebase 로그아웃 - onAuthStateChanged가 자동으로 상태 업데이트
-			await signOut(auth);
-
-			return { success: true, message: "로그아웃되었습니다." };
-		} catch {
-			return { success: false, message: "로그아웃 중 오류가 발생했습니다." };
-		}
-	}, []);
-
-	// Firebase 인증 상태 변화 감지 및 초기화
-	const initializeAuth = useCallback(() => {
-		const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-			try {
-				if (firebaseUser) {
-					// 사용자가 로그인된 상태
-					let isAdmin = false;
-					let role: AuthUser["role"] = "user";
-					
-					try {
-						// Custom Claims에서 관리자 권한 확인
-						isAdmin = await checkAdminClaims();
-						role = await getRoleClaims();
-					} catch {
-						// Claims 확인에 실패해도 로그인은 유지
-					}
-
+				if (data.user) {
 					const user: AuthUser = {
-						uid: firebaseUser.uid,
-						email: firebaseUser.email || "",
-						displayName: firebaseUser.displayName,
-						photoURL: firebaseUser.photoURL,
-						isAdmin,
-						role,
+						uid: data.user.uid,
+						email: data.user.email || "",
+						displayName: data.user.displayName,
+						photoURL: data.user.photoURL,
+						isAdmin: data.user.isAdmin || false,
+						role: data.user.role || "user",
 					};
 
 					setAuthData({
@@ -105,21 +39,153 @@ export const useAuth = () => {
 						user,
 						isLoading: false,
 					});
-				} else {
-					// 사용자가 로그아웃된 상태
-					setAuthData({
-						isAuthenticated: false,
-						user: null,
-						isLoading: false,
-					});
+					return true;
 				}
+			}
+
+			setAuthData({
+				isAuthenticated: false,
+				user: null,
+				isLoading: false,
+			});
+			return false;
+		} catch {
+			setAuthData({
+				isAuthenticated: false,
+				user: null,
+				isLoading: false,
+			});
+			return false;
+		}
+	}, [setAuthData]);
+
+	// 팝업 닫힘 감지
+	const startPopupCheck = useCallback(() => {
+		if (popupCheckIntervalRef.current) {
+			clearInterval(popupCheckIntervalRef.current);
+		}
+
+		popupCheckIntervalRef.current = window.setInterval(() => {
+			if (popupRef.current?.closed) {
+				// 팝업이 닫혔는데 로그인 성공 메시지를 못 받은 경우
+				if (popupCheckIntervalRef.current) {
+					clearInterval(popupCheckIntervalRef.current);
+					popupCheckIntervalRef.current = null;
+				}
+				popupRef.current = null;
+				setAuthData({ isLoading: false });
+			}
+		}, 500);
+	}, [setAuthData]);
+
+	// 로그인 함수 - 팝업 방식
+	const handleLogin = useCallback(
+		async (onSuccess?: () => void, onFail?: () => void) => {
+			try {
+				setAuthData({ isLoading: true });
+
+				// 콜백 저장
+				onLoginSuccessCallback = onSuccess || null;
+				onLoginFailCallback = onFail || null;
+
+				// 팝업 모드로 OAuth 시작
+				const loginUrl = `${API_BASE}/auth/google/start?returnTo=__popup__`;
+
+				// 팝업 창 열기
+				const width = 500;
+				const height = 600;
+				const left = window.screenX + (window.outerWidth - width) / 2;
+				const top = window.screenY + (window.outerHeight - height) / 2;
+
+				popupRef.current = window.open(
+					loginUrl,
+					"GoogleLogin",
+					`width=${width},height=${height},left=${left},top=${top},popup=yes`
+				);
+
+				if (!popupRef.current) {
+					setAuthData({ isLoading: false });
+					onFail?.();
+					return {
+						success: false,
+						message: "팝업이 차단되었습니다. 팝업 차단을 해제해주세요.",
+					};
+				}
+
+				// 팝업 닫힘 감지 시작
+				startPopupCheck();
+
+				// 팝업 방식에서는 결과를 기다리지 않음
+				return { success: null, message: "" };
 			} catch {
 				clearAuth();
+				onFail?.();
+				return {
+					success: false,
+					message: "로그인에 실패했습니다. 다시 시도해주세요.",
+				};
 			}
-		});
+		},
+		[setAuthData, clearAuth, startPopupCheck]
+	);
 
-		return unsubscribe;
-	}, [setAuthData, clearAuth]);
+	// 팝업에서 오는 메시지 수신
+	useEffect(() => {
+		const handleMessage = async (event: MessageEvent) => {
+			if (event.data?.type === "AUTH_SUCCESS") {
+				// 인터벌 정리
+				if (popupCheckIntervalRef.current) {
+					clearInterval(popupCheckIntervalRef.current);
+					popupCheckIntervalRef.current = null;
+				}
+
+				// 팝업 닫기
+				if (popupRef.current) {
+					popupRef.current.close();
+					popupRef.current = null;
+				}
+
+				// 사용자 정보 가져오기
+				const success = await fetchUser();
+
+				// 콜백 호출
+				if (success && onLoginSuccessCallback) {
+					onLoginSuccessCallback();
+				} else if (!success && onLoginFailCallback) {
+					onLoginFailCallback();
+				}
+
+				// 콜백 초기화
+				onLoginSuccessCallback = null;
+				onLoginFailCallback = null;
+			}
+		};
+
+		window.addEventListener("message", handleMessage);
+		return () => window.removeEventListener("message", handleMessage);
+	}, [fetchUser]);
+
+	// 로그아웃 함수
+	const handleLogout = useCallback(async () => {
+		try {
+			await fetch(`${API_BASE}/auth/logout`, {
+				method: "POST",
+				credentials: "include",
+			});
+
+			clearAuth();
+			return { success: true, message: "로그아웃되었습니다." };
+		} catch {
+			clearAuth();
+			return { success: false, message: "로그아웃 중 오류가 발생했습니다." };
+		}
+	}, [clearAuth]);
+
+	// 초기화 함수
+	const initializeAuth = useCallback(() => {
+		void fetchUser();
+		return () => {};
+	}, [fetchUser]);
 
 	return {
 		isAuthenticated,

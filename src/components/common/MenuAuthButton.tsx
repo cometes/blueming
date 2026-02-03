@@ -50,11 +50,13 @@ export default function MenuAuthButton({
 	);
 
 	const onLoginClick = async () => {
-		const result = await handleLogin();
-		if (result.success) {
-			toast.success("로그인되었습니다.");
-		} else {
-			toast.error("로그인에 실패했습니다.");
+		const result = await handleLogin(
+			() => toast.success("로그인되었습니다."),
+			() => toast.error("로그인에 실패했습니다.")
+		);
+		// 팝업이 차단된 경우에만 즉시 에러 표시
+		if (result.success === false) {
+			toast.error(result.message);
 		}
 	};
 

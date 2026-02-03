@@ -1,5 +1,3 @@
-import { Timestamp } from "firebase/firestore";
-
 // 회원 상태
 export type UserStatus = "active" | "suspended" | "pending";
 
@@ -18,8 +16,8 @@ export interface User {
     role: UserRole; // 권한
 
     // 가입 정보
-    createdAt: Timestamp | string | null; // 가입일
-    lastLoginAt: Timestamp | string | null; // 최근 로그인
+    createdAt: string | null; // 가입일
+    lastLoginAt: string | null; // 최근 로그인
 
     // 활동 통계 (선택적)
     postCount?: number; // 작성 게시글 수
@@ -27,7 +25,7 @@ export interface User {
 
     // 추가 정보
     suspendedReason?: string; // 정지 사유
-    approvedAt?: Timestamp | string | null; // 승인일
+    approvedAt?: string | null; // 승인일
     approvedBy?: string; // 승인자 UID
 }
 
@@ -41,7 +39,7 @@ export interface UserManagementSettings {
     blacklist: string[]; // 이메일 블랙리스트
     autoApprove: boolean; // 화이트리스트 자동 승인
     notifyOnNewUser: boolean; // 신규 가입 알림
-    updatedAt: Timestamp | string | null; // 마지막 수정일
+    updatedAt: string | null; // 마지막 수정일
     updatedBy: string; // 수정자 UID
 }
 

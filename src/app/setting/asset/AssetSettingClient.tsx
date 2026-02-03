@@ -194,10 +194,7 @@ export default function AssetSettingClient() {
 			}
 			if (pendingDeletes.length > 0) {
 				for (const asset of pendingDeletes) {
-					await deleteStickerAsset({
-						id: asset.id,
-						storagePath: asset.storagePath,
-					});
+					await deleteStickerAsset({ id: asset.id });
 				}
 				setPendingDeletes([]);
 			}
