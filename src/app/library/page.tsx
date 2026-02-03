@@ -1,13 +1,12 @@
 export const dynamic = "force-dynamic";
 
-import { Suspense } from "react";
 import { cookies } from "next/headers";
-import { apiClient } from "@/queries/apiClient";
+import { getDb } from "@/app/api/_lib/admin";
 import {
-	fetchLibraryList,
-	fetchLibrarySeries,
-	fetchLibraryTags,
-} from "@/queries/fetch/fetchLibrary";
+	fetchLibraryListServer,
+	fetchLibrarySeriesServer,
+	fetchLibraryTagsServer,
+} from "@/queries/fetch/fetchLibraryServer";
 import LibraryClient from "./LibraryClient";
 
 export default async function LibararyListPage({
@@ -27,53 +26,59 @@ export default async function LibararyListPage({
 
 		let postsPerPage = 10;
 		try {
-			const settingsResponse = await apiClient.get("/settings");
-			const settingsData = settingsResponse.data;
-			if (typeof settingsData?.library?.postsPerPage === "number") {
-				postsPerPage = settingsData.library.postsPerPage;
+			const db = getDb();
+			const settingsSnap = await db.collection("settings").doc("library").get();
+			const settingsData = settingsSnap.exists ? settingsSnap.data() || {} : {};
+			if (typeof settingsData.postsPerPage === "number") {
+				postsPerPage = settingsData.postsPerPage;
 			}
 		} catch {
 		}
 
-		const [{ data: listResponse }, { data: seriesData }, { data: tagData }] =
+		const [listResponse, seriesResponse, tagResponse] =
 			await Promise.all([
-				fetchLibraryList({ page: currentPage, limit: postsPerPage }),
-				fetchLibrarySeries(),
-				fetchLibraryTags(),
+				fetchLibraryListServer({ page: currentPage, limit: postsPerPage }),
+				fetchLibrarySeriesServer(),
+				fetchLibraryTagsServer(),
 			]);
 
 		const finalListResponse = {
-			items: listResponse?.items ?? [],
-			pinnedItems: listResponse?.pinnedItems ?? [],
-			total: listResponse?.total ?? 0,
+			items: listResponse?.data?.items ?? listResponse?.items ?? [],
+			pinnedItems: listResponse?.data?.pinnedItems ?? listResponse?.pinnedItems ?? [],
+			total: listResponse?.data?.total ?? listResponse?.total ?? 0,
 		};
 
 		return (
-			<Suspense fallback={null}>
-				<LibraryClient
-					listData={finalListResponse.items}
-					pinnedData={finalListResponse.pinnedItems}
-					listTotal={finalListResponse.total}
-					seriesData={seriesData}
-					tagData={Array.isArray(tagData) ? tagData : []}
-					initialPage={currentPage}
-					initialIsCardOn={initialIsCardOn}
-				/>
-			</Suspense>
+			<LibraryClient
+				listData={finalListResponse.items}
+				pinnedData={finalListResponse.pinnedItems}
+				listTotal={finalListResponse.total}
+				seriesData={
+					(seriesResponse as { data?: unknown })?.data ??
+					(seriesResponse as unknown[])
+				}
+				tagData={
+					Array.isArray((tagResponse as { data?: unknown })?.data)
+						? ((tagResponse as { data?: unknown }).data as string[])
+						: Array.isArray(tagResponse)
+							? (tagResponse as string[])
+							: []
+				}
+				initialPage={currentPage}
+				initialIsCardOn={initialIsCardOn}
+			/>
 		);
 	} catch {
 		return (
-			<Suspense fallback={null}>
-				<LibraryClient
-					listData={[]}
-					pinnedData={[]}
-					listTotal={0}
-					seriesData={[]}
-					tagData={[]}
-					initialPage={1}
-					initialIsCardOn={false}
-				/>
-			</Suspense>
+			<LibraryClient
+				listData={[]}
+				pinnedData={[]}
+				listTotal={0}
+				seriesData={[]}
+				tagData={[]}
+				initialPage={1}
+				initialIsCardOn={false}
+			/>
 		);
 	}
 }

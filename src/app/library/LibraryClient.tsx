@@ -57,9 +57,7 @@ export default function LibraryClient({
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
-	const [isCardPrefsLoaded, setIsCardPrefsLoaded] = useState(
-		initialIsCardOn !== undefined,
-	);
+	const [isCardPrefsLoaded, setIsCardPrefsLoaded] = useState(true);
 	const { isAdmin, isManagerOrAdmin, isAuthenticated } = useAdmin();
 	const skipNextQueryUpdateRef = useRef(false);
 
@@ -174,25 +172,11 @@ export default function LibraryClient({
 		setIsSeriesOn(tab === "series");
 	}, [searchParams]);
 
-	// 로컬 스토리지에서 카드 뷰 상태 불러오기
-	useEffect(() => {
-		if (initialIsCardOn !== undefined) {
-			setIsCardPrefsLoaded(true);
-			return;
-		}
-		const savedIsCardOn = localStorage.getItem("isCardOn");
-		if (savedIsCardOn !== null) {
-			setIsCardOn(savedIsCardOn === "true");
-		}
-		setIsCardPrefsLoaded(true);
-	}, [initialIsCardOn]);
-
 	// 카드 뷰 상태 변경 시 로컬 스토리지에 저장
 	useEffect(() => {
 		if (!isCardPrefsLoaded) {
 			return;
 		}
-		localStorage.setItem("isCardOn", isCardOn.toString());
 		document.cookie = `library_card_on=${isCardOn}; path=/; max-age=31536000`;
 	}, [isCardOn, isCardPrefsLoaded]);
 
