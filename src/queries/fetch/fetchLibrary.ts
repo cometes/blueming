@@ -17,6 +17,7 @@ export const fetchLibraryList = async (
 	params: FetchLibraryListParams = {},
 	options: FetchLibraryListOptions = {}
 ) => {
+	void options;
 	const requestParams: Record<string, string | number> = {};
 	if (params.page) {
 		requestParams.page = params.page;
@@ -60,6 +61,7 @@ export async function fetchLibraryDetail(
 	id: string | string[],
 	options: FetchLibraryListOptions = {}
 ) {
+	void options;
 	const request = await apiClient.get(`/library/detail/${id}`);
 
 	const data = request.data;
@@ -73,6 +75,7 @@ export const fetchLibrarySeriesList = async (
 	series: string | string[],
 	options: FetchLibraryListOptions = {}
 ) => {
+	void options;
 	const result = await apiClient.get(`/library/series/${series}`);
 
 	const data = result.data;
@@ -83,6 +86,7 @@ export const fetchLibrarySeriesList = async (
 };
 
 export const fetchLibraryTags = async (options: FetchLibraryListOptions = {}) => {
+	void options;
 	const result = await apiClient.get("/library/tags");
 
 	const data = result.data;

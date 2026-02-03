@@ -7,7 +7,7 @@ import {
 	fetchLibrarySeriesServer,
 	fetchLibraryTagsServer,
 } from "@/queries/fetch/fetchLibraryServer";
-import LibraryClient from "./LibraryClient";
+import LibraryClient, { type LibraryItem } from "./LibraryClient";
 
 export default async function LibararyListPage({
 	searchParams,
@@ -15,6 +15,13 @@ export default async function LibararyListPage({
 	searchParams?: Promise<{ page?: string }>;
 }) {
 	try {
+		type LibraryListPayload = {
+			items?: LibraryItem[];
+			pinnedItems?: LibraryItem[];
+			total?: number;
+		};
+		type LibraryListResponse = LibraryListPayload & { data?: LibraryListPayload };
+
 		const cookieStore = await cookies();
 		const cardCookie = cookieStore.get("library_card_on")?.value;
 		const initialIsCardOn = cardCookie === "true";
@@ -37,7 +44,10 @@ export default async function LibararyListPage({
 
 		const [listResponse, seriesResponse, tagResponse] =
 			await Promise.all([
-				fetchLibraryListServer({ page: currentPage, limit: postsPerPage }),
+				fetchLibraryListServer({
+					page: currentPage,
+					limit: postsPerPage,
+				}) as Promise<LibraryListResponse>,
 				fetchLibrarySeriesServer(),
 				fetchLibraryTagsServer(),
 			]);
@@ -47,16 +57,20 @@ export default async function LibararyListPage({
 			pinnedItems: listResponse?.data?.pinnedItems ?? listResponse?.pinnedItems ?? [],
 			total: listResponse?.data?.total ?? listResponse?.total ?? 0,
 		};
+		const resolvedSeriesData: LibraryItem[] = Array.isArray(
+			(seriesResponse as { data?: unknown })?.data
+		)
+			? ((seriesResponse as { data?: LibraryItem[] }).data ?? [])
+			: Array.isArray(seriesResponse)
+				? (seriesResponse as LibraryItem[])
+				: [];
 
 		return (
 			<LibraryClient
 				listData={finalListResponse.items}
 				pinnedData={finalListResponse.pinnedItems}
 				listTotal={finalListResponse.total}
-				seriesData={
-					(seriesResponse as { data?: unknown })?.data ??
-					(seriesResponse as unknown[])
-				}
+				seriesData={resolvedSeriesData}
 				tagData={
 					Array.isArray((tagResponse as { data?: unknown })?.data)
 						? ((tagResponse as { data?: unknown }).data as string[])
