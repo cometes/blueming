@@ -1,5 +1,27 @@
 import { cache } from "react";
 import { API_BASE } from "@/queries/apiClient";
+import { headers } from "next/headers";
+
+const resolveOrigin = async () => {
+	if (API_BASE.startsWith("http")) {
+		const parsed = new URL(API_BASE);
+		return parsed.origin;
+	}
+	const hdrs = await headers();
+	const host = hdrs.get("x-forwarded-host") ?? hdrs.get("host") ?? "localhost:3000";
+	const proto = hdrs.get("x-forwarded-proto") ?? "http";
+	return `${proto}://${host}`;
+};
+
+const buildUrl = async (path: string) => {
+	if (API_BASE.startsWith("http")) {
+		return new URL(path, API_BASE).toString();
+	}
+	const origin = await resolveOrigin();
+	const basePath = API_BASE.startsWith("/") ? API_BASE : `/${API_BASE}`;
+	const suffix = path.startsWith("/") ? path : `/${path}`;
+	return `${origin}${basePath}${suffix}`;
+};
 
 const defaultRevalidateSeconds = 60;
 
@@ -32,12 +54,12 @@ export const fetchLibraryListServer = cache(
 		}
 
 		const query = searchParams.toString();
-		const response = await fetch(
-			`${API_BASE}/library/list${query ? `?${query}` : ""}`,
-			{
-				next: { revalidate: defaultRevalidateSeconds },
-			}
+		const url = await buildUrl(
+			`/library/list${query ? `?${query}` : ""}`
 		);
+		const response = await fetch(url, {
+			next: { revalidate: defaultRevalidateSeconds },
+		});
 		if (!response.ok) {
 			throw new Error("Failed to fetch list");
 		}
@@ -47,7 +69,8 @@ export const fetchLibraryListServer = cache(
 );
 
 export const fetchLibrarySeriesServer = cache(async () => {
-	const response = await fetch(`${API_BASE}/library/series`, {
+	const url = await buildUrl("/library/series");
+	const response = await fetch(url, {
 		next: { revalidate: defaultRevalidateSeconds },
 	});
 	if (!response.ok) {
@@ -58,7 +81,8 @@ export const fetchLibrarySeriesServer = cache(async () => {
 });
 
 export const fetchLibraryTagsServer = cache(async () => {
-	const response = await fetch(`${API_BASE}/library/tags`, {
+	const url = await buildUrl("/library/tags");
+	const response = await fetch(url, {
 		next: { revalidate: defaultRevalidateSeconds },
 	});
 	if (!response.ok) {
@@ -69,7 +93,9 @@ export const fetchLibraryTagsServer = cache(async () => {
 });
 
 export const fetchLibraryDetailServer = async (id: string | string[]) => {
-	const response = await fetch(`${API_BASE}/library/detail/${id}`, {
+	const resolvedId = Array.isArray(id) ? id.join("/") : id;
+	const url = await buildUrl(`/library/detail/${resolvedId}`);
+	const response = await fetch(url, {
 		cache: "no-store",
 	});
 	if (!response.ok) {
@@ -82,7 +108,9 @@ export const fetchLibraryDetailServer = async (id: string | string[]) => {
 export const fetchLibrarySeriesListServer = cache(async (
 	series: string | string[]
 ) => {
-	const response = await fetch(`${API_BASE}/library/series/${series}`, {
+	const resolvedSeries = Array.isArray(series) ? series.join("/") : series;
+	const url = await buildUrl(`/library/series/${resolvedSeries}`);
+	const response = await fetch(url, {
 		next: { revalidate: defaultRevalidateSeconds },
 	});
 	if (!response.ok) {

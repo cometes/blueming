@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import GuestbookClient from "./GuestbookClient";
 import { fetchGuestbookList } from "@/queries/guestbook";
 

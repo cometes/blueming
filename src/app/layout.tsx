@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Layout from "@/components/layout/Layout";
 import Providers from "@/providers/Providers";
-import { API_BASE } from "@/queries/apiClient";
+import { getDb } from "@/app/api/_lib/admin";
+import { normalizeGeneralData } from "@/app/api/_lib/settings";
 
-const SETTINGS_REVALIDATE_SECONDS = 60 * 60;
+export const dynamic = "force-dynamic";
 
 type ThemeSettings = {
 	general?: {
@@ -170,16 +171,40 @@ const buildFontFaceCSS = (fonts: FontRegistryItem[]) =>
 
 async function getSettings(): Promise<AppSettings | null> {
 	try {
-		const res = await fetch(`${API_BASE}/settings`, {
-			next: { revalidate: SETTINGS_REVALIDATE_SECONDS, tags: ["settings"] },
+		const db = getDb();
+		const settingsSnapshot = await db.collection("settings").get();
+		const settingsDataPromises = settingsSnapshot.docs.map(async (doc) => {
+			const docSnapshot = await doc.ref.get();
+			const docData = docSnapshot.exists ? docSnapshot.data() : {};
+			const subCollections = await doc.ref.listCollections();
+			const subCollectionPromises = subCollections.map(async (subCollection) => {
+				const subCollectionSnapshot = await subCollection.get();
+				const subCollectionData = subCollectionSnapshot.docs.reduce(
+					(acc, subDoc) => {
+						acc[subDoc.id] = subDoc.data();
+						return acc;
+					},
+					{} as Record<string, unknown>
+				);
+				return { [subCollection.id]: subCollectionData };
+			});
+			const subCollectionResults = await Promise.all(subCollectionPromises);
+			const fullData = subCollectionResults.reduce(
+				(acc, curr) => ({ ...acc, ...curr }),
+				docData ?? {}
+			);
+			return { [doc.id]: fullData };
 		});
-
-		if (!res.ok) {
-			return null;
-		}
-
-		const data = await res.json();
-		return data;
+		const settingsData = await Promise.all(settingsDataPromises);
+		const result = settingsData.reduce(
+			(acc, curr) => ({ ...acc, ...curr }),
+			{} as Record<string, unknown>
+		);
+		const normalized = {
+			...result,
+			general: normalizeGeneralData(result.general),
+		};
+		return normalized as AppSettings;
 	} catch {
 		return null;
 	}

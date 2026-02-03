@@ -1,6 +1,8 @@
 "use client";
 
-import dynamic from "next/dynamic";
+export const dynamic = "force-dynamic";
+
+import dynamicImport from "next/dynamic";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMobile } from "@/hooks/use-mobile";
@@ -12,7 +14,7 @@ type WidgetType = string;
 // isAsyncData: true if the widget has internal data fetching it waits for
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const dynamicWidget = (importer: any, isAsyncData = false) =>
-	dynamic(
+	dynamicImport(
 		async () => {
 			const mod = await importer();
 			const Component = mod.default;

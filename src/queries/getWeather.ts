@@ -19,6 +19,7 @@ interface WeatherCacheEntry {
 interface WeatherOptions {
 	staleTimeMs?: number;
 	useCache?: boolean;
+	signal?: AbortSignal;
 }
 
 const weatherCache = new Map<string, WeatherCacheEntry>();
@@ -46,6 +47,7 @@ export const getWeather = async (
 			headers: {
 				"Content-Type": "application/json",
 			},
+			signal: options.signal,
 		}
 	);
 

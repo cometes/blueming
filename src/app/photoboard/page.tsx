@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import PhotoBoardClient from "./photoboard-client";
 import { fetchPhotoboardPosts } from "@/queries/photoboard";
 

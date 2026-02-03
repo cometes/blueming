@@ -1,8 +1,6 @@
 import axios from "axios";
 
-export const API_BASE =
-	process.env.NEXT_PUBLIC_API_BASE ??
-	"https://api-w5buphcleq-du.a.run.app";
+export const API_BASE = "/api";
 
 // 전역 axios 기본값 설정 - 세션 쿠키 전송을 위해 필요
 axios.defaults.withCredentials = true;

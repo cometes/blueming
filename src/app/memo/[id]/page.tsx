@@ -1,5 +1,5 @@
 import MemoDetailClient from "./MemoDetailClient";
-import { fetchMemoDetailServer } from "@/queries/memo";
+import { fetchMemoDetailServer } from "@/queries/fetch/fetchMemoServer";
 
 interface MemoDetailPageProps {
 	params: Promise<{
