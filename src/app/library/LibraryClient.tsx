@@ -17,7 +17,7 @@ import LibraryListView from "./LibraryListView";
 import LibrarySeriesView from "./LibrarySeriesView";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-interface LibraryItem {
+export interface LibraryItem {
 	id: string;
 	title: string;
 	subtitle?: string;
@@ -57,7 +57,7 @@ export default function LibraryClient({
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
-	const [isCardPrefsLoaded, setIsCardPrefsLoaded] = useState(true);
+	const [isCardPrefsLoaded] = useState(true);
 	const { isAdmin, isManagerOrAdmin, isAuthenticated } = useAdmin();
 	const skipNextQueryUpdateRef = useRef(false);
 
