@@ -1,5 +1,4 @@
 import axios from "axios";
-import { auth } from "@/lib/Firebase";
 import { API_BASE } from "@/queries/apiClient";
 
 export interface Comment {
@@ -37,13 +36,6 @@ interface CommentListParams {
 	limit?: number;
 }
 
-const getAuthHeader = async () => {
-	const currentUser = auth.currentUser;
-	if (!currentUser) return {};
-	const token = await currentUser.getIdToken();
-	return { Authorization: `Bearer ${token}` };
-};
-
 export const fetchCommentList = async (
 	postId: string,
 	params: CommentListParams = {}
@@ -60,8 +52,9 @@ export const fetchCommentList = async (
 		? `${API_BASE}/library/${postId}/comments?${searchParams.toString()}`
 		: `${API_BASE}/library/${postId}/comments`;
 
-	const headers = await getAuthHeader();
-	const response = await axios.get<CommentListResponse>(url, { headers });
+	const response = await axios.get<CommentListResponse>(url, {
+		withCredentials: true,
+	});
 	return response.data;
 };
 
@@ -75,11 +68,10 @@ export const createComment = async (
 		imageUrls?: string[];
 	}
 ) => {
-	const headers = await getAuthHeader();
 	const response = await axios.post(
 		`${API_BASE}/library/${postId}/comments`,
 		payload,
-		{ headers }
+		{ withCredentials: true }
 	);
 	return response.data as { id: string };
 };
@@ -94,11 +86,10 @@ export const updateComment = async (
 		imageUrls?: string[];
 	}
 ) => {
-	const headers = await getAuthHeader();
 	const response = await axios.put(
 		`${API_BASE}/library/${postId}/comments/${commentId}`,
 		payload,
-		{ headers }
+		{ withCredentials: true }
 	);
 	return response.data as { id: string };
 };
@@ -108,12 +99,11 @@ export const deleteComment = async (
 	commentId: string,
 	payload?: { pin?: string }
 ) => {
-	const headers = await getAuthHeader();
 	const response = await axios.delete(
 		`${API_BASE}/library/${postId}/comments/${commentId}`,
 		{
 			data: payload,
-			headers,
+			withCredentials: true,
 		}
 	);
 	return response.data as { id: string };
@@ -124,11 +114,10 @@ export const verifyCommentSecret = async (
 	commentId: string,
 	payload?: { pin?: string }
 ) => {
-	const headers = await getAuthHeader();
 	const response = await axios.post(
 		`${API_BASE}/library/${postId}/comments/${commentId}/verify`,
 		payload,
-		{ headers }
+		{ withCredentials: true }
 	);
 	return response.data as {
 		message: string;
@@ -144,6 +133,7 @@ export const uploadCommentImages = async (files: File[]) => {
 	});
 	const response = await fetch(`${API_BASE}/library/comments/uploadImage`, {
 		method: "POST",
+		credentials: "include",
 		body: formData,
 	});
 

@@ -1,69 +1,6 @@
-import { auth, db, storage } from "@/lib/Firebase";
 import type { StickerAsset, StickerAssetTab } from "@/types/stickerBoard";
-import { getAuthHeader } from "@/queries/getAuthHeader";
-import {
-	collection,
-	deleteDoc,
-	doc,
-	getDocs,
-	limit,
-	orderBy,
-	query,
-	serverTimestamp,
-	setDoc,
-	updateDoc,
-	where,
-	type Timestamp,
-} from "firebase/firestore";
-import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { v4 as uuidv4 } from "uuid";
 
-const requireUid = () => {
-	const uid = auth.currentUser?.uid;
-	if (!uid) throw new Error("로그인이 필요합니다.");
-	return uid;
-};
-
-const toMs = (ts: unknown) => {
-	const t = ts as Timestamp | undefined;
-	if (!t) return undefined;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const anyT: any = t as any;
-	if (typeof anyT?.toMillis === "function") return anyT.toMillis() as number;
-	return undefined;
-};
-
-const getExt = (file: File) => {
-	const fromType = file.type?.split("/")?.[1];
-	if (fromType) return fromType.toLowerCase();
-	const fromName = file.name?.split(".")?.pop();
-	return (fromName || "png").toLowerCase();
-};
-
-const uploadImageViaApi = async (file: File): Promise<string> => {
-	const formData = new FormData();
-	// NOTE: `useFileUpload` uses "file". We match that for compatibility.
-	formData.append("file", file);
-	const authHeader = await getAuthHeader();
-	const response = await fetch(
-		"https://api-w5buphcleq-du.a.run.app/images/uploadImage",
-		{
-			method: "POST",
-			headers: authHeader,
-			body: formData,
-		}
-	);
-	if (!response.ok) {
-		throw new Error(`Upload failed: ${response.statusText}`);
-	}
-	const data = (await response.json()) as {
-		file?: { url?: string };
-		files?: Array<{ url?: string }>;
-	};
-	const url = data?.files?.[0]?.url;
-	if (!url) throw new Error("서버에서 URL을 받지 못했습니다.");
-	return url;
-};
+const API_BASE = "https://api-w5buphcleq-du.a.run.app";
 
 const readImageSize = async (file: File): Promise<{ width?: number; height?: number }> => {
 	try {
@@ -92,115 +29,105 @@ const readImageSize = async (file: File): Promise<{ width?: number; height?: num
 };
 
 export async function listStickerAssets(tab: StickerAssetTab): Promise<StickerAsset[]> {
-	const uid = requireUid();
-	const col = collection(db, "users", uid, "stickerAssets");
-
-	const q = (() => {
-		switch (tab) {
-			case "favorites":
-				// Avoid composite index requirement by sorting client-side.
-				return query(col, where("favorite", "==", true), limit(60));
-			case "recent":
-				return query(col, orderBy("lastUsedAt", "desc"), limit(60));
-			case "all":
-			default:
-				return query(col, orderBy("createdAt", "desc"), limit(60));
-		}
-	})();
-
-	const snap = await getDocs(q);
-	const list = snap.docs.map((d) => {
-		const data = d.data() as Record<string, unknown>;
-		return {
-			id: d.id,
-			url: String(data.url || ""),
-			name: typeof data.name === "string" ? data.name : undefined,
-			width: typeof data.width === "number" ? data.width : undefined,
-			height: typeof data.height === "number" ? data.height : undefined,
-			favorite: Boolean(data.favorite),
-			storagePath: typeof data.storagePath === "string" ? data.storagePath : undefined,
-			createdAtMs: toMs(data.createdAt),
-			lastUsedAtMs: toMs(data.lastUsedAt),
-		};
+	const response = await fetch(`${API_BASE}/sticker-assets?tab=${tab}`, {
+		method: "GET",
+		credentials: "include",
 	});
-	if (tab === "favorites") {
-		return list
-			.slice()
-			.sort((a, b) => (b.createdAtMs ?? 0) - (a.createdAtMs ?? 0));
+
+	if (response.status === 401) {
+		throw new Error("로그인이 필요합니다.");
 	}
-	return list;
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({}));
+		throw new Error(error.error || "스티커 자산을 불러오지 못했습니다.");
+	}
+
+	const data = await response.json();
+	return data.items || [];
 }
 
 export async function createStickerAssetFromFile(file: File): Promise<StickerAsset> {
-	const uid = requireUid();
-	const assetId = uuidv4();
-	const ext = getExt(file);
-	const storagePath = `users/${uid}/stickerAssets/${assetId}.${ext}`;
-
 	const size = await readImageSize(file);
 
-	let url = "";
-	let storedPath: string | undefined = storagePath;
-	try {
-		const storageRef = ref(storage, storagePath);
-		await uploadBytes(storageRef, file, {
-			contentType: file.type || undefined,
-		});
-		url = await getDownloadURL(storageRef);
-	} catch (e) {
-		// If Storage Rules are not configured, fall back to existing upload API.
-		const msg = e instanceof Error ? e.message : "";
-		const isUnauthorized = msg.includes("storage/unauthorized") || msg.includes("unauthorized");
-		if (!isUnauthorized) throw e;
-		url = await uploadImageViaApi(file);
-		storedPath = undefined;
+	const formData = new FormData();
+	formData.append("file", file);
+	if (file.name) {
+		formData.append("name", file.name);
+	}
+	if (size.width) {
+		formData.append("width", String(size.width));
+	}
+	if (size.height) {
+		formData.append("height", String(size.height));
 	}
 
-	const docRef = doc(db, "users", uid, "stickerAssets", assetId);
-	const data: Record<string, unknown> = {
-		url,
-		name: file.name || null,
-		width: size.width ?? null,
-		height: size.height ?? null,
-		favorite: false,
-		createdAt: serverTimestamp(),
-		lastUsedAt: serverTimestamp(),
-	};
-	if (storedPath) data.storagePath = storedPath;
-	// Firestore doesn't allow `undefined`; use nulls for optional fields.
-	await setDoc(docRef, data);
+	const response = await fetch(`${API_BASE}/sticker-assets`, {
+		method: "POST",
+		credentials: "include",
+		body: formData,
+	});
 
-	return {
-		id: assetId,
-		url,
-		name: file.name || undefined,
-		width: size.width ?? undefined,
-		height: size.height ?? undefined,
-		favorite: false,
-		storagePath: storedPath,
-	};
+	if (response.status === 401) {
+		throw new Error("로그인이 필요합니다.");
+	}
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({}));
+		throw new Error(error.error || "스티커 자산 생성에 실패했습니다.");
+	}
+
+	return await response.json();
 }
 
 export async function setStickerAssetFavorite(assetId: string, favorite: boolean) {
-	const uid = requireUid();
-	const docRef = doc(db, "users", uid, "stickerAssets", assetId);
-	await updateDoc(docRef, { favorite });
+	const response = await fetch(`${API_BASE}/sticker-assets/${assetId}/favorite`, {
+		method: "PATCH",
+		credentials: "include",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({ favorite }),
+	});
+
+	if (response.status === 401) {
+		throw new Error("로그인이 필요합니다.");
+	}
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({}));
+		throw new Error(error.error || "즐겨찾기 업데이트에 실패했습니다.");
+	}
 }
 
 export async function markStickerAssetUsed(assetId: string) {
-	const uid = requireUid();
-	const docRef = doc(db, "users", uid, "stickerAssets", assetId);
-	await updateDoc(docRef, { lastUsedAt: serverTimestamp() });
+	const response = await fetch(`${API_BASE}/sticker-assets/${assetId}/used`, {
+		method: "PATCH",
+		credentials: "include",
+	});
+
+	if (response.status === 401) {
+		throw new Error("로그인이 필요합니다.");
+	}
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({}));
+		throw new Error(error.error || "사용 시간 업데이트에 실패했습니다.");
+	}
 }
 
-export async function deleteStickerAsset(asset: Pick<StickerAsset, "id" | "storagePath">) {
-	const uid = requireUid();
-	if (asset.storagePath) {
-		try {
-			await deleteObject(ref(storage, asset.storagePath));
-		} catch {
-			// ignore storage delete failure; still try to delete doc
-		}
+export async function deleteStickerAsset(asset: Pick<StickerAsset, "id">) {
+	const response = await fetch(`${API_BASE}/sticker-assets/${asset.id}`, {
+		method: "DELETE",
+		credentials: "include",
+	});
+
+	if (response.status === 401) {
+		throw new Error("로그인이 필요합니다.");
 	}
-	await deleteDoc(doc(db, "users", uid, "stickerAssets", asset.id));
+
+	if (!response.ok) {
+		const error = await response.json().catch(() => ({}));
+		throw new Error(error.error || "스티커 자산 삭제에 실패했습니다.");
+	}
 }

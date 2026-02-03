@@ -36,15 +36,6 @@ interface GuestbookListParams {
 
 const API_BASE = "https://api-w5buphcleq-du.a.run.app";
 
-const getAuthHeader = async () => {
-	if (typeof window === "undefined") return {};
-	const { auth } = await import("@/lib/Firebase");
-	const currentUser = auth.currentUser;
-	if (!currentUser) return {};
-	const token = await currentUser.getIdToken();
-	return { Authorization: `Bearer ${token}` };
-};
-
 export const fetchGuestbookList = async (
 	params: GuestbookListParams = {}
 ) => {
@@ -60,8 +51,9 @@ export const fetchGuestbookList = async (
 		? `${API_BASE}/guestbook?${searchParams.toString()}`
 		: `${API_BASE}/guestbook`;
 
-	const headers = await getAuthHeader();
-	const response = await axios.get<GuestbookListResponse>(url, { headers });
+	const response = await axios.get<GuestbookListResponse>(url, {
+		withCredentials: true,
+	});
 	return response.data;
 };
 
@@ -72,9 +64,8 @@ export const createGuestbookEntry = async (payload: {
 	isSecret?: boolean;
 	imageUrls?: string[];
 }) => {
-	const headers = await getAuthHeader();
 	const response = await axios.post(`${API_BASE}/guestbook`, payload, {
-		headers,
+		withCredentials: true,
 	});
 	return response.data as { id: string };
 };
@@ -88,9 +79,8 @@ export const updateGuestbookEntry = async (
 		imageUrls?: string[];
 	}
 ) => {
-	const headers = await getAuthHeader();
 	const response = await axios.put(`${API_BASE}/guestbook/${id}`, payload, {
-		headers,
+		withCredentials: true,
 	});
 	return response.data as { id: string };
 };
@@ -99,10 +89,9 @@ export const deleteGuestbookEntry = async (
 	id: string,
 	payload?: { pin?: string }
 ) => {
-	const headers = await getAuthHeader();
 	const response = await axios.delete(`${API_BASE}/guestbook/${id}`, {
 		data: payload,
-		headers,
+		withCredentials: true,
 	});
 	return response.data as { id: string };
 };
@@ -111,9 +100,8 @@ export const verifyGuestbookSecret = async (
 	id: string,
 	payload?: { pin?: string }
 ) => {
-	const headers = await getAuthHeader();
 	const response = await axios.post(`${API_BASE}/guestbook/${id}/verify`, payload, {
-		headers,
+		withCredentials: true,
 	});
 	return response.data as {
 		message: string;
@@ -129,6 +117,7 @@ export const uploadGuestbookImages = async (files: File[]) => {
 	});
 	const response = await fetch(`${API_BASE}/guestbook/uploadImage`, {
 		method: "POST",
+		credentials: "include",
 		body: formData,
 	});
 

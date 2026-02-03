@@ -13,12 +13,11 @@ import {
 	normalizeStickerSize,
 	type PctSticker,
 } from "@/lib/stickerboard-utils";
-import { auth } from "@/lib/Firebase";
+import { useAuthStore } from "@/store/auth/store";
 import {
 	listStickerAssets,
 	markStickerAssetUsed,
 } from "@/queries/stickerAssets";
-import { onAuthStateChanged } from "firebase/auth";
 import type {
 	StickerBoardComponent,
 	StickerBoardGroupComponent,
@@ -389,11 +388,13 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 		return false;
 	}, []);
 
+	const { isAuthenticated, isLoading: authLoading } = useAuthStore();
+
 	const refreshAssets = async (tab: StickerAssetTab = assetTab) => {
 		setAssetsLoading(true);
 		setAssetsError(null);
 		try {
-			if (!auth.currentUser) {
+			if (!isAuthenticated) {
 				if (!authReady) {
 					setAssetsLoading(false);
 					return;
@@ -412,12 +413,12 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 		}
 	};
 
+	// auth store가 로딩 완료되면 authReady 설정
 	useEffect(() => {
-		const unsubscribe = onAuthStateChanged(auth, () => {
+		if (!authLoading) {
 			setAuthReady(true);
-		});
-		return () => unsubscribe();
-	}, []);
+		}
+	}, [authLoading]);
 
 	const autosizeRafRef = useRef<number | null>(null);
 	const autosizePendingRef = useRef<StickerBoardTextComponent | null>(null);
@@ -711,10 +712,10 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 
 	// Load assets for asset panel
 	useEffect(() => {
-		if (!authReady || !auth.currentUser) return;
+		if (!authReady || !isAuthenticated) return;
 		void refreshAssets(assetTab);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [assetTab, authReady]);
+	}, [assetTab, authReady, isAuthenticated]);
 
 	// Load percent-based stickers from the single `components` field
 	useEffect(() => {
