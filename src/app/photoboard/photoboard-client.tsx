@@ -223,11 +223,14 @@ export default function PhotoBoardClient({
 	};
 
 	return (
-		<div className="shrink-0 w-full max-w-2xl mt-[90px] mb-[40px] mx-auto">
+		<div className="w-full max-w-full md:max-w-2xl mt-[90px] mb-[40px] mx-auto md:px-0">
 			<header className="mb-10 flex items-center justify-center">
-				<div className="flex items-center gap-2 w-full sm:w-auto">
-					<div className="w-[150px]"></div>
-					<div className="w-full sm:w-[200px]">
+				<div className="flex items-center justify-center gap-2 w-full sm:w-auto">
+					{writePermission === "admin" && isAdmin ? (
+						<div className="w-[150px]"></div>
+					) : null}
+
+					<div className="w-[200px]">
 						<Input
 							className="border-card bg-card backdrop-blur-card rounded-card text-main-text"
 							endIcon={searchInput ? X : Search}

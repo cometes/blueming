@@ -120,6 +120,7 @@ export default function WidgetMenu() {
 					: "none",
 			backgroundSize: "cover",
 			backgroundPosition: "center",
+			backgroundRepeat: "no-repeat"
 		}),
 		[
 			design?.iconBarBgType,

@@ -92,7 +92,7 @@ export default function WidgetMenuIconBar({
 	return (
 		<aside
 			className={cn(
-				"menu-iconbar h-dvh flex flex-col items-center shrink-0 sticky top-0 overflow-visible",
+				"menu-iconbar h-dvh flex flex-col items-center shrink-0 sticky top-0 overflow-visible px-1.5",
 				className,
 			)}
 			style={iconBarStyle}

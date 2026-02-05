@@ -425,7 +425,7 @@ export default function LibraryClient({
 							</Button>
 						</>
 					) : null}
-					{!hasRightButtons ? <div className="w-[150px]" /> : null}
+					{!hasRightButtons ? <div className="w-[90px] sm:w-[150px]" /> : null}
 				</div>
 				<div className="TabWrap w-fit mx-auto mt-2.5 sm:mt-7">
 					<div className="TabBox flex justify-center">
