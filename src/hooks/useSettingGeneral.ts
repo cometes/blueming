@@ -28,6 +28,10 @@ export const useSettingGeneral = () => {
     () => general?.general || {},
     [general?.general]
   );
+  const initialGeneral = useMemo(
+    () => (generalData && Object.keys(generalData).length > 0 ? generalData : defaultGeneralSetting),
+    [generalData]
+  );
 
   // Initialize state only once with either existing data or defaults
   const [generalSetting, setGeneralSetting] = useState(() => ({
@@ -55,17 +59,17 @@ export const useSettingGeneral = () => {
   );
   const normalizedInitial = useMemo(
     () => ({
-      title: generalData.title || "",
-      desc: generalData.desc || "",
-      favicon: generalData.favicon || "",
-      shareImage: generalData.shareImage || "",
-      primaryColor: generalData.primaryColor || "",
-      secondaryColor: generalData.secondaryColor || "",
-      logoType: generalData.logoType || "없음",
-      logoImage: generalData.logoImage || "",
-      logoText: generalData.logoText || ""
+      title: initialGeneral.title || "",
+      desc: initialGeneral.desc || "",
+      favicon: initialGeneral.favicon || "",
+      shareImage: initialGeneral.shareImage || "",
+      primaryColor: initialGeneral.primaryColor || "",
+      secondaryColor: initialGeneral.secondaryColor || "",
+      logoType: initialGeneral.logoType || "없음",
+      logoImage: initialGeneral.logoImage || "",
+      logoText: initialGeneral.logoText || ""
     }),
-    [generalData]
+    [initialGeneral]
   );
   const isDirty = useMemo(
     () => JSON.stringify(normalizedCurrent) !== JSON.stringify(normalizedInitial),
