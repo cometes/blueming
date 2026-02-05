@@ -58,7 +58,6 @@ export default function Layout({ children }: LayoutProps) {
 		!isLibraryWrite &&
 		!isLibraryEdit &&
 		!isLibrarySeries;
-	const isGalleryPage = pathname.startsWith("/gallery");
 
 	const showMenu =
 		!isSettingPage && !isLibraryDetail && !isLibraryWrite && !isLibraryEdit;
