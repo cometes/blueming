@@ -1,0 +1,90 @@
+name: Update From Upstream
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: "Upstream branch or tag (e.g. main, v1.2.3)"
+        required: false
+        default: "main"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      UPSTREAM_REPO: ${{ vars.UPSTREAM_REPO }}
+      BASE_BRANCH: ${{ vars.BASE_BRANCH || 'main' }}
+      UPSTREAM_REF: ${{ github.event.inputs.upstream_ref || 'main' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate config
+        run: |
+          if [ -z "$UPSTREAM_REPO" ]; then
+            echo "::error::Repository variable UPSTREAM_REPO is required. (e.g. owner/repo)"
+            exit 1
+          fi
+
+      - name: Sync from upstream
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git remote add upstream "https://github.com/${UPSTREAM_REPO}.git"
+          git fetch upstream --tags
+
+          SYNC_BRANCH="sync/upstream-$(date +%Y%m%d-%H%M%S)"
+          git checkout -B "$SYNC_BRANCH" "origin/$BASE_BRANCH"
+
+          if git show-ref --verify --quiet "refs/remotes/upstream/$UPSTREAM_REF"; then
+            git merge --no-ff --no-edit "upstream/$UPSTREAM_REF"
+          elif git show-ref --verify --quiet "refs/tags/$UPSTREAM_REF"; then
+            git merge --no-ff --no-edit "refs/tags/$UPSTREAM_REF"
+          else
+            echo "::error::upstream_ref '$UPSTREAM_REF' not found in upstream branches/tags."
+            exit 1
+          fi
+
+          git push origin "$SYNC_BRANCH"
+          echo "SYNC_BRANCH=$SYNC_BRANCH" >> "$GITHUB_ENV"
+
+      - name: Create pull request
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const base = process.env.BASE_BRANCH;
+            const head = process.env.SYNC_BRANCH;
+            const upstreamRepo = process.env.UPSTREAM_REPO;
+            const upstreamRef = process.env.UPSTREAM_REF;
+
+            const existing = await github.rest.pulls.list({
+              owner,
+              repo,
+              state: "open",
+              head: `${owner}:${head}`,
+              base
+            });
+
+            if (existing.data.length > 0) {
+              core.info("PR already exists for this sync branch.");
+              return;
+            }
+
+            await github.rest.pulls.create({
+              owner,
+              repo,
+              title: `chore: sync from ${upstreamRepo}@${upstreamRef}`,
+              head,
+              base,
+              body: "Auto-generated PR to sync updates from upstream."
+            });
