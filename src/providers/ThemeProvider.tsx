@@ -84,12 +84,12 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 		const nestedGeneral = (raw as { general?: unknown }).general;
 		const general =
 			nestedGeneral && typeof nestedGeneral === "object"
-				? (nestedGeneral as General)
+				? (nestedGeneral as unknown as General)
 				: ("primaryColor" in raw ||
 					"secondaryColor" in raw ||
 					"title" in raw ||
 					"logoType" in raw
-						? (raw as General)
+						? (raw as unknown as General)
 						: undefined);
 		const design = (raw as { design?: unknown }).design as Design | undefined;
 		return { general, design };
