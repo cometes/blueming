@@ -12,7 +12,7 @@ const respondWithCache = (req: NextRequest, body: unknown) => {
 	const etag = `"${createHash("sha1").update(payload).digest("hex")}"`;
 	const headers = {
 		"Cache-Control":
-			"public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+			"no-cache, must-revalidate",
 		ETag: etag,
 	};
 
