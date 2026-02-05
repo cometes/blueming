@@ -70,39 +70,104 @@ type AppSettings = ThemeSettings & {
 	};
 };
 
+const resolveGeneralSettings = (settings: ThemeSettings | null) => {
+	const raw = settings?.general as Record<string, unknown> | undefined;
+	if (!raw || typeof raw !== "object") return { general: undefined, design: undefined };
+	const nestedGeneral = (raw as { general?: unknown }).general;
+	const general =
+		nestedGeneral && typeof nestedGeneral === "object"
+			? (nestedGeneral as Record<string, unknown>)
+			: ("primaryColor" in raw ||
+				"secondaryColor" in raw ||
+				"title" in raw ||
+				"logoType" in raw
+					? raw
+					: undefined);
+	const design = (raw as { design?: unknown }).design as Record<string, unknown> | undefined;
+	return { general, design };
+};
+
 const buildThemeStyle = (settings: ThemeSettings | null) => {
-	const general = settings?.general?.general;
-	const design = settings?.general?.design;
-	if (!general || !design) return "";
+	const { general, design } = resolveGeneralSettings(settings);
+	if (!general && !design) return "";
 
-	const variables = [
-		`--primary-color:${general.primaryColor ?? "#007bff"}`,
-		`--secondary-color:${general.secondaryColor ?? "#6c757d"}`,
-		`--font-body:${design.font?.bodyFontFamily ?? "sans-serif"}`,
-		`--font-title:${design.font?.titleFontFamily ?? "sans-serif"}`,
-		`--color-main:${design.font?.mainFontColor ?? "#111111"}`,
-		`--color-sub:${design.font?.subFontColor ?? "#666666"}`,
-		`--bg-color:${design.background?.color ?? "#ffffff"}`,
-		`--widget-bg:${design.widget?.background ?? "rgba(255,255,255,0.8)"}`,
-		`--widget-border-color:${design.widget?.borderColor ?? "rgba(0,0,0,0.1)"}`,
-		`--widget-border-radius:${design.widget?.borderRadius ?? 16}px`,
-		`--widget-border-width:${design.widget?.borderWidth ?? 1}px`,
-		`--widget-border-style:solid`,
-		`--widget-blur:${design.widget?.blur ?? 0}px`,
-		`--card-bg:${design.card?.background ?? "rgba(255,255,255,0.9)"}`,
-		`--card-border-color:${design.card?.borderColor ?? "rgba(0,0,0,0.08)"}`,
-		`--card-border-active:${design.card?.borderActiveColor ?? "rgba(0,0,0,0.2)"}`,
-		`--card-border-radius:${design.card?.borderRadius ?? 20}px`,
-		`--card-border-style:solid`,
-		`--card-shadow:${design.card?.boxShadow ?? "none"}`,
-		`--card-translate-y:${design.card?.translateY ?? 0}px`,
-	];
+	const variables: string[] = [];
 
-	if (design.background?.type === "이미지" && design.background?.image) {
-		variables.push(`--bg-image:url("${design.background.image}")`);
+	if (general?.primaryColor !== undefined) {
+		variables.push(`--primary-color:${general.primaryColor}`);
+	}
+	if (general?.secondaryColor !== undefined) {
+		variables.push(`--secondary-color:${general.secondaryColor}`);
 	}
 
-	return `:root{${variables.join(";")}}`;
+	const font = (design as Record<string, unknown> | undefined)?.font as Record<string, unknown> | undefined;
+	if (font?.bodyFontFamily !== undefined) {
+		variables.push(`--font-body:${font.bodyFontFamily}`);
+	}
+	if (font?.titleFontFamily !== undefined) {
+		variables.push(`--font-title:${font.titleFontFamily}`);
+	}
+	if (font?.mainFontColor !== undefined) {
+		variables.push(`--color-main:${font.mainFontColor}`);
+	}
+	if (font?.subFontColor !== undefined) {
+		variables.push(`--color-sub:${font.subFontColor}`);
+	}
+
+	const background = (design as Record<string, unknown> | undefined)?.background as
+		| { type?: string; color?: string; image?: string }
+		| undefined;
+	if (background?.color !== undefined) {
+		variables.push(`--bg-color:${background.color}`);
+	}
+	if (background?.type === "이미지" && background.image) {
+		variables.push(`--bg-image:url("${background.image}")`);
+	}
+
+	const widget = (design as Record<string, unknown> | undefined)?.widget as Record<string, unknown> | undefined;
+	if (widget?.background !== undefined) {
+		variables.push(`--widget-bg:${widget.background}`);
+	}
+	if (widget?.borderColor !== undefined) {
+		variables.push(`--widget-border-color:${widget.borderColor}`);
+	}
+	if (widget?.borderRadius !== undefined) {
+		variables.push(`--widget-border-radius:${widget.borderRadius}px`);
+	}
+	if (widget?.borderWidth !== undefined) {
+		variables.push(`--widget-border-width:${widget.borderWidth}px`);
+	}
+	if (widget?.borderStyle !== undefined) {
+		variables.push(`--widget-border-style:${widget.borderStyle}`);
+	}
+	if (widget?.blur !== undefined) {
+		variables.push(`--widget-blur:${widget.blur}px`);
+	}
+
+	const card = (design as Record<string, unknown> | undefined)?.card as Record<string, unknown> | undefined;
+	if (card?.background !== undefined) {
+		variables.push(`--card-bg:${card.background}`);
+	}
+	if (card?.borderColor !== undefined) {
+		variables.push(`--card-border-color:${card.borderColor}`);
+	}
+	if (card?.borderActiveColor !== undefined) {
+		variables.push(`--card-border-active:${card.borderActiveColor}`);
+	}
+	if (card?.borderRadius !== undefined) {
+		variables.push(`--card-border-radius:${card.borderRadius}px`);
+	}
+	if (card?.borderStyle !== undefined) {
+		variables.push(`--card-border-style:${card.borderStyle}`);
+	}
+	if (card?.boxShadow !== undefined) {
+		variables.push(`--card-shadow:${card.boxShadow}`);
+	}
+	if (card?.translateY !== undefined) {
+		variables.push(`--card-translate-y:${card.translateY}px`);
+	}
+
+	return variables.length > 0 ? `:root{${variables.join(";")}}` : "";
 };
 
 const getPreloadImageUrls = (settings: AppSettings | null) => {
