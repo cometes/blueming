@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 				headers: {
 					ETag: etag,
 					"Cache-Control":
-						"public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+						"no-cache, must-revalidate",
 				},
 			});
 		}
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 			headers: {
 				ETag: etag,
 				"Cache-Control":
-					"public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+					"no-cache, must-revalidate",
 			},
 		});
 	} catch (error) {
