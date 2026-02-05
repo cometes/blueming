@@ -22,6 +22,10 @@ import {
 	ArrowUpAZ,
 	MessageSquare,
 	Link,
+	Lock,
+	Save,
+	Shield,
+	User,
 } from "lucide-react";
 import type { GallerySettings } from "@/types/gallery";
 import { DEFAULT_GALLERY_SETTINGS } from "@/types/gallery";
@@ -90,7 +94,17 @@ export default function GallerySettingsDialog({
 				<DialogHeader className="gap-0">
 					<DialogTitle className="border-b border-card-border px-5 py-4 text-main-text flex items-center justify-between">
 						<p className="font-title">갤러리 설정</p>
-						<Button onClick={handleSave}>저장하기</Button>
+						<Button
+							onClick={handleSave}
+							variant="ghost"
+							size="icon"
+							aria-label="저장하기"
+							title="저장하기"
+							className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
+							style={{ transition: "all 0.3s ease-in-out" }}
+						>
+							<Save size={16} />
+						</Button>
 					</DialogTitle>
 					<div className="px-5 py-4 text-main-text space-y-6">
 						{/* 레이아웃 선택 */}
@@ -128,7 +142,7 @@ export default function GallerySettingsDialog({
 								컬럼 수 (데스크탑 기준)
 							</Label>
 							<div className="flex gap-1 mt-2">
-								{[2, 3, 4, 5, 6].map((col) => (
+								{[2, 3, 4, 5].map((col) => (
 									<Button
 										key={col}
 										variant={
@@ -223,6 +237,64 @@ export default function GallerySettingsDialog({
 									className="flex-1"
 								>
 									<ArrowUpAZ className="mr-2 h-4 w-4" /> 오래된순
+								</Button>
+							</div>
+						</div>
+
+						{/* 작성 권한 */}
+						<div>
+							<Label className="text-sm font-medium">게시글 작성 권한</Label>
+							<div className="flex gap-2 mt-2">
+								<Button
+									variant={
+										tempSettings.writePermission === "admin"
+											? "default"
+											: "ghost"
+									}
+									onClick={() =>
+										setTempSettings((prev) => ({
+											...prev,
+											writePermission: "admin",
+										}))
+									}
+									className="flex-1"
+								>
+									<Lock className="mr-2 h-4 w-4" />
+									관리자
+								</Button>
+								<Button
+									variant={
+										tempSettings.writePermission === "manager"
+											? "default"
+											: "ghost"
+									}
+									onClick={() =>
+										setTempSettings((prev) => ({
+											...prev,
+											writePermission: "manager",
+										}))
+									}
+									className="flex-1"
+								>
+									<Shield className="mr-2 h-4 w-4" />
+									매니저
+								</Button>
+								<Button
+									variant={
+										tempSettings.writePermission === "member"
+											? "default"
+											: "ghost"
+									}
+									onClick={() =>
+										setTempSettings((prev) => ({
+											...prev,
+											writePermission: "member",
+										}))
+									}
+									className="flex-1"
+								>
+									<User className="mr-2 h-4 w-4" />
+									회원
 								</Button>
 							</div>
 						</div>

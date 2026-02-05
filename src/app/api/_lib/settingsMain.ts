@@ -15,12 +15,12 @@ type MusicPlayerSettings = {
 
 type PhotoboardSettings = {
 	postsPerRow: number;
-	writePermission: "admin" | "member";
+	writePermission: "admin" | "manager" | "member";
 };
 
 type MemoSettings = {
 	postsPerRow: number;
-	writePermission: "admin" | "member";
+	writePermission: "admin" | "manager" | "member";
 };
 
 const YT_VIDEO_ID_RE = /^[a-zA-Z0-9_-]{11}$/;
@@ -149,10 +149,15 @@ export const validatePhotoboardSettings = (
 	const postsPerRow = Number(value.postsPerRow);
 	const writePermission = value.writePermission;
 	if (!Number.isFinite(postsPerRow)) return null;
-	if (writePermission !== "admin" && writePermission !== "member") return null;
+	if (
+		writePermission !== "admin" &&
+		writePermission !== "manager" &&
+		writePermission !== "member"
+	)
+		return null;
 
 	return {
-		postsPerRow: clampNumber(Math.floor(postsPerRow), 1, 6),
+		postsPerRow: clampNumber(Math.floor(postsPerRow), 1, 5),
 		writePermission,
 	};
 };
@@ -162,10 +167,15 @@ export const validateMemoSettings = (value: unknown): MemoSettings | null => {
 	const postsPerRow = Number(value.postsPerRow);
 	const writePermission = value.writePermission;
 	if (!Number.isFinite(postsPerRow)) return null;
-	if (writePermission !== "admin" && writePermission !== "member") return null;
+	if (
+		writePermission !== "admin" &&
+		writePermission !== "manager" &&
+		writePermission !== "member"
+	)
+		return null;
 
 	return {
-		postsPerRow: clampNumber(Math.floor(postsPerRow), 1, 6),
+		postsPerRow: clampNumber(Math.floor(postsPerRow), 1, 5),
 		writePermission,
 	};
 };

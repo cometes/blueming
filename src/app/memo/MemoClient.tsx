@@ -19,6 +19,7 @@ import AdminOnly from "@/components/common/AdminOnly";
 import { useSettings } from "@/contexts/SettingsContext";
 import { setSettingsMainMemo } from "@/queries/set/setSettingsMainMemo";
 import PhotoboardSettingsDialog from "@/components/modal/PhotoboardSettingsDialog";
+import { useAdmin } from "@/hooks/auth/UseAdmin";
 
 interface MemoClientProps {
 	initialMemos?: MemoItem[];
@@ -27,6 +28,7 @@ interface MemoClientProps {
 export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 	const router = useRouter();
 	const { main, updateMain, refreshSettings } = useSettings();
+	const { isAdmin, isManagerOrAdmin, isAuthenticated } = useAdmin();
 	const [searchInput, setSearchInput] = useState("");
 	const [appliedQuery, setAppliedQuery] = useState("");
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -54,9 +56,9 @@ export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 	const [postsPerRow, setPostsPerRow] = useState(
 		resolvedMemoSettings.postsPerRow,
 	);
-	const [writePermission, setWritePermission] = useState<"admin" | "member">(
-		resolvedMemoSettings.writePermission,
-	);
+	const [writePermission, setWritePermission] = useState<
+		"admin" | "manager" | "member"
+	>(resolvedMemoSettings.writePermission);
 	const [tempPostsPerRow, setTempPostsPerRow] = useState(postsPerRow);
 	const [tempWritePermission, setTempWritePermission] =
 		useState(writePermission);
@@ -153,9 +155,7 @@ export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 		const fileImages = payload.images.filter((img) => img.file);
 		const uploadedUrls =
 			fileImages.length > 0
-				? await uploadMemoImages(
-						fileImages.map((img) => img.file as File),
-					)
+				? await uploadMemoImages(fileImages.map((img) => img.file as File))
 				: [];
 		let uploadIndex = 0;
 		const finalImageUrls = payload.images.reduce<string[]>((acc, image) => {
@@ -182,23 +182,30 @@ export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 		toast.success("메모가 등록되었습니다.");
 	};
 
-	const clampedPostsPerRow = Math.min(Math.max(postsPerRow, 1), 6);
+	const clampedPostsPerRow = Math.min(Math.max(postsPerRow, 1), 5);
+	const canWrite =
+		writePermission === "admin"
+			? isAdmin
+			: writePermission === "manager"
+				? isManagerOrAdmin
+				: isAuthenticated;
 	const columnsClass =
 		{
-			1: "columns-1 sm:columns-1 lg:columns-1",
-			2: "columns-1 sm:columns-2 lg:columns-2",
-			3: "columns-1 sm:columns-2 lg:columns-3",
-			4: "columns-1 sm:columns-2 lg:columns-4",
-			5: "columns-1 sm:columns-2 lg:columns-5",
-			6: "columns-1 sm:columns-2 lg:columns-6",
-		}[clampedPostsPerRow] ?? "columns-1 sm:columns-2 lg:columns-3";
+			1: "columns-1 sm:columns-1 md:columns-1 lg:columns-1",
+			2: "columns-1 sm:columns-2 md:columns-2 lg:columns-2",
+			3: "columns-1 sm:columns-2 md:columns-3 lg:columns-3",
+			4: "columns-1 sm:columns-2 md:columns-3 lg:columns-4",
+			5: "columns-1 sm:columns-2 md:columns-3 lg:columns-5",
+		}[clampedPostsPerRow] ?? "columns-1 sm:columns-2 md:columns-2 lg:columns-3";
 
 	return (
-		<div className="shrink-0 w-full max-w-2xl mt-[90px] mb-[40px] mx-auto">
+		<div className="w-full max-w-full md:max-w-2xl mt-[90px] mb-[40px] mx-auto md:px-0">
 			<header className="mb-10 flex items-center justify-center">
-				<div className="flex items-center gap-2 w-full sm:w-auto">
-					<div className="w-[150px]"></div>
-					<div className="w-full sm:w-[200px]">
+				<div className="flex items-center justify-center gap-2 w-full sm:w-auto">
+					{writePermission === "admin" && isAdmin ? (
+						<div className="w-[150px]"></div>
+					) : null}
+					<div className="w-[200px]">
 						<Input
 							className="border-card bg-card backdrop-blur-card rounded-card text-main-text"
 							endIcon={searchInput ? X : Search}
@@ -230,6 +237,8 @@ export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 							setTempPostsPerRow={setTempPostsPerRow}
 							tempWritePermission={tempWritePermission}
 							setTempWritePermission={setTempWritePermission}
+							showManagerOption
+							title="메모 페이지 설정"
 							onSave={handleSaveSettings}
 							trigger={
 								<Button className="bg-card border-card text-main-text rounded-full w-10 h-10 hover:border-transparent">
@@ -238,17 +247,7 @@ export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 							}
 						/>
 					</AdminOnly>
-					{writePermission === "admin" ? (
-						<AdminOnly>
-							<Button
-								type="button"
-								onClick={handleCompose}
-								className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
-							>
-								<Plus size={16} />새 글쓰기
-							</Button>
-						</AdminOnly>
-					) : (
+					{canWrite ? (
 						<Button
 							type="button"
 							onClick={handleCompose}
@@ -256,7 +255,7 @@ export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 						>
 							<Plus size={16} />새 글쓰기
 						</Button>
-					)}
+					) : null}
 				</div>
 			</header>
 
@@ -321,9 +320,7 @@ export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 									<span>{memo.author?.name ?? "게스트"}</span>
 								</div>
 
-								<span>
-									{memo.createdAt ? dateConvert(memo.createdAt) : ""}
-								</span>
+								<span>{memo.createdAt ? dateConvert(memo.createdAt) : ""}</span>
 							</div>
 						</article>
 					))

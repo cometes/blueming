@@ -229,12 +229,12 @@ interface ThemeItem {
 
 interface PhotoboardSettings {
 	postsPerRow?: number;
-	writePermission?: "admin" | "member";
+	writePermission?: "admin" | "manager" | "member";
 }
 
 interface MemoSettings {
 	postsPerRow?: number;
-	writePermission?: "admin" | "member";
+	writePermission?: "admin" | "manager" | "member";
 }
 
 // Main Settings

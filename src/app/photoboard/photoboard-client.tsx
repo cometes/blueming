@@ -29,7 +29,7 @@ export default function PhotoBoardClient({
 }: PhotoBoardClientProps) {
 	const { main, updateMain, refreshSettings } = useSettings();
 	const { user } = useAuthStore();
-	const { isAdmin } = useAdmin();
+	const { isAdmin, isManagerOrAdmin, isAuthenticated } = useAdmin();
 	const [liked, setLiked] = useState<Record<string, boolean>>({});
 	const [reposted, setReposted] = useState<Record<string, boolean>>({});
 	const [bookmarked, setBookmarked] = useState<Record<string, boolean>>({});
@@ -63,9 +63,9 @@ export default function PhotoBoardClient({
 	const [postsPerRow, setPostsPerRow] = useState(
 		resolvedPhotoboardSettings.postsPerRow,
 	);
-	const [writePermission, setWritePermission] = useState<"admin" | "member">(
-		resolvedPhotoboardSettings.writePermission,
-	);
+	const [writePermission, setWritePermission] = useState<
+		"admin" | "manager" | "member"
+	>(resolvedPhotoboardSettings.writePermission);
 
 	const [tempPostsPerRow, setTempPostsPerRow] = useState(postsPerRow);
 	const [tempWritePermission, setTempWritePermission] =
@@ -135,16 +135,15 @@ export default function PhotoBoardClient({
 		}
 	};
 
-	const clampedPostsPerRow = Math.min(Math.max(postsPerRow, 1), 6);
+	const clampedPostsPerRow = Math.min(Math.max(postsPerRow, 1), 5);
 	const columnsClass =
 		{
-			1: "columns-1 sm:columns-1 lg:columns-1",
-			2: "columns-1 sm:columns-2 lg:columns-2",
-			3: "columns-1 sm:columns-2 lg:columns-3",
-			4: "columns-1 sm:columns-2 lg:columns-4",
-			5: "columns-1 sm:columns-2 lg:columns-5",
-			6: "columns-1 sm:columns-2 lg:columns-6",
-		}[clampedPostsPerRow] ?? "columns-1 sm:columns-2 lg:columns-3";
+			1: "columns-1 sm:columns-1 md:columns-1 lg:columns-1",
+			2: "columns-1 sm:columns-2 md:columns-2 lg:columns-2",
+			3: "columns-1 sm:columns-2 md:columns-3 lg:columns-3",
+			4: "columns-1 sm:columns-2 md:columns-3 lg:columns-4",
+			5: "columns-1 sm:columns-2 md:columns-3 lg:columns-5",
+		}[clampedPostsPerRow] ?? "columns-1 sm:columns-2 md:columns-2 lg:columns-3";
 
 	const canManagePost = (post: PhotoBoardPost) =>
 		Boolean(isAdmin || (user && post.author?.id === user.uid));
@@ -222,6 +221,13 @@ export default function PhotoBoardClient({
 		}
 	};
 
+	const canWrite =
+		writePermission === "admin"
+			? isAdmin
+			: writePermission === "manager"
+				? isManagerOrAdmin
+				: isAuthenticated;
+
 	return (
 		<div className="w-full max-w-full md:max-w-2xl mt-[90px] mb-[40px] mx-auto md:px-0">
 			<header className="mb-10 flex items-center justify-center">
@@ -262,6 +268,7 @@ export default function PhotoBoardClient({
 							setTempPostsPerRow={setTempPostsPerRow}
 							tempWritePermission={tempWritePermission}
 							setTempWritePermission={setTempWritePermission}
+							showManagerOption
 							onSave={handleSaveSettings}
 							trigger={
 								<Button className="bg-card border-card text-main-text rounded-full w-10 h-10 hover:border-transparent">
@@ -270,17 +277,7 @@ export default function PhotoBoardClient({
 							}
 						/>
 					</AdminOnly>
-					{writePermission === "admin" ? (
-						<AdminOnly>
-							<Button
-								type="button"
-								onClick={() => setComposerOpen(true)}
-								className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
-							>
-								<Plus size={16} />새 글쓰기
-							</Button>
-						</AdminOnly>
-					) : (
+					{canWrite ? (
 						<Button
 							type="button"
 							onClick={() => setComposerOpen(true)}
@@ -288,7 +285,7 @@ export default function PhotoBoardClient({
 						>
 							<Plus size={16} />새 글쓰기
 						</Button>
-					)}
+					) : null}
 				</div>
 			</header>
 

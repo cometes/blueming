@@ -41,6 +41,9 @@ interface LibraryClientProps {
 	initialIsCardOn?: boolean;
 }
 
+const clampLibraryPostsPerRow = (value: number) =>
+	Math.min(Math.max(Math.floor(value), 1), 5);
+
 export default function LibraryClient({
 	listData,
 	pinnedData,
@@ -87,7 +90,7 @@ export default function LibraryClient({
 		resolvedLibrarySettings.postsPerPage,
 	);
 	const [postsPerRow, setPostsPerRow] = useState(
-		resolvedLibrarySettings.postsPerRow,
+		clampLibraryPostsPerRow(resolvedLibrarySettings.postsPerRow),
 	);
 	const [writePermission, setWritePermission] = useState<
 		"admin" | "manager" | "member"
@@ -183,7 +186,7 @@ export default function LibraryClient({
 	useEffect(() => {
 		setLayoutType(resolvedLibrarySettings.layoutType);
 		setPostsPerPage(resolvedLibrarySettings.postsPerPage);
-		setPostsPerRow(resolvedLibrarySettings.postsPerRow);
+		setPostsPerRow(clampLibraryPostsPerRow(resolvedLibrarySettings.postsPerRow));
 		setWritePermission(resolvedLibrarySettings.writePermission);
 	}, [resolvedLibrarySettings]);
 
@@ -239,13 +242,13 @@ export default function LibraryClient({
 			const payload = {
 				layoutType: tempLayoutType,
 				postsPerPage: tempPostsPerPage,
-				postsPerRow: tempPostsPerRow,
+				postsPerRow: clampLibraryPostsPerRow(tempPostsPerRow),
 				writePermission: tempWritePermission,
 			};
 			const response = await setSettingsLibrary(payload);
 			setLayoutType(response.library.layoutType);
 			setPostsPerPage(response.library.postsPerPage);
-			setPostsPerRow(response.library.postsPerRow);
+			setPostsPerRow(clampLibraryPostsPerRow(response.library.postsPerRow));
 			setWritePermission(response.library.writePermission);
 			updateLibrary?.(response.library);
 			await refreshSettings?.({ broadcast: true });

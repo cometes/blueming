@@ -36,7 +36,10 @@ const pickLibraryPayload = (payload: unknown) => {
 		nextPayload.postsPerPage = data.postsPerPage;
 	}
 	if (typeof data.postsPerRow === "number") {
-		nextPayload.postsPerRow = data.postsPerRow;
+		nextPayload.postsPerRow = Math.min(
+			Math.max(Math.floor(data.postsPerRow), 1),
+			5,
+		);
 	}
 	if (typeof data.writePermission === "string") {
 		if (["admin", "manager", "member"].includes(data.writePermission)) {

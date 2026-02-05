@@ -95,6 +95,30 @@ export async function PATCH(req: NextRequest) {
 		if (!gallerySettings || typeof gallerySettings !== "object") {
 			return jsonError(400, "gallery settings object is required");
 		}
+		const writePermission = (gallerySettings as Record<string, unknown>)
+			.writePermission;
+		if (
+			writePermission !== undefined &&
+			writePermission !== "admin" &&
+			writePermission !== "manager" &&
+			writePermission !== "member"
+		) {
+			return jsonError(400, "Invalid gallery writePermission");
+		}
+		const options = (gallerySettings as Record<string, unknown>).options;
+		if (options && typeof options === "object") {
+			const columns = (options as Record<string, unknown>).columns;
+			if (columns !== undefined) {
+				const numericColumns = Number(columns);
+				if (!Number.isFinite(numericColumns)) {
+					return jsonError(400, "Invalid gallery columns");
+				}
+				(options as Record<string, unknown>).columns = Math.min(
+					Math.max(Math.floor(numericColumns), 1),
+					5,
+				);
+			}
+		}
 
 		const db = getDb();
 		await db.collection("settings").doc("gallery").set(gallerySettings, {

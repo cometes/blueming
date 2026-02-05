@@ -19,6 +19,22 @@ import {
 
 export const runtime = "nodejs";
 
+const getMemoWritePermission = async (
+	db: FirebaseFirestore.Firestore
+): Promise<"admin" | "manager" | "member"> => {
+	const docRef = db.collection("settings").doc("main");
+	const snapshot = await docRef.get();
+	const permission = snapshot.data()?.memo?.writePermission;
+	if (
+		permission === "admin" ||
+		permission === "manager" ||
+		permission === "member"
+	) {
+		return permission;
+	}
+	return "member";
+};
+
 export async function GET(req: NextRequest) {
 	try {
 		const db = getDb();
@@ -63,6 +79,17 @@ export async function POST(req: NextRequest) {
 
 	try {
 		const db = getDb();
+		const writePermission = await getMemoWritePermission(db);
+		const canWrite =
+			writePermission === "member"
+				? true
+				: writePermission === "manager"
+					? auth.auth.role === "manager" || auth.auth.role === "admin"
+					: auth.auth.isAdmin === true;
+		if (!canWrite) {
+			return jsonError(403, "Write permission required.");
+		}
+
 		const body = await req.json();
 		const title = normalizeTitle(body?.title) || "제목 없음";
 		const content = normalizeContent(body?.content);
