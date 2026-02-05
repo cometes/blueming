@@ -12,6 +12,8 @@ export type AuthContext = {
 	role: "user" | "manager" | "admin";
 };
 
+const OWNER_UID = process.env.FIREBASE_OWNER_UID?.trim() ?? "";
+
 export const getAuthContext = async (): Promise<AuthContext | null> => {
 	try {
 		const store = await cookies();
@@ -21,7 +23,9 @@ export const getAuthContext = async (): Promise<AuthContext | null> => {
 
 		const decoded = await getFireAuth().verifySessionCookie(session, true);
 		const roleClaim = typeof decoded.role === "string" ? decoded.role : null;
-		const isAdmin = decoded.admin === true || decoded.isAdmin === true;
+		const isOwner = OWNER_UID !== "" && decoded.uid === OWNER_UID;
+		const isAdmin =
+			decoded.admin === true || decoded.isAdmin === true || isOwner;
 		const isManager = decoded.manager === true || decoded.isManager === true;
 		let role: "user" | "manager" | "admin" = "user";
 		if (roleClaim === "admin" || isAdmin) {

@@ -9,6 +9,8 @@ export type AuthContext = {
 	isAdmin: boolean;
 };
 
+const OWNER_UID = process.env.FIREBASE_OWNER_UID?.trim() ?? "";
+
 export const getAuthContext = async (
 	req: express.Request
 ): Promise<AuthContext | null> => {
@@ -17,7 +19,8 @@ export const getAuthContext = async (
 	const token = header.slice("Bearer ".length);
 	try {
 		const decoded = await admin.auth().verifyIdToken(token);
-		const isAdmin = decoded.admin === true || decoded.isAdmin === true;
+		const isOwner = OWNER_UID !== "" && decoded.uid === OWNER_UID;
+		const isAdmin = decoded.admin === true || decoded.isAdmin === true || isOwner;
 		return {
 			uid: decoded.uid,
 			email: decoded.email ?? null,
