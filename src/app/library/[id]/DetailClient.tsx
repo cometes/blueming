@@ -18,7 +18,6 @@ import { useAdmin } from "@/hooks/auth/UseAdmin";
 import { deleteLibraryPost } from "@/queries/set/deleteLibrary";
 import { setLibraryPin } from "@/queries/set/setLibraryPin";
 import { apiClient, getApiErrorMessage } from "@/queries/apiClient";
-import { getAuthHeader } from "@/queries/getAuthHeader";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth/store";
@@ -306,7 +305,8 @@ export default function DetailClient({ detailData }) {
 	};
 
 	const requiresPassword =
-		localDetail?.allow === "password" && !localDetail?.content;
+		localDetail?.allow === "password" &&
+		(localDetail?.requiresPassword ?? !localDetail?.content);
 	const detailId = localDetail?.slug || localDetail?.id;
 	const requiresSecretAccess = isSecret && !canViewSecret;
 	const canShowComments =
@@ -353,16 +353,9 @@ export default function DetailClient({ detailData }) {
 		let isMounted = true;
 
 		const fetchWithAuth = async () => {
-			const headers = await getAuthHeader();
-			if (!headers.Authorization) {
-				if (isMounted) setAuthChecked(true);
-				return;
-			}
 			try {
-				const response = await apiClient.get(`/library/detail/${detailId}`, {
-					headers,
-				});
-				if (isMounted && response.data?.content) {
+				const response = await apiClient.get(`/library/detail/${detailId}`);
+				if (isMounted && response.data) {
 					setLocalDetail(response.data);
 				}
 			} catch {
@@ -378,6 +371,21 @@ export default function DetailClient({ detailData }) {
 			isMounted = false;
 		};
 	}, [detailId, isAuthLoading, requiresPassword]);
+
+	useEffect(() => {
+		if (!isSecret) {
+			setSecretAccessGranted(false);
+			setSecretAuthChecked(true);
+			return;
+		}
+		if (isAuthLoading) return;
+		if (isAdmin || isOwner) {
+			setSecretAccessGranted(true);
+		} else {
+			setSecretAccessGranted(false);
+		}
+		setSecretAuthChecked(true);
+	}, [isSecret, isAuthLoading, isAdmin, isOwner]);
 
 	useEffect(() => {
 		if (!isSecret || !detailId) {
