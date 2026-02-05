@@ -76,67 +76,141 @@ const syncFontAssets = (fonts: FontRegistryItem[]) => {
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
 	const settings = useSettings();
-	const design = settings.general?.design;
-	const general = settings.general?.general;
+	const resolveGeneral = () => {
+		const raw = settings.general as Record<string, unknown> | undefined;
+		if (!raw || typeof raw !== "object") {
+			return { general: undefined as General | undefined, design: undefined as Design | undefined };
+		}
+		const nestedGeneral = (raw as { general?: unknown }).general;
+		const general =
+			nestedGeneral && typeof nestedGeneral === "object"
+				? (nestedGeneral as General)
+				: ("primaryColor" in raw ||
+					"secondaryColor" in raw ||
+					"title" in raw ||
+					"logoType" in raw
+						? (raw as General)
+						: undefined);
+		const design = (raw as { design?: unknown }).design as Design | undefined;
+		return { general, design };
+	};
+	const { general, design } = resolveGeneral();
 	const fontRegistry = useMemo(
 		() => settings.general?.fontRegistry ?? [],
 		[settings.general?.fontRegistry]
 	);
 
-	const setCSSVariables = (design: Design, general: General) => {
+	const setCSSVariables = (design?: Design, general?: General) => {
 		const root = document.documentElement;
+		const computed = getComputedStyle(root);
+		const pick = (value: string | undefined, fallbackVar: string, fallback: string) => {
+			if (value && value.trim().length > 0) return value;
+			const existing = computed.getPropertyValue(fallbackVar).trim();
+			return existing || fallback;
+		};
+		const font = design?.font;
+		const background = design?.background;
+		const widget = design?.widget;
+		const card = design?.card;
 
 		// 색상 변수
-		root.style.setProperty('--primary-color', general.primaryColor);
-		root.style.setProperty('--secondary-color', general.secondaryColor);
+		if (general?.primaryColor !== undefined) {
+			root.style.setProperty('--primary-color', pick(general.primaryColor, "--primary-color", "#007bff"));
+		}
+		if (general?.secondaryColor !== undefined) {
+			root.style.setProperty('--secondary-color', pick(general.secondaryColor, "--secondary-color", "#6c757d"));
+		}
 		
 		// 폰트 변수
-		root.style.setProperty('--font-body', design.font.bodyFontFamily);
-		root.style.setProperty('--font-title', design.font.titleFontFamily);
-		root.style.setProperty('--color-main', design.font.mainFontColor);
-		root.style.setProperty('--color-sub', design.font.subFontColor);
+		if (font?.bodyFontFamily !== undefined) {
+			root.style.setProperty('--font-body', pick(font.bodyFontFamily, "--font-body", "sans-serif"));
+		}
+		if (font?.titleFontFamily !== undefined) {
+			root.style.setProperty('--font-title', pick(font.titleFontFamily, "--font-title", "sans-serif"));
+		}
+		if (font?.mainFontColor !== undefined) {
+			root.style.setProperty('--color-main', pick(font.mainFontColor, "--color-main", "#111111"));
+		}
+		if (font?.subFontColor !== undefined) {
+			root.style.setProperty('--color-sub', pick(font.subFontColor, "--color-sub", "#666666"));
+		}
 		
 		// 배경 변수
-		root.style.setProperty('--bg-color', design.background.color);
-		if (design.background.type === '이미지' && design.background.image) {
-			root.style.setProperty('--bg-image', `url(${design.background.image})`);
-		} else {
-			root.style.removeProperty('--bg-image');
+		if (background?.color !== undefined) {
+			root.style.setProperty('--bg-color', pick(background.color, "--bg-color", "#ffffff"));
+		}
+		if (background?.type !== undefined) {
+			if (background.type === '이미지' && background.image) {
+				root.style.setProperty('--bg-image', `url(${background.image})`);
+			} else {
+				root.style.removeProperty('--bg-image');
+			}
 		}
 		
 		// 위젯 디자인 변수
-		root.style.setProperty('--widget-bg', design.widget.background);
-		root.style.setProperty('--widget-border-color', design.widget.borderColor);
-		root.style.setProperty('--widget-border-radius', `${design.widget.borderRadius}px`);
-		root.style.setProperty('--widget-border-width', `${design.widget.borderWidth}px`);
-		root.style.setProperty('--widget-border-style', 'solid');
-		root.style.setProperty('--widget-blur', `${design.widget.blur}px`);
-		if (design.widget.borderImage) {
-			root.style.setProperty('--widget-border-image', `url("${design.widget.borderImage}")`);
-			root.style.setProperty('--widget-border-image-type', design.widget.borderImageType || 'full');
-		} else {
-			root.style.removeProperty('--widget-border-image');
-			root.style.removeProperty('--widget-border-image-type');
+		if (widget?.background !== undefined) {
+			root.style.setProperty('--widget-bg', pick(widget.background, "--widget-bg", "rgba(255,255,255,0.8)"));
+		}
+		if (widget?.borderColor !== undefined) {
+			root.style.setProperty('--widget-border-color', pick(widget.borderColor, "--widget-border-color", "rgba(0,0,0,0.1)"));
+		}
+		if (widget?.borderRadius !== undefined) {
+			root.style.setProperty('--widget-border-radius', `${widget.borderRadius}px`);
+		}
+		if (widget?.borderWidth !== undefined) {
+			root.style.setProperty('--widget-border-width', `${widget.borderWidth}px`);
+		}
+		if (widget?.borderStyle !== undefined) {
+			root.style.setProperty('--widget-border-style', widget.borderStyle);
+		}
+		if (widget?.blur !== undefined) {
+			root.style.setProperty('--widget-blur', `${widget.blur}px`);
+		}
+		if (widget && "borderImage" in widget) {
+			if (widget.borderImage) {
+				root.style.setProperty('--widget-border-image', `url("${widget.borderImage}")`);
+				root.style.setProperty('--widget-border-image-type', widget.borderImageType || 'full');
+			} else {
+				root.style.removeProperty('--widget-border-image');
+				root.style.removeProperty('--widget-border-image-type');
+			}
 		}
 		
 		// 카드 디자인 변수
-		root.style.setProperty('--card-bg', design.card.background);
-		root.style.setProperty('--card-border-color', design.card.borderColor);
-		root.style.setProperty('--card-border-active', design.card.borderActiveColor);
-		root.style.setProperty('--card-border-radius', `${design.card.borderRadius}px`);
-		root.style.setProperty('--card-border-style', 'solid');
-		root.style.setProperty('--card-shadow', design.card.boxShadow);
-		root.style.setProperty('--card-translate-y', `${design.card.translateY}px`);
-		root.style.setProperty('--card-blur', `${design.card.blur}px`);
+		if (card?.background !== undefined) {
+			root.style.setProperty('--card-bg', pick(card.background, "--card-bg", "rgba(255,255,255,0.9)"));
+		}
+		if (card?.borderColor !== undefined) {
+			root.style.setProperty('--card-border-color', pick(card.borderColor, "--card-border-color", "rgba(0,0,0,0.08)"));
+		}
+		if (card?.borderActiveColor !== undefined) {
+			root.style.setProperty('--card-border-active', pick(card.borderActiveColor, "--card-border-active", "rgba(0,0,0,0.2)"));
+		}
+		if (card?.borderRadius !== undefined) {
+			root.style.setProperty('--card-border-radius', `${card.borderRadius}px`);
+		}
+		if (card?.borderStyle !== undefined) {
+			root.style.setProperty('--card-border-style', card.borderStyle);
+		}
+		if (card?.boxShadow !== undefined) {
+			root.style.setProperty('--card-shadow', pick(card.boxShadow, "--card-shadow", "none"));
+		}
+		if (card?.translateY !== undefined) {
+			root.style.setProperty('--card-translate-y', `${card.translateY}px`);
+		}
+		if (card?.blur !== undefined) {
+			root.style.setProperty('--card-blur', `${card.blur}px`);
+		}
 	};
 
 	useEffect(() => {
-		if (design && general) {
+		if (design || general) {
 			// DOM이 준비되면 즉시 CSS 변수 설정
 			setCSSVariables(design, general);
 			
 			// 보더 이미지 적용
-			if (design.widget.borderImage) {
+			const widget = design?.widget;
+			if (widget && "borderImage" in widget && widget.borderImage) {
 				const widgetWrappers = document.querySelectorAll('.widget-wrapper');
 				widgetWrappers.forEach((wrapper) => {
 					const element = wrapper as HTMLElement;
@@ -145,10 +219,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 					const existingCorners = element.querySelectorAll('.widget-corner-image');
 					existingCorners.forEach((corner) => corner.remove());
 					
-					if (design.widget.borderImageType === 'corner') {
+					if (widget.borderImageType === 'corner') {
 						element.setAttribute('data-border-image-type', 'corner');
 						// 코너 이미지 적용 (4개 코너 모두)
-						element.style.setProperty('--widget-corner-image', `url("${design.widget.borderImage}")`);
+						element.style.setProperty('--widget-corner-image', `url("${widget.borderImage}")`);
 						
 						// 4개 코너에 이미지 요소 추가
 						const corners = [
@@ -179,23 +253,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 					} else {
 						element.setAttribute('data-border-image-type', 'full');
 						// 전체 보더 이미지 적용
-						element.style.borderImage = `url("${design.widget.borderImage}") ${design.widget.borderWidth} fill`;
-						element.style.borderImageSlice = `${design.widget.borderWidth}`;
+						element.style.borderImage = `url("${widget.borderImage}") ${widget.borderWidth ?? 1} fill`;
+						element.style.borderImageSlice = `${widget.borderWidth ?? 1}`;
 					}
-				});
-			} else {
-				// 보더 이미지 제거
-				const widgetWrappers = document.querySelectorAll('.widget-wrapper');
-				widgetWrappers.forEach((wrapper) => {
-					const element = wrapper as HTMLElement;
-					element.removeAttribute('data-border-image-type');
-					element.style.borderImage = '';
-					element.style.borderImageSlice = '';
-					element.style.removeProperty('--widget-corner-image');
-					
-					// 코너 요소 제거
-					const corners = element.querySelectorAll('.widget-corner-image');
-					corners.forEach((corner) => corner.remove());
 				});
 			}
 		}
@@ -209,7 +269,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
 	// 초기 로딩 시 즉시 적용 (hydration 전에)
 	useEffect(() => {
-		if (typeof window !== 'undefined' && design && general) {
+		if (typeof window !== 'undefined' && (design || general)) {
 			// requestAnimationFrame을 사용해 렌더링 최적화
 			requestAnimationFrame(() => {
 				setCSSVariables(design, general);
