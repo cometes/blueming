@@ -62,7 +62,6 @@ export default function LibraryClient({
 	const searchParams = useSearchParams();
 	const [isCardPrefsLoaded] = useState(true);
 	const { isAdmin, isManagerOrAdmin, isAuthenticated } = useAdmin();
-	const skipNextQueryUpdateRef = useRef(false);
 
 	const defaultLibrarySettings = useMemo(
 		() => ({
@@ -98,39 +97,26 @@ export default function LibraryClient({
 		resolvedLibrarySettings.writePermission,
 	);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
-	const {
-		searchQuery,
-		setSearchQuery,
-		appliedQuery,
-		setAppliedQuery,
-		activeTag,
-		setActiveTag,
-		sortOrder,
-		setSortOrder,
-		listPage,
-		seriesPage,
-		setListPage,
-		setActivePage,
-	} = useLibraryFilters({
-		isSeriesOn,
-		postsPerPage,
-		initialListPage: initialPage,
-	});
+
+	// 검색어 입력 상태 (실제 검색은 엔터 시)
+	const [searchInputValue, setSearchInputValue] = useState("");
+
+	// URL 기반 필터 (단일 진실 소스)
+	const filters = useLibraryFilters({ isSeriesOn });
+
+	// 데이터 페칭
 	const { listItems, pinnedItems, listTotalCount, tagOptions, isLoading } =
 		useLibraryListData({
 			initialList: listData,
 			initialPinned: pinnedData,
 			initialTotal: listTotal,
 			initialTags: tagData,
-			initialHasData: listTotal > 0 || listData.length > 0,
 			isSeriesOn,
-			listPage,
-			postsPerPage,
-			sortOrder,
-			activeTag,
-			appliedQuery,
-			setListPage,
-			enablePrefetch: false,
+			page: filters.page,
+			limit: postsPerPage,
+			sort: filters.sort,
+			tag: filters.tag,
+			query: filters.query,
 		});
 
 	// Dialog 임시 상태 (저장 전까지 사용)
@@ -190,40 +176,12 @@ export default function LibraryClient({
 		setWritePermission(resolvedLibrarySettings.writePermission);
 	}, [resolvedLibrarySettings]);
 
-	useEffect(() => {
-		if (isSeriesOn) return;
-		const pageParam = searchParams.get("page");
-		const parsedPage = pageParam ? Number(pageParam) : 1;
-		const nextPage =
-			Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-		if (nextPage !== listPage) {
-			skipNextQueryUpdateRef.current = true;
-			setListPage(nextPage);
-		}
-	}, [isSeriesOn, searchParams, listPage, setListPage]);
-
-	useEffect(() => {
-		if (isSeriesOn) return;
-		if (skipNextQueryUpdateRef.current) {
-			skipNextQueryUpdateRef.current = false;
-			return;
-		}
-		const pageParam = searchParams.get("page");
-		const parsedPage = pageParam ? Number(pageParam) : 1;
-		const nextPage =
-			Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-		if (nextPage !== listPage) {
-			updatePageParam(listPage);
-		}
-	}, [isSeriesOn, listPage, updatePageParam, searchParams]);
-
 	const handlePageChange = useCallback(
 		(page: number) => {
-			setActivePage(page);
-			updatePageParam(page);
+			filters.setPage(page);
 			window.scrollTo({ top: 0, behavior: "smooth" });
 		},
-		[setActivePage, updatePageParam],
+		[filters],
 	);
 
 	// Dialog가 열릴 때 현재 설정값으로 임시 상태 초기화
@@ -263,20 +221,20 @@ export default function LibraryClient({
 
 	const filteredSeriesData = useMemo(() => {
 		const sorted = [...seriesData].sort((a, b) => {
-			if (sortOrder === "title") {
+			if (filters.sort === "title") {
 				return (a.title || "").localeCompare(b.title || "");
 			}
 			const aTime = new Date(a.createdAt).getTime();
 			const bTime = new Date(b.createdAt).getTime();
-			return sortOrder === "latest" ? bTime - aTime : aTime - bTime;
+			return filters.sort === "latest" ? bTime - aTime : aTime - bTime;
 		});
 		return sorted;
-	}, [seriesData, sortOrder]);
+	}, [seriesData, filters.sort]);
 
 	const { totalPages, currentPageSafe, pagedSeriesData } = useMemo(() => {
 		const totalItems = isSeriesOn ? filteredSeriesData.length : listTotalCount;
 		const nextTotalPages = Math.max(1, Math.ceil(totalItems / postsPerPage));
-		const activePage = isSeriesOn ? seriesPage : listPage;
+		const activePage = filters.page;
 		const nextCurrentPage = Math.min(activePage, nextTotalPages);
 		const startIndex = (nextCurrentPage - 1) * postsPerPage;
 		return {
@@ -290,8 +248,7 @@ export default function LibraryClient({
 	}, [
 		filteredSeriesData,
 		isSeriesOn,
-		listPage,
-		seriesPage,
+		filters.page,
 		listTotalCount,
 		postsPerPage,
 	]);
@@ -302,12 +259,10 @@ export default function LibraryClient({
 
 	const handleTagSelect = useCallback(
 		(tag: string) => {
-			setActiveTag(tag);
-			setSearchQuery("");
-			setAppliedQuery("");
-			setListPage(1);
+			filters.setTag(tag);
+			setSearchInputValue("");
 		},
-		[setActiveTag, setAppliedQuery, setListPage, setSearchQuery],
+		[filters],
 	);
 
 	const canWrite =
@@ -361,25 +316,21 @@ export default function LibraryClient({
 					<div className="flex items-center w-fit h-full">
 						<Input
 							className="border-card bg-card backdrop-blur-card rounded-card text-main-text"
-							endIcon={searchQuery ? X : Search}
-							value={searchQuery}
-							onChange={(e) => setSearchQuery(e.target.value)}
+							endIcon={searchInputValue ? X : Search}
+							value={searchInputValue}
+							onChange={(e) => setSearchInputValue(e.target.value)}
 							placeholder="제목, 태그로 검색"
 							onKeyDown={(e) => {
 								if (e.key === "Enter") {
 									e.preventDefault();
-									setActiveTag("전체");
-									setListPage(1);
-									setAppliedQuery(searchQuery.trim());
+									filters.setQuery(searchInputValue.trim());
 								}
 							}}
 							onEndIconClick={
-								searchQuery
+								searchInputValue
 									? () => {
-											setSearchQuery("");
-											setAppliedQuery("");
-											setActiveTag("전체");
-											setListPage(1);
+											setSearchInputValue("");
+											filters.clearSearch();
 										}
 									: undefined
 							}
@@ -479,10 +430,10 @@ export default function LibraryClient({
 						layoutType={layoutType}
 						postsPerRow={postsPerRow}
 						tagOptions={tagOptions}
-						activeTag={activeTag}
+						activeTag={filters.tag}
 						setActiveTag={handleTagSelect}
-						sortOrder={sortOrder}
-						setSortOrder={setSortOrder}
+						sortOrder={filters.sort}
+						setSortOrder={filters.setSort}
 						onClickMoveToPage={onClickMoveToPage}
 						detailQuery={detailQuery}
 						totalPages={totalPages}

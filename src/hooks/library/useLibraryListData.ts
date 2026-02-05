@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { fetchLibraryList, fetchLibraryTags } from "@/queries/fetch/fetchLibrary";
 
 interface LibraryItem {
@@ -15,28 +15,17 @@ interface LibraryItem {
 	allow?: "all" | "password" | "secret";
 }
 
-type ListParams = {
-	page: number;
-	limit: number;
-	sort: "latest" | "oldest" | "title";
-	tag?: string;
-	query?: string;
-};
-
 interface UseLibraryListDataParams {
 	initialList: LibraryItem[];
 	initialPinned: LibraryItem[];
 	initialTotal: number;
 	initialTags?: string[];
-	initialHasData?: boolean;
 	isSeriesOn: boolean;
-	listPage: number;
-	postsPerPage: number;
-	sortOrder: "latest" | "oldest" | "title";
-	activeTag: string;
-	appliedQuery: string;
-	setListPage: (page: number) => void;
-	enablePrefetch?: boolean;
+	page: number;
+	limit: number;
+	sort: "latest" | "oldest" | "title";
+	tag: string;
+	query: string;
 }
 
 export const useLibraryListData = ({
@@ -45,44 +34,29 @@ export const useLibraryListData = ({
 	initialTotal,
 	initialTags,
 	isSeriesOn,
-	listPage,
-	postsPerPage,
-	sortOrder,
-	activeTag,
-	appliedQuery,
-	setListPage,
-	enablePrefetch = false,
-	initialHasData = false,
+	page,
+	limit,
+	sort,
+	tag,
+	query,
 }: UseLibraryListDataParams) => {
 	const [listItems, setListItems] = useState<LibraryItem[]>(initialList);
 	const [pinnedItems, setPinnedItems] = useState<LibraryItem[]>(initialPinned);
 	const [listTotalCount, setListTotalCount] = useState(initialTotal);
 	const [tagOptions, setTagOptions] = useState<string[]>(initialTags ?? []);
-	const [isLoading, setIsLoading] = useState(!initialHasData);
-	const requestIdRef = useRef(0);
-	const initialParamsRef = useRef<ListParams>({
-		page: listPage,
-		limit: postsPerPage,
-		sort: sortOrder,
-		tag: activeTag === "전체" ? undefined : activeTag,
-		query: appliedQuery || undefined,
-	});
-	const initialFetchDoneRef = useRef(false);
+	const [isLoading, setIsLoading] = useState(false);
 
-	useEffect(() => {
-		setListItems(initialList);
-		setPinnedItems(initialPinned);
-		setListTotalCount(initialTotal);
-		if (initialHasData) {
-			setIsLoading(false);
-		}
-	}, [initialList, initialPinned, initialTotal, initialHasData]);
+	// 중복 요청 방지를 위한 ref
+	const abortControllerRef = useRef<AbortController | null>(null);
+	const lastFetchParamsRef = useRef<string>("");
 
+	// 태그 목록 로드
 	useEffect(() => {
 		if (initialTags && initialTags.length > 0) {
 			setTagOptions(initialTags);
 			return;
 		}
+
 		const loadTags = async () => {
 			try {
 				const { data } = await fetchLibraryTags({
@@ -96,119 +70,74 @@ export const useLibraryListData = ({
 				setTagOptions([]);
 			}
 		};
+
 		loadTags();
 	}, [initialTags]);
 
-	const listParams = useMemo(
-		() => ({
-			page: listPage,
-			limit: postsPerPage,
-			sort: sortOrder,
-			tag: activeTag === "전체" ? undefined : activeTag,
-			query: appliedQuery || undefined,
-		}),
-		[listPage, postsPerPage, sortOrder, activeTag, appliedQuery]
-	);
-
-	const areParamsEqual = (a: ListParams, b: ListParams) =>
-		a.page === b.page &&
-		a.limit === b.limit &&
-		a.sort === b.sort &&
-		a.tag === b.tag &&
-		a.query === b.query;
-
-	const refreshList = useCallback(async () => {
-		const requestId = ++requestIdRef.current;
-		const { data } = await fetchLibraryList(listParams);
-		if (requestId !== requestIdRef.current) {
-			return data;
-		}
-		setListItems(Array.isArray(data?.items) ? data.items : []);
-		setPinnedItems(Array.isArray(data?.pinnedItems) ? data.pinnedItems : []);
-		setListTotalCount(typeof data?.total === "number" ? data.total : 0);
-		return data;
-	}, [listParams]);
-
+	// 데이터 페칭
 	useEffect(() => {
+		// 시리즈 탭이면 페칭하지 않음
 		if (isSeriesOn) {
 			return;
 		}
 
-		const fetchPage = async () => {
-			const shouldSkipInitialFetch =
-				!initialFetchDoneRef.current &&
-				initialParamsRef.current &&
-				initialHasData &&
-				areParamsEqual(listParams, initialParamsRef.current);
-			if (shouldSkipInitialFetch) {
-				initialFetchDoneRef.current = true;
-				return;
-			}
+		// 현재 요청 파라미터
+		const currentParams = JSON.stringify({ page, limit, sort, tag, query });
 
+		// 이전 요청과 동일하면 스킵
+		if (currentParams === lastFetchParamsRef.current) {
+			return;
+		}
+
+		// 이전 요청 취소
+		if (abortControllerRef.current) {
+			abortControllerRef.current.abort();
+		}
+
+		const controller = new AbortController();
+		abortControllerRef.current = controller;
+		lastFetchParamsRef.current = currentParams;
+
+		const fetchData = async () => {
 			setIsLoading(true);
+
 			try {
-				const data = await refreshList();
-				const nextTotalPages = Math.max(
-					1,
-					Math.ceil((data?.total || 0) / postsPerPage)
-				);
-				if (listPage > nextTotalPages) {
-					setListPage(nextTotalPages);
+				const { data } = await fetchLibraryList({
+					page,
+					limit,
+					sort,
+					tag: tag === "전체" ? undefined : tag,
+					query: query || undefined,
+				});
+
+				// 요청이 취소되었으면 상태 업데이트 안 함
+				if (controller.signal.aborted) {
+					return;
 				}
-			} catch {
+
+				setListItems(Array.isArray(data?.items) ? data.items : []);
+				setPinnedItems(Array.isArray(data?.pinnedItems) ? data.pinnedItems : []);
+				setListTotalCount(typeof data?.total === "number" ? data.total : 0);
+			} catch (error) {
+				if (controller.signal.aborted) {
+					return;
+				}
 				setListItems([]);
+				setPinnedItems([]);
 				setListTotalCount(0);
 			} finally {
-				initialFetchDoneRef.current = true;
-				setIsLoading(false);
+				if (!controller.signal.aborted) {
+					setIsLoading(false);
+				}
 			}
 		};
 
-		fetchPage();
-	}, [
-		isSeriesOn,
-		refreshList,
-		listPage,
-		postsPerPage,
-		setListPage,
-		listParams,
-		initialHasData,
-	]);
+		fetchData();
 
-	useEffect(() => {
-		if (!enablePrefetch) {
-			return;
-		}
-		if (isSeriesOn) {
-			return;
-		}
-
-		const totalPages = Math.max(1, Math.ceil(listTotalCount / postsPerPage));
-		if (listPage >= totalPages) {
-			return;
-		}
-
-		const nextPage = listPage + 1;
-		fetchLibraryList(
-			{
-				page: nextPage,
-				limit: postsPerPage,
-				sort: sortOrder,
-				tag: activeTag === "전체" ? undefined : activeTag,
-				query: appliedQuery || undefined,
-			},
-			{ useCache: true, staleTimeMs: 60_000 }
-		);
-	}, [
-		isSeriesOn,
-		listPage,
-		listTotalCount,
-		postsPerPage,
-		sortOrder,
-		activeTag,
-		appliedQuery,
-		enablePrefetch,
-	]);
+		return () => {
+			controller.abort();
+		};
+	}, [isSeriesOn, page, limit, sort, tag, query]);
 
 	return {
 		listItems,
