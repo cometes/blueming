@@ -108,9 +108,7 @@ export default function Layout({ children }: LayoutProps) {
 						? "max-w-none px-0 h-auto"
 						: isMainPage
 							? "max-w-7xl px-2.5 md:px-5 h-dvh"
-							: isGalleryPage
-								? "max-w-none h-auto px-2.5 md:px-5"
-								: "max-w-5xl px-2.5 md:px-5 h-auto",
+							: "max-w-5xl px-2.5 md:px-5 h-auto"
 				)}
 			>
 				<div className="w-full h-full flex items-start justify-center gap-4 md:gap-6 relative">
