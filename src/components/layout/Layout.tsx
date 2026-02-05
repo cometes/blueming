@@ -107,13 +107,11 @@ export default function Layout({ children }: LayoutProps) {
 					isStickerBoardEditPage
 						? "max-w-none px-0 h-auto"
 						: isMainPage
-							? "max-w-7xl px-2.5 md:px-5 h-dvh"
-							: isGalleryPage
-								? "max-w-none h-auto px-2.5 md:px-5"
-								: "max-w-5xl px-2.5 md:px-5 h-auto",
+							? "max-w-7xl px-3.5 md:px-5 h-dvh"
+							: "max-w-5xl px-3.5 md:px-5 h-auto"
 				)}
 			>
-				<div className="w-full h-full flex items-start justify-center gap-4 md:gap-6 relative">
+				<div className="w-full h-full flex items-start justify-center gap-0 sm:gap-4 md:gap-6 relative">
 					{showMenu && !isMenuRightAligned && <WidgetMenu />}
 					{children}
 					{showMenu && isMenuRightAligned && <WidgetMenu />}

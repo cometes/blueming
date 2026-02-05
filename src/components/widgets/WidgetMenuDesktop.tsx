@@ -27,7 +27,7 @@ const renderLogo = (design: MenuDesign) => {
 		return (
 			<Link href="/" className="block">
 				<div
-					className="text-center mb-4 font-bold text-2xl min-[1200px]:text-4xl px-2 min-[1200px]:px-4 w-50 h-20 flex items-center justify-center break-keep transition-[font-size,padding] duration-300"
+					className="text-center mb-4 font-bold text-xl min-[900px]:text-2xl min-[1200px]:text-3xl min-[1400px]:text-4xl px-1.5 min-[900px]:px-2 min-[1200px]:px-3 min-[1400px]:px-4 w-full h-20 flex items-center justify-center break-keep transition-[font-size,padding] duration-300"
 					style={{
 						color: design.fontColor,
 						fontFamily: "var(--font-title)",
@@ -75,7 +75,7 @@ export default function WidgetMenuDesktop({
 				"menu-desktop w-[160px] min-[1200px]:w-[180px] min-w-[160px] h-dvh flex flex-col items-center justify-center shrink-0 sticky top-0",
 				"transition-[width] duration-300 ease-in-out",
 				design?.bgType === "없음" && "bg-transparent",
-				"bg-center bg-no-repeat bg-cover",
+				"bg-center bg-no-repeat bg-contain",
 				className,
 			)}
 			style={asideBackgroundStyle}

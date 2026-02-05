@@ -12,6 +12,7 @@ export type GallerySortOrder = "latest" | "oldest";
 
 export interface GallerySettings {
 	layout: GalleryLayoutType;
+	writePermission: "admin" | "manager" | "member";
 	options: {
 		columns: number; // 2~6, 데스크탑 기준 (모바일/태블릿 자동 계산)
 		gap: number; // px 단위
@@ -42,18 +43,19 @@ export function getResponsiveColumns(desktopColumns: number): {
 	tablet: number;
 	mobile: number;
 } {
+	const clampedDesktop = Math.min(Math.max(Math.floor(desktopColumns), 1), 5);
 	const columnMap: Record<number, { tablet: number; mobile: number }> = {
-		6: { tablet: 4, mobile: 2 },
 		5: { tablet: 3, mobile: 2 },
 		4: { tablet: 3, mobile: 2 },
 		3: { tablet: 2, mobile: 1 },
 		2: { tablet: 2, mobile: 1 },
+		1: { tablet: 1, mobile: 1 },
 	};
 
-	const responsive = columnMap[desktopColumns] || { tablet: 2, mobile: 1 };
+	const responsive = columnMap[clampedDesktop] || { tablet: 2, mobile: 1 };
 
 	return {
-		desktop: desktopColumns,
+		desktop: clampedDesktop,
 		tablet: responsive.tablet,
 		mobile: responsive.mobile,
 	};
@@ -62,6 +64,7 @@ export function getResponsiveColumns(desktopColumns: number): {
 // 기본 설정값
 export const DEFAULT_GALLERY_SETTINGS: GallerySettings = {
 	layout: "grid",
+	writePermission: "member",
 	options: {
 		columns: 4,
 		gap: 16,

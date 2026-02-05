@@ -17,6 +17,22 @@ import {
 
 export const runtime = "nodejs";
 
+const getGalleryWritePermission = async (
+	db: FirebaseFirestore.Firestore
+): Promise<"admin" | "manager" | "member"> => {
+	const docRef = db.collection("settings").doc("gallery");
+	const snapshot = await docRef.get();
+	const permission = snapshot.data()?.writePermission;
+	if (
+		permission === "admin" ||
+		permission === "manager" ||
+		permission === "member"
+	) {
+		return permission;
+	}
+	return "member";
+};
+
 const toGalleryItem = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
 	const data = doc.data() as Record<string, unknown>;
 	return {
@@ -104,6 +120,17 @@ export async function POST(req: NextRequest) {
 
 	try {
 		const db = getDb();
+		const writePermission = await getGalleryWritePermission(db);
+		const canWrite =
+			writePermission === "member"
+				? true
+				: writePermission === "manager"
+					? auth.auth.role === "manager" || auth.auth.role === "admin"
+					: auth.auth.isAdmin === true;
+		if (!canWrite) {
+			return jsonError(403, "Write permission required.");
+		}
+
 		const body = await req.json();
 		const imageUrl =
 			typeof body?.imageUrl === "string"

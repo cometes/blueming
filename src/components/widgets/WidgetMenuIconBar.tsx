@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import Link from "next/link";
 import {
 	Tooltip,
 	TooltipContent,
@@ -19,7 +20,7 @@ import {
 	MessageCircle,
 	Settings,
 	Folder,
-	Link,
+	Link as LinkIcon,
 } from "lucide-react";
 
 type Props = {
@@ -71,7 +72,7 @@ const getMenuIcon = (category: string) => {
 		case "폴더":
 			return <Folder size={16} className="text-sub-text" />;
 		case "커스텀":
-			return <Link size={16} className="text-sub-text" />;
+			return <LinkIcon size={16} className="text-sub-text" />;
 		default:
 			return <Square size={16} className="text-sub-text" />;
 	}
@@ -86,18 +87,20 @@ export default function WidgetMenuIconBar({
 	onSubMenuClick,
 	className,
 }: Props) {
+	const iconBarLogo = renderIconBarLogo(design);
+
 	return (
 		<aside
 			className={cn(
-				"menu-iconbar h-dvh flex flex-col items-center shrink-0 sticky top-0 overflow-visible",
+				"menu-iconbar h-dvh flex flex-col items-center shrink-0 sticky top-0 overflow-visible px-1.5",
 				className,
 			)}
 			style={iconBarStyle}
 		>
 			<TooltipProvider delayDuration={150}>
 				<nav className="w-full h-full flex flex-col items-center py-6 overflow-visible gap-4 justify-center">
-					<div className="w-full flex items-center justify-center mb-6">
-						{renderIconBarLogo(design)}
+					<div className="w-full flex items-center justify-center">
+						{iconBarLogo ? <Link href="/">{iconBarLogo}</Link> : null}
 					</div>
 
 					<ul className="flex flex-col items-center gap-3">

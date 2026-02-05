@@ -7,7 +7,9 @@ import { toast } from "sonner";
 import GalleryGrid from "./components/GalleryGrid";
 import GalleryImageModal from "@/components/modal/GalleryImageModal";
 import GallerySettingsDialog from "@/components/modal/GallerySettingsDialog";
-import GalleryCreateModal, { type GalleryCreatePayload } from "@/components/modal/GalleryCreateModal";
+import GalleryCreateModal, {
+	type GalleryCreatePayload,
+} from "@/components/modal/GalleryCreateModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -20,7 +22,7 @@ import { setSettingsGallery } from "@/queries/set/setSettingsGallery";
 export default function GalleryClient() {
 	const searchParams = useSearchParams();
 	const { gallery, updateGallery, refreshSettings } = useSettings();
-	const { isManagerOrAdmin } = useAdmin();
+	const { isAdmin, isManagerOrAdmin, isAuthenticated } = useAdmin();
 
 	// 설정 상태
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -35,12 +37,25 @@ export default function GalleryClient() {
 	const deepLinkInitialized = useRef(false);
 
 	// 현재 설정 (Context에서 가져오거나 기본값 사용)
-	const currentSettings: GallerySettings = useMemo(() => {
-		if (gallery && Object.keys(gallery).length > 0) {
-			return gallery as GallerySettings;
-		}
-		return DEFAULT_GALLERY_SETTINGS;
-	}, [gallery]);
+	const currentSettings: GallerySettings = useMemo(
+		() => ({
+			...DEFAULT_GALLERY_SETTINGS,
+			...(gallery ?? {}),
+			options: {
+				...DEFAULT_GALLERY_SETTINGS.options,
+				...(gallery?.options ?? {}),
+				columns: Math.min(
+					Math.max(Number(gallery?.options?.columns ?? DEFAULT_GALLERY_SETTINGS.options.columns), 1),
+					5,
+				),
+			},
+			behavior: {
+				...DEFAULT_GALLERY_SETTINGS.behavior,
+				...(gallery?.behavior ?? {}),
+			},
+		}),
+		[gallery],
+	);
 
 	// 이미지 데이터 (추후 API에서 가져올 수 있음)
 	const [images, setImages] = useState<GalleryImage[]>([]);
@@ -49,10 +64,10 @@ export default function GalleryClient() {
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
 	const tagOptions = useMemo(() => {
 		const tags = images.flatMap((image) =>
-			Array.isArray(image.tags) ? image.tags : []
+			Array.isArray(image.tags) ? image.tags : [],
 		);
 		return Array.from(
-			new Set(tags.map((tag) => tag.trim()).filter((tag) => Boolean(tag)))
+			new Set(tags.map((tag) => tag.trim()).filter((tag) => Boolean(tag))),
 		);
 	}, [images]);
 
@@ -178,30 +193,41 @@ export default function GalleryClient() {
 
 	const filteredImages = useMemo(() => images, [images]);
 
-	const handleCreateSubmit = useCallback(async (payload: GalleryCreatePayload) => {
-		try {
-			const created = await createGalleryImage({
-				title: payload.title,
-				imageUrl: payload.imageUrl,
-				tags: payload.tags,
-			});
-			setImages((prev) => [created, ...prev]);
-			toast.success("갤러리 이미지가 추가되었습니다.");
-		} catch (error) {
-			const message =
-				error instanceof Error
-					? error.message
-					: "갤러리 이미지 등록에 실패했습니다.";
-			toast.error(message);
-		}
-	}, []);
+	const handleCreateSubmit = useCallback(
+		async (payload: GalleryCreatePayload) => {
+			try {
+				const created = await createGalleryImage({
+					title: payload.title,
+					imageUrl: payload.imageUrl,
+					tags: payload.tags,
+				});
+				setImages((prev) => [created, ...prev]);
+				toast.success("갤러리 이미지가 추가되었습니다.");
+			} catch (error) {
+				const message =
+					error instanceof Error
+						? error.message
+						: "갤러리 이미지 등록에 실패했습니다.";
+				toast.error(message);
+			}
+		},
+		[],
+	);
+	const canWrite =
+		currentSettings.writePermission === "admin"
+			? isAdmin
+			: currentSettings.writePermission === "manager"
+				? isManagerOrAdmin
+				: isAuthenticated;
 
 	return (
-		<div className="w-full max-w-[900px] mt-[90px] mb-[90px]">
+		<div className="w-full max-w-full md:max-w-2xl mt-[90px] mb-[40px] mx-auto md:px-0">
 			<header className="mb-15 flex items-center justify-center">
-				<div className="flex items-center gap-2 w-full sm:w-auto">
-					<div className="w-[150px]"></div>
-					<div className="w-full sm:w-[200px]">
+				<div className="flex justify-center items-center gap-2 w-full sm:w-auto">
+					{currentSettings.writePermission === "admin" && isAdmin ? (
+						<div className="w-[150px]"></div>
+					) : null}
+					<div className="w-[200px]">
 						<Input
 							className="border-card bg-card backdrop-blur-card rounded-card text-main-text"
 							endIcon={searchInput ? X : Search}
@@ -238,13 +264,15 @@ export default function GalleryClient() {
 							}
 						/>
 					)}
-					<Button
-						type="button"
-						onClick={() => setIsCreateOpen(true)}
-						className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
-					>
-						<Plus size={16} />새 글쓰기
-					</Button>
+					{canWrite ? (
+						<Button
+							type="button"
+							onClick={() => setIsCreateOpen(true)}
+							className="gap-2 bg-theme-primary text-white hover:bg-theme-primary/90"
+						>
+							<Plus size={16} />새 글쓰기
+						</Button>
+					) : null}
 				</div>
 			</header>
 

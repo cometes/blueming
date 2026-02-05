@@ -57,23 +57,21 @@ function GalleryGrid({
 
 	const gridColumnsClass =
 		{
-			1: "grid-cols-1 sm:grid-cols-1 lg:grid-cols-1",
-			2: "grid-cols-2 sm:grid-cols-2 lg:grid-cols-2",
-			3: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3",
-			4: "grid-cols-2 sm:grid-cols-4 lg:grid-cols-4",
-			5: "grid-cols-2 sm:grid-cols-4 lg:grid-cols-5",
-			6: "grid-cols-2 sm:grid-cols-4 lg:grid-cols-6",
-		}[responsiveColumns.desktop] ?? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
+			1: "grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1",
+			2: "grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2",
+			3: "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3",
+			4: "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
+			5: "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5",
+		}[responsiveColumns.desktop] ?? "grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3";
 
 	const masonryColumnsClass =
 		{
-			1: "columns-1 sm:columns-1 lg:columns-1",
-			2: "columns-1 sm:columns-2 lg:columns-2",
-			3: "columns-1 sm:columns-2 lg:columns-3",
-			4: "columns-1 sm:columns-2 lg:columns-4",
-			5: "columns-1 sm:columns-3 lg:columns-5",
-			6: "columns-1 sm:columns-3 lg:columns-6",
-		}[responsiveColumns.desktop] ?? "columns-1 sm:columns-2 lg:columns-4";
+			1: "columns-1 sm:columns-1 md:columns-1 lg:columns-1",
+			2: "columns-1 sm:columns-2 md:columns-2 lg:columns-2",
+			3: "columns-1 sm:columns-2 md:columns-3 lg:columns-3",
+			4: "columns-1 sm:columns-2 md:columns-3 lg:columns-4",
+			5: "columns-1 sm:columns-2 md:columns-3 lg:columns-5",
+		}[responsiveColumns.desktop] ?? "columns-1 sm:columns-2 md:columns-2 lg:columns-3";
 
 	// 로딩 시 빈 상태 반환
 	if (isLoading) {

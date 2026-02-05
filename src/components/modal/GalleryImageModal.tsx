@@ -181,7 +181,7 @@ export default function GalleryImageModal({
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
 			<DialogContent
-				className="max-w-3xl md:max-w-3xl sm:max-w-2xl border-none p-0 overflow-hidden flex flex-col bg-card border-card rounded-card backdrop-blur-card aspect-[5/4] gap-0"
+				className="max-w-3xl md:max-w-3xl sm:max-w-2xl border-none p-0 overflow-hidden flex flex-col bg-card border-card rounded-card backdrop-blur-card h-[60vh] sm:h-[80vh] gap-0"
 				showCloseButton={false}
 				onOpenAutoFocus={(event) => {
 					event.preventDefault();

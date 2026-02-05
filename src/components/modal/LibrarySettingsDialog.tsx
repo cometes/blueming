@@ -99,7 +99,7 @@ export default function LibrarySettingsDialog({
 							<div>
 								<p className="font-title">카드뷰 칼럼 수</p>
 								<div className="flex gap-1 mt-2">
-									{[2, 3, 4, 5, 6].map((col) => (
+									{[2, 3, 4, 5].map((col) => (
 										<Button
 											key={col}
 											variant={tempPostsPerRow === col ? "default" : "ghost"}

@@ -61,11 +61,12 @@ export function SettingsProvider({ children, initialSettings }) {
 					typeof window === "undefined"
 						? new URL(settingsPath, "http://localhost")
 						: new URL(settingsPath, window.location.origin);
-				if (options?.noCache) {
+				const shouldBypassCache = options?.noCache || options?.broadcast;
+				if (shouldBypassCache) {
 					url.searchParams.set("ts", Date.now().toString());
 				}
 				const res = await fetch(url.toString(), {
-					cache: options?.noCache ? "no-store" : "force-cache",
+					cache: shouldBypassCache ? "no-store" : "force-cache",
 				});
 
 				if (!res.ok) {
