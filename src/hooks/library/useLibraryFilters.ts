@@ -1,11 +1,7 @@
 import { useCallback } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
-interface UseLibraryFiltersParams {
-	isSeriesOn: boolean;
-}
-
-export const useLibraryFilters = ({ isSeriesOn }: UseLibraryFiltersParams) => {
+export const useLibraryFilters = () => {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();

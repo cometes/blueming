@@ -118,7 +118,7 @@ export const useLibraryListData = ({
 				setListItems(Array.isArray(data?.items) ? data.items : []);
 				setPinnedItems(Array.isArray(data?.pinnedItems) ? data.pinnedItems : []);
 				setListTotalCount(typeof data?.total === "number" ? data.total : 0);
-			} catch (error) {
+			} catch {
 				if (controller.signal.aborted) {
 					return;
 				}
