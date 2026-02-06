@@ -18,6 +18,7 @@ import { useAdmin } from "@/hooks/auth/UseAdmin";
 import { deleteLibraryPost } from "@/queries/set/deleteLibrary";
 import { setLibraryPin } from "@/queries/set/setLibraryPin";
 import { apiClient, getApiErrorMessage } from "@/queries/apiClient";
+import { getAuthHeader } from "@/queries/getAuthHeader";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth/store";

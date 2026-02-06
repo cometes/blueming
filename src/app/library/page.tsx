@@ -78,7 +78,6 @@ export default async function LibararyListPage({
 							? (tagResponse as string[])
 							: []
 				}
-				initialPage={currentPage}
 				initialIsCardOn={initialIsCardOn}
 			/>
 		);
@@ -90,7 +89,6 @@ export default async function LibararyListPage({
 				listTotal={0}
 				seriesData={[]}
 				tagData={[]}
-				initialPage={1}
 				initialIsCardOn={false}
 			/>
 		);

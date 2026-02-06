@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Search, Settings, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,6 @@ interface LibraryClientProps {
 	listTotal: number;
 	seriesData: LibraryItem[];
 	tagData?: string[];
-	initialPage: number;
 	initialIsCardOn?: boolean;
 }
 
@@ -50,7 +49,6 @@ export default function LibraryClient({
 	listTotal,
 	seriesData,
 	tagData,
-	initialPage,
 	initialIsCardOn,
 }: LibraryClientProps) {
 	const { library, updateLibrary, refreshSettings } = useSettings();
@@ -102,7 +100,7 @@ export default function LibraryClient({
 	const [searchInputValue, setSearchInputValue] = useState("");
 
 	// URL 기반 필터 (단일 진실 소스)
-	const filters = useLibraryFilters({ isSeriesOn });
+	const filters = useLibraryFilters();
 
 	// 데이터 페칭
 	const { listItems, pinnedItems, listTotalCount, tagOptions, isLoading } =
@@ -138,22 +136,6 @@ export default function LibraryClient({
 			scroll: false,
 		});
 	};
-
-	const updatePageParam = useCallback(
-		(nextPage: number) => {
-			const params = new URLSearchParams(searchParams.toString());
-			if (nextPage > 1) {
-				params.set("page", String(nextPage));
-			} else {
-				params.delete("page");
-			}
-			const query = params.toString();
-			router.replace(query ? `${pathname}?${query}` : pathname, {
-				scroll: false,
-			});
-		},
-		[pathname, router, searchParams],
-	);
 
 	// URL 쿼리에서 탭 상태 복원
 	useEffect(() => {
