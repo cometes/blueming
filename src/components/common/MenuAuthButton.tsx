@@ -41,7 +41,7 @@ export default function MenuAuthButton({
 	const router = useRouter();
 	const { isAuthenticated, user, isLoading, handleLogin, handleLogout } =
 		useAuth();
-	const { isAdmin } = useAdmin();
+	const { isManagerOrAdmin } = useAdmin();
 	const [imageFailed, setImageFailed] = useState(false);
 
 	const displayLabel = useMemo(
@@ -144,7 +144,7 @@ export default function MenuAuthButton({
 				sideOffset={8}
 				portal={dropdownPortal}
 			>
-				{isAdmin && (
+				{isManagerOrAdmin && (
 					<>
 						<DropdownMenuItem
 							onClick={() => router.push("/setting")}

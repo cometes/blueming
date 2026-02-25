@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getDb } from "@/app/api/_lib/admin";
 import { jsonError } from "@/app/api/_lib/response";
-import { requireAdmin } from "@/app/api/_lib/auth";
+import { requireManager } from "@/app/api/_lib/auth";
 import { normalizeGeneralData } from "@/app/api/_lib/settings";
 
 export const runtime = "nodejs";
@@ -32,7 +32,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-	const auth = await requireAdmin();
+	const auth = await requireManager();
 	if (!auth.ok) {
 		return jsonError(auth.status, auth.error);
 	}

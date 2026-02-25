@@ -724,7 +724,9 @@ export default function MenuSettingClient() {
 										{bgType.map((el) => (
 											<RadioItem
 												key={el}
-												onClickRadio={() => updateMenuDesign("bgType", el)}
+												onClickRadio={() =>
+													updateMenuSetting("background.type", el)
+												}
 												checked={menuDesign.bgType === el}
 												content={el}
 											/>
@@ -741,12 +743,12 @@ export default function MenuSettingClient() {
 											</h3>
 										</div>
 										<div className="flex items-center gap-3">
-											<ColorPicker
-												value={menuDesign.backgroundColor}
-												onChange={(color) =>
-													updateMenuSetting("background.color", color)
-												}
-											/>
+										<ColorPicker
+											value={menuDesign.backgroundColor || "#ffffff"}
+											onChange={(color) =>
+												updateMenuSetting("background.color", color)
+											}
+										/>
 											<span
 												className="text-sm font-mono"
 												style={{ color: menuDesign.backgroundColor }}

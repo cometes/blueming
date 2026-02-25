@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { jsonError, jsonOk } from "@/app/api/_lib/response";
 import { uploadFormDataFiles } from "@/app/api/_lib/upload";
-import { requireAdmin } from "@/app/api/_lib/auth";
+import { requireManager } from "@/app/api/_lib/auth";
 
 export const runtime = "nodejs";
 
@@ -13,7 +13,7 @@ const hasAllowedExtension = (name: string) => {
 };
 
 export async function POST(req: NextRequest) {
-	const auth = await requireAdmin();
+	const auth = await requireManager();
 	if (!auth.ok) {
 		return jsonError(auth.status, auth.error);
 	}
