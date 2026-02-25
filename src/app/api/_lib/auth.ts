@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { getFireAuth } from "@/app/api/_lib/admin";
+import type { DecodedIdToken } from "firebase-admin/auth";
 import { jsonError } from "@/app/api/_lib/response";
 
 export type AuthContext = {
@@ -22,29 +23,32 @@ export const getAuthContext = async (): Promise<AuthContext | null> => {
 		if (!session) return null;
 
 		const decoded = await getFireAuth().verifySessionCookie(session, true);
-		const roleClaim = typeof decoded.role === "string" ? decoded.role : null;
-		const isOwner = OWNER_UID !== "" && decoded.uid === OWNER_UID;
-		const isAdmin =
-			decoded.admin === true || decoded.isAdmin === true || isOwner;
-		const isManager = decoded.manager === true || decoded.isManager === true;
-		let role: "user" | "manager" | "admin" = "user";
-		if (roleClaim === "admin" || isAdmin) {
-			role = "admin";
-		} else if (roleClaim === "manager" || isManager) {
-			role = "manager";
-		}
-
-		return {
-			uid: decoded.uid,
-			email: decoded.email ?? null,
-			displayName: decoded.name ?? null,
-			photoURL: decoded.picture ?? null,
-			isAdmin,
-			role,
-		};
+		return buildAuthContextFromDecoded(decoded);
 	} catch {
 		return null;
 	}
+};
+
+export const buildAuthContextFromDecoded = (decoded: DecodedIdToken): AuthContext => {
+	const roleClaim = typeof decoded.role === "string" ? decoded.role : null;
+	const isOwner = OWNER_UID !== "" && decoded.uid === OWNER_UID;
+	const isAdmin = decoded.admin === true || decoded.isAdmin === true || isOwner;
+	const isManager = decoded.manager === true || decoded.isManager === true;
+	let role: "user" | "manager" | "admin" = "user";
+	if (roleClaim === "admin" || isAdmin) {
+		role = "admin";
+	} else if (roleClaim === "manager" || isManager) {
+		role = "manager";
+	}
+
+	return {
+		uid: decoded.uid,
+		email: decoded.email ?? null,
+		displayName: decoded.name ?? null,
+		photoURL: decoded.picture ?? null,
+		isAdmin,
+		role,
+	};
 };
 
 export const requireAuth = async () => {

@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getFireAuth } from "@/app/api/_lib/admin";
+import { getDb, getFireAuth } from "@/app/api/_lib/admin";
+import { buildAuthContextFromDecoded } from "@/app/api/_lib/auth";
+import { ensureUserDoc } from "@/app/api/_lib/userLogin";
 
 export const runtime = "nodejs";
 
@@ -104,10 +106,13 @@ export async function GET(req: NextRequest) {
 	}
 
 	try {
+		const decoded = await getFireAuth().verifyIdToken(firebaseTokenData.idToken);
 		const sessionCookie = await getFireAuth().createSessionCookie(
 			firebaseTokenData.idToken,
 			{ expiresIn: SESSION_EXPIRES_IN_MS }
 		);
+		const authContext = buildAuthContextFromDecoded(decoded);
+		await ensureUserDoc(getDb(), authContext);
 		const { sameSite, secure } = getCookieOptions();
 		const res =
 			returnTo === "__popup__"

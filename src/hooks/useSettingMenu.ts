@@ -93,10 +93,16 @@ export const useSettingMenu = () => {
 				setCurrentMenuList(menuData.menus);
 			}
 			if (menuData.design) {
-				setMenuDesign({
-					...defaultMenuDesign,
-					...menuData.design,
-				});
+				const merged = { ...defaultMenuDesign, ...menuData.design };
+				// rgba(0,0,0,0)은 bgType이 "없음"일 때 API에 저장되는 sentinel 값이므로,
+				// 로드 시 기본색으로 복원해 컬러피커가 제대로 표시되도록 한다
+				if (merged.backgroundColor === "rgba(0, 0, 0, 0)") {
+					merged.backgroundColor = defaultMenuDesign.backgroundColor;
+				}
+				if (merged.iconBarBackgroundColor === "rgba(0, 0, 0, 0)") {
+					merged.iconBarBackgroundColor = defaultMenuDesign.iconBarBackgroundColor;
+				}
+				setMenuDesign(merged);
 			}
 		}
 		setIsSyncing(false);
@@ -128,17 +134,41 @@ export const useSettingMenu = () => {
 
 	const updateMenuDesign = useCallback(
 		(field: keyof MenuDesign, value: string) => {
-			setMenuDesign((prev) => ({
-				...prev,
-				[field]: value,
-			}));
+			setMenuDesign((prev) => {
+				const next = { ...prev, [field]: value };
+
+				if (field === "bgType" && value === "단색") {
+					const current = (prev.backgroundColor || "").trim().toLowerCase();
+					if (
+						current === "" ||
+						current === "transparent" ||
+						current === "rgba(0, 0, 0, 0)"
+					) {
+						next.backgroundColor = defaultMenuDesign.backgroundColor;
+					}
+				}
+
+				return next;
+			});
 		},
 		[]
 	);
 
 	const updateMenuSetting = useCallback(
 		(path: string, value: string) => {
-			if (path === "background.color") {
+			if (path === "background.type") {
+				updateMenuDesign("bgType", value);
+				if (value === "단색") {
+					const current = (menuDesign.backgroundColor || "").trim().toLowerCase();
+					if (
+						current === "" ||
+						current === "transparent" ||
+						current === "rgba(0, 0, 0, 0)"
+					) {
+						updateMenuDesign("backgroundColor", defaultMenuDesign.backgroundColor);
+					}
+				}
+			} else if (path === "background.color") {
 				updateMenuDesign("backgroundColor", value);
 			} else if (path === "font.color") {
 				updateMenuDesign("fontColor", value);
@@ -160,7 +190,7 @@ export const useSettingMenu = () => {
 				updateMenuDesign("iconBarBackgroundImage", value);
 			}
 		},
-		[updateMenuDesign]
+		[updateMenuDesign, menuDesign.backgroundColor]
 	);
 
 	const handleAddMenu = useCallback(
@@ -260,16 +290,9 @@ export const useSettingMenu = () => {
 		try {
 			const nextDesign = next?.design ?? menuDesign;
 			const nextMenus = next?.menus ?? currentMenuList;
-			const preparedMenuDesign = {
-				...nextDesign,
-				backgroundColor:
-					nextDesign.bgType === "없음"
-						? "rgba(0, 0, 0, 0)"
-						: nextDesign.backgroundColor,
-			};
 
 			const menuData = {
-				design: preparedMenuDesign,
+				design: nextDesign,
 				menus: nextMenus,
 			};
 
