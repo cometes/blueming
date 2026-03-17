@@ -10,7 +10,7 @@ import type {
 	ApproveUserRequest,
 	User,
 	UserStats,
-} from "@/types/user";
+} from "@/features/admin/types";
 
 const buildQuery = (params: Record<string, string | number | undefined>) => {
 	const searchParams = new URLSearchParams();

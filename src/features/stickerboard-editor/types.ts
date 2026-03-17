@@ -5,4 +5,9 @@ export type {
 	StickerBoardGroupComponent,
 	StickerBoardLeafComponent,
 	StickerBoardTextComponent,
-} from "@/types/stickerBoard";
+	StickerBoardSettings,
+} from "@/features/stickerboard-editor/model";
+export type {
+	StickerBoardEditorActions,
+	StickerBoardEditorState,
+} from "@/features/stickerboard-editor/editor-types";

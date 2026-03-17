@@ -10,7 +10,7 @@ import { setSettingsGeneralMenu } from "@/features/settings/api/client";
 import { runSettingsMutation } from "@/features/settings/hooks/mutation";
 import { yupResolver } from "@hookform/resolvers/yup";
 import type { AnyObjectSchema } from "yup";
-import { schemaAddMenu } from "@/lib/schema";
+import { schemaAddMenu } from "@/features/settings/lib/schema";
 
 const defaultMenuDesign: MenuDesign = {
 	align: "왼쪽",

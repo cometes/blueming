@@ -1,6 +1,6 @@
 import { useMoveToPage } from "@/hooks/useMoveToPage";
-import { dateConvert } from "@/lib/date";
-import { convertToUnderscore } from "@/lib/replace";
+import { dateConvert } from "@/shared/lib/date";
+import { convertToUnderscore } from "@/shared/lib/replace";
 import Image from "next/image";
 import { useState } from "react";
 

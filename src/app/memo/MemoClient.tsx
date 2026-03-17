@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Lock, Plus, Search, Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import MemoCreateModal from "@/components/modal/MemoCreateModal";
+import MemoCreateModal from "@/features/memo/components/MemoCreateModal";
 import { toast } from "sonner";
 import {
 	createMemo,
@@ -13,13 +13,13 @@ import {
 	uploadMemoImages,
 } from "@/features/memo/api/client";
 import type { MemoItem } from "@/features/memo/types";
-import type { CommentImage } from "@/hooks/comment/useCommentForm";
-import { dateConvert } from "@/lib/date";
+import type { CommentImage } from "@/features/comment/hooks/useCommentForm";
+import { dateConvert } from "@/shared/lib/date";
 import AdminOnly from "@/components/common/AdminOnly";
 import { useSettings } from "@/contexts/SettingsContext";
 import { setSettingsMainMemo } from "@/features/settings/api/main";
-import PhotoboardSettingsDialog from "@/components/modal/PhotoboardSettingsDialog";
-import { useAdmin } from "@/hooks/auth/UseAdmin";
+import PhotoboardSettingsDialog from "@/features/photoboard/components/PhotoboardSettingsDialog";
+import { useAdmin } from "@/features/admin/hooks/useAdmin";
 
 interface MemoClientProps {
 	initialMemos?: MemoItem[];

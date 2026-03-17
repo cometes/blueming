@@ -5,7 +5,7 @@ import UserStatsDashboard from "./components/UserStatsDashboard";
 import RegistrationSettings from "./components/RegistrationSettings";
 import UserSearchFilter from "./components/UserSearchFilter";
 import UserTable from "./components/UserTable";
-import type { UserStatus, UserRole } from "@/types/user";
+import type { UserStatus, UserRole } from "@/features/admin/types";
 
 export default function UserManagementClient() {
     const [searchQuery, setSearchQuery] = useState("");

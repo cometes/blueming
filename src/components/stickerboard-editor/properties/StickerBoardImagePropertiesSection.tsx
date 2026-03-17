@@ -13,8 +13,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { StickerBoardTransformFields } from "@/components/stickerboard-editor/properties/StickerBoardTransformFields";
-import { isImageSticker } from "@/lib/stickerboard-utils";
-import type { StickerBoardComponent } from "@/types/stickerBoard";
+import { isImageSticker } from "@/features/stickerboard-editor/lib/stickerboard-utils";
+import type { StickerBoardComponent } from "@/features/stickerboard-editor/model";
 
 interface StickerBoardImagePropertiesSectionProps {
 	component: StickerBoardComponent;

@@ -1,8 +1,8 @@
 import { useMoveToPage } from "@/hooks/useMoveToPage";
-import { dateConvert } from "@/lib/date";
+import { dateConvert } from "@/shared/lib/date";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { Fragment, useState } from "react";
 import type { ReactNode } from "react";
 import { CircleSlash, MessageCircle, Lock } from "lucide-react";

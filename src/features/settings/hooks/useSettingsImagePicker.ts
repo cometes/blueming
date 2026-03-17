@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { listStickerAssets } from "@/features/stickerboard-editor/api/assets";
-import type { StickerAsset } from "@/types/stickerBoard";
+import type { StickerAsset } from "@/features/stickerboard-editor/model";
 
 export interface PendingImage {
 	file: File;

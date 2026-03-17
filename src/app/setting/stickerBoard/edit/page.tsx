@@ -10,11 +10,11 @@ import { StickerBoardCanvas } from "@/components/stickerboard-editor/StickerBoar
 import { StickerBoardLayersPanel } from "@/components/stickerboard-editor/StickerBoardLayersPanel";
 import { StickerBoardPropertiesPanel } from "@/components/stickerboard-editor/StickerBoardPropertiesPanel";
 import { StickerBoardToolbar } from "@/components/stickerboard-editor/StickerBoardToolbar";
-import { fitToGrid12 } from "@/lib/stickerboard";
-import { isImageSticker } from "@/lib/stickerboard-utils";
+import { fitToGrid12 } from "@/features/stickerboard-editor/lib/stickerboard";
+import { isImageSticker } from "@/features/stickerboard-editor/lib/stickerboard-utils";
 import { setSettingsMainStickerBoard } from "@/features/settings/api/main";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
-import type { StickerBoardSettings } from "@/types/stickerBoard";
+import type { StickerBoardSettings } from "@/features/stickerboard-editor/model";
 import { toast } from "sonner";
 
 const LAYOUT_ITEM_ID = "스티커보드";

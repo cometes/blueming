@@ -15,8 +15,8 @@ import {
 } from "lucide-react";
 import { DragDropContext, Droppable, type DropResult } from "@hello-pangea/dnd";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import MenuPreviewItem from "@/components/items/MenuPreviewItem";
+import { cn } from "@/shared/lib/utils";
+import MenuPreviewItem from "@/features/settings/components/menu/MenuPreviewItem";
 import type { MenuDesign, MenuItem } from "@/features/settings/types";
 import { ICON_BAR_WIDTH } from "@/features/settings/lib/menu";
 

@@ -4,14 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMoveToPage } from "@/hooks/useMoveToPage";
-import { dateConvert } from "@/lib/date";
+import { dateConvert } from "@/shared/lib/date";
 import AdminOnly from "@/components/common/AdminOnly";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/tiptap-ui-primitive/tooltip/tooltip";
-import SeriesEditDialog from "@/components/modal/SeriesEditDialog";
+import SeriesEditDialog from "@/features/library/components/SeriesEditDialog";
 import Image from "next/image";
 
 interface SeriesPost {

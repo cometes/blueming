@@ -3,13 +3,13 @@
 import { memo, useCallback, useMemo } from "react";
 import type { MouseEvent } from "react";
 import GalleryItem from "./GalleryItem";
-import type { GalleryImage } from "@/types/gallery";
+import type { GalleryImage } from "@/features/gallery/types";
 import {
 	type GallerySettings,
 	DEFAULT_GALLERY_SETTINGS,
 	getResponsiveColumns,
-} from "@/types/gallery";
-import { cn } from "@/lib/utils";
+} from "@/features/gallery/types";
+import { cn } from "@/shared/lib/utils";
 
 interface GalleryGridProps {
 	images: GalleryImage[];

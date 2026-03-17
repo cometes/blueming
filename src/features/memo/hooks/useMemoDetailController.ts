@@ -14,9 +14,9 @@ import {
 	uploadMemoImages,
 } from "@/features/memo/api/client";
 import type { MemoDetail } from "@/features/memo/types";
-import { useAssets } from "@/hooks/guestbook/useAssets";
-import { useCommentImageDialog } from "@/hooks/comment/useImageDialog";
-import { createImageId, type CommentImage } from "@/hooks/comment/useCommentForm";
+import { useAssets } from "@/features/comment/hooks/useAssets";
+import { useCommentImageDialog } from "@/features/comment/hooks/useCommentImageDialog";
+import { createImageId, type CommentImage } from "@/features/comment/hooks/useCommentForm";
 import { resolveUploadedImageUrls } from "@/shared/lib/http/uploads";
 
 interface UseMemoDetailControllerArgs {
@@ -389,4 +389,3 @@ export const useMemoDetailController = ({
 		handleDeleteMemo,
 	};
 };
-

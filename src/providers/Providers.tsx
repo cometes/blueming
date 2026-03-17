@@ -6,7 +6,7 @@ import { SettingsProvider } from "./SettingsProvider";
 import { ThemeProvider } from "./ThemeProvider";
 import { ThemesProvider } from "@/contexts/ThemesContext";
 import type { SettingsSnapshot } from "@/features/settings/types";
-import { useAuth } from "@/hooks/auth/UseAuth";
+import { useAuth } from "@/features/account/hooks/useAuth";
 
 interface ProvidersProps {
 	children: React.ReactNode;

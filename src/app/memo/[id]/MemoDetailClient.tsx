@@ -4,14 +4,14 @@ import { ArrowLeft, ImagePlus, Lock, MoreHorizontal, Send, X } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import type { MemoDetail } from "@/features/memo/types";
 import { useMemoDetailController } from "@/features/memo/hooks/useMemoDetailController";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import AssetGrid from "@/components/asset/AssetGrid";
-import { dateTimeConvert } from "@/lib/date";
+import { dateTimeConvert } from "@/shared/lib/date";
 import ImageSlideModal from "@/components/modal/ImageSlideModal";
-import MemoCreateModal from "@/components/modal/MemoCreateModal";
+import MemoCreateModal from "@/features/memo/components/MemoCreateModal";
 import {
 	DropdownMenu,
 	DropdownMenuContent,

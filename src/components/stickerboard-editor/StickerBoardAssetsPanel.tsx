@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Rnd } from "react-rnd";
 import { useStickerBoardEditorContext } from "@/contexts/StickerBoardEditorContext";
-import { STICKER_ASSET_DND_MIME } from "@/types/stickerBoard";
+import { STICKER_ASSET_DND_MIME } from "@/features/stickerboard-editor/model";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PanelTopOpen, Search, X } from "lucide-react";

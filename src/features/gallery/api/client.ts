@@ -1,7 +1,7 @@
 import { httpClient } from "@/shared/lib/http/client";
 import { getAuthHeader } from "@/shared/lib/auth/client";
 import { uploadSingleFile } from "@/shared/lib/http/uploads";
-import type { GalleryImage, GallerySettings } from "@/types/gallery";
+import type { GalleryImage, GallerySettings } from "@/features/gallery/types";
 
 export interface GalleryListResponse {
 	items: GalleryImage[];

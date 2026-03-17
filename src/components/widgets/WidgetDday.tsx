@@ -1,5 +1,5 @@
 import { useSettings } from "@/contexts/SettingsContext";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import Image from "next/image";
 
 interface DdayItem {

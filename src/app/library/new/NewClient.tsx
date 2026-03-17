@@ -6,12 +6,12 @@ import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
 import { extensions } from "@/components/editor/TiptapEditor";
 import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
 import { MobileToolbarContainer } from "@/components/tiptap/MobileToolbarContainer";
-import CreateModal, { CreateMetaValue } from "@/components/modal/createModal";
+import CreateModal, { CreateMetaValue } from "@/features/library/components/CreateModal";
 import {
 	createLibraryPost,
 	fetchLibraryDetailWithAccess,
@@ -19,7 +19,7 @@ import {
 } from "@/features/library/api/client";
 import { getApiErrorMessage } from "@/shared/lib/http/client";
 import { toast } from "sonner";
-import { useAdmin } from "@/hooks/auth/UseAdmin";
+import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import { useAuthStore } from "@/store/auth/store";
 
 interface SeriesItem {

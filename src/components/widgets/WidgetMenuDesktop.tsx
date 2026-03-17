@@ -3,12 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import MenuAuthButton from "@/components/common/MenuAuthButton";
-import { cn } from "@/lib/utils";
-import type { MenuDesign, MenuItem, OpenFolders } from "./widgetMenuTypes";
+import { cn } from "@/shared/lib/utils";
+import type { OpenFolders } from "@/features/settings/lib/widgetMenu";
+import type { MenuDesign, MenuItem } from "@/features/settings/types";
 import { Bell } from "lucide-react";
 
 type Props = {
-	design: MenuDesign;
+	design: Partial<MenuDesign>;
 	filteredMenuItems: MenuItem[];
 	textAlignClass: string;
 	asideBackgroundStyle: React.CSSProperties;
@@ -19,8 +20,11 @@ type Props = {
 	className?: string;
 };
 
-const renderLogo = (design: MenuDesign) => {
-	type MenuDesignWithLogo = MenuDesign & { logoText?: string; logoImage?: string };
+const renderLogo = (design: Partial<MenuDesign>) => {
+	type MenuDesignWithLogo = Partial<MenuDesign> & {
+		logoText?: string;
+		logoImage?: string;
+	};
 	const designWithLogo = design as MenuDesignWithLogo;
 
 	if (design?.logoType === "텍스트" && designWithLogo?.logoText) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useAdmin } from "@/hooks/auth/UseAdmin";
+import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import { useEffect } from "react";
 
 interface AdminRouteProps {

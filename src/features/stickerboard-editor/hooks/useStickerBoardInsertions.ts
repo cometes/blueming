@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback } from "react";
-import { DEFAULT_TEXT_PADDING } from "@/lib/stickerboard-utils";
-import type { StickerBoardComponent, StickerBoardTextComponent } from "@/types/stickerBoard";
+import { DEFAULT_TEXT_PADDING } from "@/features/stickerboard-editor/lib/stickerboard-utils";
+import type {
+	StickerBoardComponent,
+	StickerBoardTextComponent,
+} from "@/features/stickerboard-editor/model";
 
 interface UseStickerBoardInsertionsArgs {
 	getNextZIndex: number;

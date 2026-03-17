@@ -5,11 +5,11 @@ import {
 	clamp,
 	cloneDraft,
 	isPctSticker,
-} from "@/lib/stickerboard-utils";
+} from "@/features/stickerboard-editor/lib/stickerboard-utils";
 import type {
 	StickerBoardComponent,
 	StickerBoardTextComponent,
-} from "@/types/stickerBoard";
+} from "@/features/stickerboard-editor/model";
 import { useStickerBoardInsertions } from "@/features/stickerboard-editor/hooks/useStickerBoardInsertions";
 import { useStickerBoardGroupManipulation } from "@/features/stickerboard-editor/hooks/useStickerBoardGroupManipulation";
 import { useStickerBoardLayerManipulation } from "@/features/stickerboard-editor/hooks/useStickerBoardLayerManipulation";

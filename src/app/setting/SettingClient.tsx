@@ -8,7 +8,7 @@ import AdminRoute from "@/components/common/AdminRoute";
 import SettingLayout from "@/components/layout/SettingLayout";
 import { SettingStatusProvider } from "@/contexts/SettingStatusContext";
 import { SettingHeaderActionProvider } from "@/contexts/SettingHeaderActionContext";
-import { useAdmin } from "@/hooks/auth/UseAdmin";
+import { useAdmin } from "@/features/admin/hooks/useAdmin";
 
 const GeneralSettingClient = dynamic(() => import("./general/GeneralSettingClient"));
 const DesignSettingClient = dynamic(() => import("./design/DesignSettingClient"));

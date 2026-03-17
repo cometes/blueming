@@ -1,8 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
-import { cloneDraft, type PctSticker, isPctSticker } from "@/lib/stickerboard-utils";
-import type { StickerBoardComponent } from "@/types/stickerBoard";
+import {
+	cloneDraft,
+	type PctSticker,
+	isPctSticker,
+} from "@/features/stickerboard-editor/lib/stickerboard-utils";
+import type { StickerBoardComponent } from "@/features/stickerboard-editor/model";
 
 interface UseStickerBoardHistoryArgs {
 	componentsDraft: StickerBoardComponent[];

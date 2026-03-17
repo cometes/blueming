@@ -5,13 +5,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { Menu, X, Bell } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { useSettings } from "@/contexts/SettingsContext";
 import MenuAuthButton from "@/components/common/MenuAuthButton";
-import type { MenuDesign, MenuItem, OpenFolders } from "./widgetMenuTypes";
+import type { OpenFolders } from "@/features/settings/lib/widgetMenu";
+import type { MenuDesign, MenuItem } from "@/features/settings/types";
 
 type Props = {
-	design: MenuDesign;
+	design: Partial<MenuDesign>;
 	filteredMenuItems: MenuItem[];
 	openFolders: OpenFolders;
 	onMenuClick: (item: MenuItem) => (e: React.MouseEvent) => void;
@@ -20,7 +21,7 @@ type Props = {
 	className?: string;
 };
 
-type MenuDesignWithLogo = MenuDesign & {
+type MenuDesignWithLogo = Partial<MenuDesign> & {
 	logoText?: string;
 	logoImage?: string;
 };

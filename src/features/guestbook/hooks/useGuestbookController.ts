@@ -16,10 +16,10 @@ import type { GuestbookEntry } from "@/features/guestbook/types";
 import {
 	useGuestbookForm,
 	type GuestbookImage,
-} from "@/hooks/guestbook/useGuestbookForm";
-import { useCooldown } from "@/hooks/guestbook/useCooldown";
-import { useImageDialog } from "@/hooks/guestbook/useImageDialog";
-import { useAssets } from "@/hooks/guestbook/useAssets";
+} from "@/features/guestbook/hooks/useGuestbookForm";
+import { useCooldown } from "@/features/guestbook/hooks/useCooldown";
+import { useImageDialog } from "@/features/guestbook/hooks/useImageDialog";
+import { useAssets } from "@/features/comment/hooks/useAssets";
 import { resolveUploadedImageUrls } from "@/shared/lib/http/uploads";
 
 const MAX_IMAGE_COUNT = 8;

@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback } from "react";
-import { cloneDraft } from "@/lib/stickerboard-utils";
-import type { StickerBoardComponent } from "@/types/stickerBoard";
+import { cloneDraft } from "@/features/stickerboard-editor/lib/stickerboard-utils";
+import type { StickerBoardComponent } from "@/features/stickerboard-editor/model";
 
 interface UseStickerBoardLayerManipulationArgs {
 	selectedIdRef: React.MutableRefObject<number | null>;

@@ -5,7 +5,7 @@ import DatePickerLib, { registerLocale } from "react-datepicker";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { ko } from "date-fns/locale/ko";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 

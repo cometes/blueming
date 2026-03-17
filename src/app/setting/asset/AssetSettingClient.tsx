@@ -12,7 +12,7 @@ import {
 	listStickerAssets,
 	setStickerAssetFavorite,
 } from "@/features/stickerboard-editor/api/assets";
-import type { StickerAsset } from "@/types/stickerBoard";
+import type { StickerAsset } from "@/features/stickerboard-editor/model";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 

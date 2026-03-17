@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Moveable from "react-moveable";
 import { useStickerBoardEditorContext } from "@/contexts/StickerBoardEditorContext";
-import { isPctSticker } from "@/lib/stickerboard-utils";
+import { isPctSticker } from "@/features/stickerboard-editor/lib/stickerboard-utils";
 import { StickerBoardCanvasToolbar } from "@/components/stickerboard-editor/StickerBoardCanvasToolbar";
 import { StickerBoardCanvasStage } from "@/components/stickerboard-editor/StickerBoardCanvasStage";
 

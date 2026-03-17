@@ -13,9 +13,9 @@ import {
 } from "@/components/ui/pagination";
 import type { GuestbookEntry } from "@/features/guestbook/types";
 import { ImagePlus, Lock, Send } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import GuestbookItem from "@/components/items/GuestbookItem";
+import GuestbookItem from "@/features/guestbook/components/GuestbookItem";
 import GuestbookEditDialog from "@/components/guestbook/GuestbookEditDialog";
 import GuestbookSecretDialog from "@/components/guestbook/GuestbookSecretDialog";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";

@@ -7,7 +7,7 @@ import {
 	mapLogoTypeToKorean,
 	normalizeGeneralData,
 } from "@/features/settings/server/normalizers";
-import { generateColorPalette } from "@/lib/utils";
+import { generateColorPalette } from "@/shared/lib/utils";
 
 export const runtime = "nodejs";
 

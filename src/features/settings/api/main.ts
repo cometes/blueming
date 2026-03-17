@@ -16,8 +16,8 @@ import type {
 	SlideData,
 	WeatherClockSettings,
 } from "@/features/settings/types";
-import type { GallerySettings } from "@/types/gallery";
-import type { StickerBoardSettings } from "@/types/stickerBoard";
+import type { GallerySettings } from "@/features/gallery/types";
+import type { StickerBoardSettings } from "@/features/stickerboard-editor/model";
 
 const withSettingsRevalidation = async <T>(request: () => Promise<T>) => {
 	const response = await request();

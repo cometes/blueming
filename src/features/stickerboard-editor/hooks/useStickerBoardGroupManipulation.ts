@@ -1,12 +1,18 @@
 "use client";
 
 import { useCallback } from "react";
-import { cloneDraft, isGroupSticker, isPctSticker, normalizeStickerSize, type PctSticker } from "@/lib/stickerboard-utils";
+import {
+	cloneDraft,
+	isGroupSticker,
+	isPctSticker,
+	normalizeStickerSize,
+	type PctSticker,
+} from "@/features/stickerboard-editor/lib/stickerboard-utils";
 import type {
 	StickerBoardComponent,
 	StickerBoardGroupComponent,
 	StickerBoardLeafComponent,
-} from "@/types/stickerBoard";
+} from "@/features/stickerboard-editor/model";
 
 interface UseStickerBoardGroupManipulationArgs {
 	selectedIdsRef: React.MutableRefObject<Set<number>>;

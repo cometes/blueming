@@ -1,8 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { isGroupSticker, isImageSticker, isPctSticker } from "@/lib/stickerboard-utils";
-import type { StickerBoardComponent } from "@/types/stickerBoard";
+import {
+	isGroupSticker,
+	isImageSticker,
+	isPctSticker,
+} from "@/features/stickerboard-editor/lib/stickerboard-utils";
+import type { StickerBoardComponent } from "@/features/stickerboard-editor/model";
 
 export function useStickerBoardState(componentsDraft: StickerBoardComponent[]) {
 	const [selectedId, setSelectedId] = useState<number | null>(null);

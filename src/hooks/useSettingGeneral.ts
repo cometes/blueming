@@ -6,7 +6,7 @@ import type { General } from "@/features/settings/types";
 import { setSettingsGeneralGeneral } from "@/features/settings/api/client";
 import { runSettingsMutation } from "@/features/settings/hooks/mutation";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { schemaSettingsGeneral } from "@/lib/schema";
+import { schemaSettingsGeneral } from "@/features/settings/lib/schema";
 
 const logoTypes = ["없음", "텍스트", "이미지"];
 

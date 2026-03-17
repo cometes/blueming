@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { fetchLibraryList } from "@/features/library/api/client";
-import { dateConvert } from "@/lib/date";
+import { dateConvert } from "@/shared/lib/date";
 import Link from "next/link";
 import { useSettings } from "@/contexts/SettingsContext";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMoveToPage } from "@/hooks/useMoveToPage";
-import { dateTimeConvert } from "@/lib/date";
+import { dateTimeConvert } from "@/shared/lib/date";
 import {
 	ChevronLeft,
 	ChevronRight,
@@ -11,10 +11,10 @@ import {
 	Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useAdmin } from "@/hooks/auth/UseAdmin";
+import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth/store";
 import {
@@ -43,7 +43,7 @@ import { TaskItem } from "@tiptap/extension-task-item";
 import { Link } from "@tiptap/extension-link";
 import { CustomImage } from "@/components/tiptap-extension/custom-image";
 import { CustomYoutubeNode } from "@/components/tiptap-node/youtube-node/youtube-node";
-import { renderRichText } from "@/lib/richText";
+import { renderRichText } from "@/shared/lib/richText";
 import CommentSidebar from "./CommentSidebar";
 import { useLibraryDetailController } from "@/features/library/hooks/useLibraryDetailController";
 

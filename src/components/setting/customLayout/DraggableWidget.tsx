@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Rnd, DraggableData, ResizableDelta, Position } from "react-rnd";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { GridPosition, PixelPosition, useGridSnap } from "./useGridSnap";
 import { LayoutItem, useCollisionDetection } from "./useCollisionDetection";
 

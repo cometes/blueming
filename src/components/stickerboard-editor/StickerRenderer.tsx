@@ -2,8 +2,12 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { isGroupSticker, isImageSticker, isTextSticker } from "@/lib/stickerboard-utils";
-import type { StickerBoardComponent } from "@/types/stickerBoard";
+import {
+	isGroupSticker,
+	isImageSticker,
+	isTextSticker,
+} from "@/features/stickerboard-editor/lib/stickerboard-utils";
+import type { StickerBoardComponent } from "@/features/stickerboard-editor/model";
 
 export function StickerRenderer({
 	component,

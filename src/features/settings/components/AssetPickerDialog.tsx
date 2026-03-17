@@ -2,7 +2,7 @@
 
 import AssetGrid from "@/components/asset/AssetGrid";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
-import type { StickerAsset } from "@/types/stickerBoard";
+import type { StickerAsset } from "@/features/stickerboard-editor/model";
 
 interface AssetPickerDialogProps {
 	isOpen: boolean;

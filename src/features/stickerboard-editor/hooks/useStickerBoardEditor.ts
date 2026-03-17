@@ -8,11 +8,11 @@ import {
 	DEFAULT_TEXT_PADDING,
 	isTextSticker,
 	normalizeStickerSize,
-} from "@/lib/stickerboard-utils";
+} from "@/features/stickerboard-editor/lib/stickerboard-utils";
 import type {
 	StickerBoardComponent,
 	StickerBoardTextComponent,
-} from "@/types/stickerBoard";
+} from "@/features/stickerboard-editor/model";
 import { useStickerBoardAssets } from "@/features/stickerboard-editor/hooks/useStickerBoardAssets";
 import { useStickerBoardHistory } from "@/features/stickerboard-editor/hooks/useStickerBoardHistory";
 import { useStickerBoardState } from "@/features/stickerboard-editor/hooks/useStickerBoardState";

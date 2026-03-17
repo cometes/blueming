@@ -8,7 +8,7 @@ import { StickerBoardTextDraftOverlay } from "@/components/stickerboard-editor/S
 import {
 	STICKER_ASSET_DND_MIME,
 	type StickerBoardComponent,
-} from "@/types/stickerBoard";
+} from "@/features/stickerboard-editor/model";
 
 const GRID_BASE = 12;
 

@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import type { User } from "@/types/user";
+import type { User } from "@/features/admin/types";
 import { Button } from "@/components/ui/button";
 
 interface UserTableRowProps {

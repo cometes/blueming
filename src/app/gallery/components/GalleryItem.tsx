@@ -2,10 +2,10 @@
 
 import { memo, useState } from "react";
 import { ImageOff } from "lucide-react";
-import type { GalleryImage, GalleryImageRatio } from "@/types/gallery";
-import { IMAGE_RATIO_VALUES } from "@/types/gallery";
-import { cn } from "@/lib/utils";
-import { dateConvert } from "@/lib/date";
+import type { GalleryImage, GalleryImageRatio } from "@/features/gallery/types";
+import { IMAGE_RATIO_VALUES } from "@/features/gallery/types";
+import { cn } from "@/shared/lib/utils";
+import { dateConvert } from "@/shared/lib/date";
 import { Badge } from "@/components/ui/badge";
 
 interface GalleryItemProps {

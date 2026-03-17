@@ -44,5 +44,5 @@ export type {
 	GeneralSettings,
 	SettingsSnapshot,
 } from "@/features/settings/types";
-export type { StickerBoardSettings } from "@/types/stickerBoard";
-export type { GallerySettings } from "@/types/gallery";
+export type { StickerBoardSettings } from "@/features/stickerboard-editor/model";
+export type { GallerySettings } from "@/features/gallery/types";

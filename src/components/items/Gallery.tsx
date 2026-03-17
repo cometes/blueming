@@ -1,6 +1,6 @@
 import { useMoveToPage } from "@/hooks/useMoveToPage";
-import { dateConvert } from "@/lib/date";
-import { cn } from "@/lib/utils";
+import { dateConvert } from "@/shared/lib/date";
+import { cn } from "@/shared/lib/utils";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";

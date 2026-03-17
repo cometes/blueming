@@ -16,7 +16,7 @@ import RadioItem from "@/components/items/RadioItem";
 import WidgetSetting from "@/components/setting/widget";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
-import FontRegisterDialog from "@/components/modal/FontRegisterDialog";
+import FontRegisterDialog from "@/features/settings/components/FontRegisterDialog";
 import {
 	Dialog,
 	DialogContent,

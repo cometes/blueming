@@ -6,7 +6,7 @@ import type { Editor } from "@tiptap/react";
 import { useSettings } from "@/contexts/SettingsContext";
 import { setSettingsProfile } from "@/features/settings/api/main";
 import type { ProfileData } from "@/features/settings/types";
-import { convertSlateToHTML, isSlateFormat } from "@/lib/slate-to-tiptap";
+import { convertSlateToHTML, isSlateFormat } from "@/shared/lib/slate-to-tiptap";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { useSettingsImagePicker } from "@/features/settings/hooks/useSettingsImagePicker";
 import { usePendingImageUpload } from "@/features/settings/hooks/usePendingImageUpload";

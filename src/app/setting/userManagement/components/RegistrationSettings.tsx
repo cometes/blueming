@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { UserManagementSettings, RegistrationMode } from "@/types/user";
+import type {
+	UserManagementSettings,
+	RegistrationMode,
+} from "@/features/admin/types";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";

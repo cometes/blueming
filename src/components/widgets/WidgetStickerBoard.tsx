@@ -7,7 +7,7 @@ import type {
 	StickerBoardComponent,
 	StickerBoardGroupComponent,
 	StickerBoardTextComponent,
-} from "@/types/stickerBoard";
+} from "@/features/stickerboard-editor/model";
 
 const isTextSticker = (
 	component: StickerBoardComponent

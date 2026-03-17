@@ -1,4 +1,4 @@
-import { useAdmin } from "@/hooks/auth/UseAdmin";
+import { useAdmin } from "@/features/admin/hooks/useAdmin";
 
 interface AdminOnlyProps {
 	children: React.ReactNode;

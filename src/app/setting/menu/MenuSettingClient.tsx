@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useSettingMenu } from "@/hooks/useSettingMenu";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
-import MenuAddModal from "@/components/modal/MenuAddModal";
+import MenuAddModal from "@/features/settings/components/menu/MenuAddModal";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { MenuPreviewSection } from "@/features/settings/components/menu/MenuPreviewSection";
 import { MenuResetDialog } from "@/features/settings/components/menu/MenuResetDialog";

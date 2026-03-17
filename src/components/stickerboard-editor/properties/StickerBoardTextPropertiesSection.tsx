@@ -13,8 +13,11 @@ import {
 	DEFAULT_TEXT_MAX_WIDTH_PX,
 	DEFAULT_TEXT_PADDING,
 	isTextSticker,
-} from "@/lib/stickerboard-utils";
-import type { StickerBoardComponent, StickerBoardTextComponent } from "@/types/stickerBoard";
+} from "@/features/stickerboard-editor/lib/stickerboard-utils";
+import type {
+	StickerBoardComponent,
+	StickerBoardTextComponent,
+} from "@/features/stickerboard-editor/model";
 
 interface StickerBoardTextPropertiesSectionProps {
 	component: StickerBoardTextComponent;

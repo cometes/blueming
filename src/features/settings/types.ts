@@ -1,5 +1,5 @@
-import type { StickerBoardSettings } from "@/types/stickerBoard";
-import type { GallerySettings } from "@/types/gallery";
+import type { StickerBoardSettings } from "@/features/stickerboard-editor/model";
+import type { GallerySettings } from "@/features/gallery/types";
 
 export interface LayoutItem {
 	i: string;

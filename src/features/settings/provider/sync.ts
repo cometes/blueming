@@ -10,7 +10,7 @@ import type {
 	SettingsRefreshOptions,
 	SettingsSnapshot,
 } from "@/features/settings/types";
-import type { GallerySettings } from "@/types/gallery";
+import type { GallerySettings } from "@/features/gallery/types";
 
 interface UseSettingsSyncArgs {
 	initialSettings?: SettingsSnapshot | null;

@@ -5,17 +5,17 @@ import { useSearchParams } from "next/navigation";
 import { Plus, Search, Settings, X } from "lucide-react";
 import { toast } from "sonner";
 import GalleryGrid from "./components/GalleryGrid";
-import GalleryImageModal from "@/components/modal/GalleryImageModal";
-import GallerySettingsDialog from "@/components/modal/GallerySettingsDialog";
+import GalleryImageModal from "@/features/gallery/components/GalleryImageModal";
+import GallerySettingsDialog from "@/features/gallery/components/GallerySettingsDialog";
 import GalleryCreateModal, {
 	type GalleryCreatePayload,
-} from "@/components/modal/GalleryCreateModal";
+} from "@/features/gallery/components/GalleryCreateModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSettings } from "@/contexts/SettingsContext";
-import { useAdmin } from "@/hooks/auth/UseAdmin";
-import type { GalleryImage, GallerySettings } from "@/types/gallery";
-import { DEFAULT_GALLERY_SETTINGS } from "@/types/gallery";
+import { useAdmin } from "@/features/admin/hooks/useAdmin";
+import type { GalleryImage, GallerySettings } from "@/features/gallery/types";
+import { DEFAULT_GALLERY_SETTINGS } from "@/features/gallery/types";
 import { createGalleryImage, fetchGalleryImages } from "@/features/gallery/api/client";
 import { setSettingsGallery } from "@/features/settings/api/main";
 

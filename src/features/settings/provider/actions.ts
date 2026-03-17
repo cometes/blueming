@@ -8,7 +8,7 @@ import type {
 	Menu,
 	SettingsGeneralSection,
 } from "@/features/settings/types";
-import type { GallerySettings } from "@/types/gallery";
+import type { GallerySettings } from "@/features/gallery/types";
 
 interface CreateSettingsActionsArgs {
 	setGeneral: Dispatch<SetStateAction<SettingsGeneralSection | undefined>>;

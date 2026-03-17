@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { listStickerAssets } from "@/features/stickerboard-editor/api/assets";
-import type { StickerAsset } from "@/types/stickerBoard";
+import type { StickerAsset } from "@/features/stickerboard-editor/model";
 import type { MenuDesign } from "@/features/settings/types";
 import type { ImageFieldType, PendingImage } from "@/features/settings/lib/menu";
 

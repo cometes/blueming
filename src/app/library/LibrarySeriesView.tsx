@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import type { CSSProperties } from "react";
 import ItemCard from "@/components/items/Card";
 

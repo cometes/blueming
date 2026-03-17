@@ -18,7 +18,7 @@ import {
 	AlignStartHorizontal,
 	AlignStartVertical,
 } from "lucide-react";
-import type { StickerBoardComponent } from "@/types/stickerBoard";
+import type { StickerBoardComponent } from "@/features/stickerboard-editor/model";
 
 interface StickerBoardAlignmentSectionProps {
 	selectedComponent: StickerBoardComponent;

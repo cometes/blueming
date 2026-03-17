@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useKeyboardHeight } from "@/hooks/useKeyboardHeight";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 
 interface MobileToolbarContainerProps {
 	children: React.ReactNode;

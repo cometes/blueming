@@ -3,14 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useState, useMemo, useCallback } from "react";
-import { useAdmin } from "@/hooks/auth/UseAdmin";
+import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import type {
 	BoardRoutes,
 	MenuData,
-	MenuDesign,
-	MenuItem,
 	OpenFolders,
-} from "./widgetMenuTypes";
+} from "@/features/settings/lib/widgetMenu";
+import type { MenuDesign, MenuItem } from "@/features/settings/types";
 import WidgetMenuDesktop from "./WidgetMenuDesktop";
 import WidgetMenuIconBar from "./WidgetMenuIconBar";
 import WidgetMenuMobile from "./WidgetMenuMobile";
@@ -86,7 +85,7 @@ export default function WidgetMenu() {
 		});
 	}, [menuData.menus, isAdmin, isManagerOrAdmin]);
 
-	const design: MenuDesign = useMemo(
+	const design: Partial<MenuDesign> = useMemo(
 		() => menuData.design || {},
 		[menuData.design],
 	);

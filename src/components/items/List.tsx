@@ -1,7 +1,7 @@
 import { useMoveToPage } from "@/hooks/useMoveToPage";
-import { dateConvert } from "@/lib/date";
+import { dateConvert } from "@/shared/lib/date";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { Fragment } from "react";
 import type { ReactNode } from "react";
 import { CircleSlash, MessageCircle, Lock } from "lucide-react";

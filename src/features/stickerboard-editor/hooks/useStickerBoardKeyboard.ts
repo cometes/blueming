@@ -1,8 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { cloneDraft, isGroupSticker, normalizeStickerSize, type PctSticker } from "@/lib/stickerboard-utils";
-import type { StickerBoardComponent } from "@/types/stickerBoard";
+import {
+	cloneDraft,
+	isGroupSticker,
+	normalizeStickerSize,
+	type PctSticker,
+} from "@/features/stickerboard-editor/lib/stickerboard-utils";
+import type { StickerBoardComponent } from "@/features/stickerboard-editor/model";
 
 interface UseStickerBoardKeyboardArgs {
 	selectedIdRef: React.MutableRefObject<number | null>;

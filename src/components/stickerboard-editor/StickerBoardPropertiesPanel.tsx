@@ -1,7 +1,7 @@
 "use client";
 
 import { useStickerBoardEditorContext } from "@/contexts/StickerBoardEditorContext";
-import { isTextSticker } from "@/lib/stickerboard-utils";
+import { isTextSticker } from "@/features/stickerboard-editor/lib/stickerboard-utils";
 import { StickerBoardAlignmentSection } from "@/components/stickerboard-editor/properties/StickerBoardAlignmentSection";
 import { StickerBoardTextPropertiesSection } from "@/components/stickerboard-editor/properties/StickerBoardTextPropertiesSection";
 import { StickerBoardImagePropertiesSection } from "@/components/stickerboard-editor/properties/StickerBoardImagePropertiesSection";

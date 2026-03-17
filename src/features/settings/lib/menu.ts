@@ -1,4 +1,4 @@
-import type { StickerAsset } from "@/types/stickerBoard";
+import type { StickerAsset } from "@/features/stickerboard-editor/model";
 
 export const INPUT_HEIGHT = "h-9";
 export const ICON_SIZE = 28;
@@ -27,4 +27,3 @@ export interface MenuImageManagerState {
 	assetsError: string | null;
 	assetSearchQuery: string;
 }
-

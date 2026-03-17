@@ -1,4 +1,4 @@
-import { generateColorPalette } from "@/lib/utils";
+import { generateColorPalette } from "@/shared/lib/utils";
 
 interface ColorPalettePreviewProps {
 	color: string;

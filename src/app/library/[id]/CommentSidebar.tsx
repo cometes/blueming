@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { ImagePlus, Lock, MessageCircle, Send } from "lucide-react";
 import {
 	createComment,
@@ -15,17 +15,17 @@ import {
 	updateComment,
 	verifyCommentSecret,
 } from "@/features/library/api/comments";
-import CommentItem from "@/components/items/CommentItem";
+import CommentItem from "@/features/library/components/CommentItem";
 import CommentEditDialog from "@/components/comment/CommentEditDialog";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import AssetGrid from "@/components/asset/AssetGrid";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth/store";
-import { createImageId, type CommentImage } from "@/hooks/comment/useCommentForm";
+import { createImageId, type CommentImage } from "@/features/comment/hooks/useCommentForm";
 import {
 	revokeCommentImageUrls,
 	useCommentImageManager,
-} from "@/hooks/comment/useCommentImageManager";
+} from "@/features/comment/hooks/useCommentImageManager";
 import type { LibraryComment as Comment } from "@/features/library/types";
 
 interface CommentSidebarProps {

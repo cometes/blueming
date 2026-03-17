@@ -9,8 +9,9 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import MenuAuthButton from "@/components/common/MenuAuthButton";
-import { cn } from "@/lib/utils";
-import type { MenuDesign, MenuItem, OpenFolders } from "./widgetMenuTypes";
+import { cn } from "@/shared/lib/utils";
+import type { OpenFolders } from "@/features/settings/lib/widgetMenu";
+import type { MenuDesign, MenuItem } from "@/features/settings/types";
 import {
 	Bell,
 	Square,
@@ -24,7 +25,7 @@ import {
 } from "lucide-react";
 
 type Props = {
-	design: MenuDesign;
+	design: Partial<MenuDesign>;
 	filteredMenuItems: MenuItem[];
 	iconBarStyle: React.CSSProperties;
 	openFolders: OpenFolders;
@@ -33,7 +34,7 @@ type Props = {
 	className?: string;
 };
 
-const renderIconBarLogo = (design: MenuDesign) => {
+const renderIconBarLogo = (design: Partial<MenuDesign>) => {
 	if (design?.iconBarLogoType !== "이미지") {
 		return null;
 	}

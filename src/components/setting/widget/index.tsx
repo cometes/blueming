@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { ColorPicker } from "@/components/ui/color-picker";
 import RadioItem from "@/components/items/RadioItem";
 import { useSettingDesign } from "@/hooks/useSettingDesign";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { Slider } from "@/components/ui/slider";
 
 interface WidgetSettings {

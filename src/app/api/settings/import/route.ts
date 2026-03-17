@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/app/api/_lib/admin";
 import { jsonError } from "@/app/api/_lib/response";
 import { requireAdmin } from "@/app/api/_lib/auth";
-import { generateColorPalette } from "@/lib/utils";
+import { generateColorPalette } from "@/shared/lib/utils";
 
 export const runtime = "nodejs";
 

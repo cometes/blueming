@@ -18,8 +18,8 @@ import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
-import SlideItem from "@/components/items/SlideItem";
-import SlideAddDialog from "@/components/modal/SlideAddDialog";
+import SlideItem from "@/features/settings/components/slide/SlideItem";
+import SlideAddDialog from "@/features/settings/components/SlideAddDialog";
 import { setSettingsMainSlide } from "@/features/settings/api/main";
 import type { SlideData } from "@/features/settings/types";
 

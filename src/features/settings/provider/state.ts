@@ -5,7 +5,7 @@ import type {
 	LibrarySettings,
 	SettingsSnapshot,
 } from "@/features/settings/types";
-import type { GallerySettings } from "@/types/gallery";
+import type { GallerySettings } from "@/features/gallery/types";
 
 export const useSettingsState = (initialSettings?: SettingsSnapshot | null) => {
 	const [general, setGeneral] = useState<SettingsGeneralSection | undefined>(
