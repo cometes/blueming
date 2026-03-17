@@ -3,7 +3,10 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/app/api/_lib/admin";
 import { jsonError } from "@/app/api/_lib/response";
 import { requireManager } from "@/app/api/_lib/auth";
-import { mapMenuDesignToKorean, normalizeGeneralData } from "@/app/api/_lib/settings";
+import {
+	mapMenuDesignToKorean,
+	normalizeGeneralData,
+} from "@/features/settings/server/normalizers";
 
 export const runtime = "nodejs";
 

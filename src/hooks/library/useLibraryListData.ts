@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { fetchLibraryList, fetchLibraryTags } from "@/queries/fetch/fetchLibrary";
+import { fetchLibraryList, fetchLibraryTags } from "@/features/library/api/client";
 
 interface LibraryItem {
 	id: string;

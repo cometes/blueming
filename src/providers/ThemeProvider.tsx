@@ -2,9 +2,12 @@
 "use client";
 
 import { useSettings } from "@/contexts/SettingsContext";
-import type { FontRegistryItem } from "@/contexts/SettingsContext";
 import { createContext, useContext, useEffect, useMemo } from "react";
-import { Design, General } from "@/contexts/SettingsContext";
+import type {
+	Design,
+	FontRegistryItem,
+	General,
+} from "@/features/settings/types";
 
 interface ThemeContextType {
 	design?: Design;
@@ -77,22 +80,10 @@ const syncFontAssets = (fonts: FontRegistryItem[]) => {
 export function ThemeProvider({ children }: ThemeProviderProps) {
 	const settings = useSettings();
 	const resolveGeneral = () => {
-		const raw = settings.general as Record<string, unknown> | undefined;
-		if (!raw || typeof raw !== "object") {
-			return { general: undefined as General | undefined, design: undefined as Design | undefined };
-		}
-		const nestedGeneral = (raw as { general?: unknown }).general;
-		const general =
-			nestedGeneral && typeof nestedGeneral === "object"
-				? (nestedGeneral as unknown as General)
-				: ("primaryColor" in raw ||
-					"secondaryColor" in raw ||
-					"title" in raw ||
-					"logoType" in raw
-						? (raw as unknown as General)
-						: undefined);
-		const design = (raw as { design?: unknown }).design as Design | undefined;
-		return { general, design };
+		return {
+			general: settings.general?.general as General | undefined,
+			design: settings.general?.design as Design | undefined,
+		};
 	};
 	const { general, design } = resolveGeneral();
 	const fontRegistry = useMemo(

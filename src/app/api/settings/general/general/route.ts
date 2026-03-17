@@ -3,8 +3,11 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/app/api/_lib/admin";
 import { jsonError } from "@/app/api/_lib/response";
 import { requireManager } from "@/app/api/_lib/auth";
+import {
+	mapLogoTypeToKorean,
+	normalizeGeneralData,
+} from "@/features/settings/server/normalizers";
 import { generateColorPalette } from "@/lib/utils";
-import { mapLogoTypeToKorean, normalizeGeneralData } from "@/app/api/_lib/settings";
 
 export const runtime = "nodejs";
 

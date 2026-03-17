@@ -13,7 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import type { FontRegistryItem } from "@/contexts/SettingsContext";
-import { API_BASE } from "@/queries/apiClient";
+import { API_BASE } from "@/shared/lib/http/client";
 
 type FontSource = "url" | "file";
 

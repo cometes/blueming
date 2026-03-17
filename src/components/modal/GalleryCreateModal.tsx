@@ -15,7 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { uploadGalleryImage } from "@/queries/gallery";
+import { uploadGalleryImage } from "@/features/gallery/api/client";
+import { useSingleImageUploadField } from "@/hooks/useSingleImageUploadField";
 
 export interface GalleryCreatePayload {
 	imageUrl: string;
@@ -41,8 +42,7 @@ export default function GalleryCreateModal({
 }: GalleryCreateModalProps) {
 	const { user } = useAuthStore();
 	const { isAuthenticated } = useAuthStore();
-	const [imageUrl, setImageUrl] = useState("");
-	const [imageFile, setImageFile] = useState<File | null>(null);
+	const { imageUrl, imageFile, setFromFile, clearImage } = useSingleImageUploadField();
 	const [titleInput, setTitleInput] = useState("");
 	const [tagInput, setTagInput] = useState("");
 	const [tagSearchInput, setTagSearchInput] = useState("");
@@ -66,29 +66,17 @@ export default function GalleryCreateModal({
 		setTags([]);
 		setIsDragging(false);
 		setIsProcessing(false);
-		setImageFile(null);
-		if (imageUrl.startsWith("blob:")) {
-			URL.revokeObjectURL(imageUrl);
-		}
-		setImageUrl("");
+		clearImage();
 		if (fileInputRef.current) {
 			fileInputRef.current.value = "";
 		}
-	}, [imageUrl]);
+	}, [clearImage]);
 
 	useEffect(() => {
 		if (!isOpen) {
 			resetComposer();
 		}
 	}, [isOpen, resetComposer]);
-
-	useEffect(() => {
-		return () => {
-			if (imageUrl.startsWith("blob:")) {
-				URL.revokeObjectURL(imageUrl);
-			}
-		};
-	}, [imageUrl]);
 
 	const MAX_TAGS = 6;
 
@@ -115,12 +103,7 @@ export default function GalleryCreateModal({
 			return;
 		}
 
-		if (imageUrl.startsWith("blob:")) {
-			URL.revokeObjectURL(imageUrl);
-		}
-		const previewUrl = URL.createObjectURL(file);
-		setImageUrl(previewUrl);
-		setImageFile(file);
+		setFromFile(file);
 	};
 
 	const handleDrop = (event: React.DragEvent) => {
@@ -128,12 +111,7 @@ export default function GalleryCreateModal({
 		setIsDragging(false);
 		const file = event.dataTransfer.files?.[0];
 		if (file && file.type.startsWith("image/")) {
-			if (imageUrl.startsWith("blob:")) {
-				URL.revokeObjectURL(imageUrl);
-			}
-			const previewUrl = URL.createObjectURL(file);
-			setImageUrl(previewUrl);
-			setImageFile(file);
+			setFromFile(file);
 		} else if (file) {
 			toast.error("이미지 파일만 업로드할 수 있어요.");
 		}
@@ -241,10 +219,7 @@ export default function GalleryCreateModal({
 									className="w-full h-full object-cover"
 								/>
 								<button
-									onClick={() => {
-										setImageUrl("");
-										setImageFile(null);
-									}}
+									onClick={clearImage}
 									className="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
 									title="이미지 제거"
 								>

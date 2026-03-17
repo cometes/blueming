@@ -17,8 +17,8 @@ import {
 } from "@/components/ui/dialog";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { toast } from "sonner";
-import type { DdayData } from "@/queries/set/setSettingsMainDday";
-import { listStickerAssets } from "@/queries/stickerAssets";
+import type { DdayData } from "@/features/settings/types";
+import { listStickerAssets } from "@/features/stickerboard-editor/api/assets";
 import type { StickerAsset } from "@/types/stickerBoard";
 import AssetGrid from "@/components/asset/AssetGrid";
 

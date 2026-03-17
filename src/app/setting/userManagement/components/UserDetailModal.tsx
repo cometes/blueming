@@ -11,7 +11,7 @@ import {
     deleteUser,
     updateUserRole,
     updateUserStatus,
-} from "@/queries/userManagement";
+} from "@/features/admin/api/userManagement";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,

@@ -16,8 +16,8 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { useAdmin } from "@/hooks/auth/UseAdmin";
 import type { GalleryImage, GallerySettings } from "@/types/gallery";
 import { DEFAULT_GALLERY_SETTINGS } from "@/types/gallery";
-import { createGalleryImage, fetchGalleryImages } from "@/queries/gallery";
-import { setSettingsGallery } from "@/queries/set/setSettingsGallery";
+import { createGalleryImage, fetchGalleryImages } from "@/features/gallery/api/client";
+import { setSettingsGallery } from "@/features/settings/api/main";
 
 export default function GalleryClient() {
 	const searchParams = useSearchParams();

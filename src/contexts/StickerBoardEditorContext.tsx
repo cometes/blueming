@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { createContext, useContext } from "react";
 import type { StickerBoardComponent } from "@/types/stickerBoard";
-import { useStickerBoardEditor } from "@/hooks/useStickerBoardEditor";
+import { useStickerBoardEditor } from "@/features/stickerboard-editor/hooks/useStickerBoardEditor";
 
 type StickerBoardEditorContextValue = ReturnType<typeof useStickerBoardEditor>;
 

@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { API_BASE } from "@/queries/apiClient";
+import { API_BASE } from "@/shared/lib/http/client";
 
 const defaultRevalidateSeconds = 60;
 

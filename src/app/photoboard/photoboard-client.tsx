@@ -10,11 +10,11 @@ import PhotoboardCreateModal from "@/components/modal/PhotoboardCreateModal";
 import {
 	deletePhotoboardPost,
 	fetchPhotoboardPosts,
-} from "@/queries/photoboard";
+} from "@/features/photoboard/api/client";
 import PhotoboardSettingsDialog from "@/components/modal/PhotoboardSettingsDialog";
 import AdminOnly from "@/components/common/AdminOnly";
 import { useSettings } from "@/contexts/SettingsContext";
-import { setSettingsMainPhotoboard } from "@/queries/set/setSettingsMainPhotoboard";
+import { setSettingsMainPhotoboard } from "@/features/settings/api/main";
 import { useAuthStore } from "@/store/auth/store";
 import { useAdmin } from "@/hooks/auth/UseAdmin";
 import PhotoboardItem from "@/components/items/PhotoboardItem";

@@ -1,4 +1,8 @@
-import { fetchLibraryDetail, fetchLibrarySeries, fetchLibraryTags } from "@/queries/fetch/fetchLibrary";
+import {
+	fetchLibraryDetailServer,
+	fetchLibrarySeriesServer,
+	fetchLibraryTagsServer,
+} from "@/features/library/api/server";
 import LibararyNewClient from "../../new/NewClient";
 
 interface EditPageProps {
@@ -10,9 +14,9 @@ export default async function LibraryEditPage({ params }: EditPageProps) {
 	try {
 		const [{ data: detailData }, { data: tagsData }, { data: seriesData }] =
 			await Promise.all([
-				fetchLibraryDetail(id),
-				fetchLibraryTags(),
-				fetchLibrarySeries(),
+				fetchLibraryDetailServer(id),
+				fetchLibraryTagsServer(),
+				fetchLibrarySeriesServer(),
 			]);
 
 		return (

@@ -2,17 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Moveable from "react-moveable";
-import Selecto from "react-selecto";
 import { useStickerBoardEditorContext } from "@/contexts/StickerBoardEditorContext";
 import { isPctSticker } from "@/lib/stickerboard-utils";
-import { STICKER_ASSET_DND_MIME } from "@/types/stickerBoard";
-import { StickerRenderer } from "@/components/stickerboard-editor/StickerRenderer";
-import { StickerBoardAssetsPanel } from "@/components/stickerboard-editor/StickerBoardAssetsPanel";
-import { ButtonGroup } from "@/components/ui/button-group";
-import { Button } from "@/components/ui/button";
-import { ImagePlus, Type } from "lucide-react";
-
-const GRID_BASE = 12;
+import { StickerBoardCanvasToolbar } from "@/components/stickerboard-editor/StickerBoardCanvasToolbar";
+import { StickerBoardCanvasStage } from "@/components/stickerboard-editor/StickerBoardCanvasStage";
 
 export function StickerBoardCanvas({
 	ratio,
@@ -450,454 +443,89 @@ export function StickerBoardCanvas({
 
 	return (
 		<div className="rounded-card border-card bg-card blur-proxy p-4">
-			<div className="flex items-center justify-between">
-				<div>
-					<div className="text-sm font-semibold text-main-text">캔버스</div>
-					<p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-						고정 폭 768px 캔버스 영역
-					</p>
-				</div>
-				<ButtonGroup className="items-center rounded-md border border-stone-700 bg-stone-800 overflow-hidden divide-x divide-stone-700">
-					<Button
-						type="button"
-						variant="ghost"
-						size="icon"
-						className={[
-							"h-8 w-8 rounded-none hover:bg-stone-700",
-							isImageDialogOpen ? "bg-stone-700 text-white" : "",
-						].join(" ")}
-						onClick={() => setIsImageDialogOpen((prev) => !prev)}
-						aria-label="이미지 스티커 추가"
-						title="이미지 스티커 추가"
-					>
-						<ImagePlus className="h-4 w-4" />
-					</Button>
-					<Button
-						type="button"
-						variant="ghost"
-						size="icon"
-						className={[
-							"h-8 w-8 rounded-none hover:bg-stone-700",
-							isTextInsertMode ? "bg-stone-700 text-white" : "",
-						].join(" ")}
-						onClick={() => setIsTextInsertMode((prev) => !prev)}
-						aria-label="텍스트 스티커 추가"
-						title="텍스트 스티커 추가"
-					>
-						<Type className="h-4 w-4" />
-					</Button>
-					<StickerBoardAssetsPanel
-						containerClassName=""
-						compactTrigger
-						triggerVariant="ghost"
-						triggerClassName="h-8 w-8 rounded-none hover:bg-stone-700"
-					/>
-				</ButtonGroup>
-			</div>
-			<div
-				ref={boundsRef}
-				className="mt-4 w-full overflow-hidden rounded-card border border-card bg-card-bg p-2"
-			>
-				<div className="relative grid grid-cols-12 grid-rows-12 aspect-[5/4] w-full overflow-visible">
-					<div
-						className="absolute inset-0 pointer-events-none"
-						style={{
-							backgroundImage:
-								"linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px)",
-							backgroundSize: "calc(100% / 12) calc(100% / 12)",
-						}}
-					/>
+			<StickerBoardCanvasToolbar
+				isImageDialogOpen={isImageDialogOpen}
+				isTextInsertMode={isTextInsertMode}
+				onToggleImageDialog={() => setIsImageDialogOpen((prev) => !prev)}
+				onToggleTextInsertMode={() => setIsTextInsertMode((prev) => !prev)}
+			/>
+			<StickerBoardCanvasStage
+				ratio={ratio}
+				boundsRef={boundsRef}
+				setCanvasRef={setCanvasRef}
+				visibleDraft={visibleDraft}
+				textDraft={textDraft}
+				textDraftRef={textDraftRef}
+				moveableRef={moveableRef}
+				moveableTargets={moveableTargets}
+				isSelectionLocked={isSelectionLocked}
+				keepRatio={keepRatio}
+				selectedIds={selectedIds}
+				setSelection={setSelection}
+				startMoveableInteraction={startMoveableInteraction}
+				endMoveableInteraction={endMoveableInteraction}
+				previewDrag={previewDrag}
+				commitDrag={commitDrag}
+				previewResize={previewResize}
+				commitResize={commitResize}
+				applyRotate={applyRotate}
+				commitRotate={commitRotate}
+				onPointerInsertText={(e) => {
+					if (!isTextInsertMode) return;
+					if ((e.target as HTMLElement)?.closest?.('[data-sticker-root="true"]')) {
+						return;
+					}
+					const rect = canvasRef.current?.getBoundingClientRect();
+					if (!rect || rect.width <= 0 || rect.height <= 0) return;
+					const xPct = ((e.clientX - rect.left) / rect.width) * 100;
+					const yPct = ((e.clientY - rect.top) / rect.height) * 100;
+					e.preventDefault();
+					e.stopPropagation();
+					setIsTextInsertMode(false);
+					setSelection(new Set(), null);
+					openTextDraftAt(xPct, yPct);
+				}}
+				onDropAsset={(e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					const raw = e.dataTransfer.getData("application/x-sticker-asset");
+					if (!raw) return;
+					let payload = null;
+					try {
+						payload = JSON.parse(raw);
+					} catch {
+						payload = null;
+					}
+					if (!payload?.url) return;
 
-					{ratio ? (
-						<div
-							className="relative bg-widget-bg rounded-widget border-widget overflow-visible shadow-[0_10px_25px_rgba(0,0,0,0.08)] stickerboard-canvas"
-							style={{
-								gridColumn: (() => {
-									const span = Math.max(1, Math.min(GRID_BASE, ratio.w || 1));
-									const start = Math.floor((GRID_BASE - span) / 2) + 1;
-									return `${start} / span ${span}`;
-								})(),
-								gridRow: (() => {
-									const span = Math.max(1, Math.min(GRID_BASE, ratio.h || 1));
-									const start = Math.floor((GRID_BASE - span) / 2) + 1;
-									return `${start} / span ${span}`;
-								})(),
-							}}
-							ref={setCanvasRef}
-							onPointerDown={(e) => {
-								if (!isTextInsertMode) return;
-								if (
-									(e.target as HTMLElement)?.closest?.(
-										'[data-sticker-root="true"]',
-									)
-								) {
-									return;
-								}
-								const rect = canvasRef.current?.getBoundingClientRect();
-								if (!rect || rect.width <= 0 || rect.height <= 0) return;
-								const xPct = ((e.clientX - rect.left) / rect.width) * 100;
-								const yPct = ((e.clientY - rect.top) / rect.height) * 100;
-								e.preventDefault();
-								e.stopPropagation();
-								setIsTextInsertMode(false);
-								setSelection(new Set(), null);
-								openTextDraftAt(xPct, yPct);
-							}}
-							onDragOver={(e) => {
-								e.preventDefault();
-								e.dataTransfer.dropEffect = "copy";
-							}}
-							onDrop={(e) => {
-								e.preventDefault();
-								e.stopPropagation();
-								const raw = e.dataTransfer.getData(STICKER_ASSET_DND_MIME);
-								if (!raw) return;
-								let payload = null;
-								try {
-									payload = JSON.parse(raw);
-								} catch {
-									payload = null;
-								}
-								if (!payload?.url) return;
+					const canvas = canvasRef.current;
+					if (!canvas) return;
+					const rect = canvas.getBoundingClientRect();
+					const centerXPct = ((e.clientX - rect.left) / rect.width) * 100;
+					const centerYPct = ((e.clientY - rect.top) / rect.height) * 100;
+					const base = cloneDraft(presentRef.current);
 
-								const canvas = canvasRef.current;
-								if (!canvas) return;
-								const rect = canvas.getBoundingClientRect();
-								const centerXPct = ((e.clientX - rect.left) / rect.width) * 100;
-								const centerYPct = ((e.clientY - rect.top) / rect.height) * 100;
-								const base = cloneDraft(presentRef.current);
-
-								void addImageStickerAt({
-									url: payload.url,
-									centerXPct,
-									centerYPct,
-									assetId: payload.assetId,
-									assetName: payload.name,
-									assetWidth: payload.width,
-									assetHeight: payload.height,
-									historyBase: base,
-								});
-							}}
-						>
-							<Selecto
-								dragContainer=".stickerboard-canvas"
-								selectableTargets={[".sticker-item"]}
-								selectByClick
-								selectFromInside={false}
-								toggleContinueSelect="shift"
-								hitRate={0}
-								onDragStart={(e) => {
-									const moveable = moveableRef.current;
-									const target = e.inputEvent.target as HTMLElement | null;
-									if (!target) return;
-									if (
-										moveable?.isMoveableElement(target) ||
-										target.closest(".moveable-control-box")
-									) {
-										e.stop();
-									}
-								}}
-								onSelect={(e) => {
-									const next = new Set<number>();
-									e.selected.forEach((el) => {
-										const id = Number(el.getAttribute("data-sticker-id"));
-										if (Number.isNaN(id)) return;
-										next.add(id);
-									});
-									const added = e.added[e.added.length - 1];
-									const primaryId = added
-										? Number(added.getAttribute("data-sticker-id"))
-										: next.size
-											? Array.from(next)[0]
-											: null;
-									setSelection(
-										next,
-										Number.isNaN(primaryId) ? null : primaryId,
-									);
-								}}
-							/>
-							<Moveable
-								ref={moveableRef}
-								target={
-									moveableTargets.length === 1 ? moveableTargets[0] : null
-								}
-								targets={
-									moveableTargets.length > 1 ? moveableTargets : undefined
-								}
-								origin={false}
-								draggable={!isSelectionLocked && moveableTargets.length > 0}
-								resizable={!isSelectionLocked && moveableTargets.length > 0}
-								rotatable={!isSelectionLocked && moveableTargets.length > 0}
-								keepRatio={keepRatio}
-								throttleDrag={0}
-								throttleResize={0}
-								throttleRotate={0}
-								onDragStart={(e) => {
-									const id = Number(
-										(e.target as HTMLElement).getAttribute("data-sticker-id"),
-									);
-									if (Number.isNaN(id)) return;
-									if (selectedIds.size !== 1 || !selectedIds.has(id)) {
-										setSelection(new Set([id]), id);
-									}
-									startMoveableInteraction([id]);
-								}}
-								onDrag={(e) => {
-									const id = Number(
-										(e.target as HTMLElement).getAttribute("data-sticker-id"),
-									);
-									if (Number.isNaN(id)) return;
-									previewDrag(id, e.target as HTMLElement, e.beforeTranslate as [number, number]);
-								}}
-								onDragEnd={(e) => {
-									const id = Number(
-										(e.target as HTMLElement).getAttribute("data-sticker-id"),
-									);
-									if (!Number.isNaN(id)) {
-										commitDrag([id]);
-									}
-									endMoveableInteraction();
-								}}
-								onDragGroupStart={(e) => {
-									const ids = e.targets
-										.map((t) => Number(t.getAttribute("data-sticker-id")))
-										.filter((id) => !Number.isNaN(id));
-									if (ids.length === 0) return;
-									startMoveableInteraction(ids);
-								}}
-								onDragGroup={(e) => {
-									e.events.forEach((ev) => {
-										const id = Number(
-											(ev.target as HTMLElement).getAttribute(
-												"data-sticker-id",
-											),
-										);
-										if (Number.isNaN(id)) return;
-										previewDrag(
-											id,
-											ev.target as HTMLElement,
-											ev.beforeTranslate as [number, number],
-										);
-									});
-								}}
-								onDragGroupEnd={(e) => {
-									const ids = e.targets
-										.map((t) => Number(t.getAttribute("data-sticker-id")))
-										.filter((id) => !Number.isNaN(id));
-									commitDrag(ids);
-									endMoveableInteraction();
-								}}
-								onResizeStart={(e) => {
-									const id = Number(
-										(e.target as HTMLElement).getAttribute("data-sticker-id"),
-									);
-									if (Number.isNaN(id)) return;
-									if (selectedIds.size !== 1 || !selectedIds.has(id)) {
-										setSelection(new Set([id]), id);
-									}
-									startMoveableInteraction([id]);
-								}}
-								onResize={(e) => {
-									const id = Number(
-										(e.target as HTMLElement).getAttribute("data-sticker-id"),
-									);
-									if (Number.isNaN(id)) return;
-									previewResize(
-										id,
-										e.target as HTMLElement,
-										{ width: e.width, height: e.height },
-										e.drag.beforeTranslate as [number, number],
-									);
-								}}
-								onResizeEnd={(e) => {
-									const id = Number(
-										(e.target as HTMLElement).getAttribute("data-sticker-id"),
-									);
-									if (!Number.isNaN(id)) {
-										commitResize([id]);
-									}
-									endMoveableInteraction();
-								}}
-								onResizeGroupStart={(e) => {
-									const ids = e.targets
-										.map((t) => Number(t.getAttribute("data-sticker-id")))
-										.filter((id) => !Number.isNaN(id));
-									if (ids.length === 0) return;
-									startMoveableInteraction(ids);
-								}}
-								onResizeGroup={(e) => {
-									e.events.forEach((ev) => {
-										const id = Number(
-											(ev.target as HTMLElement).getAttribute(
-												"data-sticker-id",
-											),
-										);
-										if (Number.isNaN(id)) return;
-										previewResize(
-											id,
-											ev.target as HTMLElement,
-											{ width: ev.width, height: ev.height },
-											ev.drag.beforeTranslate as [number, number],
-										);
-									});
-								}}
-								onResizeGroupEnd={(e) => {
-									const ids = e.targets
-										.map((t) => Number(t.getAttribute("data-sticker-id")))
-										.filter((id) => !Number.isNaN(id));
-									commitResize(ids);
-									endMoveableInteraction();
-								}}
-								onRotateStart={(e) => {
-									const id = Number(
-										(e.target as HTMLElement).getAttribute("data-sticker-id"),
-									);
-									if (Number.isNaN(id)) return;
-									if (selectedIds.size !== 1 || !selectedIds.has(id)) {
-										setSelection(new Set([id]), id);
-									}
-									startMoveableInteraction([id]);
-								}}
-								onRotate={(e) => {
-									const id = Number(
-										(e.target as HTMLElement).getAttribute("data-sticker-id"),
-									);
-									if (Number.isNaN(id)) return;
-									const delta = e.beforeRotate;
-									const dragDelta = (e.drag?.beforeTranslate ?? [0, 0]) as [number, number];
-									applyRotate(id, e.target as HTMLElement, delta, dragDelta);
-								}}
-								onRotateEnd={(e) => {
-									const id = Number(
-										(e.target as HTMLElement).getAttribute("data-sticker-id"),
-									);
-									if (!Number.isNaN(id)) {
-										commitRotate([id]);
-									}
-									endMoveableInteraction();
-								}}
-								onRotateGroupStart={(e) => {
-									const ids = e.targets
-										.map((t) => Number(t.getAttribute("data-sticker-id")))
-										.filter((id) => !Number.isNaN(id));
-									if (ids.length === 0) return;
-									startMoveableInteraction(ids);
-								}}
-								onRotateGroup={(e) => {
-									e.events.forEach((ev) => {
-										const id = Number(
-											(ev.target as HTMLElement).getAttribute(
-												"data-sticker-id",
-											),
-										);
-										if (Number.isNaN(id)) return;
-										const delta = ev.beforeRotate;
-										const dragDelta = (ev.drag?.beforeTranslate ?? [0, 0]) as [number, number];
-										applyRotate(id, ev.target as HTMLElement, delta, dragDelta);
-									});
-								}}
-								onRotateGroupEnd={(e) => {
-									const ids = e.targets
-										.map((t) => Number(t.getAttribute("data-sticker-id")))
-										.filter((id) => !Number.isNaN(id));
-									commitRotate(ids);
-									endMoveableInteraction();
-								}}
-							/>
-							{textDraft && (
-								<div
-									ref={textDraftRef}
-									contentEditable
-									suppressContentEditableWarning
-									onInput={(e) => {
-										const text = (e.target as HTMLDivElement).innerText;
-										setTextDraft((prev) => (prev ? { ...prev, text } : prev));
-									}}
-									onKeyDown={(e) => {
-										if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-											e.preventDefault();
-											commitTextDraft();
-										}
-										if (e.key === "Escape") {
-											e.preventDefault();
-											cancelTextDraft();
-										}
-									}}
-									onBlur={() => {
-										commitTextDraft();
-									}}
-									className={[
-										"absolute z-40 outline-none whitespace-pre-wrap break-words",
-										textDraft.mode === "edit"
-											? "ring-2 ring-blue-500 ring-offset-0 rounded-md"
-											: "",
-									].join(" ")}
-									style={
-										textDraft.mode === "edit" &&
-											textDraft.widthPct !== undefined
-											? {
-												// 편집 모드: 기존 스티커 위치/크기에 맞춤
-												left: `${textDraft.xPct}%`,
-												top: `${textDraft.yPct}%`,
-												width: `${textDraft.widthPct}%`,
-												minHeight: textDraft.heightPct
-													? `${textDraft.heightPct}%`
-													: undefined,
-												color: textDraft.textColor,
-												fontSize: `${textDraft.fontSize}px`,
-												textAlign: textDraft.textAlign,
-												backgroundColor:
-													textDraft.backgroundColor ?? "transparent",
-												padding: "4px",
-												caretColor: textDraft.textColor,
-											}
-											: {
-												// 삽입 모드: 커서만 보이고 배경 없음
-												left: `${textDraft.xPct}%`,
-												top: `${textDraft.yPct}%`,
-												minWidth: "2px",
-												maxWidth: `${textDraft.widthPx}px`,
-												color: textDraft.textColor,
-												fontSize: `${textDraft.fontSize}px`,
-												textAlign: textDraft.textAlign,
-												backgroundColor: "transparent",
-												caretColor: "#3b82f6",
-											}
-									}
-								>
-									{textDraft.mode === "edit" ? textDraft.text : ""}
-								</div>
-							)}
-							{visibleDraft.length > 0 ? (
-								visibleDraft.map((component) => (
-									<StickerRenderer
-										key={component.id}
-										component={component}
-										onDoubleClick={() => openTextDraftForEdit(component)}
-										isEditing={
-											textDraft?.mode === "edit" &&
-											textDraft?.id === component.id
-										}
-									/>
-								))
-							) : (
-								<div className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">
-									저장된 스티커가 없습니다.
-								</div>
-							)}
-						</div>
-					) : (
-						<div className="absolute inset-0 flex items-center justify-center">
-							<div className="text-center py-10">
-								<div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-theme-primary border-r-transparent" />
-								<div className="mt-4 text-xs text-gray-500">
-									캔버스를 불러오는 중...
-								</div>
-							</div>
-						</div>
-					)}
-				</div>
-			</div>
+					void addImageStickerAt({
+						url: payload.url,
+						centerXPct,
+						centerYPct,
+						assetId: payload.assetId,
+						assetName: payload.name,
+						assetWidth: payload.width,
+						assetHeight: payload.height,
+						historyBase: base,
+					});
+				}}
+				onChangeTextDraft={(text) =>
+					setTextDraft((prev) => (prev ? { ...prev, text } : prev))
+				}
+				onCommitTextDraft={commitTextDraft}
+				onCancelTextDraft={cancelTextDraft}
+				onDoubleClickComponent={openTextDraftForEdit}
+				isEditingComponent={(componentId) =>
+					textDraft?.mode === "edit" && textDraft?.id === componentId
+				}
+			/>
 		</div>
 	);
 }

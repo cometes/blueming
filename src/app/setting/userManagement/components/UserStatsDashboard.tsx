@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { UserStats } from "@/types/user";
-import { fetchUserStats } from "@/queries/userManagement";
+import { fetchUserStats } from "@/features/admin/api/userManagement";
 import { Users, UserCheck, UserX, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 

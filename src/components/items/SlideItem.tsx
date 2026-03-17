@@ -17,7 +17,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import type { SlideData } from "@/queries/set/setSettngMainSlide";
+import type { SlideData } from "@/features/settings/types";
 
 interface SlideItemProps {
 	slide: SlideData;

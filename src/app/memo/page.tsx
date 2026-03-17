@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import MemoClient from "./MemoClient";
-import { fetchMemoListServer } from "@/queries/fetch/fetchMemoServer";
+import { fetchMemoListServer } from "@/features/memo/api/server";
 
 export default async function MemoPage() {
 	try {

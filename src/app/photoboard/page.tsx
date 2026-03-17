@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import PhotoBoardClient from "./photoboard-client";
-import { fetchPhotoboardPosts } from "@/queries/photoboard";
+import { fetchPhotoboardPosts } from "@/features/photoboard/api/client";
 
 export default async function PhotoBoardPage() {
 	try {

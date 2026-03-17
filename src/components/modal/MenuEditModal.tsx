@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { useEffect } from "react";
 import {
 	Dialog,
 	DialogContent,
@@ -21,12 +22,14 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Globe, Lock, Trash2, ImagePlus, X } from "lucide-react";
-import { useFileUpload } from "@/hooks/useFileUpload";
 import { toast } from "sonner";
 import type {
 	MenuItem as MenuItemType,
 	SubMenu,
 } from "@/contexts/SettingsContext";
+import { AssetPickerDialog } from "@/features/settings/components/AssetPickerDialog";
+import { useSettingsImagePicker } from "@/features/settings/hooks/useSettingsImagePicker";
+import { uploadSingleFile } from "@/shared/lib/http/uploads";
 
 interface MenuEditModalProps {
 	isOpen: boolean;
@@ -45,7 +48,31 @@ export default function MenuEditModal({
 	onUpdateMenu,
 	handleDeleteMenu,
 }: MenuEditModalProps) {
-	const { uploadFile } = useFileUpload();
+	const imagePicker = useSettingsImagePicker<"image" | "iconImage">({
+		fields: ["image", "iconImage"] as const,
+	});
+	const {
+		state: {
+			activeField,
+			dialogThumbnail,
+			assets,
+			assetsLoading,
+			assetsError,
+			assetSearchQuery,
+			pendingImages,
+			imageSource,
+		},
+		actions: {
+			setDialogThumbnail,
+			setAssetSearchQuery,
+			handleImageFileSelect,
+			closeImageDialog,
+			handleSelectAsset,
+			clearPendingImage,
+			clearAllPendingImages,
+			openImageDialog,
+		},
+	} = imagePicker;
 
 	const handleChange = (
 		field: keyof MenuItemType,
@@ -78,7 +105,7 @@ export default function MenuEditModal({
 
 	const handleSubMenuImageUpload = async (file: File, idx: number) => {
 		try {
-			const url = await uploadFile(file);
+			const url = await uploadSingleFile(file);
 			const currentSubMenus = (menu.subMenus || []) as (string | SubMenu)[];
 			const updatedSubMenus = currentSubMenus.map((subMenu, i) => {
 				if (i === idx) {
@@ -94,33 +121,32 @@ export default function MenuEditModal({
 		}
 	};
 
-	const handleMainImageUpload = async (
-		e: React.ChangeEvent<HTMLInputElement>
-	) => {
-		const file = e.target.files?.[0];
-		if (!file) return;
+	const handleDialogConfirm = async (selectedUrl: string) => {
+		if (!activeField) return;
 		try {
-			const url = await uploadFile(file);
-			handleChange("image", url);
-			toast.success("이미지가 업로드되었습니다.");
+			if (imageSource === "asset" && selectedUrl) {
+				clearPendingImage(activeField);
+				handleChange(activeField, selectedUrl);
+			} else if (imageSource === "file") {
+				const pending = pendingImages[activeField];
+				if (!pending) return;
+				const uploadedUrl = await uploadSingleFile(pending.file);
+				handleChange(activeField, uploadedUrl);
+				clearPendingImage(activeField);
+				toast.success("이미지가 업로드되었습니다.");
+			}
 		} catch {
 			toast.error("이미지 업로드에 실패했습니다.");
+		} finally {
+			closeImageDialog();
 		}
 	};
 
-	const handleIconImageUpload = async (
-		e: React.ChangeEvent<HTMLInputElement>
-	) => {
-		const file = e.target.files?.[0];
-		if (!file) return;
-		try {
-			const url = await uploadFile(file);
-			handleChange("iconImage", url);
-			toast.success("아이콘 이미지가 업로드되었습니다.");
-		} catch {
-			toast.error("아이콘 이미지 업로드에 실패했습니다.");
+	useEffect(() => {
+		if (!isOpen) {
+			clearAllPendingImages();
 		}
-	};
+	}, [clearAllPendingImages, isOpen]);
 
 	const menuTypeLabel = {
 		posting: "포스팅",
@@ -130,6 +156,25 @@ export default function MenuEditModal({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+			<AssetPickerDialog
+				isOpen={activeField !== null}
+				onOpenChange={(open) => {
+					if (!open) closeImageDialog();
+				}}
+				thumbnail={dialogThumbnail}
+				setThumbnail={setDialogThumbnail}
+				onUpload={(url) => {
+					void handleDialogConfirm(url);
+				}}
+				onFileSelect={handleImageFileSelect}
+				assets={assets}
+				assetsLoading={assetsLoading}
+				assetsError={assetsError}
+				assetSearchQuery={assetSearchQuery}
+				onAssetSearchChange={setAssetSearchQuery}
+				onSelectAsset={handleSelectAsset}
+				className="gap-1.5"
+			/>
 			<DialogContent
 				className="max-w-md bg-card-bg border-card rounded-card"
 				onOpenAutoFocus={(e) => e.preventDefault()}
@@ -374,17 +419,20 @@ export default function MenuEditModal({
 							<p className="text-[10px] text-sub-text mb-2">
 								권장 사이즈: 220 * 80
 							</p>
-							{menu.image ? (
+							{pendingImages.image?.previewUrl || menu.image ? (
 								<div className="relative aspect-[22/8] w-full max-w-[280px] rounded-card border border-card overflow-hidden bg-card-bg group">
 										<img
-											src={menu.image}
+											src={pendingImages.image?.previewUrl || menu.image}
 											alt="메뉴 이미지"
 											className="w-full h-full object-contain"
 										/>
 									<Button
 										variant="ghost"
 										size="icon"
-										onClick={() => handleChange("image", "")}
+										onClick={() => {
+											clearPendingImage("image");
+											handleChange("image", "");
+										}}
 										className="absolute top-1 right-1 h-5 w-5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity p-0"
 										style={{ backgroundColor: "#111", color: "#fff" }}
 									>
@@ -392,7 +440,11 @@ export default function MenuEditModal({
 									</Button>
 								</div>
 							) : (
-								<label className="flex flex-col items-center justify-center py-4 w-full cursor-pointer bg-card-bg hover:bg-card-bg/70 border border-dashed border-card rounded-card transition-all gap-1.5 group">
+								<button
+									type="button"
+									onClick={() => openImageDialog("image", menu.image || "")}
+									className="flex flex-col items-center justify-center py-4 w-full cursor-pointer bg-card-bg hover:bg-card-bg/70 border border-dashed border-card rounded-card transition-all gap-1.5 group"
+								>
 									<ImagePlus
 										size={20}
 										className="text-sub-text group-hover:text-theme-primary transition-colors"
@@ -400,13 +452,7 @@ export default function MenuEditModal({
 									<span className="text-[11px] font-medium text-sub-text group-hover:text-theme-primary transition-colors">
 										이미지 업로드
 									</span>
-									<input
-										type="file"
-										className="hidden"
-										accept="image/*"
-										onChange={handleMainImageUpload}
-									/>
-								</label>
+								</button>
 							)}
 						</div>
 					</div>
@@ -420,17 +466,20 @@ export default function MenuEditModal({
 							<p className="text-[10px] text-sub-text mb-2">
 								권장 사이즈: 64 * 64
 							</p>
-							{menu.iconImage ? (
+							{pendingImages.iconImage?.previewUrl || menu.iconImage ? (
 								<div className="relative aspect-square w-16 rounded-card border border-card overflow-hidden bg-card-bg group">
 										<img
-											src={menu.iconImage}
+											src={pendingImages.iconImage?.previewUrl || menu.iconImage}
 											alt="아이콘 이미지"
 											className="w-full h-full object-contain"
 										/>
 									<Button
 										variant="ghost"
 										size="icon"
-										onClick={() => handleChange("iconImage", "")}
+										onClick={() => {
+											clearPendingImage("iconImage");
+											handleChange("iconImage", "");
+										}}
 										className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full opacity-0 group-hover:opacity-100 transition-opacity p-0"
 										style={{ backgroundColor: "#111", color: "#fff" }}
 									>
@@ -438,7 +487,13 @@ export default function MenuEditModal({
 									</Button>
 								</div>
 							) : (
-								<label className="flex flex-col items-center justify-center py-3 w-20 cursor-pointer bg-card-bg hover:bg-card-bg/70 border border-dashed border-card rounded-card transition-all gap-1.5 group">
+								<button
+									type="button"
+									onClick={() =>
+										openImageDialog("iconImage", menu.iconImage || "")
+									}
+									className="flex flex-col items-center justify-center py-3 w-20 cursor-pointer bg-card-bg hover:bg-card-bg/70 border border-dashed border-card rounded-card transition-all gap-1.5 group"
+								>
 									<ImagePlus
 										size={18}
 										className="text-sub-text group-hover:text-theme-primary transition-colors"
@@ -446,13 +501,7 @@ export default function MenuEditModal({
 									<span className="text-[10px] font-medium text-sub-text group-hover:text-theme-primary transition-colors">
 										아이콘 업로드
 									</span>
-									<input
-										type="file"
-										className="hidden"
-										accept="image/*"
-										onChange={handleIconImageUpload}
-									/>
-								</label>
+								</button>
 							)}
 						</div>
 					</div>

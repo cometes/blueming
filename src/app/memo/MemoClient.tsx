@@ -10,14 +10,14 @@ import { toast } from "sonner";
 import {
 	createMemo,
 	fetchMemoList,
-	type MemoItem,
 	uploadMemoImages,
-} from "@/queries/memo";
+} from "@/features/memo/api/client";
+import type { MemoItem } from "@/features/memo/types";
 import type { CommentImage } from "@/hooks/comment/useCommentForm";
 import { dateConvert } from "@/lib/date";
 import AdminOnly from "@/components/common/AdminOnly";
 import { useSettings } from "@/contexts/SettingsContext";
-import { setSettingsMainMemo } from "@/queries/set/setSettingsMainMemo";
+import { setSettingsMainMemo } from "@/features/settings/api/main";
 import PhotoboardSettingsDialog from "@/components/modal/PhotoboardSettingsDialog";
 import { useAdmin } from "@/hooks/auth/UseAdmin";
 

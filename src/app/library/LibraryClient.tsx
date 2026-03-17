@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useAdmin } from "@/hooks/auth/UseAdmin";
 import { useMoveToPage } from "@/hooks/useMoveToPage";
 import LibrarySettingsDialog from "@/components/modal/LibrarySettingsDialog";
-import { setSettingsLibrary } from "@/queries/set/setSettingsLibrary";
+import { setSettingsLibrary } from "@/features/settings/api/client";
 import { useSettings } from "@/contexts/SettingsContext";
 import { toast } from "sonner";
 import { useLibraryFilters } from "@/hooks/library/useLibraryFilters";

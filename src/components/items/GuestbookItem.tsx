@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Lock, Pencil, ShieldCheck, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { GuestbookEntry } from "@/queries/guestbook";
+import type { GuestbookEntry } from "@/features/guestbook/types";
 import ImageSlideModal from "@/components/modal/ImageSlideModal";
 
 interface GuestbookItemProps {

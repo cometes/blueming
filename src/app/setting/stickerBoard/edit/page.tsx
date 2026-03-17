@@ -12,7 +12,7 @@ import { StickerBoardPropertiesPanel } from "@/components/stickerboard-editor/St
 import { StickerBoardToolbar } from "@/components/stickerboard-editor/StickerBoardToolbar";
 import { fitToGrid12 } from "@/lib/stickerboard";
 import { isImageSticker } from "@/lib/stickerboard-utils";
-import { setSettingsMainStickerBoard } from "@/queries/set/setSettingsMainStickerBoard";
+import { setSettingsMainStickerBoard } from "@/features/settings/api/main";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import type { StickerBoardSettings } from "@/types/stickerBoard";
 import { toast } from "sonner";

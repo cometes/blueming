@@ -1,4 +1,4 @@
-import { fetchLibrarySeriesListServer } from "@/queries/fetch/fetchLibraryServer";
+import { fetchLibrarySeriesListServer } from "@/features/library/api/server";
 import SeriesClient from "./SeriesClient";
 
 interface SeriesPageProps {

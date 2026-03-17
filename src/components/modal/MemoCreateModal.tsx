@@ -8,9 +8,11 @@ import { useAuthStore } from "@/store/auth/store";
 import { toast } from "sonner";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import AssetGrid from "@/components/asset/AssetGrid";
-import { useAssets } from "@/hooks/guestbook/useAssets";
-import { useCommentImageDialog } from "@/hooks/comment/useImageDialog";
 import { createImageId, type CommentImage } from "@/hooks/comment/useCommentForm";
+import {
+	revokeCommentImageUrls,
+	useCommentImageManager,
+} from "@/hooks/comment/useCommentImageManager";
 import {
 	Dialog,
 	DialogContent,
@@ -84,8 +86,10 @@ export default function MemoCreateModal({
 	const [isMounted, setIsMounted] = useState(false);
 	const tagJustAddedRef = useRef(false);
 	const isComposingRef = useRef(false);
-	const imageDialog = useCommentImageDialog();
-	const assets = useAssets(imageDialog.isOpen);
+	const imageManager = useCommentImageManager({
+		maxImageCount: MAX_IMAGE_COUNT,
+	});
+	const { imageDialog, assets } = imageManager;
 
 	const displayName = user?.displayName || "게스트";
 	const avatarUrl = user?.photoURL || "";
@@ -190,18 +194,12 @@ export default function MemoCreateModal({
 			toast.error("이미지는 최대 4개까지 첨부할 수 있어요.");
 			return;
 		}
-		imageDialog.openDialog("create", images.length);
-	}, [imageDialog, images.length]);
+		imageManager.openDialog("create", images.length);
+	}, [imageManager, images.length]);
 
 	const removeImage = useCallback((id: string) => {
-		setImages((prev) => {
-			const targetImage = prev.find((image) => image.id === id);
-			if (targetImage?.url.startsWith("blob:")) {
-				URL.revokeObjectURL(targetImage.url);
-			}
-			return prev.filter((image) => image.id !== id);
-		});
-	}, []);
+		imageManager.removeImage(setImages, id);
+	}, [imageManager]);
 
 	const handleImageUpload = useCallback(
 		(url: string) => {
@@ -210,28 +208,16 @@ export default function MemoCreateModal({
 				toast.error("이미지는 최대 4개까지 첨부할 수 있어요.");
 				return;
 			}
-			if (
-				imageDialog.previewFiles.length > 0 &&
-				imageDialog.previewUrls.length > 0
-			) {
-				if (imageDialog.addImagesToTarget(setImages)) {
-					toast.success("이미지가 추가되었습니다.");
-				}
-				return;
+			if (imageManager.addUploadedImages(url, setImages)) {
+				toast.success("이미지가 추가되었습니다.");
 			}
-			imageDialog.addSingleImageToTarget(setImages, url);
-			toast.success("이미지가 추가되었습니다.");
 		},
-		[imageDialog, images.length],
+		[imageDialog.target, imageManager, images.length],
 	);
 
 	useEffect(() => {
 		return () => {
-			images.forEach((image) => {
-				if (image.url.startsWith("blob:")) {
-					URL.revokeObjectURL(image.url);
-				}
-			});
+			revokeCommentImageUrls(images);
 		};
 	}, [images]);
 

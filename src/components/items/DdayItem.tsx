@@ -20,7 +20,7 @@ import {
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { DdayData } from "@/queries/set/setSettingsMainDday";
+import type { DdayData } from "@/features/settings/types";
 
 interface DdayItemProps {
 	dday: DdayData;

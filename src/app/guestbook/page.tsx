@@ -1,11 +1,11 @@
 export const dynamic = "force-dynamic";
 
 import GuestbookClient from "./GuestbookClient";
-import { fetchGuestbookList } from "@/queries/guestbook";
+import { fetchGuestbookListServer } from "@/features/guestbook/api/server";
 
 export default async function GuestbookPage() {
 	try {
-		const data = await fetchGuestbookList({ page: 1, limit: 10 });
+		const data = await fetchGuestbookListServer({ page: 1, limit: 10 });
 		return (
 			<GuestbookClient
 				initialEntries={data.items}

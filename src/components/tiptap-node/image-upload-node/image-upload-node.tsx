@@ -6,7 +6,8 @@ import { NodeViewWrapper } from "@tiptap/react"
 import { CloseIcon } from "@/components/tiptap-icons/close-icon"
 import "@/components/tiptap-node/image-upload-node/image-upload-node.scss"
 import type { StickerAsset, StickerAssetTab } from "@/types/stickerBoard"
-import { listStickerAssets, markStickerAssetUsed } from "@/queries/stickerAssets"
+import { listStickerAssets, markStickerAssetUsed } from "@/features/stickerboard-editor/api/assets"
+import AssetGrid from "@/components/asset/AssetGrid"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -346,6 +347,7 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
   const [assets, setAssets] = React.useState<StickerAsset[]>([])
   const [assetsLoading, setAssetsLoading] = React.useState(false)
   const [assetsError, setAssetsError] = React.useState<string | null>(null)
+  const [assetSearchQuery, setAssetSearchQuery] = React.useState("")
 
   const handleImageInsert = React.useCallback((url: string, altText?: string) => {
     const pos = props.getPos()
@@ -535,41 +537,22 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
                   {(["all", "favorites", "recent"] as StickerAssetTab[]).map(
                     (tab) => (
                       <TabsContent key={tab} value={tab} className="mt-3">
-                        {assetsLoading ? (
-                          <div className="py-6 text-center text-xs text-gray-400">
-                            불러오는 중...
-                          </div>
-                        ) : assetsError ? (
-                          <div className="py-3 text-xs text-red-500">
-                            {assetsError}
-                          </div>
-                        ) : assets.length === 0 ? (
-                          <div className="py-6 text-center text-xs text-gray-400">
-                            에셋이 없습니다.
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-3 gap-2">
-                            {assets.map((asset) => (
-                              <button
-                                key={asset.id}
-                                type="button"
-                                className="relative block w-full aspect-square rounded-md border border-card bg-background/30 overflow-hidden"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  void handleSelectAsset(asset)
-                                }}
-                                title="클릭하여 이미지 추가"
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={asset.url}
-                                  alt={asset.name ?? "asset"}
-                                  className="h-full w-full object-cover"
-                                />
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                        <AssetGrid
+                          assets={assets}
+                          loading={assetsLoading}
+                          error={assetsError}
+                          selectedUrl={undefined}
+                          onSelect={(asset) => {
+                            void handleSelectAsset(asset)
+                          }}
+                          enableSearch
+                          searchQuery={assetSearchQuery}
+                          onSearchChange={setAssetSearchQuery}
+                          gridTemplateColumns="repeat(3, minmax(0, 1fr))"
+                          aspectClassName="aspect-square"
+                          imageClassName="h-full w-full object-cover"
+                          className="max-h-[220px]"
+                        />
                       </TabsContent>
                     )
                   )}

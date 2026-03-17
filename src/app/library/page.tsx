@@ -6,7 +6,7 @@ import {
 	fetchLibraryListServer,
 	fetchLibrarySeriesServer,
 	fetchLibraryTagsServer,
-} from "@/queries/fetch/fetchLibraryServer";
+} from "@/features/library/api/server";
 import LibraryClient, { type LibraryItem } from "./LibraryClient";
 
 export default async function LibararyListPage({

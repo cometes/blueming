@@ -14,17 +14,19 @@ import {
 	uploadCommentImages,
 	updateComment,
 	verifyCommentSecret,
-	type Comment,
-} from "@/queries/comment";
+} from "@/features/library/api/comments";
 import CommentItem from "@/components/items/CommentItem";
 import CommentEditDialog from "@/components/comment/CommentEditDialog";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import AssetGrid from "@/components/asset/AssetGrid";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth/store";
-import { useCommentImageDialog } from "@/hooks/comment/useImageDialog";
-import { useAssets } from "@/hooks/guestbook/useAssets";
 import { createImageId, type CommentImage } from "@/hooks/comment/useCommentForm";
+import {
+	revokeCommentImageUrls,
+	useCommentImageManager,
+} from "@/hooks/comment/useCommentImageManager";
+import type { LibraryComment as Comment } from "@/features/library/types";
 
 interface CommentSidebarProps {
 	postId: string;
@@ -59,8 +61,10 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 	const [activeComment, setActiveComment] = useState<Comment | null>(null);
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-	const imageDialog = useCommentImageDialog();
-	const assets = useAssets(imageDialog.isOpen);
+	const imageManager = useCommentImageManager({
+		maxImageCount: MAX_IMAGE_COUNT,
+	});
+	const { imageDialog, assets } = imageManager;
 
 	const loadComments = useCallback(
 		async (page: number = 1, append: boolean = false) => {
@@ -101,11 +105,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 
 	useEffect(() => {
 		return () => {
-			images.forEach((image) => {
-				if (image.url.startsWith("blob:")) {
-					URL.revokeObjectURL(image.url);
-				}
-			});
+			revokeCommentImageUrls(images);
 		};
 	}, [images]);
 
@@ -163,11 +163,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 	const closeDialog = useCallback(() => {
 		setDialogOpen(false);
 		setActiveComment(null);
-		dialogImages.forEach((image) => {
-			if (image.url.startsWith("blob:")) {
-				URL.revokeObjectURL(image.url);
-			}
-		});
+		revokeCommentImageUrls(dialogImages);
 		setDialogImages([]);
 	}, [dialogImages]);
 
@@ -194,24 +190,10 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 		if (!canSubmit) return;
 		setIsSubmitting(true);
 		try {
-			const fileImages = images.filter((img) => img.file);
-			const uploadedUrls =
-				fileImages.length > 0
-					? await uploadCommentImages(
-							fileImages.map((img) => img.file as File),
-						)
-					: [];
-			let uploadIndex = 0;
-			const finalImageUrls = images.reduce<string[]>((acc, image) => {
-				if (image.file) {
-					const nextUrl = uploadedUrls[uploadIndex];
-					uploadIndex += 1;
-					if (nextUrl) acc.push(nextUrl);
-				} else if (image.url && !image.url.startsWith("blob:")) {
-					acc.push(image.url);
-				}
-				return acc;
-			}, []);
+			const finalImageUrls = await imageManager.resolveImageUrls(
+				images,
+				uploadCommentImages,
+			);
 			await createComment(postId, {
 				message,
 				displayName: resolvedMode === "anon" ? displayName : undefined,
@@ -222,11 +204,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 			toast.success("댓글이 등록되었습니다.");
 			setMessage("");
 			setIsSecret(false);
-			images.forEach((image) => {
-				if (image.url.startsWith("blob:")) {
-					URL.revokeObjectURL(image.url);
-				}
-			});
+			revokeCommentImageUrls(images);
 			setImages([]);
 			if (resolvedMode === "anon") {
 				setDisplayName("");
@@ -247,6 +225,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 		canSubmit,
 		displayName,
 		isSecret,
+		imageManager,
 		loadComments,
 		message,
 		images,
@@ -258,24 +237,10 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 	const handleUpdate = useCallback(async () => {
 		if (!activeComment || !dialogMessage.trim()) return;
 		try {
-			const fileImages = dialogImages.filter((img) => img.file);
-			const uploadedUrls =
-				fileImages.length > 0
-					? await uploadCommentImages(
-							fileImages.map((img) => img.file as File),
-						)
-					: [];
-			let uploadIndex = 0;
-			const finalImageUrls = dialogImages.reduce<string[]>((acc, image) => {
-				if (image.file) {
-					const nextUrl = uploadedUrls[uploadIndex];
-					uploadIndex += 1;
-					if (nextUrl) acc.push(nextUrl);
-				} else if (image.url && !image.url.startsWith("blob:")) {
-					acc.push(image.url);
-				}
-				return acc;
-			}, []);
+			const finalImageUrls = await imageManager.resolveImageUrls(
+				dialogImages,
+				uploadCommentImages,
+			);
 			await updateComment(postId, activeComment.id, {
 				message: dialogMessage,
 				pin: activeComment.authorType === "anon" ? dialogPin : undefined,
@@ -297,6 +262,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 		dialogMessage,
 		dialogPin,
 		dialogSecret,
+		imageManager,
 		loadComments,
 		postId,
 	]);
@@ -319,54 +285,33 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 
 	const removeImageFromTarget = useCallback(
 		(target: "create" | "edit", id: string) => {
-			const remove = (prev: CommentImage[]) => {
-				const targetImage = prev.find((image) => image.id === id);
-				if (targetImage?.url.startsWith("blob:")) {
-					URL.revokeObjectURL(targetImage.url);
-				}
-				return prev.filter((image) => image.id !== id);
-			};
-
-			if (target === "edit") {
-				setDialogImages(remove);
-			} else {
-				setImages(remove);
-			}
+			const setter = target === "edit" ? setDialogImages : setImages;
+			imageManager.removeImage(setter, id);
 		},
-		[],
+		[imageManager],
 	);
 
 	const handleImageDialogOpen = useCallback(
 		(target: "create" | "edit") => {
 			const currentCount =
 				target === "edit" ? dialogImages.length : images.length;
-			if (!imageDialog.openDialog(target, currentCount)) {
+			if (!imageManager.openDialog(target, currentCount)) {
 				toast.error("이미지는 최대 8개까지 첨부할 수 있어요.");
 			}
 		},
-		[dialogImages.length, imageDialog, images.length],
+		[dialogImages.length, imageManager, images.length],
 	);
 
 	const handleImageUpload = useCallback(
 		(url: string) => {
 			if (!imageDialog.target || !url) return;
-
 			const setter =
 				imageDialog.target === "edit" ? setDialogImages : setImages;
-
-			if (
-				imageDialog.previewFiles.length > 0 &&
-				imageDialog.previewUrls.length > 0
-			) {
-				if (imageDialog.addImagesToTarget(setter)) {
-					toast.success("이미지가 추가되었습니다.");
-				}
-			} else {
-				imageDialog.addSingleImageToTarget(setter, url);
+			if (imageManager.addUploadedImages(url, setter)) {
 				toast.success("이미지가 추가되었습니다.");
 			}
 		},
-		[imageDialog],
+		[imageDialog.target, imageManager],
 	);
 
 	const handleLoadMore = useCallback(() => {

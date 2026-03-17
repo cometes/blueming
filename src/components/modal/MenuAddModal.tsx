@@ -25,9 +25,8 @@ import { Badge } from "@/components/ui/badge";
 import { Globe, Lock, Trash2, ImagePlus, X } from "lucide-react";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { toast } from "sonner";
-import { listStickerAssets } from "@/queries/stickerAssets";
-import type { StickerAsset } from "@/types/stickerBoard";
-import AssetGrid from "@/components/asset/AssetGrid";
+import { AssetPickerDialog } from "@/features/settings/components/AssetPickerDialog";
+import { useSettingsImagePicker } from "@/features/settings/hooks/useSettingsImagePicker";
 
 interface SubMenu {
 	name: string;
@@ -80,41 +79,34 @@ export default function MenuAddModal({
 		previewUrl: string;
 	}
 
-	const [pendingImages, setPendingImages] = useState<{
-		image: PendingImage | null;
-		iconImage: PendingImage | null;
-	}>({
-		image: null,
-		iconImage: null,
-	});
 	const [pendingSubMenuImages, setPendingSubMenuImages] = useState<
 		Record<string, PendingImage>
 	>({});
-	const [assets, setAssets] = useState<StickerAsset[]>([]);
-	const [assetsLoading, setAssetsLoading] = useState(false);
-	const [assetsError, setAssetsError] = useState<string | null>(null);
-
-	const refreshAssets = useCallback(async () => {
-		try {
-			setAssetsLoading(true);
-			setAssetsError(null);
-			const list = await listStickerAssets("all");
-			setAssets(list.filter((asset) => asset.url));
-		} catch (err) {
-			const msg =
-				err instanceof Error ? err.message : "에셋을 불러오지 못했습니다.";
-			setAssetsError(msg);
-		} finally {
-			setAssetsLoading(false);
-		}
-	}, []);
-
-	const clearPendingImage = (key: "image" | "iconImage") => {
-		const pending = pendingImages[key];
-		if (!pending) return;
-		URL.revokeObjectURL(pending.previewUrl);
-		setPendingImages((prev) => ({ ...prev, [key]: null }));
-	};
+	const imagePicker = useSettingsImagePicker<"image" | "iconImage">({
+		fields: ["image", "iconImage"] as const,
+	});
+	const {
+		state: {
+			activeField,
+			dialogThumbnail,
+			assets,
+			assetsLoading,
+			assetsError,
+			assetSearchQuery,
+			pendingImages,
+			imageSource,
+		},
+		actions: {
+			setDialogThumbnail,
+			setAssetSearchQuery,
+			handleImageFileSelect,
+			closeImageDialog,
+			handleSelectAsset,
+			clearPendingImage,
+			clearAllPendingImages,
+			openImageDialog,
+		},
+	} = imagePicker;
 
 	const clearPendingSubMenuImage = (name: string) => {
 		const pending = pendingSubMenuImages[name];
@@ -128,22 +120,16 @@ export default function MenuAddModal({
 	};
 
 	const revokePendingImages = useCallback(() => {
-		if (pendingImages.image) {
-			URL.revokeObjectURL(pendingImages.image.previewUrl);
-		}
-		if (pendingImages.iconImage) {
-			URL.revokeObjectURL(pendingImages.iconImage.previewUrl);
-		}
 		Object.values(pendingSubMenuImages).forEach((pending) => {
 			URL.revokeObjectURL(pending.previewUrl);
 		});
-	}, [pendingImages, pendingSubMenuImages]);
+	}, [pendingSubMenuImages]);
 
 	const resetPendingImages = useCallback(() => {
 		revokePendingImages();
-		setPendingImages({ image: null, iconImage: null });
+		clearAllPendingImages();
 		setPendingSubMenuImages({});
-	}, [revokePendingImages]);
+	}, [clearAllPendingImages, revokePendingImages]);
 
 	const handleAdd = async () => {
 		if (!formData.name) return;
@@ -152,13 +138,11 @@ export default function MenuAddModal({
 
 			if (pendingImages.image) {
 				const url = await uploadFile(pendingImages.image.file);
-				URL.revokeObjectURL(pendingImages.image.previewUrl);
 				nextFormData = { ...nextFormData, image: url };
 			}
 
 			if (pendingImages.iconImage) {
 				const url = await uploadFile(pendingImages.iconImage.file);
-				URL.revokeObjectURL(pendingImages.iconImage.previewUrl);
 				nextFormData = { ...nextFormData, iconImage: url };
 			}
 
@@ -216,30 +200,6 @@ export default function MenuAddModal({
 		});
 	};
 
-	const handleMainImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0];
-		if (file) {
-			const previewUrl = URL.createObjectURL(file);
-			setPendingImages((prev) => ({
-				...prev,
-				image: { file, previewUrl },
-			}));
-		}
-		e.target.value = "";
-	};
-
-	const handleIconImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0];
-		if (file) {
-			const previewUrl = URL.createObjectURL(file);
-			setPendingImages((prev) => ({
-				...prev,
-				iconImage: { file, previewUrl },
-			}));
-		}
-		e.target.value = "";
-	};
-
 	const handleSubMenuImageSelect = (file: File, name: string) => {
 		const previewUrl = URL.createObjectURL(file);
 		setPendingSubMenuImages((prev) => ({
@@ -248,14 +208,13 @@ export default function MenuAddModal({
 		}));
 	};
 
-	useEffect(() => {
-		if (!isModalOpen) return;
-		void refreshAssets();
-	}, [isModalOpen, refreshAssets]);
-
-	const handleSelectAsset = (asset: StickerAsset) => {
-		clearPendingImage("image");
-		setFormData((prev) => ({ ...prev, image: asset.url }));
+	const handleImageDialogConfirm = async (selectedUrl: string) => {
+		if (!activeField) return;
+		if (imageSource === "asset" && selectedUrl) {
+			clearPendingImage(activeField);
+			setFormData((prev) => ({ ...prev, [activeField]: selectedUrl }));
+		}
+		closeImageDialog();
 	};
 
 	useEffect(() => {
@@ -277,6 +236,25 @@ export default function MenuAddModal({
 
 	return (
 		<Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+			<AssetPickerDialog
+				isOpen={activeField !== null}
+				onOpenChange={(open) => {
+					if (!open) closeImageDialog();
+				}}
+				thumbnail={dialogThumbnail}
+				setThumbnail={setDialogThumbnail}
+				onUpload={(url) => {
+					void handleImageDialogConfirm(url);
+				}}
+				onFileSelect={handleImageFileSelect}
+				assets={assets}
+				assetsLoading={assetsLoading}
+				assetsError={assetsError}
+				assetSearchQuery={assetSearchQuery}
+				onAssetSearchChange={setAssetSearchQuery}
+				onSelectAsset={handleSelectAsset}
+				className="gap-1.5"
+			/>
 			<DialogContent
 				className="max-w-md max-h-[85vh] bg-card-bg border-card rounded-card backdrop-blur-card flex flex-col"
 				onOpenAutoFocus={(e) => e.preventDefault()}
@@ -568,9 +546,8 @@ export default function MenuAddModal({
 													onClick={() => {
 														if (pendingImages.image) {
 															clearPendingImage("image");
-															return;
 														}
-														setFormData({ ...formData, image: "" });
+														setFormData((prev) => ({ ...prev, image: "" }));
 													}}
 													className="absolute top-1 right-1 h-5 w-5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity p-0"
 													style={{ backgroundColor: "#111", color: "#fff" }}
@@ -579,7 +556,13 @@ export default function MenuAddModal({
 												</Button>
 											</div>
 										) : (
-											<label className="flex flex-col items-center justify-center h-[68px] w-full cursor-pointer bg-card-bg hover:bg-card-bg/70 border border-dashed border-card rounded-card transition-all gap-1.5 group">
+											<button
+												type="button"
+												onClick={() =>
+													openImageDialog("image", formData.image || "")
+												}
+												className="flex flex-col items-center justify-center h-[68px] w-full cursor-pointer bg-card-bg hover:bg-card-bg/70 border border-dashed border-card rounded-card transition-all gap-1.5 group"
+											>
 												<ImagePlus
 													size={20}
 													className="text-sub-text group-hover:text-theme-primary transition-colors"
@@ -587,13 +570,7 @@ export default function MenuAddModal({
 												<span className="text-[11px] font-medium text-sub-text group-hover:text-theme-primary transition-colors">
 													이미지 업로드
 												</span>
-												<input
-													type="file"
-													className="hidden"
-													accept="image/*"
-													onChange={handleMainImageSelect}
-												/>
-											</label>
+											</button>
 										)}
 									</div>
 								</div>
@@ -624,9 +601,11 @@ export default function MenuAddModal({
 													onClick={() => {
 														if (pendingImages.iconImage) {
 															clearPendingImage("iconImage");
-															return;
 														}
-														setFormData({ ...formData, iconImage: "" });
+														setFormData((prev) => ({
+															...prev,
+															iconImage: "",
+														}));
 													}}
 													className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full opacity-0 group-hover:opacity-100 transition-opacity p-0"
 													style={{ backgroundColor: "#111", color: "#fff" }}
@@ -635,7 +614,13 @@ export default function MenuAddModal({
 												</Button>
 											</div>
 										) : (
-											<label className="flex flex-col items-center justify-center h-[68px] w-full cursor-pointer bg-card-bg hover:bg-card-bg/70 border border-dashed border-card rounded-card transition-all gap-1.5 group">
+											<button
+												type="button"
+												onClick={() =>
+													openImageDialog("iconImage", formData.iconImage || "")
+												}
+												className="flex flex-col items-center justify-center h-[68px] w-full cursor-pointer bg-card-bg hover:bg-card-bg/70 border border-dashed border-card rounded-card transition-all gap-1.5 group"
+											>
 												<ImagePlus
 													size={20}
 													className="text-sub-text group-hover:text-theme-primary transition-colors"
@@ -643,33 +628,10 @@ export default function MenuAddModal({
 												<span className="text-[11px] font-medium text-sub-text group-hover:text-theme-primary transition-colors">
 													아이콘 업로드
 												</span>
-												<input
-													type="file"
-													className="hidden"
-													accept="image/*"
-													onChange={handleIconImageSelect}
-												/>
-											</label>
+											</button>
 										)}
 									</div>
 								</div>
-							</div>
-
-							<div className="mt-3 rounded-card border border-card bg-card-bg/60 p-3">
-								<div className="text-[11px] font-medium text-sub-text mb-2">
-									에셋에서 선택
-								</div>
-								<AssetGrid
-									enableSearch
-									assets={assets}
-									loading={assetsLoading}
-									error={assetsError}
-									selectedUrl={formData.image}
-									onSelect={handleSelectAsset}
-									aspectClassName="aspect-square"
-									imageClassName="w-full h-full object-contain"
-									gridTemplateColumns="repeat(4, minmax(0, 1fr))"
-								/>
 							</div>
 						</div>
 					</div>

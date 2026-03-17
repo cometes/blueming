@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { User, UserStatus, UserRole } from "@/types/user";
 import UserTableRow from "./UserTableRow";
 import UserDetailModal from "./UserDetailModal";
-import { fetchAdminUsers } from "@/queries/userManagement";
+import { fetchAdminUsers } from "@/features/admin/api/userManagement";
 import { Button } from "@/components/ui/button";
 import {
     Card,

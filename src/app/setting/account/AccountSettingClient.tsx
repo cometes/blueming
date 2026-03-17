@@ -6,8 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
-import { fetchGeminiApiKeyStatus, saveGeminiApiKey } from "@/queries/aiKey";
-import { fetchWeatherApiKeyStatus, saveWeatherApiKey } from "@/queries/weatherKey";
+import {
+	fetchGeminiApiKeyStatus,
+	fetchWeatherApiKeyStatus,
+	saveGeminiApiKey,
+	saveWeatherApiKey,
+} from "@/features/account/api/client";
 import { toast } from "sonner";
 
 export default function AccountSettingClient() {

@@ -1,7 +1,7 @@
 import type { Attrs, Node } from "@tiptap/pm/model"
 import type { Editor } from "@tiptap/react"
-import { getAuthHeader } from "@/queries/getAuthHeader"
-import { API_BASE } from "@/queries/apiClient"
+import { getAuthHeader } from "@/shared/lib/auth/client"
+import { API_BASE } from "@/shared/lib/http/client"
 
 export const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 

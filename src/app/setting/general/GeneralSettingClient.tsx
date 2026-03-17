@@ -1,20 +1,13 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
-
-import { useState, useEffect, useCallback } from "react";
-import { ImagePlus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { ColorPalettePreview } from "@/components/ui/color-palette-preview";
 import RadioItem from "@/components/items/RadioItem";
-import { useSettingGeneral } from "@/hooks/useSettingGeneral";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
 import { Save } from "lucide-react";
-import { useFileUpload } from "@/hooks/useFileUpload";
-import { toast } from "sonner";
 import {
 	Dialog,
 	DialogContent,
@@ -23,150 +16,19 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
-import AssetGrid from "@/components/asset/AssetGrid";
-import { listStickerAssets } from "@/queries/stickerAssets";
-import type { StickerAsset } from "@/types/stickerBoard";
-
-type ImageField = "favicon" | "shareImage" | "logoImage";
+import { ImageUploadSection } from "@/features/settings/components/menu/ImageUploadSection";
+import { AssetPickerDialog } from "@/features/settings/components/AssetPickerDialog";
+import { useGeneralSettingsController } from "@/features/settings/hooks/useGeneralSettingsController";
 
 const INPUT_HEIGHT = "h-9";
-const ICON_SIZE = 28;
-const ICON_COLOR = "#9BA2A8";
 
 const PLACEHOLDERS = {
 	TITLE: "홈페이지 타이틀을 입력해주세요",
 	DESC: "홈페이지 설명을 입력해주세요",
 } as const;
 
-const UPLOAD_TEXT = "Upload Image";
-
-// 로컬 이미지 미리보기를 위한 타입
-interface PendingImage {
-	file: File;
-	previewUrl: string;
-}
-
-interface ImageUploadSectionProps {
-	title: string;
-	description?: string;
-	imageSrc?: string;
-	onFileSelect: (file: File) => void;
-	onClearClick: () => void;
-	onOpenPicker?: () => void;
-	isUploading?: boolean;
-}
-
-const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
-	title,
-	description,
-	imageSrc,
-	onFileSelect,
-	onClearClick,
-	onOpenPicker,
-	isUploading = false,
-}) => (
-	<div className="section-box flex items-center mt-4">
-		<div className="text-box w-[220px]">
-			<h3 className="font-medium text-sub-text">{title}</h3>
-			{description && (
-				<p className="text-xs text-gray-500 dark:text-gray-400">
-					{description}
-				</p>
-			)}
-		</div>
-		<div className="flex items-center gap-3">
-			{onOpenPicker ? (
-				<button
-					type="button"
-					onClick={onOpenPicker}
-					className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
-						isUploading ? "opacity-60 pointer-events-none" : ""
-					}`}
-				>
-					{imageSrc ? (
-						<img
-							src={imageSrc}
-							alt={title}
-							className="w-full h-full object-contain"
-						/>
-					) : (
-						<>
-							<ImagePlus
-								size={ICON_SIZE}
-								color={ICON_COLOR}
-								absoluteStrokeWidth={true}
-							/>
-							<span className="text-xs text-gray-500 dark:text-gray-400">
-								{UPLOAD_TEXT}
-							</span>
-						</>
-					)}
-				</button>
-			) : (
-				<label
-					className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
-						isUploading ? "opacity-60 pointer-events-none" : ""
-					}`}
-				>
-					{imageSrc ? (
-						<img
-							src={imageSrc}
-							alt={title}
-							className="w-full h-full object-contain"
-						/>
-					) : (
-						<>
-							<ImagePlus
-								size={ICON_SIZE}
-								color={ICON_COLOR}
-								absoluteStrokeWidth={true}
-							/>
-							<span className="text-xs text-gray-500 dark:text-gray-400">
-								{UPLOAD_TEXT}
-							</span>
-						</>
-					)}
-					<input
-						type="file"
-						accept="image/*"
-						className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-						onChange={(event) => {
-							const file = event.target.files?.[0];
-							if (file) {
-								onFileSelect(file);
-							}
-							event.target.value = "";
-						}}
-					/>
-				</label>
-			)}
-			{imageSrc ? (
-				<Button
-					type="button"
-					variant="outline"
-					size="sm"
-					onClick={onClearClick}
-					className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
-					style={{
-						transition: "all 0.3s ease-in-out",
-					}}
-				>
-					<Trash2
-						size={14}
-						className="mr-2"
-						style={{
-							transition: "all 0.3s ease-in-out",
-						}}
-					/>
-					비우기
-				</Button>
-			) : null}
-		</div>
-	</div>
-);
-
 export default function GeneralSettingClient() {
+	const controller = useGeneralSettingsController();
 	const {
 		handleSubmit,
 		formState,
@@ -178,39 +40,29 @@ export default function GeneralSettingClient() {
 		generalSetting,
 		updateGeneralSetting,
 		updateColorSetting,
-		handleImageUpload,
-		handleClearImage,
-		handleReset,
-		handleSave,
 		isDirty,
-	} = useSettingGeneral();
-
-	const [showResetDialog, setShowResetDialog] = useState(false);
-	const { uploadFile, state: uploadState } = useFileUpload();
-	const [activeImageField, setActiveImageField] = useState<ImageField | null>(null);
-	const [dialogThumbnail, setDialogThumbnail] = useState("");
-	const [imageSource, setImageSource] = useState<
-		"file" | "asset" | "existing" | null
-	>(null);
-	const [assets, setAssets] = useState<StickerAsset[]>([]);
-	const [assetsLoading, setAssetsLoading] = useState(false);
-	const [assetsError, setAssetsError] = useState<string | null>(null);
-	const [assetSearchQuery, setAssetSearchQuery] = useState("");
-
-	// 업로드 대기 중인 이미지들을 저장
-	const [pendingImages, setPendingImages] = useState<
-		Record<ImageField, PendingImage | null>
-	>({
-		favicon: null,
-		shareImage: null,
-		logoImage: null,
-	});
-
-	// pending 이미지가 있는지 체크
-	const hasPendingImages =
-		pendingImages.favicon !== null ||
-		pendingImages.shareImage !== null ||
-		pendingImages.logoImage !== null;
+	} = controller.general;
+	const { uploadState, showResetDialog, setShowResetDialog } = controller;
+	const {
+		state: {
+			activeField: activeImageField,
+			dialogThumbnail,
+			assets,
+			assetsLoading,
+			assetsError,
+			assetSearchQuery,
+			pendingImages,
+			hasPendingImages,
+		},
+		actions: {
+			setDialogThumbnail,
+			setAssetSearchQuery,
+			handleFileSelect,
+			handleImageFileSelect,
+			closeImageDialog,
+			handleSelectAsset,
+		},
+	} = controller.imagePicker;
 
 	useSettingStatus("general", isDirty || hasPendingImages ? "dirty" : "saved");
 	useSettingHeaderAction(
@@ -232,203 +84,28 @@ export default function GeneralSettingClient() {
 		[isDirty, hasPendingImages, uploadState.loading]
 	);
 
-	// 파일 선택 시 로컬 미리보기만 표시
-	const handleFileSelect = (field: ImageField, file: File) => {
-		const previewUrl = URL.createObjectURL(file);
-		setPendingImages((prev) => ({
-			...prev,
-			[field]: { file, previewUrl },
-		}));
-	};
-
-	const refreshAssets = useCallback(async () => {
-		try {
-			setAssetsLoading(true);
-			setAssetsError(null);
-			const list = await listStickerAssets("all");
-			setAssets(list);
-		} catch (err) {
-			const message =
-				err instanceof Error ? err.message : "에셋을 불러오지 못했습니다.";
-			setAssetsError(message);
-		} finally {
-			setAssetsLoading(false);
-		}
-	}, []);
-
-	// 이미지 비우기 (로컬 미리보기 또는 서버 이미지)
-	const handleImageClear = (field: ImageField) => {
-		// pending 이미지가 있으면 URL 해제
-		if (pendingImages[field]) {
-			URL.revokeObjectURL(pendingImages[field]!.previewUrl);
-			setPendingImages((prev) => ({
-				...prev,
-				[field]: null,
-			}));
-		}
-		// 서버 이미지 제거
-		handleClearImage(field);
-	};
-
-	// 저장 버튼 클릭 시 실행
-	const onSubmit = async () => {
-		try {
-			// 1. pending 이미지들을 먼저 업로드
-			const uploadedUrls: Partial<Record<ImageField, string>> = {};
-
-			for (const field of Object.keys(pendingImages) as ImageField[]) {
-				const pending = pendingImages[field];
-				if (pending) {
-					const url = await uploadFile(pending.file);
-					uploadedUrls[field] = url;
-					// 업로드된 URL을 즉시 반영
-					handleImageUpload(field, url);
-					// blob URL 해제
-					URL.revokeObjectURL(pending.previewUrl);
-				}
-			}
-
-			// pending 이미지 초기화
-			setPendingImages({
-				favicon: null,
-				shareImage: null,
-				logoImage: null,
-			});
-
-			// 2. 업로드된 이미지 URL을 포함하여 제네럴 세팅 저장
-			const updatedSetting = {
-				...generalSetting,
-				...uploadedUrls,
-			};
-
-			await handleSave(updatedSetting);
-		} catch (error) {
-			const message =
-				error instanceof Error ? error.message : "저장에 실패했습니다.";
-			toast.error(message);
-		}
-	};
-
-	useEffect(() => {
-		if (!activeImageField) return;
-		void refreshAssets();
-	}, [activeImageField, refreshAssets]);
-
-	const handleOpenImageDialog = (field: ImageField) => {
-		const pending = pendingImages[field]?.previewUrl;
-		const currentValue = generalSetting[field] || "";
-		const current = pending || currentValue || "";
-		setDialogThumbnail(current);
-		if (pending) {
-			setImageSource("file");
-		} else if (currentValue) {
-			setImageSource("existing");
-		} else {
-			setImageSource(null);
-		}
-		setActiveImageField(field);
-	};
-
-	const handleImageFileSelect = (file: File, previewUrl: string) => {
-		if (!activeImageField) return;
-		if (pendingImages[activeImageField]) {
-			URL.revokeObjectURL(pendingImages[activeImageField]!.previewUrl);
-		}
-		setPendingImages((prev) => ({
-			...prev,
-			[activeImageField]: { file, previewUrl },
-		}));
-		setDialogThumbnail(previewUrl);
-		setImageSource("file");
-	};
-
-	const handleSelectAsset = (asset: StickerAsset) => {
-		setDialogThumbnail(asset.url);
-		setImageSource("asset");
-	};
-
-	const handleImageDialogConfirm = (selectedUrl: string) => {
-		if (!activeImageField) return;
-		if (imageSource === "asset" && selectedUrl) {
-			if (pendingImages[activeImageField]) {
-				URL.revokeObjectURL(pendingImages[activeImageField]!.previewUrl);
-			}
-			setPendingImages((prev) => ({ ...prev, [activeImageField]: null }));
-			handleImageUpload(activeImageField, selectedUrl);
-		}
-		setActiveImageField(null);
-	};
-
-	const handleResetConfirm = () => {
-		// pending 이미지 URL 정리
-		Object.values(pendingImages).forEach((pending) => {
-			if (pending) {
-				URL.revokeObjectURL(pending.previewUrl);
-			}
-		});
-		setPendingImages({
-			favicon: null,
-			shareImage: null,
-			logoImage: null,
-		});
-
-		handleReset();
-		setShowResetDialog(false);
-	};
-
-	// 컴포넌트 언마운트 시 blob URL 정리
-	useEffect(() => {
-		return () => {
-			Object.values(pendingImages).forEach((pending) => {
-				if (pending) {
-					URL.revokeObjectURL(pending.previewUrl);
-				}
-			});
-		};
-	}, [pendingImages]);
-
 	return (
 		<form
 			id="setting-form-general"
-			onSubmit={handleSubmit(onSubmit)}
+			onSubmit={handleSubmit(async () => controller.handleSave())}
 			className="space-y-8"
 		>
-			<ImageUploadDialog
+			<AssetPickerDialog
 				isOpen={activeImageField !== null}
 				onOpenChange={(open) => {
-					if (!open) {
-						setActiveImageField(null);
-						setAssetSearchQuery("");
-					}
+					if (!open) closeImageDialog();
 				}}
 				thumbnail={dialogThumbnail}
 				setThumbnail={setDialogThumbnail}
-				onUpload={handleImageDialogConfirm}
-				uploadMode="deferred"
+				onUpload={controller.handleImageDialogConfirm}
 				onFileSelect={handleImageFileSelect}
-				rightContent={
-					<div>
-						<div className="text-xs font-semibold text-main-text mb-2">
-							에셋 목록
-						</div>
-						<AssetGrid
-							assets={assets}
-							loading={assetsLoading}
-							error={assetsError}
-							emptyMessage="에셋이 없습니다."
-							emptySearchMessage="검색 결과가 없습니다."
-							selectedUrl={dialogThumbnail}
-							onSelect={handleSelectAsset}
-							enableSearch={true}
-							searchQuery={assetSearchQuery}
-							onSearchChange={setAssetSearchQuery}
-							aspectClassName="aspect-square"
-							imageClassName="w-full h-full object-contain"
-							gridTemplateColumns="repeat(4, minmax(0, 1fr))"
-							className="gap-1.5"
-						/>
-					</div>
-				}
+				assets={assets}
+				assetsLoading={assetsLoading}
+				assetsError={assetsError}
+				assetSearchQuery={assetSearchQuery}
+				onAssetSearchChange={setAssetSearchQuery}
+				onSelectAsset={handleSelectAsset}
+				className="gap-1.5"
 			/>
 
 			{/* 홈페이지 설정 Section */}
@@ -495,8 +172,8 @@ export default function GeneralSettingClient() {
 							pendingImages.favicon?.previewUrl || generalSetting.favicon
 						}
 						onFileSelect={(file) => handleFileSelect("favicon", file)}
-						onClearClick={() => handleImageClear("favicon")}
-						onOpenPicker={() => handleOpenImageDialog("favicon")}
+						onClearClick={() => controller.handleImageClear("favicon")}
+						onOpenPicker={() => controller.handleOpenImageDialog("favicon")}
 						isUploading={uploadState.loading}
 					/>
 
@@ -508,8 +185,8 @@ export default function GeneralSettingClient() {
 							pendingImages.shareImage?.previewUrl || generalSetting.shareImage
 						}
 						onFileSelect={(file) => handleFileSelect("shareImage", file)}
-						onClearClick={() => handleImageClear("shareImage")}
-						onOpenPicker={() => handleOpenImageDialog("shareImage")}
+						onClearClick={() => controller.handleImageClear("shareImage")}
+						onOpenPicker={() => controller.handleOpenImageDialog("shareImage")}
 						isUploading={uploadState.loading}
 					/>
 
@@ -587,12 +264,12 @@ export default function GeneralSettingClient() {
 						<ImageUploadSection
 							title="홈페이지 로고"
 							description="홈페이지의 대표 로고를 커스텀 할 수 있습니다."
-							imageSrc={
-								pendingImages.logoImage?.previewUrl || generalSetting.logoImage
-							}
-							onFileSelect={(file) => handleFileSelect("logoImage", file)}
-							onClearClick={() => handleImageClear("logoImage")}
-							onOpenPicker={() => handleOpenImageDialog("logoImage")}
+						imageSrc={
+							pendingImages.logoImage?.previewUrl || generalSetting.logoImage
+						}
+						onFileSelect={(file) => handleFileSelect("logoImage", file)}
+						onClearClick={() => controller.handleImageClear("logoImage")}
+						onOpenPicker={() => controller.handleOpenImageDialog("logoImage")}
 							isUploading={uploadState.loading}
 						/>
 					)}
@@ -663,7 +340,7 @@ export default function GeneralSettingClient() {
 						<Button
 							type="button"
 							variant="destructive"
-							onClick={handleResetConfirm}
+							onClick={controller.handleResetConfirm}
 							className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
 							style={{
 								transition: "all 0.3s ease-in-out",

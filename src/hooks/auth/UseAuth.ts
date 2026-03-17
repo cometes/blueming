@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useAuthStore, AuthUser } from "@/store/auth/store";
-import { API_BASE } from "@/queries/apiClient";
+import {
+	buildGooglePopupLoginUrl,
+	fetchAuthStatus,
+	logoutWithSession,
+	toAuthUser,
+} from "@/shared/lib/auth/client";
 
 // 로그인 성공 콜백을 위한 전역 변수
 let onLoginSuccessCallback: (() => void) | null = null;
@@ -16,34 +21,18 @@ export const useAuth = () => {
 	const fetchUser = useCallback(async () => {
 		try {
 			console.log("[auth] fetch user start");
-			const response = await fetch(`${API_BASE}/auth/me`, {
-				method: "GET",
-				credentials: "include",
-			});
-
-			if (response.ok) {
-				const data = await response.json();
+			const data = await fetchAuthStatus();
+			if (data?.user) {
 				console.log("[auth] fetch user ok", {
 					hasUser: !!data?.user,
 				});
-
-				if (data.user) {
-					const user: AuthUser = {
-						uid: data.user.uid,
-						email: data.user.email || "",
-						displayName: data.user.displayName,
-						photoURL: data.user.photoURL,
-						isAdmin: data.user.isAdmin || false,
-						role: data.user.role || "user",
-					};
-
-					setAuthData({
-						isAuthenticated: true,
-						user,
-						isLoading: false,
-					});
-					return true;
-				}
+				const user: AuthUser = toAuthUser(data.user) as AuthUser;
+				setAuthData({
+					isAuthenticated: true,
+					user,
+					isLoading: false,
+				});
+				return true;
 			}
 
 			setAuthData({
@@ -94,7 +83,7 @@ export const useAuth = () => {
 				onLoginFailCallback = onFail || null;
 
 				// 팝업 모드로 OAuth 시작
-				const loginUrl = `${API_BASE}/auth/google/start?returnTo=__popup__`;
+				const loginUrl = buildGooglePopupLoginUrl();
 
 				// 팝업 창 열기
 				const width = 500;
@@ -173,10 +162,7 @@ export const useAuth = () => {
 	// 로그아웃 함수
 	const handleLogout = useCallback(async () => {
 		try {
-			await fetch(`${API_BASE}/auth/logout`, {
-				method: "POST",
-				credentials: "include",
-			});
+			await logoutWithSession();
 
 			clearAuth();
 			return { success: true, message: "로그아웃되었습니다." };

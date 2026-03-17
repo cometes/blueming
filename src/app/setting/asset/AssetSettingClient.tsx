@@ -11,7 +11,7 @@ import {
 	deleteStickerAsset,
 	listStickerAssets,
 	setStickerAssetFavorite,
-} from "@/queries/stickerAssets";
+} from "@/features/stickerboard-editor/api/assets";
 import type { StickerAsset } from "@/types/stickerBoard";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";

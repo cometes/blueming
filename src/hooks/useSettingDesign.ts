@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { useEffect, useMemo, useState } from "react";
-import { setSettingsGeneralDesign } from "@/queries/set/setSettingsGeneralDesign";
+import { setSettingsGeneralDesign } from "@/features/settings/api/design";
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
 

@@ -8,10 +8,10 @@ import {
 	useCallback,
 } from "react";
 import { useSettings } from "@/contexts/SettingsContext";
-import type { ThemeItem } from "@/contexts/SettingsContext";
+import type { ThemeItem } from "@/features/settings/types";
 import { toast } from "sonner";
-import { setSettingsImport } from "@/queries/set/setSettingsImport";
-import { setSettingsTheme, getSettingsTheme } from "@/queries/set/setSettingsTheme";
+import { setSettingsImport } from "@/features/settings/api/import";
+import { setSettingsTheme, getSettingsTheme } from "@/features/settings/api/theme";
 
 type ThemeData = ThemeItem;
 

@@ -20,10 +20,8 @@ import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
 import DdayItem from "@/components/items/DdayItem";
 import DdayAddDialog from "@/components/modal/DdayAddDialog";
-import {
-	setSettingsMainDday,
-	type DdayData,
-} from "@/queries/set/setSettingsMainDday";
+import { setSettingsMainDday } from "@/features/settings/api/main";
+import type { DdayData } from "@/features/settings/types";
 
 const MAX_DDAY = 8;
 

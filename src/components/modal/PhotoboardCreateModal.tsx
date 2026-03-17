@@ -11,7 +11,7 @@ import {
 	createPhotoboardPost,
 	updatePhotoboardPost,
 	uploadPhotoboardImage,
-} from "@/queries/photoboard";
+} from "@/features/photoboard/api/client";
 import {
 	Dialog,
 	DialogContent,
@@ -19,6 +19,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useSingleImageUploadField } from "@/hooks/useSingleImageUploadField";
 
 interface PhotoboardCreateModalProps {
 	isOpen: boolean;
@@ -38,8 +39,8 @@ export default function PhotoboardCreateModal({
 	post = null,
 }: PhotoboardCreateModalProps) {
 	const { user, isAuthenticated } = useAuthStore();
-	const [imageUrl, setImageUrl] = useState("");
-	const [imageFile, setImageFile] = useState<File | null>(null);
+	const { imageUrl, imageFile, setFromFile, setFromUrl, clearImage } =
+		useSingleImageUploadField();
 	const [captionInput, setCaptionInput] = useState("");
 	const [isDragging, setIsDragging] = useState(false);
 	const [isProcessing, setIsProcessing] = useState(false);
@@ -53,15 +54,11 @@ export default function PhotoboardCreateModal({
 		setCaptionInput("");
 		setIsDragging(false);
 		setIsProcessing(false);
-		setImageFile(null);
-		if (imageUrl.startsWith("blob:")) {
-			URL.revokeObjectURL(imageUrl);
-		}
-		setImageUrl("");
+		clearImage();
 		if (fileInputRef.current) {
 			fileInputRef.current.value = "";
 		}
-	}, [imageUrl]);
+	}, [clearImage]);
 
 	useEffect(() => {
 		if (!isOpen) {
@@ -71,18 +68,9 @@ export default function PhotoboardCreateModal({
 
 		if (isEditMode && post) {
 			setCaptionInput(post.caption);
-			setImageUrl(post.imageUrl);
-			setImageFile(null);
+			setFromUrl(post.imageUrl);
 		}
-	}, [isOpen, isEditMode, post, resetComposer]);
-
-	useEffect(() => {
-		return () => {
-			if (imageUrl.startsWith("blob:")) {
-				URL.revokeObjectURL(imageUrl);
-			}
-		};
-	}, [imageUrl]);
+	}, [isOpen, isEditMode, post, resetComposer, setFromUrl]);
 
 	const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
@@ -92,12 +80,7 @@ export default function PhotoboardCreateModal({
 			return;
 		}
 
-		if (imageUrl.startsWith("blob:")) {
-			URL.revokeObjectURL(imageUrl);
-		}
-		const previewUrl = URL.createObjectURL(file);
-		setImageUrl(previewUrl);
-		setImageFile(file);
+		setFromFile(file);
 	};
 
 	const handleDrop = (event: React.DragEvent) => {
@@ -105,12 +88,7 @@ export default function PhotoboardCreateModal({
 		setIsDragging(false);
 		const file = event.dataTransfer.files?.[0];
 		if (file && file.type.startsWith("image/")) {
-			if (imageUrl.startsWith("blob:")) {
-				URL.revokeObjectURL(imageUrl);
-			}
-			const previewUrl = URL.createObjectURL(file);
-			setImageUrl(previewUrl);
-			setImageFile(file);
+			setFromFile(file);
 		} else if (file) {
 			toast.error("이미지 파일만 업로드할 수 있어요.");
 		}
@@ -213,10 +191,7 @@ export default function PhotoboardCreateModal({
 									className="w-full h-full object-cover"
 								/>
 								<button
-									onClick={() => {
-										setImageUrl("");
-										setImageFile(null);
-									}}
+									onClick={clearImage}
 									className="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
 									title="이미지 제거"
 								>

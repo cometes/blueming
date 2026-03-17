@@ -10,7 +10,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import type { Comment } from "@/queries/comment";
+import type { LibraryComment as Comment } from "@/features/library/types";
 import ImageSlideModal from "@/components/modal/ImageSlideModal";
 
 interface CommentItemProps {

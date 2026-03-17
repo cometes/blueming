@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { listStickerAssets } from "@/queries/stickerAssets";
+import { listStickerAssets } from "@/features/stickerboard-editor/api/assets";
 import type { StickerAsset } from "@/types/stickerBoard";
 
 export const useAssets = (enabled: boolean) => {

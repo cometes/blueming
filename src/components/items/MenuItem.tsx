@@ -57,7 +57,10 @@ export default function WidgetMenu() {
 	// -------------------------------------------------------------------------
 
 	const { general } = useSettings();
-	const menuData: MenuData = general.menu || { design: {}, menus: [] };
+	const menuData: MenuData = {
+		design: general?.menu?.design || {},
+		menus: general?.menu?.menus || [],
+	};
 	const router = useRouter();
 	const { isAdmin, isManagerOrAdmin } = useAdmin();
 	const [openFolders, setOpenFolders] = useState<OpenFolders>({});

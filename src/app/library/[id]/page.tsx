@@ -1,4 +1,4 @@
-import { fetchLibraryDetailServer } from "@/queries/fetch/fetchLibraryServer";
+import { fetchLibraryDetailServer } from "@/features/library/api/server";
 import DetailClient from "./DetailClient";
 
 export default async function LibararyDetailPage({ params }: { params: Promise<{ id: string }> }) {

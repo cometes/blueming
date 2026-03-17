@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { listStickerAssets } from "@/queries/stickerAssets";
+import { listStickerAssets } from "@/features/stickerboard-editor/api/assets";
 import type { StickerAsset } from "@/types/stickerBoard";
 import AssetGrid from "@/components/asset/AssetGrid";
 
