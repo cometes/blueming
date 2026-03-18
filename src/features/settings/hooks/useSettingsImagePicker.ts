@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { listStickerAssets } from "@/features/stickerboard-editor/api/assets";
 import type { StickerAsset } from "@/features/stickerboard-editor/model";
 
@@ -25,6 +25,8 @@ export function useSettingsImagePicker<Field extends string>({
 	const [assetsLoading, setAssetsLoading] = useState(false);
 	const [assetsError, setAssetsError] = useState<string | null>(null);
 	const [assetSearchQuery, setAssetSearchQuery] = useState("");
+	const fieldsRef = useRef(fields);
+
 	const [pendingImages, setPendingImages] = useState<Record<Field, PendingImage | null>>(
 		() =>
 			fields.reduce(
@@ -34,8 +36,8 @@ export function useSettingsImagePicker<Field extends string>({
 	);
 
 	const hasPendingImages = useMemo(
-		() => fields.some((field) => pendingImages[field] !== null),
-		[fields, pendingImages],
+		() => fieldsRef.current.some((field) => pendingImages[field] !== null),
+		[pendingImages],
 	);
 
 	const refreshAssets = useCallback(async () => {
@@ -106,18 +108,18 @@ export function useSettingsImagePicker<Field extends string>({
 
 	const clearAllPendingImages = useCallback(() => {
 		setPendingImages((prev) => {
-			fields.forEach((field) => {
+			fieldsRef.current.forEach((field) => {
 				const current = prev[field];
 				if (current) {
 					URL.revokeObjectURL(current.previewUrl);
 				}
 			});
-			return fields.reduce(
+			return fieldsRef.current.reduce(
 				(acc, field) => ({ ...acc, [field]: null }),
 				{} as Record<Field, PendingImage | null>,
 			);
 		});
-	}, [fields]);
+	}, []);
 
 	const openImageDialog = useCallback(
 		(field: Field, currentValue?: string) => {

@@ -66,11 +66,9 @@ export function MenuPreviewSection({
 }: MenuPreviewSectionProps) {
 	return (
 		<section>
-			<div className="flex items-center justify-between mb-2">
-				<h2 className="text-[20px] font-semibold font-title">메뉴 설정</h2>
-			</div>
 			<p className="text-sm text-sub-text mb-6">
-				메뉴 텍스트 및 이미지를 설정합니다. 드래그 앤 드롭으로 순서를 변경할 수 있습니다. 최대 8개까지 추가 가능합니다.
+				메뉴 텍스트 및 이미지를 설정합니다. 드래그 앤 드롭으로 순서를 변경할 수
+				있습니다. 최대 8개까지 추가 가능합니다.
 			</p>
 			<div className="section-wrap flex justify-center gap-6 py-10 rounded-card border-card bg-card-bg">
 				<aside
@@ -132,9 +130,7 @@ export function MenuPreviewSection({
 												design={menuDesign}
 												openFolders={openFolders}
 												onToggleFolder={onToggleFolder}
-												onUpdateMenu={(updated) =>
-													onUpdateMenu(index, updated)
-												}
+												onUpdateMenu={(updated) => onUpdateMenu(index, updated)}
 												handleDeleteMenu={onDeleteMenu}
 												boardArr={boardArr}
 											/>
@@ -221,7 +217,8 @@ export function MenuPreviewSection({
 												type="button"
 												className="w-10 h-10 rounded-full bg-card-bg/60 border border-card flex items-center justify-center leading-none"
 												onClick={() => {
-													if (menu.category === "폴더") onToggleFolder(menu.uniqueId);
+													if (menu.category === "폴더")
+														onToggleFolder(menu.uniqueId);
 												}}
 											>
 												{getMenuIcon(menu.category)}
