@@ -192,7 +192,7 @@ export default function LibararyNewClient({
 		setIsVerifyingPassword(true);
 		setPasswordError("");
 		try {
-			const detailId = initialData?.slug || initialData?.id;
+			const detailId = initialData?.id;
 			const data = await fetchLibraryDetailWithAccess(detailId, {
 				password: passwordInput.trim(),
 			});
@@ -214,7 +214,7 @@ export default function LibararyNewClient({
 
 		const fetchWithAuth = async () => {
 			try {
-				const detailId = initialData?.slug || initialData?.id;
+				const detailId = initialData?.id;
 				const data = await fetchLibraryDetailWithAccess(detailId, {
 					includeAuth: true,
 				});

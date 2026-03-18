@@ -1,5 +1,6 @@
 import MemoDetailClient from "./MemoDetailClient";
-import { fetchMemoDetailServer } from "@/features/memo/api/server";
+import { fetchMemoDetailDirect } from "@/features/memo/api/serverDirect";
+import { getAuthContext } from "@/app/api/_lib/auth";
 
 interface MemoDetailPageProps {
 	params: Promise<{
@@ -9,6 +10,7 @@ interface MemoDetailPageProps {
 
 export default async function MemoDetailPage({ params }: MemoDetailPageProps) {
 	const { id } = await params;
-	const initialMemo = await fetchMemoDetailServer(id);
+	const authContext = await getAuthContext();
+	const initialMemo = await fetchMemoDetailDirect(id, authContext);
 	return <MemoDetailClient memoId={id} initialMemo={initialMemo ?? undefined} />;
 }

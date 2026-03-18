@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import dynamicImport from "next/dynamic";
 import type React from "react";
 import { useSettings } from "@/contexts/SettingsContext";

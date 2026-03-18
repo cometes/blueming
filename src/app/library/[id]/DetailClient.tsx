@@ -529,9 +529,7 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 								<div
 									className="PrevNextBox prev flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 p-2 md:max-w-44 md:min-w-40 md:p-2.5 lg:max-w-52 lg:min-w-48 lg:p-3 border-card bg-card backdrop-blur-card overflow-hidden group"
 									onClick={onClickMoveToPage(
-										`/library/${
-											localDetail?.prevPost?.slug || localDetail?.prevPost?.id
-										}${detailQuery}`,
+										`/library/${localDetail?.prevPost?.slug || localDetail?.prevPost?.id}${detailQuery}`,
 									)}
 								>
 									<div
@@ -570,9 +568,7 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 								<div
 									className="PrevNextBox next flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 p-2 md:max-w-44 md:min-w-40 md:p-2.5 lg:max-w-52 lg:min-w-48 lg:p-3 border-card bg-card backdrop-blur-card overflow-hidden flex-row-reverse group"
 									onClick={onClickMoveToPage(
-										`/library/${
-											localDetail?.nextPost?.slug || localDetail?.nextPost?.id
-										}${detailQuery}`,
+										`/library/${localDetail?.nextPost?.slug || localDetail?.nextPost?.id}${detailQuery}`,
 									)}
 								>
 									<div

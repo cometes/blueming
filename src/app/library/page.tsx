@@ -3,25 +3,23 @@ export const dynamic = "force-dynamic";
 import { cookies } from "next/headers";
 import { getDb } from "@/app/api/_lib/admin";
 import {
-	fetchLibraryListServer,
-	fetchLibrarySeriesServer,
-	fetchLibraryTagsServer,
-} from "@/features/library/api/server";
+	fetchLibraryListDirect,
+	fetchLibrarySeriesDirect,
+	fetchLibraryTagsDirect,
+} from "@/features/library/api/serverDirect";
 import LibraryClient, { type LibraryItem } from "./LibraryClient";
 
-export default async function LibararyListPage({
+export default async function LibraryListPage({
 	searchParams,
 }: {
-	searchParams?: Promise<{ page?: string }>;
+	searchParams?: Promise<{
+		page?: string;
+		sort?: string;
+		tag?: string;
+		q?: string;
+	}>;
 }) {
 	try {
-		type LibraryListPayload = {
-			items?: LibraryItem[];
-			pinnedItems?: LibraryItem[];
-			total?: number;
-		};
-		type LibraryListResponse = LibraryListPayload & { data?: LibraryListPayload };
-
 		const cookieStore = await cookies();
 		const cardCookie = cookieStore.get("library_card_on")?.value;
 		const initialIsCardOn = cardCookie === "true";
@@ -30,54 +28,43 @@ export default async function LibararyListPage({
 		const parsedPage = Number(params?.page);
 		const currentPage =
 			Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+		const sort = (params?.sort as "latest" | "oldest" | "title") ?? "latest";
+		const tag = params?.tag ?? "";
+		const query = params?.q ?? "";
 
-		let postsPerPage = 10;
-		try {
-			const db = getDb();
-			const settingsSnap = await db.collection("settings").doc("library").get();
-			const settingsData = settingsSnap.exists ? settingsSnap.data() || {} : {};
-			if (typeof settingsData.postsPerPage === "number") {
-				postsPerPage = settingsData.postsPerPage;
-			}
-		} catch {
-		}
+		const db = getDb();
+		const settingsPromise = db
+			.collection("settings")
+			.doc("library")
+			.get()
+			.catch(() => null);
 
-		const [listResponse, seriesResponse, tagResponse] =
-			await Promise.all([
-				fetchLibraryListServer({
-					page: currentPage,
-					limit: postsPerPage,
-				}) as Promise<LibraryListResponse>,
-				fetchLibrarySeriesServer(),
-				fetchLibraryTagsServer(),
-			]);
+		const [settingsSnap, seriesData, tagData] = await Promise.all([
+			settingsPromise,
+			fetchLibrarySeriesDirect(),
+			fetchLibraryTagsDirect(),
+		]);
 
-		const finalListResponse = {
-			items: listResponse?.data?.items ?? listResponse?.items ?? [],
-			pinnedItems: listResponse?.data?.pinnedItems ?? listResponse?.pinnedItems ?? [],
-			total: listResponse?.data?.total ?? listResponse?.total ?? 0,
-		};
-		const resolvedSeriesData: LibraryItem[] = Array.isArray(
-			(seriesResponse as { data?: unknown })?.data
-		)
-			? ((seriesResponse as { data?: LibraryItem[] }).data ?? [])
-			: Array.isArray(seriesResponse)
-				? (seriesResponse as LibraryItem[])
-				: [];
+		const postsPerPage =
+			typeof settingsSnap?.data()?.postsPerPage === "number"
+				? (settingsSnap.data()!.postsPerPage as number)
+				: 10;
+
+		const listResult = await fetchLibraryListDirect({
+			page: currentPage,
+			limit: postsPerPage,
+			sort,
+			tag,
+			query,
+		});
 
 		return (
 			<LibraryClient
-				listData={finalListResponse.items}
-				pinnedData={finalListResponse.pinnedItems}
-				listTotal={finalListResponse.total}
-				seriesData={resolvedSeriesData}
-				tagData={
-					Array.isArray((tagResponse as { data?: unknown })?.data)
-						? ((tagResponse as { data?: unknown }).data as string[])
-						: Array.isArray(tagResponse)
-							? (tagResponse as string[])
-							: []
-				}
+				listData={listResult.items as LibraryItem[]}
+				pinnedData={listResult.pinnedItems as LibraryItem[]}
+				listTotal={listResult.total}
+				seriesData={seriesData as unknown as LibraryItem[]}
+				tagData={tagData}
 				initialIsCardOn={initialIsCardOn}
 			/>
 		);

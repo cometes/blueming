@@ -76,7 +76,7 @@ export function useLibraryDetailController({
 	const requiresPassword =
 		localDetail?.allow === "password" &&
 		(localDetail?.requiresPassword ?? !localDetail?.content);
-	const detailId = localDetail?.slug || localDetail?.id;
+	const detailId = localDetail?.id;
 	const requiresSecretAccess = isSecret && !canViewSecret;
 	const canShowComments =
 		(!requiresPassword || Boolean(localDetail?.content)) &&

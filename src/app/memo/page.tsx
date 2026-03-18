@@ -1,11 +1,9 @@
-export const dynamic = "force-dynamic";
-
 import MemoClient from "./MemoClient";
-import { fetchMemoListServer } from "@/features/memo/api/server";
+import { fetchMemoListDirect } from "@/features/memo/api/serverDirect";
 
 export default async function MemoPage() {
 	try {
-		const data = await fetchMemoListServer();
+		const data = await fetchMemoListDirect();
 		const initialMemos = data?.items ?? [];
 		return <MemoClient initialMemos={initialMemos} />;
 	} catch {

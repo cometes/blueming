@@ -1,13 +1,18 @@
 import {
-	fetchLibrarySeriesServer,
-	fetchLibraryTagsServer,
-} from "@/features/library/api/server";
+	fetchLibrarySeriesDirect,
+	fetchLibraryTagsDirect,
+} from "@/features/library/api/serverDirect";
 import LibararyNewClient from "./NewClient";
 
 export default async function LibararyNewPage() {
 	try {
-		const { data: tagsData } = await fetchLibraryTagsServer();
-		const { data: seriesData } = await fetchLibrarySeriesServer();
+		const [rawTags, rawSeries] = await Promise.all([
+			fetchLibraryTagsDirect(),
+			fetchLibrarySeriesDirect(),
+		]);
+
+		const tagsData = rawTags.map((t) => ({ id: t, name: t }));
+		const seriesData = rawSeries.map((s) => ({ id: s.series, name: s.series }));
 
 		return <LibararyNewClient seriesData={seriesData} tagsData={tagsData} />;
 	} catch {
