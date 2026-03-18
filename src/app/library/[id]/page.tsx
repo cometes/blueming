@@ -1,13 +1,14 @@
-import { fetchLibraryDetailServer } from "@/queries/fetch/fetchLibraryServer";
+import { fetchLibraryDetailDirect } from "@/features/library/api/serverDirect";
 import DetailClient from "./DetailClient";
 
 export default async function LibararyDetailPage({ params }: { params: Promise<{ id: string }> }) {
 	try {
 		const { id } = await params;
-		const { data: detailData } = await fetchLibraryDetailServer(id);
+		const detailData = await fetchLibraryDetailDirect(id);
 
-		return <DetailClient detailData={detailData} />;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		return <DetailClient detailData={detailData as any} />;
 	} catch {
-		return <DetailClient detailData={[]} />;
+		return <DetailClient detailData={null} />;
 	}
 }

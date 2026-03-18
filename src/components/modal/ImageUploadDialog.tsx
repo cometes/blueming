@@ -5,8 +5,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { ImagePlus, Upload, Search } from "lucide-react";
 import { toast } from "sonner";
-import { getAuthHeader } from "@/queries/getAuthHeader";
-import { API_BASE } from "@/queries/apiClient";
+import { uploadFiles } from "@/shared/lib/http/uploads";
 import {
 	Dialog,
 	DialogContent,
@@ -89,35 +88,9 @@ export default function ImageUploadDialog({
 			}
 
 			setIsUploading(true);
-
-			const formData = new FormData();
-			files.forEach((file) => {
-				const sanitizedFileName = encodeURIComponent(file.name);
-				const processedFile = new File([file], sanitizedFileName, {
-					type: file.type,
-				});
-				formData.append("file", processedFile);
+			const [url] = await uploadFiles({
+				files,
 			});
-
-			const authHeader = await getAuthHeader();
-			const response = await fetch(`${API_BASE}/images/uploadImage`, {
-				method: "POST",
-				headers: authHeader,
-				body: formData,
-				credentials: "include",
-			});
-
-			if (!response.ok) {
-				throw new Error("Upload failed");
-			}
-
-			const data = await response.json();
-			const urls = Array.isArray(data.files)
-				? data.files
-						.map((file: { url?: string }) => file?.url)
-						.filter(Boolean)
-				: [];
-			const url = urls[0];
 
 			if (!url) {
 				toast.error("URL이 반환되지 않았습니다.");

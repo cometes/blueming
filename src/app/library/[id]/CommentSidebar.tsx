@@ -1,12 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
-import { ImagePlus, Lock, MessageCircle, Send } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import {
 	createComment,
 	deleteComment,
@@ -14,17 +9,20 @@ import {
 	uploadCommentImages,
 	updateComment,
 	verifyCommentSecret,
-	type Comment,
-} from "@/queries/comment";
-import CommentItem from "@/components/items/CommentItem";
+} from "@/features/library/api/comments";
 import CommentEditDialog from "@/components/comment/CommentEditDialog";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import AssetGrid from "@/components/asset/AssetGrid";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth/store";
-import { useCommentImageDialog } from "@/hooks/comment/useImageDialog";
-import { useAssets } from "@/hooks/guestbook/useAssets";
-import { createImageId, type CommentImage } from "@/hooks/comment/useCommentForm";
+import { createImageId, type CommentImage } from "@/features/comment/hooks/useCommentForm";
+import {
+	revokeCommentImageUrls,
+	useCommentImageManager,
+} from "@/features/comment/hooks/useCommentImageManager";
+import type { LibraryComment as Comment } from "@/features/library/types";
+import CommentForm from "./CommentForm";
+import CommentList from "./CommentList";
 
 interface CommentSidebarProps {
 	postId: string;
@@ -59,8 +57,10 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 	const [activeComment, setActiveComment] = useState<Comment | null>(null);
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-	const imageDialog = useCommentImageDialog();
-	const assets = useAssets(imageDialog.isOpen);
+	const imageManager = useCommentImageManager({
+		maxImageCount: MAX_IMAGE_COUNT,
+	});
+	const { imageDialog, assets } = imageManager;
 
 	const loadComments = useCallback(
 		async (page: number = 1, append: boolean = false) => {
@@ -101,11 +101,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 
 	useEffect(() => {
 		return () => {
-			images.forEach((image) => {
-				if (image.url.startsWith("blob:")) {
-					URL.revokeObjectURL(image.url);
-				}
-			});
+			revokeCommentImageUrls(images);
 		};
 	}, [images]);
 
@@ -163,11 +159,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 	const closeDialog = useCallback(() => {
 		setDialogOpen(false);
 		setActiveComment(null);
-		dialogImages.forEach((image) => {
-			if (image.url.startsWith("blob:")) {
-				URL.revokeObjectURL(image.url);
-			}
-		});
+		revokeCommentImageUrls(dialogImages);
 		setDialogImages([]);
 	}, [dialogImages]);
 
@@ -194,24 +186,10 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 		if (!canSubmit) return;
 		setIsSubmitting(true);
 		try {
-			const fileImages = images.filter((img) => img.file);
-			const uploadedUrls =
-				fileImages.length > 0
-					? await uploadCommentImages(
-							fileImages.map((img) => img.file as File),
-						)
-					: [];
-			let uploadIndex = 0;
-			const finalImageUrls = images.reduce<string[]>((acc, image) => {
-				if (image.file) {
-					const nextUrl = uploadedUrls[uploadIndex];
-					uploadIndex += 1;
-					if (nextUrl) acc.push(nextUrl);
-				} else if (image.url && !image.url.startsWith("blob:")) {
-					acc.push(image.url);
-				}
-				return acc;
-			}, []);
+			const finalImageUrls = await imageManager.resolveImageUrls(
+				images,
+				uploadCommentImages,
+			);
 			await createComment(postId, {
 				message,
 				displayName: resolvedMode === "anon" ? displayName : undefined,
@@ -222,11 +200,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 			toast.success("댓글이 등록되었습니다.");
 			setMessage("");
 			setIsSecret(false);
-			images.forEach((image) => {
-				if (image.url.startsWith("blob:")) {
-					URL.revokeObjectURL(image.url);
-				}
-			});
+			revokeCommentImageUrls(images);
 			setImages([]);
 			if (resolvedMode === "anon") {
 				setDisplayName("");
@@ -247,6 +221,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 		canSubmit,
 		displayName,
 		isSecret,
+		imageManager,
 		loadComments,
 		message,
 		images,
@@ -258,24 +233,10 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 	const handleUpdate = useCallback(async () => {
 		if (!activeComment || !dialogMessage.trim()) return;
 		try {
-			const fileImages = dialogImages.filter((img) => img.file);
-			const uploadedUrls =
-				fileImages.length > 0
-					? await uploadCommentImages(
-							fileImages.map((img) => img.file as File),
-						)
-					: [];
-			let uploadIndex = 0;
-			const finalImageUrls = dialogImages.reduce<string[]>((acc, image) => {
-				if (image.file) {
-					const nextUrl = uploadedUrls[uploadIndex];
-					uploadIndex += 1;
-					if (nextUrl) acc.push(nextUrl);
-				} else if (image.url && !image.url.startsWith("blob:")) {
-					acc.push(image.url);
-				}
-				return acc;
-			}, []);
+			const finalImageUrls = await imageManager.resolveImageUrls(
+				dialogImages,
+				uploadCommentImages,
+			);
 			await updateComment(postId, activeComment.id, {
 				message: dialogMessage,
 				pin: activeComment.authorType === "anon" ? dialogPin : undefined,
@@ -297,6 +258,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 		dialogMessage,
 		dialogPin,
 		dialogSecret,
+		imageManager,
 		loadComments,
 		postId,
 	]);
@@ -319,54 +281,33 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 
 	const removeImageFromTarget = useCallback(
 		(target: "create" | "edit", id: string) => {
-			const remove = (prev: CommentImage[]) => {
-				const targetImage = prev.find((image) => image.id === id);
-				if (targetImage?.url.startsWith("blob:")) {
-					URL.revokeObjectURL(targetImage.url);
-				}
-				return prev.filter((image) => image.id !== id);
-			};
-
-			if (target === "edit") {
-				setDialogImages(remove);
-			} else {
-				setImages(remove);
-			}
+			const setter = target === "edit" ? setDialogImages : setImages;
+			imageManager.removeImage(setter, id);
 		},
-		[],
+		[imageManager],
 	);
 
 	const handleImageDialogOpen = useCallback(
 		(target: "create" | "edit") => {
 			const currentCount =
 				target === "edit" ? dialogImages.length : images.length;
-			if (!imageDialog.openDialog(target, currentCount)) {
+			if (!imageManager.openDialog(target, currentCount)) {
 				toast.error("이미지는 최대 8개까지 첨부할 수 있어요.");
 			}
 		},
-		[dialogImages.length, imageDialog, images.length],
+		[dialogImages.length, imageManager, images.length],
 	);
 
 	const handleImageUpload = useCallback(
 		(url: string) => {
 			if (!imageDialog.target || !url) return;
-
 			const setter =
 				imageDialog.target === "edit" ? setDialogImages : setImages;
-
-			if (
-				imageDialog.previewFiles.length > 0 &&
-				imageDialog.previewUrls.length > 0
-			) {
-				if (imageDialog.addImagesToTarget(setter)) {
-					toast.success("이미지가 추가되었습니다.");
-				}
-			} else {
-				imageDialog.addSingleImageToTarget(setter, url);
+			if (imageManager.addUploadedImages(url, setter)) {
 				toast.success("이미지가 추가되었습니다.");
 			}
 		},
-		[imageDialog],
+		[imageDialog.target, imageManager],
 	);
 
 	const handleLoadMore = useCallback(() => {
@@ -391,191 +332,36 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 				ref={scrollContainerRef}
 				className="flex-1 overflow-y-auto p-4 space-y-1"
 			>
-				{isLoading && comments.length === 0 ? (
-					<div className="space-y-3">
-						{[...Array(3)].map((_, i) => (
-							<div key={i} className="flex gap-2">
-								<Skeleton className="w-8 h-8 rounded-full bg-card" />
-								<div className="flex-1 space-y-2">
-									<Skeleton className="h-4 w-20 bg-card" />
-									<Skeleton className="h-16 w-3/4 rounded-2xl bg-card" />
-								</div>
-							</div>
-						))}
-					</div>
-				) : comments.length === 0 ? (
-					<div className="flex flex-col items-center justify-center h-full text-sub-text">
-						<MessageCircle size={40} className="mb-2 opacity-30" />
-						<p className="text-sm">첫 번째 댓글을 남겨보세요.</p>
-					</div>
-				) : (
-					<>
-						{comments.map((comment) => (
-							<CommentItem
-								key={comment.id}
-								comment={comment}
-								isOwn={comment.isOwn === true}
-								onToggleSecret={(pinValue) =>
-									handleToggleSecret(comment, pinValue)
-								}
-								onEdit={
-									comment.canEdit ? () => openDialog(comment, "edit") : undefined
-								}
-								onDelete={
-									comment.canDelete
-										? () => openDialog(comment, "delete")
-										: undefined
-								}
-							/>
-						))}
-						{hasMore && (
-							<div className="flex justify-center pt-4">
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={handleLoadMore}
-									disabled={isLoading}
-								>
-									{isLoading ? "로딩 중..." : "이전 댓글 더보기"}
-								</Button>
-							</div>
-						)}
-					</>
-				)}
+				<CommentList
+					comments={comments}
+					isLoading={isLoading}
+					hasMore={hasMore}
+					onLoadMore={handleLoadMore}
+					onToggleSecret={handleToggleSecret}
+					onEdit={(comment) => openDialog(comment, "edit")}
+					onDelete={(comment) => openDialog(comment, "delete")}
+				/>
 			</div>
 
-			{/* 입력 영역 */}
-			<div className="border-t border-card-border p-3 bg-card-bg">
-				{isAuthLoading ? (
-					<div className="space-y-2">
-						<Skeleton className="h-9 w-full rounded-card bg-card" />
-						<Skeleton className="h-20 w-full rounded-card bg-card" />
-					</div>
-				) : (
-					<div className="space-y-2">
-						{/* 익명 입력 필드 */}
-						{resolvedMode === "anon" && (
-							<div className="flex gap-1.5">
-								<Input
-									type="text"
-									placeholder="닉네임"
-									value={displayName}
-									onChange={(e) => setDisplayName(e.target.value)}
-									className="flex-1 h-8 text-sm"
-								/>
-								<Input
-									type="password"
-									placeholder="비밀번호"
-									inputMode="numeric"
-									value={pin}
-									onChange={(e) => setPin(e.target.value)}
-									className="w-24 h-8 text-sm"
-								/>
-							</div>
-						)}
-
-						{/* 메시지 입력 */}
-						<div className="relative">
-							<textarea
-								value={message}
-								onChange={(e) => setMessage(e.target.value)}
-								placeholder="메시지를 입력하세요..."
-								maxLength={500}
-								rows={2}
-								className="w-full rounded-card border-card bg-card px-3 py-2 pr-10 text-sm text-main-text resize-none"
-								onKeyDown={(e) => {
-									if (
-										e.key === "Enter" &&
-										(e.ctrlKey || e.metaKey) &&
-										canSubmit
-									) {
-										e.preventDefault();
-										handleCreate();
-									}
-								}}
-							/>
-							<Button
-								type="button"
-								size="sm"
-								variant="ghost"
-								onClick={handleCreate}
-								disabled={!canSubmit || isSubmitting}
-								className="absolute right-1 bottom-1 w-8 h-8 p-0"
-							>
-								<Send size={16} className="text-theme-primary" />
-							</Button>
-						</div>
-
-						{/* 하단 옵션 */}
-						<div className="flex items-center justify-between">
-							<div className="flex items-center gap-2">
-								<button
-									type="button"
-									onClick={() => handleImageDialogOpen("create")}
-									disabled={
-										isSubmitting || images.length >= MAX_IMAGE_COUNT
-									}
-									className={cn(
-										"inline-flex items-center justify-center w-8 h-8 rounded-card border border-card bg-card text-main-text",
-										isSubmitting || images.length >= MAX_IMAGE_COUNT
-											? "opacity-60 pointer-events-none"
-											: "",
-									)}
-									aria-label="사진 첨부"
-								>
-									<ImagePlus size={14} />
-								</button>
-								{images.length > 0 && (
-									<span className="text-xs text-sub-text">
-										{images.length}/{MAX_IMAGE_COUNT}
-									</span>
-								)}
-								<label className="inline-flex items-center gap-1.5 text-xs text-sub-text">
-									<Switch
-										checked={isSecret}
-										onCheckedChange={setIsSecret}
-										className="scale-75"
-									/>
-									<Lock size={12} />
-									비밀글
-								</label>
-							</div>
-							{cooldownRemaining > 0 && (
-								<span className="text-xs text-sub-text">
-									{cooldownRemaining}초
-								</span>
-							)}
-						</div>
-					</div>
-				)}
-			</div>
-
-			{images.length > 0 && (
-				<div className="px-3 pb-3 bg-card-bg border-t border-card-border">
-					<div className="flex flex-wrap gap-1.5">
-						{images.map((image) => (
-							<div
-								key={image.id}
-								className="relative w-14 h-14 rounded-lg border border-card overflow-hidden"
-							>
-								{/* eslint-disable-next-line @next/next/no-img-element */}
-								<img
-									src={image.url}
-									alt="첨부 이미지"
-									className="absolute inset-0 w-full h-full object-cover"
-								/>
-								<button
-									type="button"
-									onClick={() => removeImageFromTarget("create", image.id)}
-									className="absolute top-0.5 right-0.5 rounded-full bg-black/60 text-white text-[8px] px-1.5 py-0.5"
-								>
-									X
-								</button>
-							</div>
-						))}
-					</div>
-				</div>
-			)}
+			<CommentForm
+				isAuthLoading={isAuthLoading}
+				resolvedMode={resolvedMode}
+				displayName={displayName}
+				onDisplayNameChange={setDisplayName}
+				pin={pin}
+				onPinChange={setPin}
+				message={message}
+				onMessageChange={setMessage}
+				isSecret={isSecret}
+				onIsSecretChange={setIsSecret}
+				images={images}
+				isSubmitting={isSubmitting}
+				canSubmit={canSubmit}
+				cooldownRemaining={cooldownRemaining}
+				onSubmit={handleCreate}
+				onOpenImageDialog={() => handleImageDialogOpen("create")}
+				onRemoveImage={(id) => removeImageFromTarget("create", id)}
+			/>
 
 			<CommentEditDialog
 				open={dialogOpen}

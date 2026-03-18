@@ -4,13 +4,13 @@ import type { DropResult } from "@hello-pangea/dnd";
 import { toast } from "sonner";
 import {
 	useSettings,
-	type MenuItem,
-	type MenuDesign,
 } from "@/contexts/SettingsContext";
-import { setSettingsGeneralMenu } from "@/queries/set/setSettingsGeneralMenu";
+import type { MenuDesign, MenuItem } from "@/features/settings/types";
+import { setSettingsGeneralMenu } from "@/features/settings/api/client";
+import { runSettingsMutation } from "@/features/settings/hooks/mutation";
 import { yupResolver } from "@hookform/resolvers/yup";
 import type { AnyObjectSchema } from "yup";
-import { schemaAddMenu } from "@/lib/schema";
+import { schemaAddMenu } from "@/features/settings/lib/schema";
 
 const defaultMenuDesign: MenuDesign = {
 	align: "왼쪽",
@@ -269,16 +269,15 @@ export const useSettingMenu = () => {
 				menus: [],
 			};
 
-			const response = await setSettingsGeneralMenu(menuData);
-			updateGeneral(response.general);
-			await refreshSettings?.({ broadcast: true });
-
-			const channel = new BroadcastChannel("menuSettingsUpdated");
-			channel.postMessage({
-				menuSettings: response.general,
-				timestamp: Date.now(),
+			await runSettingsMutation({
+				execute: () => setSettingsGeneralMenu(menuData),
+				onSuccess: (response) => updateGeneral?.(response.general || {}),
+				refreshSettings,
+				channelName: "menuSettingsUpdated",
+				broadcastPayload: (response) => ({
+					menuSettings: response.general,
+				}),
 			});
-			channel.close();
 
 			toast.success("초기화되었습니다.");
 		} catch {
@@ -296,16 +295,15 @@ export const useSettingMenu = () => {
 				menus: nextMenus,
 			};
 
-			const response = await setSettingsGeneralMenu(menuData);
-			updateGeneral(response.general);
-			await refreshSettings?.({ broadcast: true });
-
-			const channel = new BroadcastChannel("menuSettingsUpdated");
-			channel.postMessage({
-				menuSettings: response.general,
-				timestamp: Date.now(),
+			await runSettingsMutation({
+				execute: () => setSettingsGeneralMenu(menuData),
+				onSuccess: (response) => updateGeneral?.(response.general || {}),
+				refreshSettings,
+				channelName: "menuSettingsUpdated",
+				broadcastPayload: (response) => ({
+					menuSettings: response.general,
+				}),
 			});
-			channel.close();
 
 			toast.success("저장되었습니다.");
 		} catch {

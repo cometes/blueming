@@ -2,10 +2,11 @@ import { useForm } from "react-hook-form";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
-import type { General } from "@/contexts/SettingsContext";
-import { setSettingsGeneralGeneral } from "@/queries/set/setSettingsGeneralGeneral";
+import type { General } from "@/features/settings/types";
+import { setSettingsGeneralGeneral } from "@/features/settings/api/client";
+import { runSettingsMutation } from "@/features/settings/hooks/mutation";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { schemaSettingsGeneral } from "@/lib/schema";
+import { schemaSettingsGeneral } from "@/features/settings/lib/schema";
 
 const logoTypes = ["없음", "텍스트", "이미지"];
 
@@ -124,28 +125,28 @@ export const useSettingGeneral = () => {
   }, [generalData, setValue]);
 
   // Memoize handlers to prevent unnecessary re-renders
-  const updateGeneralSetting = useCallback((field, value) => {
+  const updateGeneralSetting = useCallback((field: string, value: unknown) => {
     setGeneralSetting(prev => ({
       ...prev,
       [field]: value
     }));
   }, []);
 
-  const updateColorSetting = useCallback((field, value) => {
+  const updateColorSetting = useCallback((field: string, value: string) => {
     setGeneralSetting(prev => ({
       ...prev,
       [field]: value
     }));
   }, []);
 
-  const handleImageUpload = useCallback((field, value) => {
+  const handleImageUpload = useCallback((field: string, value: string) => {
     setGeneralSetting(prev => ({
       ...prev,
       [field]: value
     }));
   }, []);
 
-  const handleClearImage = useCallback(field => {
+  const handleClearImage = useCallback((field: string) => {
     setGeneralSetting(prev => ({
       ...prev,
       [field]: ""
@@ -186,17 +187,15 @@ export const useSettingGeneral = () => {
       });
 
       // Save reset settings to server
-      const response = await setSettingsGeneralGeneral(defaultGeneralSetting);
-      updateGeneral(response.general);
-      await refreshSettings?.({ broadcast: true });
-
-      // BroadcastChannel을 통해 리셋된 설정을 다른 탭/창에 알림
-      const channel = new BroadcastChannel("generalSettingsUpdated");
-      channel.postMessage({
-        generalSettings: response.general,
-        timestamp: Date.now()
+      await runSettingsMutation({
+        execute: () => setSettingsGeneralGeneral(defaultGeneralSetting),
+        onSuccess: (response) => updateGeneral?.(response.general || {}),
+        refreshSettings,
+        channelName: "generalSettingsUpdated",
+        broadcastPayload: (response) => ({
+          generalSettings: response.general,
+        }),
       });
-      channel.close();
 
       toast.success("초기화되었습니다.");
     } catch {
@@ -208,17 +207,15 @@ export const useSettingGeneral = () => {
   const handleSave = useCallback(async (nextSetting?: typeof generalSetting) => {
     try {
       const payload = nextSetting ?? generalSetting;
-      const response = await setSettingsGeneralGeneral(payload);
-      updateGeneral(response.general);
-      await refreshSettings?.({ broadcast: true });
-      
-      // BroadcastChannel을 통해 설정 변경사항을 다른 탭/창에 알림
-      const channel = new BroadcastChannel("generalSettingsUpdated");
-      channel.postMessage({
-        generalSettings: response.general,
-        timestamp: Date.now()
+      await runSettingsMutation({
+        execute: () => setSettingsGeneralGeneral(payload),
+        onSuccess: (response) => updateGeneral?.(response.general || {}),
+        refreshSettings,
+        channelName: "generalSettingsUpdated",
+        broadcastPayload: (response) => ({
+          generalSettings: response.general,
+        }),
       });
-      channel.close();
       
       toast.success("저장되었습니다.");
       return true;

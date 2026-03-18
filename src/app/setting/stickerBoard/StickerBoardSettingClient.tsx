@@ -6,13 +6,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
-import { fitToGrid12 } from "@/lib/stickerboard";
+import { fitToGrid12 } from "@/features/stickerboard-editor/lib/stickerboard";
 import type {
 	StickerBoardComponent,
 	StickerBoardGroupComponent,
 	StickerBoardSettings,
 	StickerBoardTextComponent,
-} from "@/types/stickerBoard";
+} from "@/features/stickerboard-editor/model";
 
 const LAYOUT_ITEM_ID = "스티커보드";
 const CANVAS_RATIO_BASE = 12;

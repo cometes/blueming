@@ -13,7 +13,7 @@ import { LinkIcon } from "@/components/tiptap-icons/link-icon";
 import { TrashIcon } from "@/components/tiptap-icons/trash-icon";
 
 // --- Lib ---
-import { isMarkInSchema, sanitizeUrl } from "@/lib/tiptap-utils";
+import { isMarkInSchema, sanitizeUrl } from "@/shared/lib/tiptap-utils";
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button";

@@ -1,4 +1,8 @@
-import { fetchLibraryDetail, fetchLibrarySeries, fetchLibraryTags } from "@/queries/fetch/fetchLibrary";
+import {
+	fetchLibraryDetailDirect,
+	fetchLibrarySeriesDirect,
+	fetchLibraryTagsDirect,
+} from "@/features/library/api/serverDirect";
 import LibararyNewClient from "../../new/NewClient";
 
 interface EditPageProps {
@@ -8,17 +12,20 @@ interface EditPageProps {
 export default async function LibraryEditPage({ params }: EditPageProps) {
 	const { id } = await params;
 	try {
-		const [{ data: detailData }, { data: tagsData }, { data: seriesData }] =
-			await Promise.all([
-				fetchLibraryDetail(id),
-				fetchLibraryTags(),
-				fetchLibrarySeries(),
-			]);
+		const [detailData, rawTags, rawSeries] = await Promise.all([
+			fetchLibraryDetailDirect(id),
+			fetchLibraryTagsDirect(),
+			fetchLibrarySeriesDirect(),
+		]);
+
+		const tagsData = rawTags.map((t) => ({ id: t, name: t }));
+		const seriesData = rawSeries.map((s) => ({ id: s.series, name: s.series }));
 
 		return (
 			<LibararyNewClient
 				mode="edit"
-				initialData={detailData}
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				initialData={detailData ? ({ ...detailData, content: detailData.content ?? "" } as any) : undefined}
 				tagsData={tagsData}
 				seriesData={seriesData}
 			/>

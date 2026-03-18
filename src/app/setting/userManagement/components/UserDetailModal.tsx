@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAuthStore } from "@/store/auth/store";
-import type { User, UserStatus, UserRole } from "@/types/user";
+import type { User, UserStatus, UserRole } from "@/features/admin/types";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -11,7 +11,7 @@ import {
     deleteUser,
     updateUserRole,
     updateUserStatus,
-} from "@/queries/userManagement";
+} from "@/features/admin/api/userManagement";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,

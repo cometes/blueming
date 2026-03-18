@@ -1,7 +1,7 @@
 "use client";
 
 import { useMoveToPage } from "@/hooks/useMoveToPage";
-import { dateTimeConvert } from "@/lib/date";
+import { dateTimeConvert } from "@/shared/lib/date";
 import {
 	ChevronLeft,
 	ChevronRight,
@@ -11,15 +11,10 @@ import {
 	Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useAdmin } from "@/hooks/auth/UseAdmin";
-import { deleteLibraryPost } from "@/queries/set/deleteLibrary";
-import { setLibraryPin } from "@/queries/set/setLibraryPin";
-import { apiClient, getApiErrorMessage } from "@/queries/apiClient";
-import { getAuthHeader } from "@/queries/getAuthHeader";
-import { toast } from "sonner";
+import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth/store";
 import {
@@ -27,7 +22,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/tiptap-ui-primitive/tooltip/tooltip";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import Image from "next/image";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
@@ -48,8 +43,9 @@ import { TaskItem } from "@tiptap/extension-task-item";
 import { Link } from "@tiptap/extension-link";
 import { CustomImage } from "@/components/tiptap-extension/custom-image";
 import { CustomYoutubeNode } from "@/components/tiptap-node/youtube-node/youtube-node";
-import { renderRichText } from "@/lib/richText";
+import { renderRichText } from "@/shared/lib/richText";
 import CommentSidebar from "./CommentSidebar";
+import { useLibraryDetailController, type LibraryDetailData } from "@/features/library/hooks/useLibraryDetailController";
 
 import "@/styles/tiptap-variables.css";
 import "@/components/tiptap-node/list-node/list-node.scss";
@@ -59,7 +55,7 @@ import "@/components/tiptap-node/image-node/image-node.scss";
 import "@/components/tiptap-node/image-upload-node/image-upload-node.scss";
 import "@/components/tiptap-node/youtube-node/youtube-node.scss";
 
-export default function DetailClient({ detailData }) {
+export default function DetailClient({ detailData }: { detailData: LibraryDetailData | null | undefined }) {
 	const { onClickMoveToPage } = useMoveToPage();
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -69,60 +65,48 @@ export default function DetailClient({ detailData }) {
 	const listPage = searchParams.get("page");
 	const listPath = listPage ? `/library?page=${listPage}` : "/library";
 	const detailQuery = listPage ? `?page=${listPage}` : "";
-	const [localDetail, setLocalDetail] = useState(detailData);
-	const [isPinned, setIsPinned] = useState(Boolean(detailData?.pinned));
-	const [password, setPassword] = useState("");
-	const [passwordError, setPasswordError] = useState("");
-	const [isVerifying, setIsVerifying] = useState(false);
-	const [authChecked, setAuthChecked] = useState(false);
-	const [secretAuthChecked, setSecretAuthChecked] = useState(false);
-	const [secretAccessGranted, setSecretAccessGranted] = useState(false);
-	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-	const authorName = localDetail?.author || "익명";
+	const {
+		localDetail,
+		isPinned,
+		password,
+		setPassword,
+		passwordError,
+		authChecked,
+		secretAuthChecked,
+		isSidebarOpen,
+		setIsSidebarOpen,
+		isSecret,
+		canViewSecret,
+		requiresPassword,
+		requiresSecretAccess,
+		canShowComments,
+		backgroundType,
+		backgroundColor,
+		backgroundImage,
+		enableBackdrop,
+		backgroundStyle,
+		handleDelete,
+		handleTogglePin,
+		handleVerifyPassword,
+	} = useLibraryDetailController({
+		detailData,
+		isAdmin,
+		isAuthLoading,
+		userUid: user?.uid,
+		onDeleted: () => {
+			router.push(listPath);
+			router.refresh();
+		},
+	});
+	const authorName =
+		typeof localDetail?.author === "string" && localDetail.author.trim()
+			? localDetail.author
+			: "익명";
 	const authorPhotoURL =
 		typeof localDetail?.authorPhotoURL === "string"
 			? localDetail.authorPhotoURL
 			: "";
 	const authorInitial = authorName.trim().charAt(0) || "익";
-	const ownerId =
-		localDetail?.authorId ??
-		localDetail?.author?.id ??
-		localDetail?.uid ??
-		null;
-	const isOwner = Boolean(ownerId && user?.uid === ownerId);
-	const isSecret = localDetail?.allow === "secret";
-	const canViewSecret = Boolean(isAdmin || isOwner || secretAccessGranted);
-	const backgroundType =
-		typeof localDetail?.backgroundType === "string"
-			? localDetail.backgroundType
-			: "default";
-	const backgroundColor =
-		typeof localDetail?.backgroundColor === "string"
-			? localDetail.backgroundColor
-			: "";
-	const backgroundImage =
-		typeof localDetail?.backgroundImage === "string"
-			? localDetail.backgroundImage
-			: "";
-	const enableBackdrop =
-		typeof localDetail?.enableBackdrop === "boolean"
-			? localDetail.enableBackdrop
-			: true;
-	const backgroundStyle = useMemo(() => {
-		if (backgroundType === "color" && backgroundColor) {
-			return { backgroundColor };
-		}
-		if (backgroundType === "image" && backgroundImage) {
-			return {
-				backgroundImage: `url(${backgroundImage})`,
-				backgroundSize: "cover",
-				backgroundPosition: "center",
-				backgroundRepeat: "no-repeat",
-				backgroundAttachment: "fixed",
-			};
-		}
-		return null;
-	}, [backgroundColor, backgroundImage, backgroundType]);
 	const contentSource =
 		isSecret && !canViewSecret ? null : localDetail?.content;
 	const parsedContent = useMemo(() => {
@@ -224,17 +208,9 @@ export default function DetailClient({ detailData }) {
 	});
 
 	useEffect(() => {
-		setIsPinned(Boolean(detailData?.pinned));
-	}, [detailData?.pinned]);
-
-	useEffect(() => {
 		if (!editor || parsedContent == null) return;
 		editor.commands.setContent(parsedContent);
 	}, [editor, parsedContent]);
-
-	useEffect(() => {
-		setLocalDetail(detailData);
-	}, [detailData]);
 
 	useEffect(() => {
 		const body = document.body;
@@ -274,160 +250,6 @@ export default function DetailClient({ detailData }) {
 			body.style.backgroundAttachment = prevStyles.backgroundAttachment;
 		};
 	}, [backgroundColor, backgroundImage, backgroundType]);
-
-	const handleDelete = async () => {
-		if (!localDetail?.id) return;
-		const confirmed = window.confirm("이 게시글을 삭제할까요?");
-		if (!confirmed) return;
-
-		try {
-			await deleteLibraryPost(localDetail.id);
-			toast.success("삭제되었습니다.");
-			router.push(listPath);
-			router.refresh();
-		} catch {
-			toast.error("삭제에 실패했습니다.");
-		}
-	};
-
-	const handleTogglePin = async () => {
-		if (!localDetail?.id) return;
-		const nextPinned = !isPinned;
-		setIsPinned(nextPinned);
-		try {
-			await setLibraryPin(localDetail.id, nextPinned);
-			toast.success(
-				nextPinned ? "공지로 설정되었습니다." : "공지 설정이 해제되었습니다.",
-			);
-		} catch {
-			setIsPinned(!nextPinned);
-			toast.error("공지 설정 변경에 실패했습니다.");
-		}
-	};
-
-	const requiresPassword =
-		localDetail?.allow === "password" &&
-		(localDetail?.requiresPassword ?? !localDetail?.content);
-	const detailId = localDetail?.slug || localDetail?.id;
-	const requiresSecretAccess = isSecret && !canViewSecret;
-	const canShowComments =
-		(!requiresPassword || Boolean(localDetail?.content)) &&
-		(!requiresSecretAccess || canViewSecret);
-
-	const handleVerifyPassword = async () => {
-		if (!detailId || isVerifying) return;
-		if (!password.trim()) {
-			setPasswordError("비밀번호를 입력해주세요.");
-			return;
-		}
-
-		setIsVerifying(true);
-		setPasswordError("");
-		try {
-			const response = await apiClient.get(`/library/detail/${detailId}`, {
-				headers: { "x-post-password": password },
-			});
-			setLocalDetail(response.data);
-			setPassword("");
-			setPasswordError("");
-			setAuthChecked(true);
-		} catch (error) {
-			setPasswordError(
-				getApiErrorMessage(error, "비밀번호가 올바르지 않습니다."),
-			);
-		} finally {
-			setIsVerifying(false);
-		}
-	};
-
-	useEffect(() => {
-		if (!requiresPassword) {
-			setAuthChecked(true);
-			return;
-		}
-		setAuthChecked(false);
-	}, [detailId, requiresPassword]);
-
-	useEffect(() => {
-		if (!requiresPassword || !detailId) return;
-		if (isAuthLoading) return;
-		let isMounted = true;
-
-		const fetchWithAuth = async () => {
-			try {
-				const response = await apiClient.get(`/library/detail/${detailId}`);
-				if (isMounted && response.data) {
-					setLocalDetail(response.data);
-				}
-			} catch {
-				// Ignore: user isn't author or no auth
-			} finally {
-				if (isMounted) setAuthChecked(true);
-			}
-		};
-
-		fetchWithAuth();
-
-		return () => {
-			isMounted = false;
-		};
-	}, [detailId, isAuthLoading, requiresPassword]);
-
-	useEffect(() => {
-		if (!isSecret) {
-			setSecretAccessGranted(false);
-			setSecretAuthChecked(true);
-			return;
-		}
-		if (isAuthLoading) return;
-		if (isAdmin || isOwner) {
-			setSecretAccessGranted(true);
-		} else {
-			setSecretAccessGranted(false);
-		}
-		setSecretAuthChecked(true);
-	}, [isSecret, isAuthLoading, isAdmin, isOwner]);
-
-	useEffect(() => {
-		if (!isSecret || !detailId) {
-			setSecretAuthChecked(true);
-			setSecretAccessGranted(false);
-			return;
-		}
-		if (isAdmin || isOwner) {
-			setSecretAuthChecked(true);
-			return;
-		}
-		if (isAuthLoading) return;
-		let isMounted = true;
-
-		const fetchWithAuth = async () => {
-			const headers = await getAuthHeader();
-			if (!headers.Authorization) {
-				if (isMounted) setSecretAuthChecked(true);
-				return;
-			}
-			try {
-				const response = await apiClient.get(`/library/detail/${detailId}`, {
-					headers,
-				});
-				if (isMounted && response.data?.content) {
-					setLocalDetail(response.data);
-					setSecretAccessGranted(true);
-				}
-			} catch {
-				// Ignore: user isn't author or no auth
-			} finally {
-				if (isMounted) setSecretAuthChecked(true);
-			}
-		};
-
-		fetchWithAuth();
-
-		return () => {
-			isMounted = false;
-		};
-	}, [detailId, isAuthLoading, isAdmin, isOwner, isSecret]);
 
 	const sidebarDrawer = (
 		<div
@@ -664,14 +486,14 @@ export default function DetailClient({ detailData }) {
 										{authorName}
 									</span>
 									<span className="text-border">•</span>
-									<span>{dateTimeConvert(localDetail?.createdAt)}</span>
+									<span>{dateTimeConvert(localDetail?.createdAt ?? "")}</span>
 								</div>
-								{localDetail?.tags?.length > 0 && (
+								{(localDetail?.tags?.length ?? 0) > 0 && (
 									<div className="TagBox flex mt-4">
 										{/* 태그 */}
-										{localDetail.tags?.length > 0 && (
+										{(localDetail?.tags?.length ?? 0) > 0 && (
 											<div className="flex flex-wrap gap-2">
-												{localDetail.tags.map((tag, index) => (
+												{localDetail?.tags?.map((tag, index) => (
 													<Badge
 														key={index}
 														variant="secondary"
@@ -707,9 +529,7 @@ export default function DetailClient({ detailData }) {
 								<div
 									className="PrevNextBox prev flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 p-2 md:max-w-44 md:min-w-40 md:p-2.5 lg:max-w-52 lg:min-w-48 lg:p-3 border-card bg-card backdrop-blur-card overflow-hidden group"
 									onClick={onClickMoveToPage(
-										`/library/${
-											localDetail?.prevPost?.slug || localDetail?.prevPost?.id
-										}${detailQuery}`,
+										`/library/${localDetail?.prevPost?.slug || localDetail?.prevPost?.id}${detailQuery}`,
 									)}
 								>
 									<div
@@ -748,9 +568,7 @@ export default function DetailClient({ detailData }) {
 								<div
 									className="PrevNextBox next flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 p-2 md:max-w-44 md:min-w-40 md:p-2.5 lg:max-w-52 lg:min-w-48 lg:p-3 border-card bg-card backdrop-blur-card overflow-hidden flex-row-reverse group"
 									onClick={onClickMoveToPage(
-										`/library/${
-											localDetail?.nextPost?.slug || localDetail?.nextPost?.id
-										}${detailQuery}`,
+										`/library/${localDetail?.nextPost?.slug || localDetail?.nextPost?.id}${detailQuery}`,
 									)}
 								>
 									<div

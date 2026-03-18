@@ -1,5 +1,5 @@
 import { useSettings } from "@/contexts/SettingsContext";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import Image from "next/image";
 
 interface DdayItem {
@@ -11,7 +11,7 @@ interface DdayItem {
 
 export default function WidgetDday() {
 	const { main } = useSettings();
-	const ddayData = main.dday || [];
+	const ddayData = main?.dday || [];
 
 	const calculateDday = (targetDate: string): string => {
 		if (!targetDate) return "D-?";

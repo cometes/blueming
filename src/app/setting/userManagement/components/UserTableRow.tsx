@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import type { User } from "@/types/user";
+import type { User } from "@/features/admin/types";
 import { Button } from "@/components/ui/button";
 
 interface UserTableRowProps {
@@ -13,6 +13,15 @@ export default function UserTableRow({ user, onClick }: UserTableRowProps) {
     return (
         <div
             onClick={onClick}
+            role="button"
+            tabIndex={0}
+            aria-label={`${user.displayName || "이름 없음"} 상세보기`}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onClick();
+                }
+            }}
             className="flex items-center justify-between gap-4 rounded-card border border-card bg-card px-4 py-3 hover:bg-card-bg transition-colors cursor-pointer"
         >
             <div className="flex items-center gap-3 min-w-0">

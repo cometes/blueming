@@ -2,17 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Search, Settings, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAdmin } from "@/hooks/auth/UseAdmin";
+import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import { useMoveToPage } from "@/hooks/useMoveToPage";
-import LibrarySettingsDialog from "@/components/modal/LibrarySettingsDialog";
-import { setSettingsLibrary } from "@/queries/set/setSettingsLibrary";
+import LibrarySettingsDialog from "@/features/library/components/LibrarySettingsDialog";
+import { setSettingsLibrary } from "@/features/settings/api/client";
 import { useSettings } from "@/contexts/SettingsContext";
 import { toast } from "sonner";
-import { useLibraryFilters } from "@/hooks/library/useLibraryFilters";
-import { useLibraryListData } from "@/hooks/library/useLibraryListData";
+import { useLibraryFilters } from "@/features/library/hooks/useLibraryFilters";
+import { useLibraryListData } from "@/features/library/hooks/useLibraryListData";
 import LibraryListView from "./LibraryListView";
 import LibrarySeriesView from "./LibrarySeriesView";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";

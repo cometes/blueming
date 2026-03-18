@@ -89,7 +89,7 @@ function RainWindowEffectComponent({ active = true }: RainWindowEffectProps) {
 				window.addEventListener("resize", handleResize);
 				if (active) {
 					raindropFxRef.current.stop?.();
-					await raindropFxRef.current.start();
+					await raindropFxRef.current.start?.();
 				}
 			} catch {
 			}

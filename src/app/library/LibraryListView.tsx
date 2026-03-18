@@ -2,8 +2,8 @@
 
 import { ArrowUpDown, Pin, Lock } from "lucide-react";
 import type { CSSProperties } from "react";
-import { cn } from "@/lib/utils";
-import { dateConvert } from "@/lib/date";
+import { cn } from "@/shared/lib/utils";
+import { dateConvert } from "@/shared/lib/date";
 import ItemGallery from "@/components/items/Gallery";
 import ItemListWithImage from "@/components/items/ListWithImage";
 import ItemList from "@/components/items/List";

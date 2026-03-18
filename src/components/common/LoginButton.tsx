@@ -1,5 +1,5 @@
 import React from "react";
-import { useAuth } from "@/hooks/auth/UseAuth";
+import { useAuth } from "@/features/account/hooks/useAuth";
 
 export default function LoginButton() {
 	const { isAuthenticated, user, isLoading, handleLogin, handleLogout } =

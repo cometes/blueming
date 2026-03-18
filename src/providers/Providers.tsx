@@ -5,15 +5,12 @@ import { Toaster } from "sonner";
 import { SettingsProvider } from "./SettingsProvider";
 import { ThemeProvider } from "./ThemeProvider";
 import { ThemesProvider } from "@/contexts/ThemesContext";
-import { useAuth } from "@/hooks/auth/UseAuth";
+import type { SettingsSnapshot } from "@/features/settings/types";
+import { useAuth } from "@/features/account/hooks/useAuth";
 
 interface ProvidersProps {
 	children: React.ReactNode;
-	initialSettings: {
-		general?: Record<string, unknown>;
-		main?: Record<string, unknown>;
-		library?: Record<string, unknown>;
-	} | null;
+	initialSettings: SettingsSnapshot | null;
 }
 
 // 인증 초기화 컴포넌트

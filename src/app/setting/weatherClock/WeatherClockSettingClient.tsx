@@ -18,8 +18,8 @@ import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
-import { setSettingsMainWeatherClock } from "@/queries/set/setSettingsMainWeatherClock";
-import { generateCityIllustration } from "@/queries/generateCityIllustration";
+import { setSettingsMainWeatherClock } from "@/features/settings/api/main";
+import { generateCityIllustration } from "@/shared/lib/ai/cityIllustration";
 
 export default function WeatherClockSettingClient() {
 	const settings = useSettings();

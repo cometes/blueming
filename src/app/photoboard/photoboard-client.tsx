@@ -6,19 +6,19 @@ import { type PhotoBoardPost } from "@/data/photoboard";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import PhotoboardCreateModal from "@/components/modal/PhotoboardCreateModal";
+import PhotoboardCreateModal from "@/features/photoboard/components/PhotoboardCreateModal";
 import {
 	deletePhotoboardPost,
 	fetchPhotoboardPosts,
-} from "@/queries/photoboard";
-import PhotoboardSettingsDialog from "@/components/modal/PhotoboardSettingsDialog";
+} from "@/features/photoboard/api/client";
+import PhotoboardSettingsDialog from "@/features/photoboard/components/PhotoboardSettingsDialog";
 import AdminOnly from "@/components/common/AdminOnly";
 import { useSettings } from "@/contexts/SettingsContext";
-import { setSettingsMainPhotoboard } from "@/queries/set/setSettingsMainPhotoboard";
+import { setSettingsMainPhotoboard } from "@/features/settings/api/main";
 import { useAuthStore } from "@/store/auth/store";
-import { useAdmin } from "@/hooks/auth/UseAdmin";
-import PhotoboardItem from "@/components/items/PhotoboardItem";
-import PhotoboardDetailModal from "@/components/modal/PhotoboardDetailModal";
+import { useAdmin } from "@/features/admin/hooks/useAdmin";
+import PhotoboardItem from "@/features/photoboard/components/PhotoboardItem";
+import PhotoboardDetailModal from "@/features/photoboard/components/PhotoboardDetailModal";
 
 interface PhotoBoardClientProps {
 	initialPosts: PhotoBoardPost[];

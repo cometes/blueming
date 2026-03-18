@@ -2,75 +2,14 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Layout from "@/components/layout/Layout";
 import Providers from "@/providers/Providers";
-import { getDb } from "@/app/api/_lib/admin";
-import { normalizeGeneralData } from "@/app/api/_lib/settings";
+import { getServerSettings, type ServerSettings, type FontRegistryItem } from "@/app/api/_lib/settingsServer";
+import { getFontFormat, isFontFileUrl } from "@/shared/lib/fonts";
 
 export const dynamic = "force-dynamic";
 
-type ThemeSettings = {
-	general?: {
-		general?: {
-			primaryColor?: string;
-			secondaryColor?: string;
-			favicon?: string;
-			title?: string;
-			desc?: string;
-			shareImage?: string;
-		};
-		fontRegistry?: FontRegistryItem[];
-		design?: {
-			font?: {
-				bodyFontFamily?: string;
-				titleFontFamily?: string;
-				mainFontColor?: string;
-				subFontColor?: string;
-			};
-			background?: {
-				type?: string;
-				color?: string;
-				image?: string;
-			};
-			widget?: {
-				background?: string;
-				borderColor?: string;
-				borderRadius?: number;
-				borderWidth?: number;
-				blur?: number;
-			};
-			card?: {
-				background?: string;
-				borderColor?: string;
-				borderActiveColor?: string;
-				borderRadius?: number;
-				boxShadow?: string;
-				translateY?: number;
-			};
-		};
-	};
-};
+type AppSettings = ServerSettings;
 
-type FontRegistryItem = {
-	id?: string;
-	name?: string;
-	family?: string;
-	url?: string;
-	source?: "url" | "file";
-};
-
-type AppSettings = ThemeSettings & {
-	general?: ThemeSettings["general"] & {
-		menu?: {
-			design?: {
-				backgroundImage?: string;
-				iconBarBackgroundImage?: string;
-				logoImage?: string;
-				iconBarLogoImage?: string;
-			};
-		};
-	};
-};
-
-const resolveGeneralSettings = (settings: ThemeSettings | null) => {
+const resolveGeneralSettings = (settings: ServerSettings | null) => {
 	const raw = settings?.general as Record<string, unknown> | undefined;
 	if (!raw || typeof raw !== "object") return { general: undefined, design: undefined };
 	const nestedGeneral = (raw as { general?: unknown }).general;
@@ -87,7 +26,7 @@ const resolveGeneralSettings = (settings: ThemeSettings | null) => {
 	return { general, design };
 };
 
-const buildThemeStyle = (settings: ThemeSettings | null) => {
+const buildThemeStyle = (settings: ServerSettings | null) => {
 	const { general, design } = resolveGeneralSettings(settings);
 	if (!general && !design) return "";
 
@@ -192,32 +131,9 @@ const getPreloadImageUrls = (settings: AppSettings | null) => {
 	);
 };
 
-const getFontRegistry = (settings: ThemeSettings | null) =>
+const getFontRegistry = (settings: ServerSettings | null): FontRegistryItem[] =>
 	settings?.general?.fontRegistry ?? [];
 
-const getFontFormat = (url: string) => {
-	const cleanUrl = url.split("?")[0];
-	const ext = cleanUrl.split(".").pop()?.toLowerCase();
-	switch (ext) {
-		case "woff2":
-			return "woff2";
-		case "woff":
-			return "woff";
-		case "ttf":
-			return "truetype";
-		case "otf":
-			return "opentype";
-		case "eot":
-			return "embedded-opentype";
-		default:
-			return undefined;
-	}
-};
-
-const isFontFileUrl = (url: string) => {
-	const cleanUrl = url.split("?")[0].toLowerCase();
-	return /\.(woff2|woff|ttf|otf|eot)$/.test(cleanUrl);
-};
 
 const buildFontFaceCSS = (fonts: FontRegistryItem[]) =>
 	fonts
@@ -234,46 +150,7 @@ const buildFontFaceCSS = (fonts: FontRegistryItem[]) =>
 		})
 		.join("");
 
-async function getSettings(): Promise<AppSettings | null> {
-	try {
-		const db = getDb();
-		const settingsSnapshot = await db.collection("settings").get();
-		const settingsDataPromises = settingsSnapshot.docs.map(async (doc) => {
-			const docSnapshot = await doc.ref.get();
-			const docData = docSnapshot.exists ? docSnapshot.data() : {};
-			const subCollections = await doc.ref.listCollections();
-			const subCollectionPromises = subCollections.map(async (subCollection) => {
-				const subCollectionSnapshot = await subCollection.get();
-				const subCollectionData = subCollectionSnapshot.docs.reduce(
-					(acc, subDoc) => {
-						acc[subDoc.id] = subDoc.data();
-						return acc;
-					},
-					{} as Record<string, unknown>
-				);
-				return { [subCollection.id]: subCollectionData };
-			});
-			const subCollectionResults = await Promise.all(subCollectionPromises);
-			const fullData = subCollectionResults.reduce(
-				(acc, curr) => ({ ...acc, ...curr }),
-				docData ?? {}
-			);
-			return { [doc.id]: fullData };
-		});
-		const settingsData = await Promise.all(settingsDataPromises);
-		const result = settingsData.reduce(
-			(acc, curr) => ({ ...acc, ...curr }),
-			{} as Record<string, unknown>
-		);
-		const normalized = {
-			...result,
-			general: normalizeGeneralData(result.general),
-		};
-		return normalized as AppSettings;
-	} catch {
-		return null;
-	}
-}
+const getSettings = getServerSettings;
 
 export async function generateMetadata(): Promise<Metadata> {
 	const settings = await getSettings();

@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useSettings } from "@/contexts/SettingsContext";
-import { getWeather, type WeatherData } from "@/queries/getWeather";
-import { CACHE_POLICY } from "@/queries/cachePolicy";
+import { getWeather, type WeatherData } from "@/shared/lib/weather/client";
+import { CACHE_POLICY } from "@/shared/lib/cachePolicy";
 import WeatherIcon from "@/components/weather/WeatherIcon";
 import { MapPin } from "lucide-react";
 import WidgetSkeleton from "@/components/widgets/WidgetSkeleton";

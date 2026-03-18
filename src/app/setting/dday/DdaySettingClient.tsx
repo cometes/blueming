@@ -18,12 +18,10 @@ import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
-import DdayItem from "@/components/items/DdayItem";
-import DdayAddDialog from "@/components/modal/DdayAddDialog";
-import {
-	setSettingsMainDday,
-	type DdayData,
-} from "@/queries/set/setSettingsMainDday";
+import DdayItem from "@/features/settings/components/dday/DdayItem";
+import DdayAddDialog from "@/features/settings/components/DdayAddDialog";
+import { setSettingsMainDday } from "@/features/settings/api/main";
+import type { DdayData } from "@/features/settings/types";
 
 const MAX_DDAY = 8;
 

@@ -11,7 +11,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { useThemes } from "@/contexts/ThemesContext";
-import { dateConvert } from "@/lib/date";
+import { dateConvert } from "@/shared/lib/date";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 
 const INPUT_HEIGHT = "h-9";

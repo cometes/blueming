@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { Circle } from "lucide-react";
 
 interface RadioItemProps {
@@ -29,6 +29,12 @@ export default function RadioItem({
 			)}
 			role="radio"
 			aria-checked={checked}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					onClickRadio();
+				}
+			}}
 		>
 			<span
 				className={cn(

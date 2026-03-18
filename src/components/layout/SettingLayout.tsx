@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { useState, useEffect, ReactNode } from "react";
 import { Menu, ChevronLeft } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";

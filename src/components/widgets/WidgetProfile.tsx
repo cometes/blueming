@@ -3,7 +3,7 @@
 import { useSettings } from "@/contexts/SettingsContext";
 import { useMemo } from "react";
 import Image from "next/image";
-import { isRichTextEmpty, renderRichText } from "@/lib/richText";
+import { isRichTextEmpty, renderRichText } from "@/shared/lib/richText";
 
 interface ProfileData {
 	headerImage?: string;

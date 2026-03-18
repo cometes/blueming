@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getDb } from "@/app/api/_lib/admin";
 import { jsonError } from "@/app/api/_lib/response";
 import { requireAdmin } from "@/app/api/_lib/auth";
-import { generateColorPalette } from "@/lib/utils";
+import { generateColorPalette } from "@/shared/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -67,43 +66,50 @@ const extractYouTubePlaylistId = (input: unknown): string | null => {
 	}
 };
 
-const validateGeneralData = (general: any): string[] => {
+type ImportObject = Record<string, unknown>;
+
+const asObj = (v: unknown): ImportObject | null =>
+	v !== null && typeof v === "object" && !Array.isArray(v)
+		? (v as ImportObject)
+		: null;
+
+const validateGeneralData = (general: ImportObject): string[] => {
 	const errors: string[] = [];
 
-	if (general.general) {
-		const g = general.general;
+	const g = asObj(general.general);
+	if (g) {
 		if (g.title && typeof g.title !== "string") {
 			errors.push("general.general.title must be a string");
 		}
 		if (g.desc && typeof g.desc !== "string") {
 			errors.push("general.general.desc must be a string");
 		}
-		if (g.logoImage && !validateUrl(g.logoImage)) {
+		if (g.logoImage && !validateUrl(String(g.logoImage))) {
 			errors.push("general.general.logoImage must be a valid URL");
 		}
-		if (g.favicon && !validateUrl(g.favicon)) {
+		if (g.favicon && !validateUrl(String(g.favicon))) {
 			errors.push("general.general.favicon must be a valid URL");
 		}
-		if (g.shareImage && !validateUrl(g.shareImage)) {
+		if (g.shareImage && !validateUrl(String(g.shareImage))) {
 			errors.push("general.general.shareImage must be a valid URL");
 		}
 	}
 
-	if (general.menu) {
-		const menu = general.menu;
+	const menu = asObj(general.menu);
+	if (menu) {
 		if (menu.menus && !Array.isArray(menu.menus)) {
 			errors.push("general.menu.menus must be an array");
-		} else if (menu.menus) {
-			menu.menus.forEach((item: any, index: number) => {
+		} else if (Array.isArray(menu.menus)) {
+			(menu.menus as ImportObject[]).forEach((item, index) => {
 				if (!item.id || !item.uniqueId || !item.name) {
 					errors.push(
 						`general.menu.menus[${index}] must have id, uniqueId, and name`
 					);
 				}
-				if (item.image && !validateUrl(item.image)) {
+				if (item.image && !validateUrl(String(item.image))) {
 					errors.push(`general.menu.menus[${index}].image must be a valid URL`);
 				}
-				if (item.iconImage && !validateUrl(item.iconImage)) {
+				if (item.iconImage && !validateUrl(String(item.iconImage))) {
 					errors.push(
 						`general.menu.menus[${index}].iconImage must be a valid URL`
 					);
@@ -111,34 +117,31 @@ const validateGeneralData = (general: any): string[] => {
 			});
 		}
 
-		if (menu.design) {
-			const design = menu.design;
-			if (design.backgroundImage && !validateUrl(design.backgroundImage)) {
+		const menuDesign = asObj(menu.design);
+		if (menuDesign) {
+			if (menuDesign.backgroundImage && !validateUrl(String(menuDesign.backgroundImage))) {
 				errors.push("general.menu.design.backgroundImage must be a valid URL");
 			}
-			if (design.logoImage && !validateUrl(design.logoImage)) {
+			if (menuDesign.logoImage && !validateUrl(String(menuDesign.logoImage))) {
 				errors.push("general.menu.design.logoImage must be a valid URL");
 			}
-			if (design.iconBarLogoImage && !validateUrl(design.iconBarLogoImage)) {
+			if (menuDesign.iconBarLogoImage && !validateUrl(String(menuDesign.iconBarLogoImage))) {
 				errors.push("general.menu.design.iconBarLogoImage must be a valid URL");
 			}
-			if (
-				design.iconBarBackgroundImage &&
-				!validateUrl(design.iconBarBackgroundImage)
-			) {
-				errors.push(
-					"general.menu.design.iconBarBackgroundImage must be a valid URL"
-				);
+			if (menuDesign.iconBarBackgroundImage && !validateUrl(String(menuDesign.iconBarBackgroundImage))) {
+				errors.push("general.menu.design.iconBarBackgroundImage must be a valid URL");
 			}
 		}
 	}
 
-	if (general.design) {
-		const design = general.design;
-		if (design.background?.image && !validateUrl(design.background.image)) {
+	const design = asObj(general.design);
+	if (design) {
+		const bg = asObj(design.background);
+		if (bg?.image && !validateUrl(String(bg.image))) {
 			errors.push("general.design.background.image must be a valid URL");
 		}
-		if (design.widget?.borderImage && !validateUrl(design.widget.borderImage)) {
+		const widget = asObj(design.widget);
+		if (widget?.borderImage && !validateUrl(String(widget.borderImage))) {
 			errors.push("general.design.widget.borderImage must be a valid URL");
 		}
 	}
@@ -146,17 +149,18 @@ const validateGeneralData = (general: any): string[] => {
 	if (general.theme) {
 		const themeValue = Array.isArray(general.theme)
 			? general.theme
-			: general.theme.value;
+			: asObj(general.theme)?.value;
 		if (!Array.isArray(themeValue)) {
 			errors.push("general.theme must be an array");
 		}
 	}
 
-	if (general.effect) {
-		if (typeof general.effect.enabled !== "boolean") {
+	const effect = asObj(general.effect);
+	if (effect) {
+		if (typeof effect.enabled !== "boolean") {
 			errors.push("general.effect.enabled must be a boolean");
 		}
-		if (general.effect.type && typeof general.effect.type !== "string") {
+		if (effect.type && typeof effect.type !== "string") {
 			errors.push("general.effect.type must be a string");
 		}
 	}
@@ -164,21 +168,21 @@ const validateGeneralData = (general: any): string[] => {
 	return errors;
 };
 
-const validateMainData = (main: any): string[] => {
+const validateMainData = (main: ImportObject): string[] => {
 	const errors: string[] = [];
 
-	if (main.customLayout) {
-		const layout = main.customLayout;
-		if (layout?.layout && !Array.isArray(layout.layout)) {
+	const layout = asObj(main.customLayout);
+	if (layout) {
+		if (layout.layout && !Array.isArray(layout.layout)) {
 			errors.push("main.customLayout.layout must be an array");
 		}
-		if (layout?.mobileLayout && !Array.isArray(layout.mobileLayout)) {
+		if (layout.mobileLayout && !Array.isArray(layout.mobileLayout)) {
 			errors.push("main.customLayout.mobileLayout must be an array");
 		}
-		if (layout?.desktopWidgets && !Array.isArray(layout.desktopWidgets)) {
+		if (layout.desktopWidgets && !Array.isArray(layout.desktopWidgets)) {
 			errors.push("main.customLayout.desktopWidgets must be an array");
 		}
-		if (layout?.mobileWidgets && !Array.isArray(layout.mobileWidgets)) {
+		if (layout.mobileWidgets && !Array.isArray(layout.mobileWidgets)) {
 			errors.push("main.customLayout.mobileWidgets must be an array");
 		}
 	}
@@ -187,8 +191,8 @@ const validateMainData = (main: any): string[] => {
 		if (!Array.isArray(main.slide)) {
 			errors.push("main.slide must be an array");
 		} else {
-			main.slide.forEach((slide: any, index: number) => {
-				if (slide.image && !validateUrl(slide.image)) {
+			(main.slide as ImportObject[]).forEach((slide, index) => {
+				if (slide.image && !validateUrl(String(slide.image))) {
 					errors.push(`main.slide[${index}].image must be a valid URL`);
 				}
 			});
@@ -199,37 +203,38 @@ const validateMainData = (main: any): string[] => {
 		if (!Array.isArray(main.dday)) {
 			errors.push("main.dday must be an array");
 		} else {
-			main.dday.forEach((item: any, index: number) => {
-				if (item.image && !validateUrl(item.image)) {
+			(main.dday as ImportObject[]).forEach((item, index) => {
+				if (item.image && !validateUrl(String(item.image))) {
 					errors.push(`main.dday[${index}].image must be a valid URL`);
 				}
 			});
 		}
 	}
 
-	if (main.profile) {
-		if (main.profile.headerImage && !validateUrl(main.profile.headerImage)) {
+	const profile = asObj(main.profile);
+	if (profile) {
+		if (profile.headerImage && !validateUrl(String(profile.headerImage))) {
 			errors.push("main.profile.headerImage must be a valid URL");
 		}
-		if (main.profile.profileImage && !validateUrl(main.profile.profileImage)) {
+		if (profile.profileImage && !validateUrl(String(profile.profileImage))) {
 			errors.push("main.profile.profileImage must be a valid URL");
 		}
 	}
 
-	if (main.notice) {
+	const notice = asObj(main.notice);
+	if (notice) {
+		const marqueeSettings = asObj(notice.marqueeSettings);
 		if (
-			main.notice?.marqueeSettings?.backgroundColor &&
-			typeof main.notice.marqueeSettings.backgroundColor !== "string"
+			marqueeSettings?.backgroundColor &&
+			typeof marqueeSettings.backgroundColor !== "string"
 		) {
-			errors.push(
-				"main.notice.marqueeSettings.backgroundColor must be a string"
-			);
+			errors.push("main.notice.marqueeSettings.backgroundColor must be a string");
 		}
 	}
 
-	if (main.musicPlayer) {
-		const mp = main.musicPlayer;
-		if (typeof mp !== "object" || mp === null) {
+	const mp = asObj(main.musicPlayer);
+	if (main.musicPlayer !== undefined) {
+		if (!mp) {
 			errors.push("main.musicPlayer must be an object");
 		} else {
 			if (typeof mp.enabled !== "boolean") {
@@ -238,8 +243,9 @@ const validateMainData = (main: any): string[] => {
 			if (!Array.isArray(mp.items)) {
 				errors.push("main.musicPlayer.items must be an array");
 			} else {
-				mp.items.forEach((item: any, index: number) => {
-					if (!item || typeof item !== "object") {
+				(mp.items as unknown[]).forEach((rawItem, index) => {
+					const item = asObj(rawItem);
+					if (!item) {
 						errors.push(`main.musicPlayer.items[${index}] must be an object`);
 						return;
 					}
@@ -247,20 +253,17 @@ const validateMainData = (main: any): string[] => {
 						errors.push(`main.musicPlayer.items[${index}].id must be a string`);
 					}
 					if (typeof item.title !== "string") {
-						errors.push(
-							`main.musicPlayer.items[${index}].title must be a string`
-						);
+						errors.push(`main.musicPlayer.items[${index}].title must be a string`);
 					}
+					const url = typeof item.url === "string" ? item.url : "";
 					const hasVideoId =
 						typeof item.videoId === "string" &&
 						Boolean(extractYouTubeVideoId(item.videoId));
 					const hasPlaylistId =
 						typeof item.playlistId === "string" &&
 						Boolean(extractYouTubePlaylistId(item.playlistId));
-					const hasVideoUrl =
-						validateUrl(item.url) && Boolean(extractYouTubeVideoId(item.url));
-					const hasPlaylistUrl =
-						validateUrl(item.url) && Boolean(extractYouTubePlaylistId(item.url));
+					const hasVideoUrl = validateUrl(url) && Boolean(extractYouTubeVideoId(url));
+					const hasPlaylistUrl = validateUrl(url) && Boolean(extractYouTubePlaylistId(url));
 					if (!hasVideoId && !hasPlaylistId && !hasVideoUrl && !hasPlaylistUrl) {
 						errors.push(
 							`main.musicPlayer.items[${index}] must have a valid videoId or playlistId`
@@ -268,24 +271,21 @@ const validateMainData = (main: any): string[] => {
 					}
 				});
 			}
-			if (
-				mp.defaultItemId !== undefined &&
-				typeof mp.defaultItemId !== "string"
-			) {
+			if (mp.defaultItemId !== undefined && typeof mp.defaultItemId !== "string") {
 				errors.push("main.musicPlayer.defaultItemId must be a string");
 			}
 		}
 	}
 
-	if (main.weatherClock) {
-		const wc = main.weatherClock;
-		if (typeof wc !== "object" || wc === null) {
+	const wc = asObj(main.weatherClock);
+	if (main.weatherClock !== undefined) {
+		if (!wc) {
 			errors.push("main.weatherClock must be an object");
 		} else {
 			if (typeof wc.enabled !== "boolean") {
 				errors.push("main.weatherClock.enabled must be a boolean");
 			}
-			if (typeof wc.city !== "string" || !wc.city.trim()) {
+			if (typeof wc.city !== "string" || !String(wc.city).trim()) {
 				errors.push("main.weatherClock.city must be a non-empty string");
 			}
 		}
@@ -308,8 +308,8 @@ export async function POST(req: NextRequest) {
 		}
 
 		const validationErrors: string[] = [];
-		if (general) validationErrors.push(...validateGeneralData(general));
-		if (main) validationErrors.push(...validateMainData(main));
+		if (general) validationErrors.push(...validateGeneralData(general as ImportObject));
+		if (main) validationErrors.push(...validateMainData(main as ImportObject));
 		if (validationErrors.length > 0) {
 			return NextResponse.json(
 				{ error: "Validation failed", details: validationErrors },

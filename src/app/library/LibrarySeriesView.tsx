@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import type { CSSProperties } from "react";
 import ItemCard from "@/components/items/Card";
 
@@ -14,6 +14,10 @@ interface LibraryItem {
 	thumbnail?: string;
 	pinned?: boolean;
 	allow?: "all" | "password" | "secret";
+	series?: string;
+	postLength?: number;
+	lastUpdatedThumbnail?: string;
+	lastUpdatedDate?: string;
 }
 
 interface LibrarySeriesViewProps {

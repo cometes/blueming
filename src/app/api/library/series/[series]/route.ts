@@ -47,7 +47,7 @@ export async function GET(
 		}
 
 		const sortedPosts = posts.sort((a, b) =>
-			a.createdAt > b.createdAt ? -1 : 1
+			(a.createdAt ?? "") > (b.createdAt ?? "") ? -1 : 1
 		);
 		const lastUpdatedPost = sortedPosts[0] || null;
 

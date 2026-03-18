@@ -12,7 +12,7 @@ import {
   findNodePosition,
   isEmptyNode,
   isMarkInSchema,
-} from "@/lib/tiptap-utils"
+} from "@/shared/lib/tiptap-utils"
 
 // --- UI Primitives ---
 import type { ButtonProps } from "@/components/tiptap-ui-primitive/button"

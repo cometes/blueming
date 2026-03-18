@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
-import { getAuthHeader } from "@/queries/getAuthHeader";
-import { API_BASE } from "@/queries/apiClient";
+import {
+	buildUploadEndpoint,
+	uploadSingleFile,
+} from "@/shared/lib/http/uploads";
 
 export interface FileUploadOptions {
   maxSize?: number; // 바이트 단위, 기본값: 10MB
@@ -25,7 +27,7 @@ export interface UseFileUploadReturn {
 const DEFAULT_OPTIONS: Required<FileUploadOptions> = {
   maxSize: 10 * 1024 * 1024, // 10MB
   allowedTypes: ["image/*"],
-  endpoint: `${API_BASE}/images/uploadImage`,
+  endpoint: buildUploadEndpoint("/images/uploadImage"),
 };
 
 export const useFileUpload = (options?: FileUploadOptions): UseFileUploadReturn => {
@@ -79,31 +81,7 @@ export const useFileUpload = (options?: FileUploadOptions): UseFileUploadReturn 
     setState({ loading: true, error: null });
 
     try {
-      const formData = new FormData();
-      const sanitizedFileName = encodeURIComponent(file.name);
-      const processedFile = new File([file], sanitizedFileName, {
-        type: file.type,
-      });
-      formData.append("file", processedFile);
-
-      const authHeader = await getAuthHeader();
-      const response = await fetch(config.endpoint, {
-        method: "POST",
-        headers: authHeader,
-        body: formData,
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const url = data.files?.[0]?.url;
-      
-      if (!url) {
-        throw new Error("서버에서 올바른 응답을 받지 못했습니다.");
-      }
+      const url = await uploadSingleFile(file, { endpoint: config.endpoint });
 
       setState({ loading: false, error: null });
       return url;

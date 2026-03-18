@@ -10,10 +10,10 @@ export default function WidgetSlide() {
 	const { main } = useSettings();
 	const slides = main?.slide;
 
-	const slickRef = useRef(null);
+	const slickRef = useRef<SliderComponent>(null);
 
-	const previous = useCallback(() => slickRef.current.slickPrev(), []);
-	const next = useCallback(() => slickRef.current.slickNext(), []);
+	const previous = useCallback(() => slickRef.current?.slickPrev(), []);
+	const next = useCallback(() => slickRef.current?.slickNext(), []);
 
 	const settings = {
 		arrows: false,

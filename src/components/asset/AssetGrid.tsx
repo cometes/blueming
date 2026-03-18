@@ -3,8 +3,8 @@
 
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { cn } from "@/lib/utils";
-import type { StickerAsset } from "@/types/stickerBoard";
+import { cn } from "@/shared/lib/utils";
+import type { StickerAsset } from "@/features/stickerboard-editor/model";
 import { Input } from "@/components/ui/input";
 
 interface AssetGridProps {

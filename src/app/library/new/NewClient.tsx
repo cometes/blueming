@@ -6,18 +6,20 @@ import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
 import { extensions } from "@/components/editor/TiptapEditor";
 import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
 import { MobileToolbarContainer } from "@/components/tiptap/MobileToolbarContainer";
-import CreateModal, { CreateMetaValue } from "@/components/modal/createModal";
-import { createLibraryPost } from "@/queries/set/createLibrary";
-import { updateLibraryPost } from "@/queries/set/updateLibrary";
-import { apiClient, getApiErrorMessage } from "@/queries/apiClient";
-import { getAuthHeader } from "@/queries/getAuthHeader";
+import CreateModal, { CreateMetaValue } from "@/features/library/components/CreateModal";
+import {
+	createLibraryPost,
+	fetchLibraryDetailWithAccess,
+	updateLibraryPost,
+} from "@/features/library/api/client";
+import { getApiErrorMessage } from "@/shared/lib/http/client";
 import { toast } from "sonner";
-import { useAdmin } from "@/hooks/auth/UseAdmin";
+import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import { useAuthStore } from "@/store/auth/store";
 
 interface SeriesItem {
@@ -190,11 +192,11 @@ export default function LibararyNewClient({
 		setIsVerifyingPassword(true);
 		setPasswordError("");
 		try {
-			const detailId = initialData?.slug || initialData?.id;
-			const response = await apiClient.get(`/library/detail/${detailId}`, {
-				headers: { "x-post-password": passwordInput.trim() },
+			const detailId = initialData?.id;
+			const data = await fetchLibraryDetailWithAccess(detailId, {
+				password: passwordInput.trim(),
 			});
-			applyDetailData(response.data);
+			applyDetailData(data);
 			setPasswordInput("");
 			setPasswordError("");
 		} catch (error) {
@@ -211,15 +213,13 @@ export default function LibararyNewClient({
 		let isMounted = true;
 
 		const fetchWithAuth = async () => {
-			const headers = await getAuthHeader();
-			if (!headers.Authorization) return;
 			try {
-				const detailId = initialData?.slug || initialData?.id;
-				const response = await apiClient.get(`/library/detail/${detailId}`, {
-					headers,
+				const detailId = initialData?.id;
+				const data = await fetchLibraryDetailWithAccess(detailId, {
+					includeAuth: true,
 				});
-				if (isMounted && response.data?.content) {
-					applyDetailData(response.data);
+				if (isMounted && data?.content) {
+					applyDetailData(data);
 				}
 			} catch {
 				// Ignore: user isn't author or no auth

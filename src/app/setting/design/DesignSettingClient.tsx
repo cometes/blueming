@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
 import { ImagePlus, Trash2, Save, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -14,15 +13,10 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import RadioItem from "@/components/items/RadioItem";
-import { useSettingDesign } from "@/hooks/useSettingDesign";
 import WidgetSetting from "@/components/setting/widget";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
-import { useSettings } from "@/contexts/SettingsContext";
-import { setSettingsGeneralFontRegistry } from "@/queries/set/setSettingsGeneralFontRegistry";
-import FontRegisterDialog from "@/components/modal/FontRegisterDialog";
-import { useFileUpload } from "@/hooks/useFileUpload";
-import { toast } from "sonner";
+import FontRegisterDialog from "@/features/settings/components/FontRegisterDialog";
 import {
 	Dialog,
 	DialogContent,
@@ -31,10 +25,8 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
-import AssetGrid from "@/components/asset/AssetGrid";
-import { listStickerAssets } from "@/queries/stickerAssets";
-import type { StickerAsset } from "@/types/stickerBoard";
+import { AssetPickerDialog } from "@/features/settings/components/AssetPickerDialog";
+import { useDesignSettingsController } from "@/features/settings/hooks/useDesignSettingsController";
 
 const BACKGROUND_TYPES = {
 	IMAGE: "이미지",
@@ -51,13 +43,8 @@ const FONT_SAMPLE_TEXTS = {
 const ICON_SIZE = 28;
 const ICON_COLOR = "#9BA2A8";
 
-// 로컬 이미지 미리보기를 위한 타입
-interface PendingImage {
-	file: File;
-	previewUrl: string;
-}
-
 export default function DesignSettingClient() {
+	const controller = useDesignSettingsController();
 	const {
 		BGTypes,
 		fontTitle,
@@ -66,47 +53,39 @@ export default function DesignSettingClient() {
 		font,
 		widget,
 		card,
-		currentDesignSetting,
-		onClickSubmit,
-		onClickReset,
 		updateDesignSetting,
 		isDirty,
-	} = useSettingDesign();
+	} = controller.design;
+	const {
+		state: {
+			activeField: activeImageField,
+			dialogThumbnail,
+			assets,
+			assetsLoading,
+			assetsError,
+			assetSearchQuery,
+			pendingImages,
+			hasPendingImages,
+		},
+		actions: {
+			setDialogThumbnail,
+			setAssetSearchQuery,
+			closeImageDialog,
+			handleImageFileSelect,
+			handleSelectAsset,
+		},
+	} = controller.imagePicker;
+	const { uploadState, showResetDialog, setShowResetDialog, isFontDialogOpen, setIsFontDialogOpen, fontRegistry } = controller;
+	const pendingBgImage = pendingImages.background;
 
-	const { general, updateGeneral, refreshSettings } = useSettings();
-	const { uploadFile, state: uploadState } = useFileUpload();
-	const [showResetDialog, setShowResetDialog] = useState(false);
-	const [isFontDialogOpen, setIsFontDialogOpen] = useState(false);
-
-	// pending 배경 이미지 저장
-	const [pendingBgImage, setPendingBgImage] = useState<PendingImage | null>(null);
-	// pending 위젯 보더 이미지 저장
-	const [pendingBorderImage, setPendingBorderImage] = useState<PendingImage | null>(null);
-
-	// 이미지 업로드 다이얼로그 상태
-	type ImageField = "background" | "borderImage";
-	const [activeImageField, setActiveImageField] = useState<ImageField | null>(null);
-	const [dialogThumbnail, setDialogThumbnail] = useState("");
-	const [imageSource, setImageSource] = useState<"file" | "asset" | "existing" | null>(null);
-	const [assets, setAssets] = useState<StickerAsset[]>([]);
-	const [assetsLoading, setAssetsLoading] = useState(false);
-	const [assetsError, setAssetsError] = useState<string | null>(null);
-	const [assetSearchQuery, setAssetSearchQuery] = useState("");
-
-	const hasPendingImage = pendingBgImage !== null || pendingBorderImage !== null;
-
-	useSettingStatus("design", isDirty || hasPendingImage ? "dirty" : "saved");
-	const fontRegistry = useMemo(
-		() => general?.fontRegistry ?? [],
-		[general?.fontRegistry]
-	);
+	useSettingStatus("design", isDirty || hasPendingImages ? "dirty" : "saved");
 	useSettingHeaderAction(
 		<Button
 			type="submit"
 			form="setting-form-design"
 			variant="ghost"
 			size="icon"
-			disabled={(!isDirty && !hasPendingImage) || uploadState.loading}
+			disabled={(!isDirty && !hasPendingImages) || uploadState.loading}
 			aria-label="저장하기"
 			title="저장하기"
 			className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
@@ -116,240 +95,33 @@ export default function DesignSettingClient() {
 		>
 			<Save size={16} />
 		</Button>,
-		[isDirty, hasPendingImage, uploadState.loading]
-	);
-
-	// 배경 이미지 비우기
-	const handleImageClear = () => {
-		if (pendingBgImage) {
-			URL.revokeObjectURL(pendingBgImage.previewUrl);
-			setPendingBgImage(null);
-		}
-		updateDesignSetting("background.image", "");
-	};
-
-	// 에셋 목록 로드
-	const refreshAssets = useCallback(async () => {
-		try {
-			setAssetsLoading(true);
-			setAssetsError(null);
-			const list = await listStickerAssets("all");
-			setAssets(list);
-		} catch (err) {
-			const message =
-				err instanceof Error ? err.message : "에셋을 불러오지 못했습니다.";
-			setAssetsError(message);
-		} finally {
-			setAssetsLoading(false);
-		}
-	}, []);
-
-	useEffect(() => {
-		if (!activeImageField) return;
-		void refreshAssets();
-	}, [activeImageField, refreshAssets]);
-
-	// 이미지 다이얼로그 열기
-	const handleOpenImageDialog = (field: ImageField) => {
-		let currentValue = "";
-		let pendingPreview = "";
-
-		if (field === "background") {
-			pendingPreview = pendingBgImage?.previewUrl || "";
-			currentValue = background.image || "";
-		} else if (field === "borderImage") {
-			pendingPreview = pendingBorderImage?.previewUrl || "";
-			currentValue = widget.borderImage || "";
-		}
-
-		const current = pendingPreview || currentValue || "";
-		setDialogThumbnail(current);
-		if (pendingPreview) {
-			setImageSource("file");
-		} else if (currentValue) {
-			setImageSource("existing");
-		} else {
-			setImageSource(null);
-		}
-		setActiveImageField(field);
-	};
-
-	// 다이얼로그에서 파일 선택
-	const handleImageFileSelect = (file: File, previewUrl: string) => {
-		if (!activeImageField) return;
-
-		if (activeImageField === "background") {
-			if (pendingBgImage) {
-				URL.revokeObjectURL(pendingBgImage.previewUrl);
-			}
-			setPendingBgImage({ file, previewUrl });
-		} else if (activeImageField === "borderImage") {
-			if (pendingBorderImage) {
-				URL.revokeObjectURL(pendingBorderImage.previewUrl);
-			}
-			setPendingBorderImage({ file, previewUrl });
-		}
-		setDialogThumbnail(previewUrl);
-		setImageSource("file");
-	};
-
-	// 에셋 선택
-	const handleSelectAsset = (asset: StickerAsset) => {
-		setDialogThumbnail(asset.url);
-		setImageSource("asset");
-	};
-
-	// 다이얼로그 확인
-	const handleImageDialogConfirm = (selectedUrl: string) => {
-		if (!activeImageField) return;
-
-		if (imageSource === "asset" && selectedUrl) {
-			if (activeImageField === "background") {
-				if (pendingBgImage) {
-					URL.revokeObjectURL(pendingBgImage.previewUrl);
-				}
-				setPendingBgImage(null);
-				updateDesignSetting("background.image", selectedUrl);
-			} else if (activeImageField === "borderImage") {
-				if (pendingBorderImage) {
-					URL.revokeObjectURL(pendingBorderImage.previewUrl);
-				}
-				setPendingBorderImage(null);
-				updateDesignSetting("widget.borderImage", selectedUrl);
-			}
-		}
-		setActiveImageField(null);
-	};
-
-	// 저장 버튼 클릭 시 실행
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		try {
-			let nextDesign = currentDesignSetting;
-
-			// 1. pending 배경 이미지가 있으면 먼저 업로드
-			if (pendingBgImage) {
-				const url = await uploadFile(pendingBgImage.file);
-				nextDesign = {
-					...nextDesign,
-					background: {
-						...nextDesign.background,
-						image: url,
-					},
-				};
-				updateDesignSetting("background.image", url);
-				URL.revokeObjectURL(pendingBgImage.previewUrl);
-				setPendingBgImage(null);
-			}
-
-			// 2. pending 보더 이미지가 있으면 업로드
-			if (pendingBorderImage) {
-				const url = await uploadFile(pendingBorderImage.file);
-				nextDesign = {
-					...nextDesign,
-					widget: {
-						...nextDesign.widget,
-						borderImage: url,
-					},
-				};
-				updateDesignSetting("widget.borderImage", url);
-				URL.revokeObjectURL(pendingBorderImage.previewUrl);
-				setPendingBorderImage(null);
-			}
-
-			// 3. 업로드 결과를 포함한 스냅샷으로 저장
-			onClickSubmit(nextDesign);
-		} catch (error) {
-			const message =
-				error instanceof Error
-					? error.message
-					: "저장에 실패했습니다.";
-			toast.error(message);
-		}
-	};
-
-	const handleReset = () => {
-		// pending 이미지 URL 정리
-		if (pendingBgImage) {
-			URL.revokeObjectURL(pendingBgImage.previewUrl);
-			setPendingBgImage(null);
-		}
-		if (pendingBorderImage) {
-			URL.revokeObjectURL(pendingBorderImage.previewUrl);
-			setPendingBorderImage(null);
-		}
-		onClickReset();
-		setShowResetDialog(false);
-	};
-
-	// 컴포넌트 언마운트 시 blob URL 정리
-	useEffect(() => {
-		return () => {
-			if (pendingBgImage) {
-				URL.revokeObjectURL(pendingBgImage.previewUrl);
-			}
-			if (pendingBorderImage) {
-				URL.revokeObjectURL(pendingBorderImage.previewUrl);
-			}
-		};
-	}, [pendingBgImage, pendingBorderImage]);
-
-	const handleUpdateFontRegistry = useCallback(
-		async (nextRegistry) => {
-			try {
-				await setSettingsGeneralFontRegistry(nextRegistry);
-				updateGeneral?.({ fontRegistry: nextRegistry });
-				await refreshSettings?.({ broadcast: true });
-				toast.success("폰트가 저장되었습니다.");
-			} catch {
-				toast.error("폰트 저장에 실패했습니다.");
-			}
-		},
-		[refreshSettings, updateGeneral]
+		[isDirty, hasPendingImages, uploadState.loading]
 	);
 
 	return (
 		<form
 			id="setting-form-design"
-			onSubmit={handleSubmit}
+			onSubmit={(e) => {
+				e.preventDefault();
+				void controller.handleSave();
+			}}
 			className="space-y-8"
 		>
-			<ImageUploadDialog
+			<AssetPickerDialog
 				isOpen={activeImageField !== null}
 				onOpenChange={(open) => {
-					if (!open) {
-						setActiveImageField(null);
-						setAssetSearchQuery("");
-					}
+					if (!open) closeImageDialog();
 				}}
 				thumbnail={dialogThumbnail}
 				setThumbnail={setDialogThumbnail}
-				onUpload={handleImageDialogConfirm}
-				uploadMode="deferred"
+				onUpload={controller.handleImageDialogConfirm}
 				onFileSelect={handleImageFileSelect}
-				rightContent={
-					<div>
-						<div className="text-xs font-semibold text-main-text mb-2">
-							에셋 목록
-						</div>
-						<AssetGrid
-							assets={assets}
-							loading={assetsLoading}
-							error={assetsError}
-							emptyMessage="에셋이 없습니다."
-							emptySearchMessage="검색 결과가 없습니다."
-							selectedUrl={dialogThumbnail}
-							onSelect={handleSelectAsset}
-							enableSearch
-							searchQuery={assetSearchQuery}
-							onSearchChange={setAssetSearchQuery}
-							gridTemplateColumns="repeat(4, minmax(0, 1fr))"
-							aspectClassName="aspect-square"
-							imageClassName="w-full h-full object-contain"
-						/>
-					</div>
-				}
+				assets={assets}
+				assetsLoading={assetsLoading}
+				assetsError={assetsError}
+				assetSearchQuery={assetSearchQuery}
+				onAssetSearchChange={setAssetSearchQuery}
+				onSelectAsset={handleSelectAsset}
 			/>
 
 			{/* 배경 디자인 설정 Section */}
@@ -384,7 +156,7 @@ export default function DesignSettingClient() {
 							<div className="flex items-center gap-3">
 								<button
 									type="button"
-									onClick={() => handleOpenImageDialog("background")}
+									onClick={() => controller.handleOpenImageDialog("background")}
 									className={`relative w-3xs max-h-32 aspect-video rounded-card border-card bg-card-bg overflow-hidden flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-card-active transition-colors ${
 										uploadState.loading ? "opacity-60 pointer-events-none" : ""
 									}`}
@@ -413,7 +185,7 @@ export default function DesignSettingClient() {
 										type="button"
 										variant="outline"
 										size="sm"
-										onClick={handleImageClear}
+										onClick={controller.handleImageClear}
 										className="rounded-card border-card bg-card-bg hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
 										style={{
 											transition: "all 0.3s ease-in-out",
@@ -465,7 +237,7 @@ export default function DesignSettingClient() {
 				widget={widget}
 				card={card}
 				updateDesignSetting={updateDesignSetting}
-				onOpenBorderImagePicker={() => handleOpenImageDialog("borderImage")}
+				onOpenBorderImagePicker={() => controller.handleOpenImageDialog("borderImage")}
 				isUploading={uploadState.loading}
 			/>
 
@@ -568,7 +340,7 @@ export default function DesignSettingClient() {
 							<h3 className="font-medium text-sub-text">제목 서체</h3>
 						</div>
 						<Select
-							value={font.titleFontFamily}
+							value={font.titleFontFamily ?? ""}
 							onValueChange={(value: string) => {
 								updateDesignSetting("font.titleFontFamily", value);
 							}}
@@ -578,7 +350,7 @@ export default function DesignSettingClient() {
 							</SelectTrigger>
 							<SelectContent>
 								{fontTitle.map((item) => (
-									<SelectItem key={item.value} value={item.value}>
+									<SelectItem key={item.value ?? ""} value={item.value ?? ""}>
 										{item.label}
 									</SelectItem>
 								))}
@@ -592,7 +364,7 @@ export default function DesignSettingClient() {
 							<h3 className="font-medium text-sub-text">본문 서체</h3>
 						</div>
 						<Select
-							value={font.bodyFontFamily}
+							value={font.bodyFontFamily ?? ""}
 							onValueChange={(value: string) => {
 								updateDesignSetting("font.bodyFontFamily", value);
 							}}
@@ -602,7 +374,7 @@ export default function DesignSettingClient() {
 							</SelectTrigger>
 							<SelectContent>
 								{fontBody.map((item) => (
-									<SelectItem key={item.value} value={item.value}>
+									<SelectItem key={item.value ?? ""} value={item.value ?? ""}>
 										{item.label}
 									</SelectItem>
 								))}
@@ -649,7 +421,7 @@ export default function DesignSettingClient() {
 						<Button
 							type="button"
 							variant="destructive"
-							onClick={handleReset}
+							onClick={controller.handleReset}
 							className="rounded-card border-card bg-card-bg hover:border-red-500 hover:text-red-500 hover:bg-red-500/10"
 							style={{
 								transition: "all 0.3s ease-in-out",
@@ -664,7 +436,7 @@ export default function DesignSettingClient() {
 				open={isFontDialogOpen}
 				onOpenChange={setIsFontDialogOpen}
 				fontRegistry={fontRegistry}
-				onUpdate={handleUpdateFontRegistry}
+				onUpdate={controller.handleUpdateFontRegistry}
 			/>
 		</form>
 	);

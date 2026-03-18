@@ -3,6 +3,7 @@ import admin from "firebase-admin";
 import { jsonError, jsonOk } from "@/app/api/_lib/response";
 import { getDb } from "@/app/api/_lib/admin";
 import { requireAuth } from "@/app/api/_lib/auth";
+import { buildRateLimitKey, checkRateLimit } from "@/app/api/_lib/rateLimit";
 import {
 	COLLECTION_NAME,
 	MAX_LIMIT,
@@ -88,6 +89,23 @@ export async function POST(req: NextRequest) {
 					: auth.auth.isAdmin === true;
 		if (!canWrite) {
 			return jsonError(403, "Write permission required.");
+		}
+
+		// 관리자 제외 Rate Limiting: 분당 5회, 시간당 20회
+		if (!auth.auth.isAdmin) {
+			const rlKey = buildRateLimitKey(auth.auth, req, "memo");
+			const rl = await checkRateLimit(rlKey, {
+				collection: "memoRateLimits",
+				cooldownMs: 5_000,
+				minuteLimit: 5,
+				hourLimit: 20,
+			});
+			if (rl.ok === false) {
+				const retryAfterSec = Math.ceil(rl.retryAfterMs / 1000);
+				return jsonError(429, `메모 작성이 너무 빠릅니다. ${retryAfterSec}초 후 다시 시도해주세요.`, {
+					retryAfter: retryAfterSec,
+				});
+			}
 		}
 
 		const body = await req.json();

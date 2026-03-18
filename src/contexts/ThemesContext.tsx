@@ -8,10 +8,10 @@ import {
 	useCallback,
 } from "react";
 import { useSettings } from "@/contexts/SettingsContext";
-import type { ThemeItem } from "@/contexts/SettingsContext";
+import type { ThemeItem } from "@/features/settings/types";
 import { toast } from "sonner";
-import { setSettingsImport } from "@/queries/set/setSettingsImport";
-import { setSettingsTheme, getSettingsTheme } from "@/queries/set/setSettingsTheme";
+import { setSettingsImport } from "@/features/settings/api/import";
+import { setSettingsTheme, getSettingsTheme } from "@/features/settings/api/theme";
 
 type ThemeData = ThemeItem;
 
@@ -145,7 +145,7 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 			});
 
 			// 로컬 상태 업데이트
-			updateGeneral(updatedGeneral);
+			updateGeneral?.(updatedGeneral);
 			setThemes(updatedThemes);
 			await refreshSettings?.({ broadcast: true });
 			toast.success(`'${name}' 테마가 성공적으로 저장되었습니다.`);
@@ -187,7 +187,7 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 			});
 
 			// 로컬 상태 업데이트
-			updateGeneral(updatedGeneral);
+			updateGeneral?.(updatedGeneral);
 			setThemes(updatedThemes);
 			await refreshSettings?.({ broadcast: true });
 			toast.success(`'${themeToRemove.name}' 테마가 삭제되었습니다.`);
@@ -227,8 +227,8 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 			};
 
 			// 1. 즉시 로컬 상태 업데이트 (사용자 경험 향상)
-			updateGeneral(generalWithThemes);
-			updateMain(mainCopy);
+			updateGeneral?.(generalWithThemes);
+			updateMain?.(mainCopy);
 
 			// 2. 서버에 설정 저장 (영구 보존)
 			try {
@@ -336,7 +336,7 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 			});
 
 			// 로컬 상태 업데이트
-			updateGeneral(updatedGeneral);
+			updateGeneral?.(updatedGeneral);
 			setThemes(updatedThemes);
 			await refreshSettings?.({ broadcast: true });
 			toast.success(`'${newTheme.name}' 테마를 가져왔습니다.`);

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import WidgetMenu from "../widgets/WidgetMenu";
 import BackgroundEffect from "../effects/BackgroundEffect";
 import { useSettings } from "@/contexts/SettingsContext";

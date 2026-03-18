@@ -45,7 +45,7 @@ const MainToolbarContent = ({
 				<TextAlignDropdownMenu editor={editor} />
 				<ListDropdownMenu
 					types={["bulletList", "orderedList", "taskList"]}
-					editor={editor}
+					editor={editor ?? undefined}
 				/>
 			</ToolbarGroup>
 

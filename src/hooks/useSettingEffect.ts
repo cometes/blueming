@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
-import { setSettingsEffect } from "@/queries/set/setSettingsEffect";
-import type { EffectSettings } from "@/contexts/SettingsContext";
+import { setSettingsEffect } from "@/features/settings/api/client";
+import { runSettingsMutation } from "@/features/settings/hooks/mutation";
+import type { EffectSettings } from "@/features/settings/types";
 
 const defaultEffectSetting: EffectSettings = {
 	enabled: false,
@@ -153,7 +154,7 @@ export const useSettingEffect = () => {
 
 		isDirtyRef.current = true;
 
-		updateGeneral({
+		updateGeneral?.({
 			design: {
 				...general.design,
 				effect: effectSetting,
@@ -169,27 +170,25 @@ export const useSettingEffect = () => {
 			isDirtyRef.current = false;
 
 			// Save reset settings to server
-			await setSettingsEffect(defaultEffectSetting);
-			
-			// Update context with new design settings
-			if (general?.design) {
-				updateGeneral({
-					design: {
-						...general.design,
-						effect: defaultEffectSetting
+			await runSettingsMutation({
+				execute: () => setSettingsEffect(defaultEffectSetting),
+				onSuccess: async () => {
+					if (general?.design) {
+						updateGeneral?.({
+							design: {
+								...general.design,
+								effect: defaultEffectSetting
+							}
+						});
 					}
-				});
-			}
-			await refreshSettings?.({ broadcast: true });
-
-			// BroadcastChannel을 통해 리셋된 설정을 다른 탭/창에 알림
-			const channel = new BroadcastChannel("effectSettingsUpdated");
-			channel.postMessage({
-				effectSettings: defaultEffectSetting,
-				timestamp: Date.now()
+				},
+				refreshSettings,
+				channelName: "effectSettingsUpdated",
+				broadcastPayload: () => ({
+					effectSettings: defaultEffectSetting,
+				}),
 			});
-			channel.close();
-
+			
 			toast.success("초기화되었습니다.");
 			initialEffectRef.current = defaultEffectSetting;
 		} catch {
@@ -200,26 +199,24 @@ export const useSettingEffect = () => {
 	// Save settings
 	const handleSave = useCallback(async () => {
 		try {
-			await setSettingsEffect(effectSetting);
-			
-			// Update context with new design settings
-			if (general?.design) {
-				updateGeneral({
-					design: {
-						...general.design,
-						effect: effectSetting
+			await runSettingsMutation({
+				execute: () => setSettingsEffect(effectSetting),
+				onSuccess: async () => {
+					if (general?.design) {
+						updateGeneral?.({
+							design: {
+								...general.design,
+								effect: effectSetting
+							}
+						});
 					}
-				});
-			}
-			await refreshSettings?.({ broadcast: true });
-
-			// BroadcastChannel을 통해 설정 변경사항을 다른 탭/창에 알림
-			const channel = new BroadcastChannel("effectSettingsUpdated");
-			channel.postMessage({
-				effectSettings: effectSetting,
-				timestamp: Date.now()
+				},
+				refreshSettings,
+				channelName: "effectSettingsUpdated",
+				broadcastPayload: () => ({
+					effectSettings: effectSetting,
+				}),
 			});
-			channel.close();
 
 			toast.success("저장되었습니다.");
 			initialEffectRef.current = effectSetting;

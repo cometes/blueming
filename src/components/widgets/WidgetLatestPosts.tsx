@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { fetchLibraryList } from "@/queries/fetch/fetchLibrary";
-import { dateConvert } from "@/lib/date";
+import { fetchLibraryList } from "@/features/library/api/client";
+import { dateConvert } from "@/shared/lib/date";
 import Link from "next/link";
 import { useSettings } from "@/contexts/SettingsContext";
 

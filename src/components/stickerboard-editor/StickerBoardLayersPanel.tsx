@@ -1,12 +1,12 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { useStickerBoardEditorContext } from "@/contexts/StickerBoardEditorContext";
-import { isGroupSticker } from "@/lib/stickerboard-utils";
+import { isGroupSticker } from "@/features/stickerboard-editor/lib/stickerboard-utils";
 import type {
 	StickerBoardComponent,
 	StickerBoardGroupComponent,
-} from "@/types/stickerBoard";
+} from "@/features/stickerboard-editor/model";
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import {
 	Eye,

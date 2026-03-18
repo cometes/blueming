@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { jsonError, jsonOk } from "@/app/api/_lib/response";
 import { getBucket, getDb } from "@/app/api/_lib/admin";
 import { requireAuth } from "@/app/api/_lib/auth";
+import { buildRateLimitKey, checkRateLimit } from "@/app/api/_lib/rateLimit";
 import {
 	buildSearchTokens,
 	ensureUniqueSlug,
@@ -29,6 +30,23 @@ export async function POST(req: NextRequest) {
 	const auth = await requireAuth();
 	if (!auth.ok) {
 		return jsonError(auth.status, auth.error);
+	}
+
+	if (!auth.auth.isAdmin) {
+		const key = buildRateLimitKey(auth.auth, req, "library");
+		const rateLimit = await checkRateLimit(key, {
+			collection: "libraryRateLimits",
+			cooldownMs: 5_000,
+			minuteLimit: 2,
+			hourLimit: 10,
+		});
+		if (rateLimit.ok === false) {
+			const retryAfter = Math.max(1, Math.ceil(rateLimit.retryAfterMs / 1000));
+			const message = rateLimit.reason === "cooldown"
+				? `잠시 후 다시 시도해주세요. (${retryAfter}초)`
+				: "요청이 너무 잦습니다. 잠시 후 다시 시도해주세요.";
+			return jsonError(429, message, { retryAfter });
+		}
 	}
 
 	try {

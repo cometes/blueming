@@ -1,8 +1,9 @@
 import _ from "lodash";
 import { useEffect, useMemo, useState } from "react";
-import { setSettingsGeneralDesign } from "@/queries/set/setSettingsGeneralDesign";
+import { setSettingsGeneralDesign } from "@/features/settings/api/design";
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
+import { runSettingsMutation } from "@/features/settings/hooks/mutation";
 
 const defaultValues = {
 	background: {
@@ -29,6 +30,7 @@ const defaultValues = {
 		borderRadius: 6,
 		borderWidth: 1,
 		blur: 6,
+		borderImage: "",
 		boxShadow: "rgba(0, 0, 0, 0.1) 0px 20px 20px -10px",
 		translateY: -5,
 	},
@@ -40,8 +42,10 @@ const defaultValues = {
 	},
 };
 
-const mergeWithDefaults = (defaults, current) => {
-	const result = { ...defaults };
+type PlainObject = Record<string, unknown>;
+
+const mergeWithDefaults = (defaults: PlainObject, current: PlainObject | null | undefined): PlainObject => {
+	const result: PlainObject = { ...defaults };
 	if (!current) return result;
 
 	Object.keys(defaults).forEach((key) => {
@@ -52,7 +56,7 @@ const mergeWithDefaults = (defaults, current) => {
 			typeof current[key] === "object" &&
 			current[key] !== null
 		) {
-			result[key] = mergeWithDefaults(defaults[key], current[key]);
+			result[key] = mergeWithDefaults(defaults[key] as PlainObject, current[key] as PlainObject);
 		} else if (current[key] !== undefined && current[key] !== null) {
 			result[key] = current[key];
 		}
@@ -113,7 +117,7 @@ export const useSettingDesign = () => {
       label: font.name || font.family,
       value: font.family,
     }));
-  const buildFontOptions = (defaults) => {
+  const buildFontOptions = (defaults: Array<{ label: string; value: string }>) => {
     const merged = [...defaults, ...registryFonts];
     const seen = new Set();
     return merged.filter((item) => {
@@ -128,11 +132,11 @@ export const useSettingDesign = () => {
 
   // Initialize with merged defaults and design immediately
   // This is the key change from the original code - we're merging on initialization
-  const [currentDesignSetting, setCurrentDesignSetting] = useState(() =>
-    mergeWithDefaults(defaultValues, design)
+  const [currentDesignSetting, setCurrentDesignSetting] = useState<typeof defaultValues>(
+    () => mergeWithDefaults(defaultValues, design) as typeof defaultValues
   );
   const baselineDesign = useMemo(
-    () => mergeWithDefaults(defaultValues, design),
+    () => mergeWithDefaults(defaultValues, design) as typeof defaultValues,
     [design]
   );
   const isDirty = useMemo(
@@ -143,17 +147,17 @@ export const useSettingDesign = () => {
   // Still update when design changes, but it should already be properly initialized
   useEffect(() => {
     if (design) {
-      const mergedDesign = mergeWithDefaults(defaultValues, design);
+      const mergedDesign = mergeWithDefaults(defaultValues, design) as typeof defaultValues;
       setCurrentDesignSetting(mergedDesign);
     }
   }, [design]);
 
 
   // Helper function to update a specific field in currentDesignSetting
-  const updateDesignSetting = (path, value) => {
+  const updateDesignSetting = (path: string, value: unknown) => {
     setCurrentDesignSetting(prev => {
       // Create a deep clone of the previous state
-      const updated = _.cloneDeep(prev);
+      const updated = _.cloneDeep(prev) as PlainObject;
 
       // Split the path into parts (e.g., "background.color" -> ["background", "color"])
       const parts = path.split(".");
@@ -161,22 +165,22 @@ export const useSettingDesign = () => {
       // Navigate to the correct nested object
       let current = updated;
       for (let i = 0; i < parts.length - 1; i++) {
-        current = current[parts[i]];
+        current = current[parts[i]] as PlainObject;
       }
 
       // Update the value
       current[parts[parts.length - 1]] = value;
 
-      return updated;
+      return updated as typeof defaultValues;
     });
   };
 
   // Get changed values compared to defaultValues
-  const getChangedValues = (source = currentDesignSetting) => {
-    const changedValues = {};
+  const getChangedValues = (source: PlainObject = currentDesignSetting as PlainObject): PlainObject => {
+    const changedValues: PlainObject = {};
 
     Object.keys(source).forEach(key => {
-      if (!_.isEqual(source[key], defaultValues[key])) {
+      if (!_.isEqual(source[key], (defaultValues as PlainObject)[key])) {
         changedValues[key] = source[key];
       }
     });
@@ -188,23 +192,18 @@ export const useSettingDesign = () => {
     const source = overrideDesign ?? currentDesignSetting;
     const changedData = getChangedValues(source);
     try {
-      const response = await setSettingsGeneralDesign(changedData);
-      if (updateDesign) {
-        updateDesign(response.general.design);
-      }
-      if (overrideDesign) {
-        setCurrentDesignSetting(overrideDesign);
-      }
-      await refreshSettings?.({ broadcast: true });
-
-      // BroadcastChannel을 통해 디자인 설정 변경사항을 다른 탭/창에 알림
-      const channel = new BroadcastChannel("designSettingsUpdated");
-      channel.postMessage({
-        designSettings: response.general.design,
-        timestamp: Date.now()
+      await runSettingsMutation({
+        execute: () => setSettingsGeneralDesign(changedData),
+        onSuccess: (response) => {
+          if (updateDesign) updateDesign(response.general.design);
+          if (overrideDesign) setCurrentDesignSetting(overrideDesign);
+        },
+        refreshSettings,
+        channelName: "designSettingsUpdated",
+        broadcastPayload: (response) => ({
+          designSettings: response.general.design,
+        }),
       });
-      channel.close();
-
       toast.success("저장되었습니다.");
     } catch {
       toast.error("저장에 실패했습니다.");
@@ -213,21 +212,18 @@ export const useSettingDesign = () => {
 
   const onClickReset = async () => {
     try {
-      const response = await setSettingsGeneralDesign(defaultValues);
-      setCurrentDesignSetting(defaultValues);
-      if (updateDesign) {
-        updateDesign(response.general.design);
-      }
-      await refreshSettings?.({ broadcast: true });
-
-      // BroadcastChannel을 통해 디자인 설정 초기화를 다른 탭/창에 알림
-      const channel = new BroadcastChannel("designSettingsUpdated");
-      channel.postMessage({
-        designSettings: response.general.design,
-        timestamp: Date.now()
+      await runSettingsMutation({
+        execute: () => setSettingsGeneralDesign(defaultValues),
+        onSuccess: (response) => {
+          setCurrentDesignSetting(defaultValues);
+          if (updateDesign) updateDesign(response.general.design);
+        },
+        refreshSettings,
+        channelName: "designSettingsUpdated",
+        broadcastPayload: (response) => ({
+          designSettings: response.general.design,
+        }),
       });
-      channel.close();
-
       toast.success("초기화되었습니다.");
       setOpenReset(false);
     } catch {

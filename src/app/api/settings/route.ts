@@ -17,10 +17,10 @@ const normalizeSettings = (data: unknown) => {
 	};
 };
 
-const fetchDocumentWithSubCollections = async (docRef: FirebaseFirestore.DocumentReference) => {
-	const docSnapshot = await docRef.get();
-	const docData = docSnapshot.exists ? docSnapshot.data() : {};
-
+const fetchSubCollections = async (
+	docRef: FirebaseFirestore.DocumentReference,
+	docData: Record<string, unknown>
+) => {
 	const subCollections = await docRef.listCollections();
 	const subCollectionPromises = subCollections.map(async (subCollection) => {
 		const subCollectionSnapshot = await subCollection.get();
@@ -37,7 +37,7 @@ const fetchDocumentWithSubCollections = async (docRef: FirebaseFirestore.Documen
 	const subCollectionResults = await Promise.all(subCollectionPromises);
 	return subCollectionResults.reduce(
 		(acc, curr) => ({ ...acc, ...curr }),
-		docData ?? {}
+		docData
 	);
 };
 
@@ -47,7 +47,8 @@ export async function GET(req: NextRequest) {
 		const settingsSnapshot = await db.collection("settings").get();
 
 		const settingsDataPromises = settingsSnapshot.docs.map(async (doc) => {
-			const fullData = await fetchDocumentWithSubCollections(doc.ref);
+			const docData = doc.exists ? (doc.data() ?? {}) : {};
+			const fullData = await fetchSubCollections(doc.ref, docData);
 			return { [doc.id]: fullData };
 		});
 

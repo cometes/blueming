@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, LogOut, Settings } from "lucide-react";
-import { useAuth } from "@/hooks/auth/UseAuth";
-import { useAdmin } from "@/hooks/auth/UseAdmin";
+import { useAuth } from "@/features/account/hooks/useAuth";
+import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -13,7 +13,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { cn } from "@/shared/lib/utils";
 import { toast } from "sonner";
 
 type MenuAuthVariant = "desktop" | "iconbar";

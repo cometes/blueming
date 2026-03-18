@@ -13,6 +13,7 @@ import {
 	updateLibraryCommentCount,
 	hashPin,
 } from "@/app/api/_lib/libraryComments";
+import { buildRateLimitKey, checkRateLimit } from "@/app/api/_lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -131,6 +132,22 @@ export async function POST(
 	const db = getDb();
 	try {
 		const authContext = await getAuthContext();
+
+		// Rate Limiting: 분당 5회, 시간당 30회
+		const rlKey = buildRateLimitKey(authContext, req, "comment");
+		const rl = await checkRateLimit(rlKey, {
+			collection: "commentRateLimits",
+			cooldownMs: 5_000,
+			minuteLimit: 5,
+			hourLimit: 30,
+		});
+		if (rl.ok === false) {
+			const retryAfterSec = Math.ceil(rl.retryAfterMs / 1000);
+			return jsonError(429, `댓글 작성이 너무 빠릅니다. ${retryAfterSec}초 후 다시 시도해주세요.`, {
+				retryAfter: retryAfterSec,
+			});
+		}
+
 		const body = await req.json();
 		const message = normalizeMessage(body?.message);
 		const displayName = normalizeName(body?.displayName);

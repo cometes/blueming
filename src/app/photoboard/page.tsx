@@ -1,12 +1,9 @@
-export const dynamic = "force-dynamic";
-
 import PhotoBoardClient from "./photoboard-client";
-import { fetchPhotoboardPosts } from "@/queries/photoboard";
+import { fetchPhotoboardPostsDirect } from "@/features/photoboard/api/serverDirect";
 
 export default async function PhotoBoardPage() {
 	try {
-		const data = await fetchPhotoboardPosts();
-		const initialPosts = data?.items ?? [];
+		const initialPosts = await fetchPhotoboardPostsDirect();
 		return <PhotoBoardClient initialPosts={initialPosts} />;
 	} catch {
 		return <PhotoBoardClient initialPosts={[]} />;
