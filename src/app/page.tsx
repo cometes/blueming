@@ -3,23 +3,24 @@
 export const dynamic = "force-dynamic";
 
 import dynamicImport from "next/dynamic";
+import type React from "react";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useMobile } from "@/hooks/use-mobile";
 import WidgetSkeleton from "@/components/widgets/WidgetSkeleton";
 
 type WidgetType = string;
+type WidgetProps = { onReady?: () => void; [key: string]: unknown };
+type WidgetImporter = () => Promise<unknown>;
 
 // Helper to wrap dynamic imports and notify when ready
 // isAsyncData: true if the widget has internal data fetching it waits for
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const dynamicWidget = (importer: any, isAsyncData = false) =>
+const dynamicWidget = (importer: WidgetImporter, isAsyncData = false) =>
 	dynamicImport(
 		async () => {
-			const mod = await importer();
+			const mod = (await importer()) as { default: React.ComponentType<WidgetProps> };
 			const Component = mod.default;
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			function WrappedWidget(props: any) {
+			function WrappedWidget(props: WidgetProps) {
 				useEffect(() => {
 					// If not async (static), we are ready as soon as mounted
 					if (!isAsyncData && props.onReady) {

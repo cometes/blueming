@@ -3,7 +3,7 @@ import React, { useState, useRef, useLayoutEffect, useMemo } from "react";
 import { isRichTextEmpty, renderRichText } from "@/shared/lib/richText";
 
 // Custom hook: observes element size and returns content dimensions
-function useContentDimensions(containerRef: React.RefObject<HTMLDivElement>) {
+function useContentDimensions(containerRef: React.RefObject<HTMLDivElement | null>) {
 	const [dims, setDims] = useState({ width: 0, height: 0 });
 
 	useLayoutEffect(() => {

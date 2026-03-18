@@ -88,9 +88,7 @@ export const clampStickerToEditorBounds = (
 
 export const cloneDraft = (draft: StickerBoardComponent[]) => {
 	// safe enough for plain JSON-ish objects
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const g: any = globalThis as any;
-	if (typeof g.structuredClone === "function") return g.structuredClone(draft);
+	if (typeof structuredClone === "function") return structuredClone(draft);
 	return JSON.parse(JSON.stringify(draft)) as StickerBoardComponent[];
 };
 

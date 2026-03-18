@@ -8,6 +8,7 @@ import { useFileUpload } from "@/hooks/useFileUpload";
 import { useSettingsImagePicker } from "@/features/settings/hooks/useSettingsImagePicker";
 import { usePendingImageUpload } from "@/features/settings/hooks/usePendingImageUpload";
 import { setSettingsGeneralFontRegistry } from "@/features/settings/api/fontRegistry";
+import type { FontRegistryItem } from "@/features/settings/types";
 
 type ImageField = "background" | "borderImage";
 
@@ -94,7 +95,7 @@ export function useDesignSettingsController() {
 	}, [design, imagePicker.actions]);
 
 	const handleUpdateFontRegistry = useCallback(
-		async (nextRegistry) => {
+		async (nextRegistry: FontRegistryItem[]) => {
 			try {
 				await setSettingsGeneralFontRegistry(nextRegistry);
 				updateGeneral?.({ fontRegistry: nextRegistry });

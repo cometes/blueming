@@ -154,7 +154,7 @@ export const useSettingEffect = () => {
 
 		isDirtyRef.current = true;
 
-		updateGeneral({
+		updateGeneral?.({
 			design: {
 				...general.design,
 				effect: effectSetting,
@@ -174,7 +174,7 @@ export const useSettingEffect = () => {
 				execute: () => setSettingsEffect(defaultEffectSetting),
 				onSuccess: async () => {
 					if (general?.design) {
-						updateGeneral({
+						updateGeneral?.({
 							design: {
 								...general.design,
 								effect: defaultEffectSetting
@@ -203,7 +203,7 @@ export const useSettingEffect = () => {
 				execute: () => setSettingsEffect(effectSetting),
 				onSuccess: async () => {
 					if (general?.design) {
-						updateGeneral({
+						updateGeneral?.({
 							design: {
 								...general.design,
 								effect: effectSetting

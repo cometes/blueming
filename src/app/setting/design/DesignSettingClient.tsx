@@ -340,7 +340,7 @@ export default function DesignSettingClient() {
 							<h3 className="font-medium text-sub-text">제목 서체</h3>
 						</div>
 						<Select
-							value={font.titleFontFamily}
+							value={font.titleFontFamily ?? ""}
 							onValueChange={(value: string) => {
 								updateDesignSetting("font.titleFontFamily", value);
 							}}
@@ -350,7 +350,7 @@ export default function DesignSettingClient() {
 							</SelectTrigger>
 							<SelectContent>
 								{fontTitle.map((item) => (
-									<SelectItem key={item.value} value={item.value}>
+									<SelectItem key={item.value ?? ""} value={item.value ?? ""}>
 										{item.label}
 									</SelectItem>
 								))}
@@ -364,7 +364,7 @@ export default function DesignSettingClient() {
 							<h3 className="font-medium text-sub-text">본문 서체</h3>
 						</div>
 						<Select
-							value={font.bodyFontFamily}
+							value={font.bodyFontFamily ?? ""}
 							onValueChange={(value: string) => {
 								updateDesignSetting("font.bodyFontFamily", value);
 							}}
@@ -374,7 +374,7 @@ export default function DesignSettingClient() {
 							</SelectTrigger>
 							<SelectContent>
 								{fontBody.map((item) => (
-									<SelectItem key={item.value} value={item.value}>
+									<SelectItem key={item.value ?? ""} value={item.value ?? ""}>
 										{item.label}
 									</SelectItem>
 								))}

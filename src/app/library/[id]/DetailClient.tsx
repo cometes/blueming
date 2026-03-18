@@ -45,7 +45,7 @@ import { CustomImage } from "@/components/tiptap-extension/custom-image";
 import { CustomYoutubeNode } from "@/components/tiptap-node/youtube-node/youtube-node";
 import { renderRichText } from "@/shared/lib/richText";
 import CommentSidebar from "./CommentSidebar";
-import { useLibraryDetailController } from "@/features/library/hooks/useLibraryDetailController";
+import { useLibraryDetailController, type LibraryDetailData } from "@/features/library/hooks/useLibraryDetailController";
 
 import "@/styles/tiptap-variables.css";
 import "@/components/tiptap-node/list-node/list-node.scss";
@@ -55,7 +55,7 @@ import "@/components/tiptap-node/image-node/image-node.scss";
 import "@/components/tiptap-node/image-upload-node/image-upload-node.scss";
 import "@/components/tiptap-node/youtube-node/youtube-node.scss";
 
-export default function DetailClient({ detailData }) {
+export default function DetailClient({ detailData }: { detailData: LibraryDetailData | null | undefined }) {
 	const { onClickMoveToPage } = useMoveToPage();
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -486,14 +486,14 @@ export default function DetailClient({ detailData }) {
 										{authorName}
 									</span>
 									<span className="text-border">•</span>
-									<span>{dateTimeConvert(localDetail?.createdAt)}</span>
+									<span>{dateTimeConvert(localDetail?.createdAt ?? "")}</span>
 								</div>
-								{localDetail?.tags?.length > 0 && (
+								{(localDetail?.tags?.length ?? 0) > 0 && (
 									<div className="TagBox flex mt-4">
 										{/* 태그 */}
-										{localDetail.tags?.length > 0 && (
+										{(localDetail?.tags?.length ?? 0) > 0 && (
 											<div className="flex flex-wrap gap-2">
-												{localDetail.tags.map((tag, index) => (
+												{localDetail?.tags?.map((tag, index) => (
 													<Badge
 														key={index}
 														variant="secondary"

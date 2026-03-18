@@ -271,7 +271,7 @@ export const useSettingMenu = () => {
 
 			await runSettingsMutation({
 				execute: () => setSettingsGeneralMenu(menuData),
-				onSuccess: (response) => updateGeneral(response.general || {}),
+				onSuccess: (response) => updateGeneral?.(response.general || {}),
 				refreshSettings,
 				channelName: "menuSettingsUpdated",
 				broadcastPayload: (response) => ({
@@ -297,7 +297,7 @@ export const useSettingMenu = () => {
 
 			await runSettingsMutation({
 				execute: () => setSettingsGeneralMenu(menuData),
-				onSuccess: (response) => updateGeneral(response.general || {}),
+				onSuccess: (response) => updateGeneral?.(response.general || {}),
 				refreshSettings,
 				channelName: "menuSettingsUpdated",
 				broadcastPayload: (response) => ({

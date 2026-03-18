@@ -4,7 +4,16 @@ import { convertToUnderscore } from "@/shared/lib/replace";
 import Image from "next/image";
 import { useState } from "react";
 
-export default function ItemCard(props) {
+interface ItemCardProps {
+	data: {
+		series?: string;
+		postLength?: number;
+		lastUpdatedThumbnail?: string;
+		lastUpdatedDate?: string;
+	};
+}
+
+export default function ItemCard(props: ItemCardProps) {
 	const { onClickMoveToPage } = useMoveToPage();
 	const [imageError, setImageError] = useState(false);
 	const [isHovered, setIsHovered] = useState(false);
@@ -12,7 +21,7 @@ export default function ItemCard(props) {
 	const hasThumbnail =
 		Boolean(thumbnailUrl) &&
 		!imageError &&
-		!thumbnailUrl.includes("example.com");
+		!thumbnailUrl?.includes("example.com");
 
 	return (
 		<div>
@@ -22,13 +31,13 @@ export default function ItemCard(props) {
 				onMouseEnter={() => setIsHovered(true)}
 				onMouseLeave={() => setIsHovered(false)}
 				onClick={onClickMoveToPage(
-					`/library/series/${convertToUnderscore(props.data.series)}/`
+					`/library/series/${convertToUnderscore(props.data.series ?? "")}/`
 				)}
 			>
 				{hasThumbnail ? (
 					<Image
 						alt="시리즈 썸네일"
-						src={thumbnailUrl}
+						src={thumbnailUrl ?? ""}
 						layout="fill"
 						objectFit={"cover"}
 						style={{
@@ -42,7 +51,7 @@ export default function ItemCard(props) {
 			<div
 				className="SeriesBox p-3 cursor-pointer"
 				onClick={onClickMoveToPage(
-					`/library/series/${convertToUnderscore(props.data.series)}/`
+					`/library/series/${convertToUnderscore(props.data.series ?? "")}/`
 				)}
 			>
 				<div className="flex items-center justify-between">
@@ -56,7 +65,7 @@ export default function ItemCard(props) {
 				</div>
 
 				<span className="text-xs md:text-sm text-sub-text before:content-'·' mt-1">
-					마지막 업데이트 {dateConvert(props.data.lastUpdatedDate)}
+					마지막 업데이트 {dateConvert(props.data.lastUpdatedDate ?? "")}
 				</span>
 			</div>
 		</div>

@@ -118,9 +118,9 @@ export default function ItemListWithImage({
 							))}
 						</div>
 						{/* 태그 */}
-						{data.tags?.length > 0 && (
+						{(data.tags?.length ?? 0) > 0 && (
 							<div className="flex flex-wrap gap-2 pt-1 mt-1.5">
-								{data.tags.slice(0, 2).map((tag, index) => (
+								{data.tags?.slice(0, 2).map((tag, index) => (
 									<Badge
 										key={index}
 										variant="secondary"
@@ -137,7 +137,7 @@ export default function ItemListWithImage({
 										{tag}
 									</Badge>
 								))}
-								{data.tags.slice(0, 3).map((tag, index) => (
+								{data.tags?.slice(0, 3).map((tag, index) => (
 									<Badge
 										key={`md-${index}`}
 										variant="secondary"
@@ -154,20 +154,20 @@ export default function ItemListWithImage({
 										{tag}
 									</Badge>
 								))}
-								{data.tags.length > 2 && (
+								{(data.tags?.length ?? 0) > 2 && (
 									<Badge
 										variant="outline"
 										className="px-2.5 text-xs font-medium rounded-full text-sub-text md:hidden"
 									>
-										+{data.tags.length - 2}
+										+{data.tags?.length ?? 0 - 2}
 									</Badge>
 								)}
-								{data.tags.length > 3 && (
+								{(data.tags?.length ?? 0) > 3 && (
 									<Badge
 										variant="outline"
 										className="px-2.5 text-xs font-medium rounded-full text-sub-text hidden md:inline-flex"
 									>
-										+{data.tags.length - 3}
+										+{data.tags?.length ?? 0 - 3}
 									</Badge>
 								)}
 							</div>
@@ -180,7 +180,7 @@ export default function ItemListWithImage({
 				<div className="relative w-40 md:w-60 self-stretch">
 					{/* 오른쪽 이미지 영역 */}
 					<Image
-						src={data.thumbnail}
+						src={data.thumbnail ?? ""}
 						alt={data.title}
 						fill
 						sizes="(min-width: 768px) 240px, 160px"

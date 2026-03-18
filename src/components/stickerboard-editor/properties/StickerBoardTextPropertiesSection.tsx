@@ -211,7 +211,7 @@ export function StickerBoardTextPropertiesSection({
 										...prev,
 										style: {
 											...(prev.style ?? {}),
-											textAlign: value as typeof prev.style.textAlign,
+											textAlign: value as "left" | "center" | "right",
 										},
 									};
 									if (next.autoSize !== false) onRequestAutoSize(next);

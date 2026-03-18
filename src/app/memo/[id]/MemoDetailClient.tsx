@@ -207,13 +207,13 @@ export default function MemoDetailClient({
 						{memo.content}
 					</div>
 
-					{memo.imageUrls && memo.imageUrls.length > 0 && (
+					{memo.imageUrls && (memo.imageUrls?.length ?? 0) > 0 && (
 						<div
 							className={cn(
 								"grid gap-2 mt-4",
-								memo.imageUrls.length === 1 && "grid-cols-1",
-								memo.imageUrls.length === 2 && "grid-cols-2",
-								memo.imageUrls.length >= 3 && "grid-cols-2 grid-rows-2",
+								(memo.imageUrls?.length ?? 0) === 1 && "grid-cols-1",
+								(memo.imageUrls?.length ?? 0) === 2 && "grid-cols-2",
+								(memo.imageUrls?.length ?? 0) >= 3 && "grid-cols-2 grid-rows-2",
 							)}
 						>
 							{memo.imageUrls.slice(0, 4).map((url, index) => (
@@ -223,10 +223,10 @@ export default function MemoDetailClient({
 									onClick={() => openImageModal(memo.imageUrls ?? [], index)}
 									className={cn(
 										"relative rounded-card border border-card overflow-hidden text-left",
-										memo.imageUrls.length === 1
+										(memo.imageUrls?.length ?? 0) === 1
 											? "aspect-[4/3]"
 											: "aspect-square",
-										memo.imageUrls.length === 3 && index === 0 && "row-span-2",
+										(memo.imageUrls?.length ?? 0) === 3 && index === 0 && "row-span-2",
 									)}
 									aria-label={`이미지 ${index + 1} 확대 보기`}
 								>
@@ -260,7 +260,7 @@ export default function MemoDetailClient({
 						<div>
 							{replies.map((reply) => {
 								const canManageReply =
-									Boolean(reply.author?.id) && user?.uid === reply.author.id;
+									Boolean(reply.author?.id) && user?.uid === reply.author?.id;
 								return (
 									<div key={reply.id} className="p-5 border-t border-card-border">
 										<div className="flex items-center justify-between text-sm text-sub-text">
@@ -320,13 +320,13 @@ export default function MemoDetailClient({
 										<div className="text-sm text-main-text whitespace-pre-line leading-relaxed mt-2.5">
 											{reply.content}
 										</div>
-										{reply.imageUrls && reply.imageUrls.length > 0 && (
+										{reply.imageUrls && (reply.imageUrls?.length ?? 0) > 0 && (
 											<div
 												className={cn(
 													"grid gap-2 mt-3",
-													reply.imageUrls.length === 1 && "grid-cols-1",
-													reply.imageUrls.length === 2 && "grid-cols-2",
-													reply.imageUrls.length >= 3 &&
+													(reply.imageUrls?.length ?? 0) === 1 && "grid-cols-1",
+													(reply.imageUrls?.length ?? 0) === 2 && "grid-cols-2",
+													(reply.imageUrls?.length ?? 0) >= 3 &&
 														"grid-cols-2 grid-rows-2",
 												)}
 											>
@@ -339,10 +339,10 @@ export default function MemoDetailClient({
 														}
 														className={cn(
 															"relative rounded-lg border border-card overflow-hidden text-left",
-															reply.imageUrls.length === 1
+															(reply.imageUrls?.length ?? 0) === 1
 																? "aspect-[4/3]"
 																: "aspect-square",
-															reply.imageUrls.length === 3 &&
+															(reply.imageUrls?.length ?? 0) === 3 &&
 																index === 0 &&
 																"row-span-2",
 														)}

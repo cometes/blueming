@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Rnd, DraggableData, ResizableDelta, Position } from "react-rnd";
+import { Rnd, DraggableData, ResizableDelta, Position, RndDragEvent } from "react-rnd";
 import { cn } from "@/shared/lib/utils";
 import { GridPosition, PixelPosition, useGridSnap } from "./useGridSnap";
 import { LayoutItem, useCollisionDetection } from "./useCollisionDetection";
@@ -12,7 +12,7 @@ interface DraggableWidgetProps {
 	color: string;
 	label: string;
 	layout: LayoutItem[];
-	containerRef: React.RefObject<HTMLDivElement>;
+	containerRef: React.RefObject<HTMLDivElement | null>;
 	onPositionChange: (id: string, position: GridPosition) => void;
 	columns?: number;
 	rows?: number;
@@ -51,7 +51,7 @@ export const DraggableWidget = ({
 	}, [gridPosition, cellSize, gridToPixel]);
 
 	const handleDragStop = useCallback(
-		(_event: MouseEvent | TouchEvent, data: DraggableData) => {
+		(_event: RndDragEvent, data: DraggableData) => {
 			const newPixelPos: PixelPosition = {
 				x: data.x,
 				y: data.y,

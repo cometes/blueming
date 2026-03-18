@@ -8,6 +8,7 @@ import type {
 	FontRegistryItem,
 	General,
 } from "@/features/settings/types";
+import { getFontFormat, isFontFileUrl } from "@/shared/lib/fonts";
 
 interface ThemeContextType {
 	design?: Design;
@@ -21,32 +22,9 @@ interface ThemeProviderProps {
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const getFontFormat = (url: string) => {
-	const cleanUrl = url.split("?")[0];
-	const ext = cleanUrl.split(".").pop()?.toLowerCase();
-	switch (ext) {
-		case "woff2":
-			return "woff2";
-		case "woff":
-			return "woff";
-		case "ttf":
-			return "truetype";
-		case "otf":
-			return "opentype";
-		case "eot":
-			return "embedded-opentype";
-		default:
-			return undefined;
-	}
-};
-
-const isFontFileUrl = (url: string) => {
-	const cleanUrl = url.split("?")[0].toLowerCase();
-	return /\.(woff2|woff|ttf|otf|eot)$/.test(cleanUrl);
-};
 
 const buildFontFace = (font: FontRegistryItem) => {
-	const format = getFontFormat(font.url);
+	const format = getFontFormat(font.url ?? "");
 	const formatValue = format ? ` format("${format}")` : "";
 	return `@font-face{font-family:"${font.family}";src:url("${font.url}")${formatValue};font-display:swap;}`;
 };

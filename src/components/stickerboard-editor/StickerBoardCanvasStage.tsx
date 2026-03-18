@@ -39,7 +39,7 @@ interface StickerBoardCanvasStageProps {
 	isSelectionLocked: boolean;
 	keepRatio: boolean;
 	selectedIds: Set<number>;
-	setSelection: (ids: Set<number>, id: number | null) => void;
+	setSelection: (ids: Set<number>, id?: number | null) => void;
 	startMoveableInteraction: (ids: number[]) => void;
 	endMoveableInteraction: () => void;
 	previewDrag: (id: number, target: HTMLElement, delta: [number, number]) => void;

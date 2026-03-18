@@ -282,7 +282,7 @@ export function useCustomLayoutController() {
 	const saveLayout = useCallback(async (layoutData: CustomLayout) => {
 		await setCustomLayout(layoutData);
 		await refreshSettings?.({ broadcast: true });
-		updateMain({ customLayout: layoutData });
+		updateMain?.({ customLayout: layoutData });
 		layoutChannelRef.current?.postMessage(layoutData);
 	}, [refreshSettings, updateMain]);
 

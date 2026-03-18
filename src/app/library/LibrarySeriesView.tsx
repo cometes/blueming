@@ -14,6 +14,10 @@ interface LibraryItem {
 	thumbnail?: string;
 	pinned?: boolean;
 	allow?: "all" | "password" | "secret";
+	series?: string;
+	postLength?: number;
+	lastUpdatedThumbnail?: string;
+	lastUpdatedDate?: string;
 }
 
 interface LibrarySeriesViewProps {

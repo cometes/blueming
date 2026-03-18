@@ -10,7 +10,7 @@ import {
 import { getApiErrorMessage } from "@/shared/lib/http/client";
 import type { LibraryPinResponse } from "@/features/library/types";
 
-interface LibraryDetailData extends Partial<LibraryPinResponse> {
+export interface LibraryDetailData extends Partial<LibraryPinResponse> {
 	id?: string;
 	slug?: string;
 	title?: string;

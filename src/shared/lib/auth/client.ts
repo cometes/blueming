@@ -48,8 +48,8 @@ export const toAuthUser = (
 	return {
 		uid: user.uid,
 		email: user.email || "",
-		displayName: user.displayName,
-		photoURL: user.photoURL,
+		displayName: user.displayName ?? null,
+		photoURL: user.photoURL ?? null,
 		isAdmin: user.isAdmin || false,
 		role: user.role || "user",
 	};

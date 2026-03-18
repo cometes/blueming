@@ -11,7 +11,7 @@ interface DdayItem {
 
 export default function WidgetDday() {
 	const { main } = useSettings();
-	const ddayData = main.dday || [];
+	const ddayData = main?.dday || [];
 
 	const calculateDday = (targetDate: string): string => {
 		if (!targetDate) return "D-?";

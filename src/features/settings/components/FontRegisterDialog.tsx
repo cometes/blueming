@@ -250,7 +250,7 @@ export default function FontRegisterDialog({
 											type="button"
 											variant="ghost"
 											size="icon"
-											onClick={() => handleRemoveFont(font.id)}
+											onClick={() => handleRemoveFont(font.id ?? "")}
 											aria-label="삭제"
 										>
 											<Trash2 size={14} />

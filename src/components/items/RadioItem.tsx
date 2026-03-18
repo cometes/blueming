@@ -29,6 +29,12 @@ export default function RadioItem({
 			)}
 			role="radio"
 			aria-checked={checked}
+			onKeyDown={(e) => {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					onClickRadio();
+				}
+			}}
 		>
 			<span
 				className={cn(

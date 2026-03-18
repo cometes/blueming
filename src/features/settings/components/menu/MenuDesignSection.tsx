@@ -25,7 +25,7 @@ interface MenuDesignSectionProps {
 	iconBarBgTypes: string[];
 	menuDesign: Partial<MenuDesign>;
 	pendingImages: Record<MenuImageField, PendingImage | null>;
-	updateMenuDesign: (field: string, value: string) => void;
+	updateMenuDesign: (field: keyof MenuDesign, value: string) => void;
 	updateMenuSetting: (field: string, value: string) => void;
 	handleFileSelect: (field: MenuImageField, file: File) => void;
 	handleImageClear: (field: MenuImageField) => void;

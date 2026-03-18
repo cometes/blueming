@@ -66,9 +66,9 @@ export default function ItemGallery({
 				</div>
 				<div className="GalleryTagBox z-20">
 					{/* 태그 */}
-					{data.tags?.length > 0 && (
+					{(data.tags?.length ?? 0) > 0 && (
 						<div className="flex flex-wrap gap-2 mt-1">
-							{data.tags.slice(0, 3).map((tag, index) => (
+							{data.tags?.slice(0, 3).map((tag, index) => (
 								<Badge
 									key={index}
 									variant="secondary"
@@ -85,12 +85,12 @@ export default function ItemGallery({
 									{tag}
 								</Badge>
 							))}
-							{data.tags.length > 3 && (
+							{(data.tags?.length ?? 0) > 3 && (
 								<Badge
 									variant="outline"
 									className="px-2.5 text-xs font-medium rounded-full text-sub-text"
 								>
-									+{data.tags.length - 3}
+									+{data.tags?.length ?? 0 - 3}
 								</Badge>
 							)}
 						</div>
@@ -101,7 +101,7 @@ export default function ItemGallery({
 				{hasThumbnail ? (
 					<Image
 						alt="썸네일"
-						src={data.thumbnail}
+						src={data.thumbnail ?? ""}
 						layout="fill"
 						objectFit={"cover"}
 						onError={() => setImageError(true)}

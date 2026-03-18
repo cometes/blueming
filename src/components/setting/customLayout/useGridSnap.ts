@@ -21,7 +21,7 @@ interface GridConfig {
 }
 
 export const useGridSnap = (
-	containerRef: React.RefObject<HTMLElement>,
+	containerRef: React.RefObject<HTMLElement | null>,
 	{ columns = 12, rows = 12, gap = 10 }: GridConfig = {}
 ) => {
 	const [cellSize, setCellSize] = useState({ width: 0, height: 0 });

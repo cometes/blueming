@@ -20,18 +20,16 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Globe, Lock, Trash2, ImagePlus, X } from "lucide-react";
+import { Globe, Lock, ImagePlus, X } from "lucide-react";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { toast } from "sonner";
 import { AssetPickerDialog } from "@/features/settings/components/AssetPickerDialog";
 import { useSettingsImagePicker } from "@/features/settings/hooks/useSettingsImagePicker";
-
-interface SubMenu {
-	name: string;
-	image: string;
-}
+import MenuPostingTab from "./MenuPostingTab";
+import MenuFolderTab from "./MenuFolderTab";
+import MenuCustomTab from "./MenuCustomTab";
+import type { SubMenu, PendingImage } from "./MenuFolderTab";
 
 type MenuTab = "posting" | "folder" | "custom";
 
@@ -73,15 +71,10 @@ export default function MenuAddModal({
 		image: "",
 		iconImage: "",
 	});
-
-	interface PendingImage {
-		file: File;
-		previewUrl: string;
-	}
-
 	const [pendingSubMenuImages, setPendingSubMenuImages] = useState<
 		Record<string, PendingImage>
 	>({});
+
 	const imagePicker = useSettingsImagePicker<"image" | "iconImage">({
 		fields: ["image", "iconImage"] as const,
 	});
@@ -206,6 +199,21 @@ export default function MenuAddModal({
 			...prev,
 			[name]: { file, previewUrl },
 		}));
+	};
+
+	const handleClearSubMenuImage = (smName: string, idx: number) => {
+		if (pendingSubMenuImages[smName]) {
+			clearPendingSubMenuImage(smName);
+			return;
+		}
+		const updatedSubMenus = formData.subMenus.map((subMenu, i) => {
+			if (i === idx) {
+				const name = typeof subMenu === "string" ? subMenu : subMenu.name;
+				return { name, image: "" };
+			}
+			return subMenu;
+		});
+		setFormData({ ...formData, subMenus: updatedSubMenus });
 	};
 
 	const handleImageDialogConfirm = async (selectedUrl: string) => {
@@ -338,184 +346,38 @@ export default function MenuAddModal({
 
 						<div className="space-y-3 pt-2 border-t border-card/40">
 							<TabsContent value="posting" className="mt-0">
-								<div className="space-y-1.5">
-									<Label className="text-xs font-medium text-sub-text">
-										게시판 선택
-									</Label>
-									<Select
-										value={formData.category}
-										onValueChange={(v) =>
-											setFormData({ ...formData, category: v })
-										}
-									>
-										<SelectTrigger className="h-10 rounded-card border-card bg-card-bg">
-											<SelectValue placeholder="게시판을 선택하세요" />
-										</SelectTrigger>
-										<SelectContent>
-											{boardArr.map((board) => (
-												<SelectItem key={board.value} value={board.value}>
-													{board.label}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
+								<MenuPostingTab
+									category={formData.category}
+									boardArr={boardArr}
+									onCategoryChange={(v) =>
+										setFormData({ ...formData, category: v })
+									}
+								/>
 							</TabsContent>
 
 							<TabsContent value="folder" className="mt-0">
-								<div className="space-y-3">
-									<div className="flex items-center justify-between">
-										<Label className="text-xs font-medium text-sub-text">
-											하위 메뉴
-										</Label>
-										<Select onValueChange={(v) => handleAddSubMenu(v)}>
-											<SelectTrigger className="h-8 w-[140px] text-xs rounded-card border-card bg-card-bg">
-												<SelectValue placeholder="추가하기" />
-											</SelectTrigger>
-											<SelectContent>
-												{boardArr
-													.filter((board) => {
-														return !formData.subMenus.some(
-															(sm) =>
-																(typeof sm === "string" ? sm : sm.name) ===
-																board.value
-														);
-													})
-													.map((board) => (
-														<SelectItem key={board.value} value={board.value}>
-															{board.label}
-														</SelectItem>
-													))}
-											</SelectContent>
-										</Select>
-									</div>
-									{formData.subMenus.length > 0 && (
-										<div className="grid grid-cols-1 gap-2 max-h-[160px] overflow-y-auto pr-1">
-											{formData.subMenus.map((sm, idx) => {
-												const smName = typeof sm === "string" ? sm : sm.name;
-												const smImage = typeof sm === "object" ? sm.image : "";
-												const smPreview =
-													pendingSubMenuImages[smName]?.previewUrl || smImage;
-												return (
-													<div
-														key={idx}
-														className="flex items-center justify-between bg-card-bg rounded-card p-2 border border-card"
-													>
-														<span className="text-sm font-medium flex-1">
-															{smName}
-														</span>
-														<div className="flex items-center gap-2">
-															{!smPreview && (
-																<label className="cursor-pointer p-1.5 hover:bg-card-bg rounded-md text-sub-text hover:text-theme-primary transition-all">
-																	<ImagePlus size={16} />
-																	<input
-																		type="file"
-																		className="hidden"
-																		accept="image/*"
-																		onChange={(e) => {
-																			const file = e.target.files?.[0];
-																			if (file) {
-																				handleSubMenuImageSelect(file, smName);
-																			}
-																			e.target.value = "";
-																		}}
-																	/>
-																</label>
-															)}
-															<Button
-																variant="ghost"
-																size="icon"
-																onClick={() => handleRemoveSubMenu(idx)}
-																className="h-8 w-8 text-sub-text hover:text-destructive"
-															>
-																<Trash2 size={16} />
-															</Button>
-															{smPreview && (
-																<div className="relative w-[150px] max-h-9 rounded-card bg-theme-primary/10 border border-card overflow-hidden group">
-																	<img
-																		src={smPreview}
-																		alt="하위 메뉴 이미지"
-																		className="w-full h-full object-contain"
-																	/>
-																	<Button
-																		variant="ghost"
-																		size="icon"
-																		onClick={() => {
-																			if (pendingSubMenuImages[smName]) {
-																				clearPendingSubMenuImage(smName);
-																				return;
-																			}
-																			const updatedSubMenus =
-																				formData.subMenus.map((subMenu, i) => {
-																					if (i === idx) {
-																						const name =
-																							typeof subMenu === "string"
-																								? subMenu
-																								: subMenu.name;
-																						return { name, image: "" };
-																					}
-																					return subMenu;
-																				});
-																			setFormData({
-																				...formData,
-																				subMenus: updatedSubMenus,
-																			});
-																		}}
-																		className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full opacity-0 group-hover:opacity-100 transition-opacity p-0"
-																		style={{
-																			backgroundColor: "#111",
-																			color: "#fff",
-																		}}
-																	>
-																		<X size={10} />
-																	</Button>
-																</div>
-															)}
-														</div>
-													</div>
-												);
-											})}
-										</div>
-									)}
-									{formData.subMenus.length === 0 && (
-										<p className="text-xs text-sub-text text-center py-2">
-											하위 메뉴를 추가해보세요
-										</p>
-									)}
-								</div>
+								<MenuFolderTab
+									boardArr={boardArr}
+									subMenus={formData.subMenus}
+									pendingSubMenuImages={pendingSubMenuImages}
+									onAddSubMenu={handleAddSubMenu}
+									onRemoveSubMenu={handleRemoveSubMenu}
+									onSubMenuImageSelect={handleSubMenuImageSelect}
+									onClearSubMenuImage={handleClearSubMenuImage}
+								/>
 							</TabsContent>
 
 							<TabsContent value="custom" className="mt-0">
-								<div className="space-y-3">
-									<div className="space-y-1.5">
-										<Label className="text-xs font-medium text-sub-text">
-											URL
-										</Label>
-										<Input
-											value={formData.url}
-											onChange={(e) =>
-												setFormData({ ...formData, url: e.target.value })
-											}
-											placeholder="https://..."
-											className="h-10 rounded-card border-card bg-card-bg focus:border-card-active"
-										/>
-									</div>
-									<div className="flex items-center space-x-2">
-										<Checkbox
-											id="openInNewTab"
-											checked={formData.openInNewTab}
-											onCheckedChange={(v: boolean) =>
-												setFormData({ ...formData, openInNewTab: v })
-											}
-										/>
-										<Label
-											htmlFor="openInNewTab"
-											className="text-sm font-medium cursor-pointer text-sub-text"
-										>
-											새 탭에서 열기
-										</Label>
-									</div>
-								</div>
+								<MenuCustomTab
+									url={formData.url}
+									openInNewTab={formData.openInNewTab}
+									onUrlChange={(v) =>
+										setFormData({ ...formData, url: v })
+									}
+									onOpenInNewTabChange={(v) =>
+										setFormData({ ...formData, openInNewTab: v })
+									}
+								/>
 							</TabsContent>
 						</div>
 

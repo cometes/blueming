@@ -1,6 +1,7 @@
 "use client";
 
 import { useEditor, EditorContent } from "@tiptap/react";
+import type { AnyExtension } from "@tiptap/core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -36,7 +37,7 @@ export default function ProfileSettingClient() {
 			extensions.find((ext) => ext.name === "placeholder")?.configure({
 				placeholder: PLACEHOLDERS.INTRODUCTION,
 			}) || extensions.find((ext) => ext.name === "placeholder"),
-		].filter(Boolean),
+		].filter(Boolean) as AnyExtension[],
 		content: "<p></p>",
 		immediatelyRender: false,
 		editorProps: {

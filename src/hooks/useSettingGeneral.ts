@@ -125,28 +125,28 @@ export const useSettingGeneral = () => {
   }, [generalData, setValue]);
 
   // Memoize handlers to prevent unnecessary re-renders
-  const updateGeneralSetting = useCallback((field, value) => {
+  const updateGeneralSetting = useCallback((field: string, value: unknown) => {
     setGeneralSetting(prev => ({
       ...prev,
       [field]: value
     }));
   }, []);
 
-  const updateColorSetting = useCallback((field, value) => {
+  const updateColorSetting = useCallback((field: string, value: string) => {
     setGeneralSetting(prev => ({
       ...prev,
       [field]: value
     }));
   }, []);
 
-  const handleImageUpload = useCallback((field, value) => {
+  const handleImageUpload = useCallback((field: string, value: string) => {
     setGeneralSetting(prev => ({
       ...prev,
       [field]: value
     }));
   }, []);
 
-  const handleClearImage = useCallback(field => {
+  const handleClearImage = useCallback((field: string) => {
     setGeneralSetting(prev => ({
       ...prev,
       [field]: ""
@@ -189,7 +189,7 @@ export const useSettingGeneral = () => {
       // Save reset settings to server
       await runSettingsMutation({
         execute: () => setSettingsGeneralGeneral(defaultGeneralSetting),
-        onSuccess: (response) => updateGeneral(response.general || {}),
+        onSuccess: (response) => updateGeneral?.(response.general || {}),
         refreshSettings,
         channelName: "generalSettingsUpdated",
         broadcastPayload: (response) => ({
@@ -209,7 +209,7 @@ export const useSettingGeneral = () => {
       const payload = nextSetting ?? generalSetting;
       await runSettingsMutation({
         execute: () => setSettingsGeneralGeneral(payload),
-        onSuccess: (response) => updateGeneral(response.general || {}),
+        onSuccess: (response) => updateGeneral?.(response.general || {}),
         refreshSettings,
         channelName: "generalSettingsUpdated",
         broadcastPayload: (response) => ({

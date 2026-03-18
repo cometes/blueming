@@ -4,6 +4,7 @@ import Layout from "@/components/layout/Layout";
 import Providers from "@/providers/Providers";
 import { getDb } from "@/app/api/_lib/admin";
 import { normalizeGeneralData } from "@/app/api/_lib/settings";
+import { getFontFormat, isFontFileUrl } from "@/shared/lib/fonts";
 
 export const dynamic = "force-dynamic";
 
@@ -195,29 +196,6 @@ const getPreloadImageUrls = (settings: AppSettings | null) => {
 const getFontRegistry = (settings: ThemeSettings | null) =>
 	settings?.general?.fontRegistry ?? [];
 
-const getFontFormat = (url: string) => {
-	const cleanUrl = url.split("?")[0];
-	const ext = cleanUrl.split(".").pop()?.toLowerCase();
-	switch (ext) {
-		case "woff2":
-			return "woff2";
-		case "woff":
-			return "woff";
-		case "ttf":
-			return "truetype";
-		case "otf":
-			return "opentype";
-		case "eot":
-			return "embedded-opentype";
-		default:
-			return undefined;
-	}
-};
-
-const isFontFileUrl = (url: string) => {
-	const cleanUrl = url.split("?")[0].toLowerCase();
-	return /\.(woff2|woff|ttf|otf|eot)$/.test(cleanUrl);
-};
 
 const buildFontFaceCSS = (fonts: FontRegistryItem[]) =>
 	fonts

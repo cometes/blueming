@@ -8,6 +8,6 @@ export default async function LibararyDetailPage({ params }: { params: Promise<{
 
 		return <DetailClient detailData={detailData} />;
 	} catch {
-		return <DetailClient detailData={[]} />;
+		return <DetailClient detailData={null} />;
 	}
 }
