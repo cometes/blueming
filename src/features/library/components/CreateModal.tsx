@@ -1,7 +1,14 @@
 "use client";
 
 import { useMemo, useState, useEffect, type KeyboardEvent } from "react";
-import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import CreateModalLeftPanel from "@/features/library/components/CreateModalLeftPanel";
 import CreateModalRightPanel from "@/features/library/components/CreateModalRightPanel";
@@ -217,6 +224,12 @@ const CreateModal = ({
 					}
 				}}
 			>
+				<DialogHeader className="sr-only">
+					<DialogTitle>라이브러리 글 설정</DialogTitle>
+					<DialogDescription>
+						제목, 태그, 썸네일, 시리즈, 공개 설정 등을 입력하세요.
+					</DialogDescription>
+				</DialogHeader>
 				<DialogClose
 					className="absolute right-4 top-4 z-[1] rounded-card border border-card bg-card-bg p-2 text-sub-text transition hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
 					aria-label="닫기"

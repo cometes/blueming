@@ -16,6 +16,7 @@ import {
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
@@ -259,6 +260,11 @@ export default function MemoCreateModal({
 					<DialogTitle className="text-[20px] font-semibold font-title">
 						{mode === "edit" ? "메모 수정" : "새 메모"}
 					</DialogTitle>
+					<DialogDescription className="sr-only">
+						{mode === "edit"
+							? "기존 메모를 수정합니다. 제목, 내용, 태그, 이미지를 변경할 수 있습니다."
+							: "새 메모를 작성합니다. 제목, 내용, 태그, 이미지를 입력하세요."}
+					</DialogDescription>
 				</DialogHeader>
 				<div className="flex flex-col md:flex-row items-stretch min-h-0">
 					<div className="w-full md:w-[60%] p-4 flex flex-col gap-4 border-b md:border-b-0 md:border-r border-card-border">

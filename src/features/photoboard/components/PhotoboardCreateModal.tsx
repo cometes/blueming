@@ -15,6 +15,7 @@ import {
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
@@ -168,6 +169,11 @@ export default function PhotoboardCreateModal({
 				<DialogTitle className="text-[20px] font-semibold font-title">
 					{isEditMode ? "게시물 수정" : "새 게시물"}
 				</DialogTitle>
+				<DialogDescription className="sr-only">
+					{isEditMode
+						? "기존 게시물을 수정합니다. 이미지와 내용을 변경할 수 있습니다."
+						: "새 게시물을 작성합니다. 이미지와 내용을 입력하세요."}
+				</DialogDescription>
 				</DialogHeader>
 				<div className="flex">
 					{/* Left Column: Image Upload/Preview */}
