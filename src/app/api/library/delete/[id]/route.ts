@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { revalidateTag } from "next/cache";
 import { jsonError, jsonOk } from "@/app/api/_lib/response";
 import { getBucket, getDb } from "@/app/api/_lib/admin";
 import { requireAdmin } from "@/app/api/_lib/auth";
@@ -70,10 +71,14 @@ export async function DELETE(
 
 		if (series) {
 			await removeCollectionPost(db, "series", series, documentId);
+			revalidateTag("library-series");
 		}
 
-		for (const tag of tags) {
-			await removeCollectionPost(db, "tags", tag, documentId);
+		if (tags.length > 0) {
+			for (const tag of tags) {
+				await removeCollectionPost(db, "tags", tag, documentId);
+			}
+			revalidateTag("library-tags");
 		}
 
 		return jsonOk({ postId: documentId });

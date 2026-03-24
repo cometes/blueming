@@ -23,37 +23,23 @@ import {
 	TooltipTrigger,
 } from "@/components/tiptap-ui-primitive/tooltip/tooltip";
 import { useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
-import { EditorContent, useEditor } from "@tiptap/react";
-import { StarterKit } from "@tiptap/starter-kit";
-import { BulletList } from "@tiptap/extension-bullet-list";
-import { OrderedList } from "@tiptap/extension-ordered-list";
-import { ListItem } from "@tiptap/extension-list-item";
-import { TextStyle } from "@tiptap/extension-text-style";
-import { Color } from "@tiptap/extension-color";
-import { FontFamily } from "@tiptap/extension-font-family";
-import { FontSize } from "@/components/tiptap-extension/font-size";
-import { Highlight } from "@tiptap/extension-highlight";
-import { Underline } from "@tiptap/extension-underline";
-import { Superscript } from "@tiptap/extension-superscript";
-import { Subscript } from "@tiptap/extension-subscript";
-import { TextAlign } from "@tiptap/extension-text-align";
-import { TaskList } from "@tiptap/extension-task-list";
-import { TaskItem } from "@tiptap/extension-task-item";
-import { Link } from "@tiptap/extension-link";
-import { CustomImage } from "@/components/tiptap-extension/custom-image";
-import { CustomYoutubeNode } from "@/components/tiptap-node/youtube-node/youtube-node";
 import { renderRichText } from "@/shared/lib/richText";
 import CommentSidebar from "./CommentSidebar";
 import { useLibraryDetailController, type LibraryDetailData } from "@/features/library/hooks/useLibraryDetailController";
 
-import "@/styles/tiptap-variables.css";
-import "@/components/tiptap-node/list-node/list-node.scss";
-import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
-import "@/components/tiptap-node/code-block-node/code-block-node.scss";
-import "@/components/tiptap-node/image-node/image-node.scss";
-import "@/components/tiptap-node/image-upload-node/image-upload-node.scss";
-import "@/components/tiptap-node/youtube-node/youtube-node.scss";
+const LibraryContentViewer = dynamic(() => import("./LibraryContentViewer"), {
+	ssr: false,
+	loading: () => (
+		<div className="animate-pulse space-y-3 py-2">
+			<div className="h-4 bg-card-bg rounded w-3/4" />
+			<div className="h-4 bg-card-bg rounded" />
+			<div className="h-4 bg-card-bg rounded w-5/6" />
+			<div className="h-4 bg-card-bg rounded w-2/3" />
+		</div>
+	),
+});
 
 export default function DetailClient({ detailData }: { detailData: LibraryDetailData | null | undefined }) {
 	const { onClickMoveToPage } = useMoveToPage();
@@ -152,66 +138,6 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 		const fallbackHtml = renderRichText(rawContent);
 		return fallbackHtml || null;
 	}, [contentSource]);
-	const viewerExtensions = useMemo(
-		() => [
-			StarterKit.configure({
-				bulletList: false,
-				orderedList: false,
-				listItem: false,
-				dropcursor: false,
-			}),
-			Link.configure({ openOnClick: false }),
-			BulletList,
-			OrderedList,
-			ListItem,
-			TextStyle,
-			Color.configure({
-				types: ["textStyle"],
-			}),
-			FontFamily.configure({
-				types: ["textStyle"],
-			}),
-			FontSize.configure({
-				types: ["textStyle"],
-			}),
-			Highlight.configure({ multicolor: true }),
-			Underline,
-			Superscript,
-			Subscript,
-			TextAlign.configure({ types: ["heading", "paragraph"] }),
-			TaskList.configure({
-				HTMLAttributes: {
-					class: "task-list",
-				},
-			}),
-			TaskItem.configure({
-				nested: true,
-				HTMLAttributes: {
-					class: "task-item",
-				},
-			}),
-			CustomYoutubeNode,
-			CustomImage,
-		],
-		[],
-	);
-	const editor = useEditor({
-		extensions: viewerExtensions,
-		content: parsedContent ?? "",
-		immediatelyRender: false,
-		editable: false,
-		editorProps: {
-			attributes: {
-				class: "tiptap prose max-w-none text-main-text readonly",
-			},
-		},
-	});
-
-	useEffect(() => {
-		if (!editor || parsedContent == null) return;
-		editor.commands.setContent(parsedContent);
-	}, [editor, parsedContent]);
-
 	useEffect(() => {
 		const body = document.body;
 		const prevStyles = {
@@ -516,11 +442,7 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 								)}
 							</div>
 							<Separator className="my-7 bg-gray-500" />
-							{!parsedContent || !editor || editor.isEmpty ? (
-								<p className="text-sub-text">내용이 없습니다.</p>
-							) : (
-								<EditorContent editor={editor} />
-							)}
+							<LibraryContentViewer content={parsedContent} />
 						</div>
 					)}
 					{!requiresPassword && (!isSecret || canViewSecret) && (

@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import admin from "firebase-admin";
+import { revalidateTag } from "next/cache";
 import { jsonError, jsonOk } from "@/app/api/_lib/response";
 import { getBucket, getDb } from "@/app/api/_lib/admin";
 import { requireAdmin } from "@/app/api/_lib/auth";
@@ -222,6 +223,8 @@ export async function PUT(
 		for (const tag of normalizedTags) {
 			await upsertCollectionPost(db, "tags", tag, postSummary);
 		}
+		revalidateTag("library-series");
+		revalidateTag("library-tags");
 
 		return jsonOk({ postId: documentId, slug: uniqueSlug });
 	} catch (error) {

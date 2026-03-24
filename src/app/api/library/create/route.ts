@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import admin from "firebase-admin";
 import { v4 as uuidv4 } from "uuid";
+import { revalidateTag } from "next/cache";
 import { jsonError, jsonOk } from "@/app/api/_lib/response";
 import { getBucket, getDb } from "@/app/api/_lib/admin";
 import { requireAuth } from "@/app/api/_lib/auth";
@@ -167,6 +168,7 @@ export async function POST(req: NextRequest) {
 			} else {
 				await seriesDocRef.set({ posts: [postSummary] });
 			}
+			revalidateTag("library-series");
 		}
 
 		if (normalizedTags.length > 0) {
@@ -190,6 +192,7 @@ export async function POST(req: NextRequest) {
 					await tagDocRef.set({ posts: [postSummary] });
 				}
 			}
+			revalidateTag("library-tags");
 		}
 
 		return jsonOk({ postId, createdAt: convertedCreatedAt, slug: uniqueSlug }, { status: 201 });
