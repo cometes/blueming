@@ -196,25 +196,15 @@ export const useSettingDesign = () => {
     }
   };
 
-  // Get changed values compared to defaultValues
-  const getChangedValues = (source: PlainObject = currentDesignSetting as PlainObject): PlainObject => {
-    const changedValues: PlainObject = {};
-
-    Object.keys(source).forEach(key => {
-      if (!_.isEqual(source[key], (defaultValues as PlainObject)[key])) {
-        changedValues[key] = source[key];
-      }
-    });
-
-    return changedValues;
-  };
 
   const onClickSubmit = async (overrideDesign?: typeof currentDesignSetting) => {
     const source = overrideDesign ?? currentDesignSetting;
-    const changedData = getChangedValues(source);
+    // getChangedValues는 기본값과 비교해 변경된 항목만 추출하지만,
+    // 이 방식은 기본값으로 되돌릴 때 빈 객체를 보내 Firestore의 기존 값이 남는 버그가 있음.
+    // 전체 설정을 항상 저장해 Firestore 상태가 UI와 항상 일치하도록 처리.
     try {
       await runSettingsMutation({
-        execute: () => setSettingsGeneralDesign(changedData),
+        execute: () => setSettingsGeneralDesign(source),
         onSuccess: (response) => {
           if (updateDesign) updateDesign(response.general.design);
           if (overrideDesign) setCurrentDesignSetting(overrideDesign);
