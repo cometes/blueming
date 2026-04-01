@@ -76,7 +76,7 @@ export default function WidgetMenuDesktop({
 	return (
 		<aside
 			className={cn(
-				"menu-desktop w-[160px] min-[1200px]:w-[180px] min-w-[160px] h-dvh flex flex-col items-center justify-center shrink-0 sticky top-0",
+				"menu-desktop w-[160px] min-[1200px]:w-[180px] min-w-[160px] h-dvh flex flex-col items-center justify-center shrink-0 sticky top-0 z-10",
 				"transition-[width] duration-300 ease-in-out",
 				design?.bgType === "없음" && "bg-transparent",
 				"bg-center bg-no-repeat bg-contain",

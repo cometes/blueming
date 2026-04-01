@@ -3,7 +3,7 @@ import admin from "firebase-admin";
 import { revalidateTag } from "next/cache";
 import { jsonError, jsonOk } from "@/app/api/_lib/response";
 import { getBucket, getDb } from "@/app/api/_lib/admin";
-import { requireAdmin } from "@/app/api/_lib/auth";
+import { requireAuth } from "@/app/api/_lib/auth";
 import {
 	buildSearchTokens,
 	ensureUniqueSlug,
@@ -64,7 +64,7 @@ export async function PUT(
 	req: NextRequest,
 	{ params }: { params: Promise<{ id?: string }> }
 ) {
-	const auth = await requireAdmin();
+	const auth = await requireAuth();
 	if (!auth.ok) {
 		return jsonError(auth.status, auth.error);
 	}
@@ -85,6 +85,10 @@ export async function PUT(
 		}
 
 		const previousData = docSnapshot.data() ?? {};
+		const authorUid = typeof previousData?.authorUid === "string" ? previousData.authorUid : null;
+		if (authorUid !== auth.auth.uid && !auth.auth.isAdmin) {
+			return jsonError(403, "수정 권한이 없습니다.");
+		}
 		const body = await req.json();
 		const {
 			title,

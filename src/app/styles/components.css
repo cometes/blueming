@@ -40,7 +40,7 @@
 		border-color: var(--widget-border-color);
 		border-radius: var(--widget-border-radius);
 		border-width: var(--widget-border-width);
-		border-style: solid;
+		border-style: var(--widget-border-style);
 		backdrop-filter: blur(var(--widget-blur));
 	}
 
@@ -85,7 +85,7 @@
 		border-color: var(--card-border-color);
 		border-radius: var(--card-border-radius);
 		border-width: var(--widget-border-width);
-		border-style: solid;
+		border-style: var(--card-border-style);
 		box-shadow: var(--card-shadow);
 		transition: transform 0.2s ease, border-color 0.2s ease;
 

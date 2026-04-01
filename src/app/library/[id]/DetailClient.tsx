@@ -27,7 +27,10 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { renderRichText } from "@/shared/lib/richText";
 import CommentSidebar from "./CommentSidebar";
-import { useLibraryDetailController, type LibraryDetailData } from "@/features/library/hooks/useLibraryDetailController";
+import {
+	useLibraryDetailController,
+	type LibraryDetailData,
+} from "@/features/library/hooks/useLibraryDetailController";
 
 const LibraryContentViewer = dynamic(() => import("./LibraryContentViewer"), {
 	ssr: false,
@@ -41,7 +44,11 @@ const LibraryContentViewer = dynamic(() => import("./LibraryContentViewer"), {
 	),
 });
 
-export default function DetailClient({ detailData }: { detailData: LibraryDetailData | null | undefined }) {
+export default function DetailClient({
+	detailData,
+}: {
+	detailData: LibraryDetailData | null | undefined;
+}) {
 	const { onClickMoveToPage } = useMoveToPage();
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -54,6 +61,7 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 	const {
 		localDetail,
 		isPinned,
+		isOwner,
 		password,
 		setPassword,
 		passwordError,
@@ -200,29 +208,29 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 				}}
 				onClick={(event) => event.stopPropagation()}
 			>
-			{/* 책갈피 탭 */}
-			<button
-				type="button"
-				onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-				className="w-8 h-20 mt-[120px] bg-card border border-r-0 border-card-border rounded-l-lg flex items-center justify-center cursor-pointer hover:bg-card-bg self-start"
-				style={{ transition: "background-color 200ms" }}
-				aria-label={isSidebarOpen ? "사이드바 닫기" : "사이드바 열기"}
-			>
-				<ChevronLeft
-					size={16}
-					className="text-sub-text"
-					style={{
-						transform: isSidebarOpen ? "rotate(180deg)" : "rotate(0deg)",
-						transition: "transform 300ms ease-in-out",
-					}}
-				/>
-			</button>
-			{/* 드로어 본체 */}
-			<div className="w-[340px] h-full bg-card border-l border-card-border shadow-lg flex flex-col backdrop-blur-card">
-				{canShowComments && localDetail?.id ? (
-					<CommentSidebar postId={localDetail.id} />
-				) : null}
-			</div>
+				{/* 책갈피 탭 */}
+				<button
+					type="button"
+					onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+					className="w-8 h-20 mt-[120px] bg-card border border-r-0 border-card-border rounded-l-lg flex items-center justify-center cursor-pointer hover:bg-card-bg self-start"
+					style={{ transition: "background-color 200ms" }}
+					aria-label={isSidebarOpen ? "사이드바 닫기" : "사이드바 열기"}
+				>
+					<ChevronLeft
+						size={16}
+						className="text-sub-text"
+						style={{
+							transform: isSidebarOpen ? "rotate(180deg)" : "rotate(0deg)",
+							transition: "transform 300ms ease-in-out",
+						}}
+					/>
+				</button>
+				{/* 드로어 본체 */}
+				<div className="w-[340px] h-full bg-card border-l border-card-border shadow-lg flex flex-col backdrop-blur-card">
+					{canShowComments && localDetail?.id ? (
+						<CommentSidebar postId={localDetail.id} />
+					) : null}
+				</div>
 			</div>
 		</div>
 	);
@@ -330,27 +338,29 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 						<div>
 							<div className="flex items-center justify-between mt-10">
 								<Button onClick={onClickMoveToPage(listPath)}>목록으로</Button>
-								{isAdmin ? (
+								{isAdmin || isOwner ? (
 									<div className="flex items-center gap-3">
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<button
-													type="button"
-													onClick={handleTogglePin}
-													className={cn(
-														"w-8 h-8 rounded-full bg-card flex items-center justify-center border border-card cursor-pointer",
-														isPinned ? "text-theme-primary" : "text-sub-text",
-													)}
-													style={{ transition: "color 200ms ease-out" }}
-													aria-label="공지로 설정"
-												>
-													<Pin size={16} />
-												</button>
-											</TooltipTrigger>
-											<TooltipContent className="text-xs">
-												{isPinned ? "공지 해제" : "공지로 설정"}
-											</TooltipContent>
-										</Tooltip>
+										{isAdmin && (
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<button
+														type="button"
+														onClick={handleTogglePin}
+														className={cn(
+															"w-8 h-8 rounded-full bg-card flex items-center justify-center border border-card cursor-pointer",
+															isPinned ? "text-theme-primary" : "text-sub-text",
+														)}
+														style={{ transition: "color 200ms ease-out" }}
+														aria-label="공지로 설정"
+													>
+														<Pin size={16} />
+													</button>
+												</TooltipTrigger>
+												<TooltipContent className="text-xs">
+													{isPinned ? "공지 해제" : "공지로 설정"}
+												</TooltipContent>
+											</Tooltip>
+										)}
 										<Tooltip>
 											<TooltipTrigger asChild>
 												<button
@@ -425,8 +435,7 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 														variant="secondary"
 														className={cn(
 															"px-3 text-xs font-medium rounded-full",
-															"bg-theme-primary/10 text-theme-primary border-theme-primary/20",
-															"hover:bg-theme-primary/20",
+															"bg-white/60 text-theme-primary border-theme-primary/80",
 														)}
 														style={{
 															transition:
@@ -449,7 +458,7 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 						<div className="PrevNextWrap flex justify-between mt-24">
 							{localDetail?.prevPost ? (
 								<div
-									className="PrevNextBox prev flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 p-2 md:max-w-44 md:min-w-40 md:p-2.5 lg:max-w-52 lg:min-w-48 lg:p-3 border-card bg-card backdrop-blur-card overflow-hidden group"
+									className="PrevNextBox prev flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 py-2 px-3.5 md:max-w-44 md:min-w-40 md:py-2.5 md:px-3.5 lg:max-w-52 lg:min-w-48 lg:py-3 lg:px-3.5 border-card bg-card backdrop-blur-card overflow-hidden group"
 									onClick={onClickMoveToPage(
 										`/library/${localDetail?.prevPost?.slug || localDetail?.prevPost?.id}${detailQuery}`,
 									)}
@@ -488,7 +497,7 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 							)}
 							{localDetail?.nextPost ? (
 								<div
-									className="PrevNextBox next flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 p-2 md:max-w-44 md:min-w-40 md:p-2.5 lg:max-w-52 lg:min-w-48 lg:p-3 border-card bg-card backdrop-blur-card overflow-hidden flex-row-reverse group"
+									className="PrevNextBox next flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 py-2 px-3.5 md:max-w-44 md:min-w-40 md:py-2.5 md:px-3.5 lg:max-w-52 lg:min-w-48 lg:py-3 lg:px-3.5 border-card bg-card backdrop-blur-card overflow-hidden flex-row-reverse group"
 									onClick={onClickMoveToPage(
 										`/library/${localDetail?.nextPost?.slug || localDetail?.nextPost?.id}${detailQuery}`,
 									)}

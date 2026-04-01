@@ -54,7 +54,8 @@ export default function PhotoboardDetailModal({
 			{/* Arrow Navigation */}
 			<DialogContent
 				showCloseButton={false}
-				className="max-w-3xl md:max-w-3xl w-full bg-card border-card rounded-r-none rounded-l-none md:rounded-card backdrop-blur-card p-0 overflow-visible min-h-[60vh]"
+				className="max-w-3xl md:max-w-3xl sm:max-w-2xl bg-card border-card rounded-card backdrop-blur-card p-0 overflow-visible h-[60vh] sm:h-[80vh]"
+				onOpenAutoFocus={(e) => e.preventDefault()}
 			>
 				{hasPrev && (
 					<button
@@ -84,9 +85,9 @@ export default function PhotoboardDetailModal({
 					</button>
 				)}
 
-				<div className="flex flex-col md:flex-row gap-0 w-full h-full overflow-hidden">
+				<div className="flex flex-col sm:flex-row gap-0 w-full h-full overflow-hidden">
 					{/* Left: Image Area (55%) */}
-					<div className="w-full md:w-[60%] h-[40vh] md:h-full  flex items-center justify-center relative">
+					<div className="w-full sm:w-[60%] h-[60vh] sm:h-full flex items-center justify-center relative">
 						{post.imageUrl && (
 							<div className="relative w-full h-full">
 								<Image
@@ -102,7 +103,7 @@ export default function PhotoboardDetailModal({
 					</div>
 
 					{/* Right: Content Area (45%) */}
-					<div className="w-full md:w-[40%] h-full flex flex-col bg-card">
+					<div className="w-full sm:w-[40%] h-full flex flex-col bg-card">
 						{/* Header */}
 						<div className="flex items-center justify-between p-4 border-b border-card-border">
 							<div className="flex items-center gap-3">
@@ -155,12 +156,7 @@ export default function PhotoboardDetailModal({
 									</div>
 								</div>
 
-								{/* Comments Placeholder */}
-								<div className="border-t border-card-border pt-4">
-									<p className="text-sm text-sub-text text-center py-8">
-										댓글 기능이 곧 추가될 예정입니다.
-									</p>
-								</div>
+								
 							</div>
 						</ScrollArea>
 

@@ -9,6 +9,8 @@ import {
 	Download,
 	Link as LinkIcon,
 	ImageOff,
+	Pencil,
+	Trash2,
 } from "lucide-react";
 import {
 	Dialog,
@@ -28,6 +30,9 @@ interface GalleryImageModalProps {
 	images: GalleryImage[];
 	initialIndex?: number;
 	onIndexChange?: (index: number) => void;
+	canManage?: (image: GalleryImage) => boolean;
+	onEdit?: (image: GalleryImage) => void;
+	onDelete?: (image: GalleryImage) => void;
 }
 
 export default function GalleryImageModal({
@@ -36,6 +41,9 @@ export default function GalleryImageModal({
 	images,
 	initialIndex = 0,
 	onIndexChange,
+	canManage,
+	onEdit,
+	onDelete,
 }: GalleryImageModalProps) {
 	const [activeIndex, setActiveIndex] = useState(initialIndex);
 	const [isLoaded, setIsLoaded] = useState(false);
@@ -221,6 +229,28 @@ export default function GalleryImageModal({
 						>
 							<Download className="h-5 w-5" />
 						</Button>
+						{canManage?.(currentImage) && (
+							<>
+								<Button
+									variant="ghost"
+									size="icon"
+									className="text-main-text hover:bg-white/10"
+									onClick={() => onEdit?.(currentImage)}
+									title="수정"
+								>
+									<Pencil className="h-5 w-5" />
+								</Button>
+								<Button
+									variant="ghost"
+									size="icon"
+									className="text-main-text hover:bg-red-400/20 text-red-400"
+									onClick={() => onDelete?.(currentImage)}
+									title="삭제"
+								>
+									<Trash2 className="h-5 w-5" />
+								</Button>
+							</>
+						)}
 						<Button
 							variant="ghost"
 							size="icon"

@@ -33,6 +33,7 @@ export interface GalleryImage {
 	width?: number;
 	height?: number;
 	createdAt?: string;
+	authorId?: string;
 }
 
 export function getResponsiveColumns(desktopColumns: number): {

@@ -93,7 +93,7 @@ export default function WidgetMenuIconBar({
 	return (
 		<aside
 			className={cn(
-				"menu-iconbar h-dvh flex flex-col items-center shrink-0 sticky top-0 overflow-visible px-1.5",
+				"menu-iconbar h-dvh flex flex-col items-center shrink-0 sticky top-0 z-10 overflow-visible px-2",
 				className,
 			)}
 			style={iconBarStyle}
@@ -147,9 +147,7 @@ export default function WidgetMenuIconBar({
 									>
 										{item.subMenus.map((subMenu, idx) => {
 											const name =
-												typeof subMenu === "string"
-													? subMenu
-													: subMenu.name;
+												typeof subMenu === "string" ? subMenu : subMenu.name;
 											return (
 												<li key={`${item.uniqueId}-sub-${idx}`}>
 													<Tooltip>

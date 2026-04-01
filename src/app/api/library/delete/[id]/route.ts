@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { revalidateTag } from "next/cache";
 import { jsonError, jsonOk } from "@/app/api/_lib/response";
 import { getBucket, getDb } from "@/app/api/_lib/admin";
-import { requireAdmin } from "@/app/api/_lib/auth";
+import { requireAuth } from "@/app/api/_lib/auth";
 import { normalizeStringArray } from "@/app/api/_lib/library";
 
 export const runtime = "nodejs";
@@ -36,7 +36,7 @@ export async function DELETE(
 	_req: NextRequest,
 	{ params }: { params: Promise<{ id?: string }> }
 ) {
-	const auth = await requireAdmin();
+	const auth = await requireAuth();
 	if (!auth.ok) {
 		return jsonError(auth.status, auth.error);
 	}
@@ -57,6 +57,10 @@ export async function DELETE(
 		}
 
 		const metadata = docSnapshot.data() ?? {};
+		const authorUid = typeof metadata?.authorUid === "string" ? metadata.authorUid : null;
+		if (authorUid !== auth.auth.uid && !auth.auth.isAdmin) {
+			return jsonError(403, "삭제 권한이 없습니다.");
+		}
 		const series = typeof metadata?.series === "string" ? metadata.series : "";
 		const tags = normalizeStringArray(metadata?.tags);
 

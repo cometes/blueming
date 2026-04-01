@@ -141,7 +141,7 @@ export async function PATCH(
 
 		const data = (snapshot.data() || {}) as Record<string, unknown>;
 		const authorId = typeof data.authorId === "string" ? data.authorId : null;
-		if (!authorId || auth.auth.uid !== authorId) {
+		if (!authorId || (auth.auth.uid !== authorId && !auth.auth.isAdmin)) {
 			return jsonError(403, "작성자만 수정할 수 있습니다.");
 		}
 
@@ -210,7 +210,7 @@ export async function DELETE(
 
 		const data = (snapshot.data() || {}) as Record<string, unknown>;
 		const authorId = typeof data.authorId === "string" ? data.authorId : null;
-		if (!authorId || auth.auth.uid !== authorId) {
+		if (!authorId || (auth.auth.uid !== authorId && !auth.auth.isAdmin)) {
 			return jsonError(403, "작성자만 삭제할 수 있습니다.");
 		}
 

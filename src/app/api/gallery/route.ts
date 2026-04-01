@@ -47,6 +47,7 @@ const toGalleryItem = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
 		height: (data.height as number | undefined) ?? undefined,
 		createdAt: formatTimestamp(data.createdAt),
 		author: data.author ?? null,
+		authorId: typeof data.authorId === "string" ? data.authorId : null,
 	};
 };
 

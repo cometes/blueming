@@ -16,13 +16,15 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import type { GalleryImage, GallerySettings } from "@/features/gallery/types";
 import { DEFAULT_GALLERY_SETTINGS } from "@/features/gallery/types";
-import { createGalleryImage, fetchGalleryImages } from "@/features/gallery/api/client";
+import { createGalleryImage, deleteGalleryImage, fetchGalleryImages, updateGalleryImage } from "@/features/gallery/api/client";
+import { useAuthStore } from "@/store/auth/store";
 import { setSettingsGallery } from "@/features/settings/api/main";
 
 export default function GalleryClient() {
 	const searchParams = useSearchParams();
 	const { gallery, updateGallery, refreshSettings } = useSettings();
 	const { isAdmin, isManagerOrAdmin, isAuthenticated } = useAdmin();
+	const user = useAuthStore((state) => state.user);
 
 	// 설정 상태
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -32,6 +34,7 @@ export default function GalleryClient() {
 	// 모달 상태
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [selectedIndex, setSelectedIndex] = useState(0);
+	const [editingImage, setEditingImage] = useState<GalleryImage | null>(null);
 
 	// 딥링크 초기화 완료 플래그 - 최초 마운트 시 한 번만 처리
 	const deepLinkInitialized = useRef(false);
@@ -213,6 +216,47 @@ export default function GalleryClient() {
 		},
 		[],
 	);
+	const handleEditSubmit = useCallback(
+		async (payload: GalleryCreatePayload) => {
+			if (!editingImage) return;
+			try {
+				const updated = await updateGalleryImage(editingImage.id, {
+					title: payload.title,
+					imageUrl: payload.imageUrl,
+					tags: payload.tags,
+				});
+				setImages((prev) => prev.map((img) => (img.id === editingImage.id ? { ...img, ...updated } : img)));
+				setEditingImage(null);
+				toast.success("이미지가 수정되었습니다.");
+			} catch (error) {
+				const message = error instanceof Error ? error.message : "수정에 실패했습니다.";
+				toast.error(message);
+			}
+		},
+		[editingImage],
+	);
+
+	const handleDeleteImage = useCallback(
+		async (image: GalleryImage) => {
+			if (!window.confirm("이미지를 삭제하시겠습니까?")) return;
+			try {
+				await deleteGalleryImage(image.id);
+				setImages((prev) => prev.filter((img) => img.id !== image.id));
+				setIsModalOpen(false);
+				toast.success("이미지가 삭제되었습니다.");
+			} catch (error) {
+				const message = error instanceof Error ? error.message : "삭제에 실패했습니다.";
+				toast.error(message);
+			}
+		},
+		[],
+	);
+
+	const canManageImage = useCallback(
+		(image: GalleryImage) => isAdmin || (user?.uid != null && user.uid === image.authorId),
+		[isAdmin, user?.uid],
+	);
+
 	const canWrite =
 		currentSettings.writePermission === "admin"
 			? isAdmin
@@ -291,13 +335,18 @@ export default function GalleryClient() {
 				images={filteredImages}
 				initialIndex={selectedIndex}
 				onIndexChange={handleIndexChange}
+				canManage={canManageImage}
+				onEdit={(image) => { setEditingImage(image); setIsCreateOpen(true); }}
+				onDelete={handleDeleteImage}
 			/>
 
 			<GalleryCreateModal
 				isOpen={isCreateOpen}
-				onOpenChange={setIsCreateOpen}
-				onSubmit={handleCreateSubmit}
+				onOpenChange={(open) => { setIsCreateOpen(open); if (!open) setEditingImage(null); }}
+				onSubmit={editingImage ? handleEditSubmit : handleCreateSubmit}
 				tagsOptions={tagOptions}
+				editingId={editingImage?.id}
+				initialValues={editingImage ? { title: editingImage.title, imageUrl: editingImage.src, tags: editingImage.tags ?? [] } : undefined}
 			/>
 		</div>
 	);
