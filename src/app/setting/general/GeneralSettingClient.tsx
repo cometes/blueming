@@ -50,7 +50,6 @@ export default function GeneralSettingClient() {
 		updateColorSetting,
 		isDirty,
 		fontTitle,
-		fontWeightOptions,
 	} = controller.general;
 	const { uploadState, showResetDialog, setShowResetDialog } = controller;
 	const {
