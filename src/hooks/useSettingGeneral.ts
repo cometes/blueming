@@ -8,6 +8,23 @@ import { runSettingsMutation } from "@/features/settings/hooks/mutation";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { schemaSettingsGeneral } from "@/features/settings/lib/schema";
 
+const baseFontOptions = [
+	{ label: "프리텐다드", value: "Pretendard" },
+	{ label: "조선일보명조", value: "Chosunilbo" },
+];
+
+const fontWeightOptions = [
+	{ label: "얇게 (100)", value: "100" },
+	{ label: "가늘게 (200)", value: "200" },
+	{ label: "라이트 (300)", value: "300" },
+	{ label: "보통 (400)", value: "400" },
+	{ label: "미디움 (500)", value: "500" },
+	{ label: "세미볼드 (600)", value: "600" },
+	{ label: "굵게 (700)", value: "700" },
+	{ label: "엑스트라볼드 (800)", value: "800" },
+	{ label: "블랙 (900)", value: "900" },
+];
+
 const logoTypes = ["없음", "텍스트", "이미지"];
 
 // 홈페이지 설정 기본값
@@ -21,10 +38,26 @@ const defaultGeneralSetting = {
 	logoType: "없음",
 	logoImage: "",
 	logoText: "",
+	logoFontFamily: "",
+	logoFontWeight: "700",
+	logoColor: "",
 };
 
 export const useSettingGeneral = () => {
   const { general, updateGeneral, refreshSettings } = useSettings();
+  const fontRegistry = useMemo(() => general?.fontRegistry || [], [general?.fontRegistry]);
+  const fontTitle = useMemo(() => {
+    const registryFonts = fontRegistry
+      .filter((font): font is typeof font & { family: string } => Boolean(font?.family))
+      .map((font) => ({ label: font.name || font.family, value: font.family }));
+    const merged = [...baseFontOptions, ...registryFonts];
+    const seen = new Set();
+    return merged.filter((item) => {
+      if (seen.has(item.value)) return false;
+      seen.add(item.value);
+      return true;
+    });
+  }, [fontRegistry]);
   const generalData = useMemo<Partial<General>>(
     () => general?.general || {},
     [general?.general]
@@ -54,7 +87,10 @@ export const useSettingGeneral = () => {
       secondaryColor: generalSetting.secondaryColor || "",
       logoType: generalSetting.logoType || "없음",
       logoImage: generalSetting.logoImage || "",
-      logoText: generalSetting.logoText || ""
+      logoText: generalSetting.logoText || "",
+      logoFontFamily: generalSetting.logoFontFamily || "",
+      logoFontWeight: generalSetting.logoFontWeight || "700",
+      logoColor: generalSetting.logoColor || "",
     }),
     [generalSetting]
   );
@@ -68,7 +104,10 @@ export const useSettingGeneral = () => {
       secondaryColor: initialGeneral.secondaryColor || "",
       logoType: initialGeneral.logoType || "없음",
       logoImage: initialGeneral.logoImage || "",
-      logoText: initialGeneral.logoText || ""
+      logoText: initialGeneral.logoText || "",
+      logoFontFamily: (initialGeneral as typeof defaultGeneralSetting).logoFontFamily || "",
+      logoFontWeight: (initialGeneral as typeof defaultGeneralSetting).logoFontWeight || "700",
+      logoColor: (initialGeneral as typeof defaultGeneralSetting).logoColor || "",
     }),
     [initialGeneral]
   );
@@ -110,7 +149,10 @@ export const useSettingGeneral = () => {
         primaryColor: generalData.primaryColor || prev.primaryColor,
         secondaryColor: generalData.secondaryColor || prev.secondaryColor,
         logoType: generalData.logoType || prev.logoType,
-        logoImage: generalData.logoImage || prev.logoImage
+        logoImage: generalData.logoImage || prev.logoImage,
+        logoFontFamily: generalData.logoFontFamily ?? prev.logoFontFamily,
+        logoFontWeight: generalData.logoFontWeight ?? prev.logoFontWeight,
+        logoColor: generalData.logoColor ?? prev.logoColor,
       }));
 
       // Set form values
@@ -245,5 +287,7 @@ export const useSettingGeneral = () => {
     bgThumbnail,
     setBgThumnail,
     isDirty,
+    fontTitle,
+    fontWeightOptions,
   };
 };

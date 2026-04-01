@@ -212,6 +212,9 @@ export interface General {
 	logoImage: string;
 	logoText: string;
 	logoType: string;
+	logoFontFamily?: string;
+	logoFontWeight?: string;
+	logoColor?: string;
 }
 
 export interface PhotoboardSettings {

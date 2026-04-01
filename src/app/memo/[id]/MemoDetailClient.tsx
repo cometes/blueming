@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeft, Lock, MoreHorizontal, X } from "lucide-react";
+import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -89,6 +90,7 @@ export default function MemoDetailClient({
 		memoId,
 		initialMemo,
 	});
+	const { isAdmin } = useAdmin();
 
 	const contentNode = (() => {
 		if (!memo) {
@@ -175,7 +177,7 @@ export default function MemoDetailClient({
 								{memo.createdAt ? dateTimeConvert(memo.createdAt) : ""}
 							</span>
 						</div>
-						{isOwner && (
+						{(isOwner || isAdmin) && (
 							<DropdownMenu modal={false}>
 								<DropdownMenuTrigger asChild>
 									<button

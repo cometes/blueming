@@ -5,8 +5,6 @@ import Providers from "@/providers/Providers";
 import { getServerSettings, type ServerSettings, type FontRegistryItem } from "@/app/api/_lib/settingsServer";
 import { getFontFormat, isFontFileUrl } from "@/shared/lib/fonts";
 
-export const dynamic = "force-dynamic";
-
 type AppSettings = ServerSettings;
 
 const resolveGeneralSettings = (settings: ServerSettings | null) => {

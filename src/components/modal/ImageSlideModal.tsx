@@ -56,7 +56,10 @@ export default function ImageSlideModal({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-2xl md:max-w-2xl bg-card border-card rounded-card backdrop-blur-card p-0 overflow-hidden h-[60vh] sm:h-[80vh]">
+			<DialogContent
+				className="max-w-3xl md:max-w-3xl sm:max-w-2xl bg-card border-card rounded-card backdrop-blur-card p-0 overflow-hidden h-[60vh] sm:h-[80vh]"
+				onOpenAutoFocus={(e) => e.preventDefault()}
+			>
 				<div className="relative w-full">
 					{/* eslint-disable-next-line @next/next/no-img-element */}
 					<img

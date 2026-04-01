@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { createHash } from "crypto";
+import { revalidateTag } from "next/cache";
 import { getDb } from "@/app/api/_lib/admin";
 import { jsonError } from "@/app/api/_lib/response";
 import { requireAdmin } from "@/app/api/_lib/auth";
@@ -80,6 +81,7 @@ export async function POST(req: NextRequest) {
 		const db = getDb();
 		const docRef = db.collection("settings").doc("library");
 		await docRef.set(payload, { merge: true });
+		revalidateTag("library-settings");
 
 		const updated = await docRef.get();
 		return NextResponse.json({ library: updated.data() ?? {} });

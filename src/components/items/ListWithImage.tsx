@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/shared/lib/utils";
 import { Fragment, useState } from "react";
 import type { ReactNode } from "react";
-import { CircleSlash, MessageCircle, Lock } from "lucide-react";
+import { CircleSlash, MessageCircle, Lock, Pin } from "lucide-react";
 
 interface ItemListProps {
 	data: {
@@ -78,12 +78,7 @@ export default function ItemListWithImage({
 					<div>
 						<div className="flex items-center gap-2">
 							{data.pinned && (
-								<Badge
-									variant="secondary"
-									className="px-2 text-[10px] rounded-full bg-theme-primary/10 text-theme-primary border-theme-primary/20"
-								>
-									고정
-								</Badge>
+								<Pin size={14} className="text-theme-primary shrink-0" />
 							)}
 							{data.allow === "password" && (
 								<Lock size={14} className="text-sub-text shrink-0" />
@@ -93,7 +88,7 @@ export default function ItemListWithImage({
 							)}
 							<h3
 								className={cn(
-									"text-lg font-semibold text-main-text leading-tight",
+									"font-semibold text-main-text leading-tight",
 									"line-clamp-1 md:line-clamp-2 group-hover:text-theme-primary font-title",
 								)}
 								style={{ transition: "color 0.2s ease-out" }}

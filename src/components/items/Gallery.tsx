@@ -4,7 +4,7 @@ import { cn } from "@/shared/lib/utils";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-import { Lock } from "lucide-react";
+import { Lock, Pin } from "lucide-react";
 
 interface ItemGalleryProps {
 	data: {
@@ -39,8 +39,8 @@ export default function ItemGallery({
 			onClick={onClickMoveToPage(detailPath)}
 		>
 			{data.pinned && (
-				<span className="absolute top-3 left-3 z-20 px-2 py-0.5 text-[10px] rounded-full bg-theme-primary/80 text-white">
-					고정
+				<span className="absolute top-3 left-3 z-20 p-1.5 rounded-full bg-theme-primary/80 text-white flex items-center justify-center">
+					<Pin size={12} />
 				</span>
 			)}
 			<div

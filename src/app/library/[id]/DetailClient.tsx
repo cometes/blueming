@@ -23,39 +23,32 @@ import {
 	TooltipTrigger,
 } from "@/components/tiptap-ui-primitive/tooltip/tooltip";
 import { useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
-import { EditorContent, useEditor } from "@tiptap/react";
-import { StarterKit } from "@tiptap/starter-kit";
-import { BulletList } from "@tiptap/extension-bullet-list";
-import { OrderedList } from "@tiptap/extension-ordered-list";
-import { ListItem } from "@tiptap/extension-list-item";
-import { TextStyle } from "@tiptap/extension-text-style";
-import { Color } from "@tiptap/extension-color";
-import { FontFamily } from "@tiptap/extension-font-family";
-import { FontSize } from "@/components/tiptap-extension/font-size";
-import { Highlight } from "@tiptap/extension-highlight";
-import { Underline } from "@tiptap/extension-underline";
-import { Superscript } from "@tiptap/extension-superscript";
-import { Subscript } from "@tiptap/extension-subscript";
-import { TextAlign } from "@tiptap/extension-text-align";
-import { TaskList } from "@tiptap/extension-task-list";
-import { TaskItem } from "@tiptap/extension-task-item";
-import { Link } from "@tiptap/extension-link";
-import { CustomImage } from "@/components/tiptap-extension/custom-image";
-import { CustomYoutubeNode } from "@/components/tiptap-node/youtube-node/youtube-node";
 import { renderRichText } from "@/shared/lib/richText";
 import CommentSidebar from "./CommentSidebar";
-import { useLibraryDetailController, type LibraryDetailData } from "@/features/library/hooks/useLibraryDetailController";
+import {
+	useLibraryDetailController,
+	type LibraryDetailData,
+} from "@/features/library/hooks/useLibraryDetailController";
 
-import "@/styles/tiptap-variables.css";
-import "@/components/tiptap-node/list-node/list-node.scss";
-import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
-import "@/components/tiptap-node/code-block-node/code-block-node.scss";
-import "@/components/tiptap-node/image-node/image-node.scss";
-import "@/components/tiptap-node/image-upload-node/image-upload-node.scss";
-import "@/components/tiptap-node/youtube-node/youtube-node.scss";
+const LibraryContentViewer = dynamic(() => import("./LibraryContentViewer"), {
+	ssr: false,
+	loading: () => (
+		<div className="animate-pulse space-y-3 py-2">
+			<div className="h-4 bg-card-bg rounded w-3/4" />
+			<div className="h-4 bg-card-bg rounded" />
+			<div className="h-4 bg-card-bg rounded w-5/6" />
+			<div className="h-4 bg-card-bg rounded w-2/3" />
+		</div>
+	),
+});
 
-export default function DetailClient({ detailData }: { detailData: LibraryDetailData | null | undefined }) {
+export default function DetailClient({
+	detailData,
+}: {
+	detailData: LibraryDetailData | null | undefined;
+}) {
 	const { onClickMoveToPage } = useMoveToPage();
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -68,6 +61,7 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 	const {
 		localDetail,
 		isPinned,
+		isOwner,
 		password,
 		setPassword,
 		passwordError,
@@ -152,66 +146,6 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 		const fallbackHtml = renderRichText(rawContent);
 		return fallbackHtml || null;
 	}, [contentSource]);
-	const viewerExtensions = useMemo(
-		() => [
-			StarterKit.configure({
-				bulletList: false,
-				orderedList: false,
-				listItem: false,
-				dropcursor: false,
-			}),
-			Link.configure({ openOnClick: false }),
-			BulletList,
-			OrderedList,
-			ListItem,
-			TextStyle,
-			Color.configure({
-				types: ["textStyle"],
-			}),
-			FontFamily.configure({
-				types: ["textStyle"],
-			}),
-			FontSize.configure({
-				types: ["textStyle"],
-			}),
-			Highlight.configure({ multicolor: true }),
-			Underline,
-			Superscript,
-			Subscript,
-			TextAlign.configure({ types: ["heading", "paragraph"] }),
-			TaskList.configure({
-				HTMLAttributes: {
-					class: "task-list",
-				},
-			}),
-			TaskItem.configure({
-				nested: true,
-				HTMLAttributes: {
-					class: "task-item",
-				},
-			}),
-			CustomYoutubeNode,
-			CustomImage,
-		],
-		[],
-	);
-	const editor = useEditor({
-		extensions: viewerExtensions,
-		content: parsedContent ?? "",
-		immediatelyRender: false,
-		editable: false,
-		editorProps: {
-			attributes: {
-				class: "tiptap prose max-w-none text-main-text readonly",
-			},
-		},
-	});
-
-	useEffect(() => {
-		if (!editor || parsedContent == null) return;
-		editor.commands.setContent(parsedContent);
-	}, [editor, parsedContent]);
-
 	useEffect(() => {
 		const body = document.body;
 		const prevStyles = {
@@ -274,29 +208,29 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 				}}
 				onClick={(event) => event.stopPropagation()}
 			>
-			{/* 책갈피 탭 */}
-			<button
-				type="button"
-				onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-				className="w-8 h-20 mt-[120px] bg-card border border-r-0 border-card-border rounded-l-lg flex items-center justify-center cursor-pointer hover:bg-card-bg self-start"
-				style={{ transition: "background-color 200ms" }}
-				aria-label={isSidebarOpen ? "사이드바 닫기" : "사이드바 열기"}
-			>
-				<ChevronLeft
-					size={16}
-					className="text-sub-text"
-					style={{
-						transform: isSidebarOpen ? "rotate(180deg)" : "rotate(0deg)",
-						transition: "transform 300ms ease-in-out",
-					}}
-				/>
-			</button>
-			{/* 드로어 본체 */}
-			<div className="w-[340px] h-full bg-card border-l border-card-border shadow-lg flex flex-col backdrop-blur-card">
-				{canShowComments && localDetail?.id ? (
-					<CommentSidebar postId={localDetail.id} />
-				) : null}
-			</div>
+				{/* 책갈피 탭 */}
+				<button
+					type="button"
+					onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+					className="w-8 h-20 mt-[120px] bg-card border border-r-0 border-card-border rounded-l-lg flex items-center justify-center cursor-pointer hover:bg-card-bg self-start"
+					style={{ transition: "background-color 200ms" }}
+					aria-label={isSidebarOpen ? "사이드바 닫기" : "사이드바 열기"}
+				>
+					<ChevronLeft
+						size={16}
+						className="text-sub-text"
+						style={{
+							transform: isSidebarOpen ? "rotate(180deg)" : "rotate(0deg)",
+							transition: "transform 300ms ease-in-out",
+						}}
+					/>
+				</button>
+				{/* 드로어 본체 */}
+				<div className="w-[340px] h-full bg-card border-l border-card-border shadow-lg flex flex-col backdrop-blur-card">
+					{canShowComments && localDetail?.id ? (
+						<CommentSidebar postId={localDetail.id} />
+					) : null}
+				</div>
 			</div>
 		</div>
 	);
@@ -404,27 +338,29 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 						<div>
 							<div className="flex items-center justify-between mt-10">
 								<Button onClick={onClickMoveToPage(listPath)}>목록으로</Button>
-								{isAdmin ? (
+								{isAdmin || isOwner ? (
 									<div className="flex items-center gap-3">
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<button
-													type="button"
-													onClick={handleTogglePin}
-													className={cn(
-														"w-8 h-8 rounded-full bg-card flex items-center justify-center border border-card cursor-pointer",
-														isPinned ? "text-theme-primary" : "text-sub-text",
-													)}
-													style={{ transition: "color 200ms ease-out" }}
-													aria-label="공지로 설정"
-												>
-													<Pin size={16} />
-												</button>
-											</TooltipTrigger>
-											<TooltipContent className="text-xs">
-												{isPinned ? "공지 해제" : "공지로 설정"}
-											</TooltipContent>
-										</Tooltip>
+										{isAdmin && (
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<button
+														type="button"
+														onClick={handleTogglePin}
+														className={cn(
+															"w-8 h-8 rounded-full bg-card flex items-center justify-center border border-card cursor-pointer",
+															isPinned ? "text-theme-primary" : "text-sub-text",
+														)}
+														style={{ transition: "color 200ms ease-out" }}
+														aria-label="공지로 설정"
+													>
+														<Pin size={16} />
+													</button>
+												</TooltipTrigger>
+												<TooltipContent className="text-xs">
+													{isPinned ? "공지 해제" : "공지로 설정"}
+												</TooltipContent>
+											</Tooltip>
+										)}
 										<Tooltip>
 											<TooltipTrigger asChild>
 												<button
@@ -499,8 +435,7 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 														variant="secondary"
 														className={cn(
 															"px-3 text-xs font-medium rounded-full",
-															"bg-theme-primary/10 text-theme-primary border-theme-primary/20",
-															"hover:bg-theme-primary/20",
+															"bg-white/60 text-theme-primary border-theme-primary/80",
 														)}
 														style={{
 															transition:
@@ -516,18 +451,14 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 								)}
 							</div>
 							<Separator className="my-7 bg-gray-500" />
-							{!parsedContent || !editor || editor.isEmpty ? (
-								<p className="text-sub-text">내용이 없습니다.</p>
-							) : (
-								<EditorContent editor={editor} />
-							)}
+							<LibraryContentViewer content={parsedContent} />
 						</div>
 					)}
 					{!requiresPassword && (!isSecret || canViewSecret) && (
 						<div className="PrevNextWrap flex justify-between mt-24">
 							{localDetail?.prevPost ? (
 								<div
-									className="PrevNextBox prev flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 p-2 md:max-w-44 md:min-w-40 md:p-2.5 lg:max-w-52 lg:min-w-48 lg:p-3 border-card bg-card backdrop-blur-card overflow-hidden group"
+									className="PrevNextBox prev flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 py-2 px-3.5 md:max-w-44 md:min-w-40 md:py-2.5 md:px-3.5 lg:max-w-52 lg:min-w-48 lg:py-3 lg:px-3.5 border-card bg-card backdrop-blur-card overflow-hidden group"
 									onClick={onClickMoveToPage(
 										`/library/${localDetail?.prevPost?.slug || localDetail?.prevPost?.id}${detailQuery}`,
 									)}
@@ -566,7 +497,7 @@ export default function DetailClient({ detailData }: { detailData: LibraryDetail
 							)}
 							{localDetail?.nextPost ? (
 								<div
-									className="PrevNextBox next flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 p-2 md:max-w-44 md:min-w-40 md:p-2.5 lg:max-w-52 lg:min-w-48 lg:p-3 border-card bg-card backdrop-blur-card overflow-hidden flex-row-reverse group"
+									className="PrevNextBox next flex-none flex items-center cursor-pointer rounded-card max-w-40 min-w-32 py-2 px-3.5 md:max-w-44 md:min-w-40 md:py-2.5 md:px-3.5 lg:max-w-52 lg:min-w-48 lg:py-3 lg:px-3.5 border-card bg-card backdrop-blur-card overflow-hidden flex-row-reverse group"
 									onClick={onClickMoveToPage(
 										`/library/${localDetail?.nextPost?.slug || localDetail?.nextPost?.id}${detailQuery}`,
 									)}

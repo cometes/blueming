@@ -1,11 +1,11 @@
 export const dynamic = "force-dynamic";
 
 import { cookies } from "next/headers";
-import { getDb } from "@/app/api/_lib/admin";
 import {
 	fetchLibraryListDirect,
-	fetchLibrarySeriesDirect,
-	fetchLibraryTagsDirect,
+	fetchLibrarySettingsCached,
+	fetchLibrarySeriesCached,
+	fetchLibraryTagsCached,
 } from "@/features/library/api/serverDirect";
 import LibraryClient, { type LibraryItem } from "./LibraryClient";
 
@@ -32,31 +32,28 @@ export default async function LibraryListPage({
 		const tag = params?.tag ?? "";
 		const query = params?.q ?? "";
 
-		const db = getDb();
-		const settingsPromise = db
-			.collection("settings")
-			.doc("library")
-			.get()
-			.catch(() => null);
-
-		const [settingsSnap, seriesData, tagData] = await Promise.all([
-			settingsPromise,
-			fetchLibrarySeriesDirect(),
-			fetchLibraryTagsDirect(),
-		]);
-
-		const postsPerPage =
-			typeof settingsSnap?.data()?.postsPerPage === "number"
-				? (settingsSnap.data()!.postsPerPage as number)
-				: 10;
-
-		const listResult = await fetchLibraryListDirect({
-			page: currentPage,
-			limit: postsPerPage,
-			sort,
-			tag,
-			query,
+		// settings/series/tags는 unstable_cache로 캐싱 → cache hit 시 거의 즉시 완료
+		// list는 settings 완료 즉시 체이닝되어 바로 시작
+		const settingsPromise = fetchLibrarySettingsCached();
+		const seriesPromise = fetchLibrarySeriesCached();
+		const tagsPromise = fetchLibraryTagsCached();
+		const listPromise = settingsPromise.then((settings) => {
+			const postsPerPage =
+				typeof settings.postsPerPage === "number" ? settings.postsPerPage : 10;
+			return fetchLibraryListDirect({
+				page: currentPage,
+				limit: postsPerPage,
+				sort,
+				tag,
+				query,
+			});
 		});
+
+		const [seriesData, tagData, listResult] = await Promise.all([
+			seriesPromise,
+			tagsPromise,
+			listPromise,
+		]);
 
 		return (
 			<LibraryClient

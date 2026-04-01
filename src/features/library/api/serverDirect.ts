@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { getDb, getBucket } from "@/app/api/_lib/admin";
 import {
 	parsePositiveInt,
@@ -167,6 +168,30 @@ export async function fetchLibraryTagsDirect(): Promise<string[]> {
 	return snapshot.docs.map((doc) => doc.id);
 }
 
+async function fetchLibrarySettingsDirect(): Promise<Record<string, unknown>> {
+	const db = getDb();
+	const snap = await db.collection("settings").doc("library").get();
+	return snap.exists ? (snap.data() ?? {}) : {};
+}
+
+export const fetchLibrarySettingsCached = unstable_cache(
+	fetchLibrarySettingsDirect,
+	["library-settings"],
+	{ tags: ["library-settings"], revalidate: 3600 }
+);
+
+export const fetchLibrarySeriesCached = unstable_cache(
+	fetchLibrarySeriesDirect,
+	["library-series"],
+	{ tags: ["library-series"], revalidate: 300 }
+);
+
+export const fetchLibraryTagsCached = unstable_cache(
+	fetchLibraryTagsDirect,
+	["library-tags"],
+	{ tags: ["library-tags"], revalidate: 300 }
+);
+
 export type LibraryDetailResult = {
 	id: string;
 	title: string;
@@ -265,28 +290,54 @@ export async function fetchLibraryDetailDirect(
 
 		const contentPath = `library/create/contents/${resolvedId}/content.json`;
 		const file = bucket.file(contentPath);
-		let content = "";
-		try {
-			const [fileData] = await file.download();
-			content = fileData.toString();
-		} catch (storageError) {
-			console.error(
-				`[fetchLibraryDetailDirect] Storage download failed for id="${resolvedId}":`,
-				storageError,
-			);
-		}
-
 		const collectionRef = db.collection("library");
-		const allDocsSnapshot = await collectionRef.orderBy("createdAt").get();
-		const allDocs = allDocsSnapshot.docs.map((doc) => ({
-			id: doc.id,
-			title: doc.data().title as string,
-			slug: (doc.data().slug as string) || undefined,
-		}));
-		const currentIndex = allDocs.findIndex((doc) => doc.id === resolvedId);
-		const prevPost = currentIndex > 0 ? allDocs[currentIndex - 1] : null;
-		const nextPost =
-			currentIndex < allDocs.length - 1 ? allDocs[currentIndex + 1] : null;
+		const currentCreatedAt = metadata.createdAt;
+
+		type PostRef = { id: string; title: string; slug?: string } | null;
+		const toPostRef = (snap: FirebaseFirestore.QuerySnapshot): PostRef => {
+			const doc = snap.docs[0];
+			if (!doc) return null;
+			return {
+				id: doc.id,
+				title: doc.data().title as string,
+				slug: (doc.data().slug as string) || undefined,
+			};
+		};
+
+		const contentPromise = file
+			.download()
+			.then(([data]) => data.toString())
+			.catch((storageError) => {
+				console.error(
+					`[fetchLibraryDetailDirect] Storage download failed for id="${resolvedId}":`,
+					storageError,
+				);
+				return "";
+			});
+
+		const prevPromise = currentCreatedAt
+			? collectionRef
+					.where("createdAt", "<", currentCreatedAt)
+					.orderBy("createdAt", "desc")
+					.limit(1)
+					.get()
+					.then(toPostRef)
+			: Promise.resolve<PostRef>(null);
+
+		const nextPromise = currentCreatedAt
+			? collectionRef
+					.where("createdAt", ">", currentCreatedAt)
+					.orderBy("createdAt", "asc")
+					.limit(1)
+					.get()
+					.then(toPostRef)
+			: Promise.resolve<PostRef>(null);
+
+		const [content, prevPost, nextPost] = await Promise.all([
+			contentPromise,
+			prevPromise,
+			nextPromise,
+		]);
 
 		return {
 			id: resolvedId,

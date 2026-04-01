@@ -91,7 +91,14 @@ export default function Layout({ children }: LayoutProps) {
 									className="h-12 max-h-12 w-auto object-contain"
 								/>
 							) : (
-								<h1 className="text-lg font-title font-bold tracking-normal">
+								<h1
+									className="text-lg tracking-normal"
+									style={{
+										fontFamily: general?.general?.logoFontFamily || undefined,
+										fontWeight: general?.general?.logoFontWeight || "700",
+										color: general?.general?.logoColor || undefined,
+									}}
+								>
 									{general?.general?.logoText}
 								</h1>
 							)}

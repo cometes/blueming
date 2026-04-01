@@ -60,7 +60,7 @@ export function useLibraryDetailController({
 	const [password, setPassword] = useState("");
 	const [passwordError, setPasswordError] = useState("");
 	const [isVerifying, setIsVerifying] = useState(false);
-	const [authChecked, setAuthChecked] = useState(false);
+	const [authChecked, setAuthChecked] = useState(true);
 	const [secretAuthChecked, setSecretAuthChecked] = useState(false);
 	const [secretAccessGranted, setSecretAccessGranted] = useState(false);
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -180,9 +180,7 @@ export function useLibraryDetailController({
 	useEffect(() => {
 		if (!requiresPassword) {
 			setAuthChecked(true);
-			return;
 		}
-		setAuthChecked(false);
 	}, [detailId, requiresPassword]);
 
 	useEffect(() => {

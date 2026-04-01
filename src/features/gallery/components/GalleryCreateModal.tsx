@@ -29,6 +29,8 @@ interface GalleryCreateModalProps {
 	onOpenChange: (open: boolean) => void;
 	onSubmit: (payload: GalleryCreatePayload) => void;
 	tagsOptions?: string[];
+	editingId?: string;
+	initialValues?: { title: string; imageUrl: string; tags: string[] };
 }
 
 const normalizeTag = (value: string) =>
@@ -39,10 +41,12 @@ export default function GalleryCreateModal({
 	onOpenChange,
 	onSubmit,
 	tagsOptions = [],
+	editingId,
+	initialValues,
 }: GalleryCreateModalProps) {
 	const { user } = useAuthStore();
 	const { isAuthenticated } = useAuthStore();
-	const { imageUrl, imageFile, setFromFile, clearImage } = useSingleImageUploadField();
+	const { imageUrl, imageFile, setFromFile, setFromUrl, clearImage } = useSingleImageUploadField();
 	const [titleInput, setTitleInput] = useState("");
 	const [tagInput, setTagInput] = useState("");
 	const [tagSearchInput, setTagSearchInput] = useState("");
@@ -75,8 +79,13 @@ export default function GalleryCreateModal({
 	useEffect(() => {
 		if (!isOpen) {
 			resetComposer();
+		} else if (initialValues) {
+			setTitleInput(initialValues.title);
+			setTags(initialValues.tags);
+			setFromUrl(initialValues.imageUrl);
 		}
-	}, [isOpen, resetComposer]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isOpen]);
 
 	const MAX_TAGS = 6;
 
@@ -194,7 +203,7 @@ export default function GalleryCreateModal({
 			<DialogContent className="max-w-3xl md:max-w-3xl w-full bg-card border-card rounded-card backdrop-blur-card p-0 overflow-hidden text-main-text gap-0 h-[570px] max-h-[570px] flex flex-col">
 				<DialogHeader className="p-4 border-b border-card-border shrink-0">
 					<DialogTitle className="text-[20px] font-semibold font-title">
-						새 갤러리 이미지
+						{editingId ? "이미지 수정" : "새 갤러리 이미지"}
 					</DialogTitle>
 				</DialogHeader>
 				<div className="flex flex-col md:flex-row items-stretch flex-1 min-h-0">
@@ -424,6 +433,8 @@ export default function GalleryCreateModal({
 							>
 								{isProcessing ? (
 									<Loader2 size={16} className="animate-spin" />
+								) : editingId ? (
+									"수정"
 								) : (
 									"게시"
 								)}

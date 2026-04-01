@@ -44,11 +44,17 @@ export async function GET(
 				: null;
 
 		const requiresPassword = metadata.allow === "password";
+		const isSecret = metadata.allow === "secret";
 		const authContext = await getAuthContext();
 		const authorUid =
 			typeof metadata.authorUid === "string" ? metadata.authorUid : null;
 		const isOwner = Boolean(authorUid) && authContext?.uid === authorUid;
 		const bypassPassword = Boolean(authContext?.isAdmin || isOwner);
+
+		if (isSecret && !bypassPassword) {
+			return jsonError(403, "이 게시글은 작성자와 관리자만 열람할 수 있습니다.");
+		}
+
 		const headerPassword = req.headers.get("x-post-password") || "";
 		const queryPassword = req.nextUrl.searchParams.get("password") || "";
 		const providedPassword = headerPassword || queryPassword;

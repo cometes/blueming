@@ -19,6 +19,14 @@ import {
 import { ImageUploadSection } from "@/features/settings/components/menu/ImageUploadSection";
 import { AssetPickerDialog } from "@/features/settings/components/AssetPickerDialog";
 import { useGeneralSettingsController } from "@/features/settings/hooks/useGeneralSettingsController";
+import { Slider } from "@/components/ui/slider";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 
 const INPUT_HEIGHT = "h-9";
 
@@ -41,6 +49,8 @@ export default function GeneralSettingClient() {
 		updateGeneralSetting,
 		updateColorSetting,
 		isDirty,
+		fontTitle,
+		fontWeightOptions,
 	} = controller.general;
 	const { uploadState, showResetDialog, setShowResetDialog } = controller;
 	const {
@@ -276,30 +286,122 @@ export default function GeneralSettingClient() {
 
 					{/* 텍스트 로고 */}
 					{currentLogo === "텍스트" && (
-						<div className="section-box flex items-center mt-4">
-							<div className="text-box w-[220px] pr-5 relative">
-								<h3 className="font-medium text-sub-text">로고 타이틀</h3>
-								{formState.errors.logoText?.message && (
-									<p className="text-sm absolute left-1 top-full text-red-500 mt-1">
-										{formState.errors.logoText.message}
-									</p>
-								)}
+						<>
+							{/* 미리보기 */}
+							<div className="flex flex-col items-center p-8 rounded-card border-card bg-card-bg filter-blur-card mt-6 mb-2">
+								<div className="flex items-center justify-center h-[80px] px-8">
+									<span
+										style={{
+											fontFamily: generalSetting.logoFontFamily || undefined,
+											fontWeight: generalSetting.logoFontWeight || "700",
+											color: generalSetting.logoColor || undefined,
+											fontSize: "1.5rem",
+										}}
+									>
+										{generalSetting.logoText || "로고 타이틀"}
+									</span>
+								</div>
 							</div>
-							<div className="input-box relative w-calc(100% - 220px) flex-1">
-								<Input
-									placeholder="로고 타이틀을 입력해주세요"
-									value={getValues("logoText") || generalSetting.logoText || ""}
-									onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-										setValue("logoText", e.target.value);
-										updateGeneralSetting("logoText", e.target.value);
-									}}
-									className={
-										INPUT_HEIGHT +
-										"rounded-card border-card focus:border-card-active bg-card-bg"
-									}
-								/>
+
+							{/* 로고 타이틀 텍스트 */}
+							<div className="section-box flex items-center mt-4">
+								<div className="text-box w-[220px] pr-5 relative">
+									<h3 className="font-medium text-sub-text">로고 타이틀</h3>
+									{formState.errors.logoText?.message && (
+										<p className="text-sm absolute left-1 top-full text-red-500 mt-1">
+											{formState.errors.logoText.message}
+										</p>
+									)}
+								</div>
+								<div className="input-box relative w-calc(100% - 220px) flex-1">
+									<Input
+										placeholder="로고 타이틀을 입력해주세요"
+										value={getValues("logoText") || generalSetting.logoText || ""}
+										onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+											setValue("logoText", e.target.value);
+											updateGeneralSetting("logoText", e.target.value);
+										}}
+										className={
+											INPUT_HEIGHT +
+											" rounded-card border-card focus:border-card-active bg-card-bg"
+										}
+									/>
+								</div>
 							</div>
-						</div>
+
+							{/* 폰트 스타일 */}
+							<div className="section-box flex items-center mt-4">
+								<div className="text-box w-[220px] pr-5">
+									<h3 className="font-medium text-sub-text">폰트 스타일</h3>
+								</div>
+								<div className="w-[200px]">
+									<Select
+										value={generalSetting.logoFontFamily || ""}
+										onValueChange={(value) => updateGeneralSetting("logoFontFamily", value)}
+									>
+										<SelectTrigger className={INPUT_HEIGHT + " rounded-card border-card bg-card-bg"}>
+											<SelectValue placeholder="기본 폰트" />
+										</SelectTrigger>
+										<SelectContent>
+											{fontTitle.map((item) => (
+												<SelectItem key={item.value} value={item.value}>
+													<span style={{ fontFamily: item.value }}>{item.label}</span>
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+								</div>
+							</div>
+
+							{/* 폰트 굵기 */}
+							<div className="section-box flex items-center mt-4">
+								<div className="text-box w-[220px] pr-5">
+									<h3 className="font-medium text-sub-text">폰트 굵기</h3>
+								</div>
+								<div className="flex items-center gap-4 flex-1 max-w-md w-full">
+									<Slider
+										min={100}
+										max={900}
+										step={100}
+										value={[Number(generalSetting.logoFontWeight) || 700]}
+										onValueChange={(val) =>
+											updateGeneralSetting("logoFontWeight", String(val[0]))
+										}
+										className="flex-1 min-w-[150px]"
+									/>
+									<Input
+										type="number"
+										min={100}
+										max={900}
+										step={100}
+										value={Number(generalSetting.logoFontWeight) || 700}
+										onChange={(e) =>
+											updateGeneralSetting("logoFontWeight", e.target.value)
+										}
+										className="w-20 rounded-card border-card bg-card-bg"
+									/>
+								</div>
+							</div>
+
+							{/* 폰트 컬러 */}
+							<div className="section-box flex items-center mt-4">
+								<div className="text-box w-[220px] pr-5">
+									<h3 className="font-medium text-sub-text">폰트 컬러</h3>
+								</div>
+								<div className="flex items-center gap-3">
+									<ColorPicker
+										value={generalSetting.logoColor || "#000000"}
+										onChange={(color) => updateColorSetting("logoColor", color)}
+									/>
+									<span
+										className="text-sm font-mono"
+										style={{ color: generalSetting.logoColor || undefined }}
+									>
+										{generalSetting.logoColor || "#000000"}
+									</span>
+								</div>
+							</div>
+						</>
 					)}
 				</div>
 			</section>
