@@ -77,6 +77,14 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 			const existing = computed.getPropertyValue(fallbackVar).trim();
 			return existing || fallback;
 		};
+		// 멀티 워드 폰트명은 따옴표로 감싸야 CSS font-family에서 올바르게 동작
+		const formatFontFamily = (value: string) => {
+			const v = value.trim();
+			if (!v) return v;
+			if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) return v;
+			if (v.includes(" ")) return `"${v}"`;
+			return v;
+		};
 		const font = design?.font;
 		const background = design?.background;
 		const widget = design?.widget;
@@ -89,13 +97,13 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 		if (general?.secondaryColor !== undefined) {
 			root.style.setProperty('--secondary-color', pick(general.secondaryColor, "--secondary-color", "#6c757d"));
 		}
-		
+
 		// 폰트 변수
 		if (font?.bodyFontFamily !== undefined) {
-			root.style.setProperty('--font-body', pick(font.bodyFontFamily, "--font-body", "sans-serif"));
+			root.style.setProperty('--font-body', formatFontFamily(pick(font.bodyFontFamily, "--font-body", "sans-serif")));
 		}
 		if (font?.titleFontFamily !== undefined) {
-			root.style.setProperty('--font-title', pick(font.titleFontFamily, "--font-title", "sans-serif"));
+			root.style.setProperty('--font-title', formatFontFamily(pick(font.titleFontFamily, "--font-title", "sans-serif")));
 		}
 		if (font?.mainFontColor !== undefined) {
 			root.style.setProperty('--color-main', pick(font.mainFontColor, "--color-main", "#111111"));

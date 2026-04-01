@@ -173,6 +173,27 @@ export const useSettingDesign = () => {
 
       return updated as typeof defaultValues;
     });
+
+    // 폰트 변경 시 CSS 변수를 즉시 반영해 실시간 미리보기 제공
+    if (typeof window !== "undefined" && typeof value === "string") {
+      const root = document.documentElement;
+      const formatFontFamily = (v: string) => {
+        const trimmed = v.trim();
+        if (!trimmed) return trimmed;
+        if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) return trimmed;
+        if (trimmed.includes(" ")) return `"${trimmed}"`;
+        return trimmed;
+      };
+      if (path === "font.titleFontFamily") {
+        root.style.setProperty("--font-title", formatFontFamily(value));
+      } else if (path === "font.bodyFontFamily") {
+        root.style.setProperty("--font-body", formatFontFamily(value));
+      } else if (path === "font.mainFontColor") {
+        root.style.setProperty("--color-main", value);
+      } else if (path === "font.subFontColor") {
+        root.style.setProperty("--color-sub", value);
+      }
+    }
   };
 
   // Get changed values compared to defaultValues

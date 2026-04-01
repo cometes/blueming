@@ -38,11 +38,19 @@ const buildThemeStyle = (settings: ServerSettings | null) => {
 	}
 
 	const font = (design as Record<string, unknown> | undefined)?.font as Record<string, unknown> | undefined;
+	// 멀티 워드 폰트명은 따옴표로 감싸야 CSS font-family에서 올바르게 동작 (예: "Noto Sans KR")
+	const formatFontFamilySSR = (value: string) => {
+		const v = value.trim();
+		if (!v) return v;
+		if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) return v;
+		if (v.includes(" ")) return `"${v}"`;
+		return v;
+	};
 	if (font?.bodyFontFamily !== undefined) {
-		variables.push(`--font-body:${font.bodyFontFamily}`);
+		variables.push(`--font-body:${formatFontFamilySSR(String(font.bodyFontFamily))}`);
 	}
 	if (font?.titleFontFamily !== undefined) {
-		variables.push(`--font-title:${font.titleFontFamily}`);
+		variables.push(`--font-title:${formatFontFamilySSR(String(font.titleFontFamily))}`);
 	}
 	if (font?.mainFontColor !== undefined) {
 		variables.push(`--color-main:${font.mainFontColor}`);
