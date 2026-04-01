@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -59,6 +59,7 @@ export default function WidgetMenuMobile({
 	className,
 }: Props) {
 	const [isOpen, setIsOpen] = useState(false);
+	const pendingNavigationRef = useRef<(() => void) | null>(null);
 	const { general } = useSettings();
 	const designWithLogo = design as MenuDesignWithLogo;
 	const align = useMemo(
@@ -84,14 +85,21 @@ export default function WidgetMenuMobile({
 	}, [design?.bgType, design?.backgroundColor, design?.backgroundImage]);
 
 	const handleMenuItemClick = (item: MenuItem) => (e: React.MouseEvent) => {
-		onMenuClick(item)(e);
-		if (item.category !== "폴더") {
+		if (item.category === "폴더") {
+			onMenuClick(item)(e);
+		} else {
+			// 페이지 이동은 exit 애니메이션 완료 후 실행 (removeChild 에러 방지)
+			pendingNavigationRef.current = () => {
+				onMenuClick(item)({ preventDefault: () => {} } as React.MouseEvent);
+			};
 			setIsOpen(false);
 		}
 	};
 
 	const handleSubMenuItemClick = (parentId: string, subMenuName: string) => {
-		onSubMenuClick(parentId, subMenuName);
+		pendingNavigationRef.current = () => {
+			onSubMenuClick(parentId, subMenuName);
+		};
 		setIsOpen(false);
 	};
 
@@ -100,7 +108,14 @@ export default function WidgetMenuMobile({
 		if (generalLogo?.logoType === "텍스트" && generalLogo?.logoText) {
 			return (
 				<Link href="/" className="block" onClick={() => setIsOpen(false)}>
-					<h1 className="text-lg font-title font-bold tracking-normal">
+					<h1
+						className="text-lg tracking-normal"
+						style={{
+							fontFamily: generalLogo.logoFontFamily || undefined,
+							fontWeight: generalLogo.logoFontWeight || "700",
+							color: generalLogo.logoColor || undefined,
+						}}
+					>
 						{generalLogo.logoText}
 					</h1>
 				</Link>
@@ -182,7 +197,12 @@ export default function WidgetMenuMobile({
 				</button>
 			</header>
 
-			<AnimatePresence>
+			<AnimatePresence onExitComplete={() => {
+				if (pendingNavigationRef.current) {
+					pendingNavigationRef.current();
+					pendingNavigationRef.current = null;
+				}
+			}}>
 				{isOpen ? (
 					<motion.div
 						className="fixed inset-0 z-[100]"
