@@ -1,4 +1,5 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import { type PhotoBoardPost } from "@/data/photoboard";
 import {
 	ChevronLeft,
@@ -57,6 +58,9 @@ export default function PhotoboardDetailModal({
 				className="max-w-3xl md:max-w-3xl sm:max-w-2xl bg-card border-card rounded-card backdrop-blur-card p-0 overflow-visible h-[60vh] sm:h-[80vh]"
 				onOpenAutoFocus={(e) => e.preventDefault()}
 			>
+				<VisuallyHidden.Root>
+					<DialogTitle>{post.caption || "사진 게시글"}</DialogTitle>
+				</VisuallyHidden.Root>
 				{hasPrev && (
 					<button
 						data-photoboard-nav="prev"
