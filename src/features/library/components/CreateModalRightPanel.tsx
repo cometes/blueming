@@ -1,13 +1,14 @@
 "use client";
 
 import type React from "react";
+import { useState } from "react";
 import type { CreateMetaValue } from "@/features/library/components/CreateModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { normalizeSlug } from "@/shared/lib/slug";
 import { cn } from "@/shared/lib/utils";
-import { Ban, Globe, Lock, Plus, Search, X } from "lucide-react";
+import { Ban, Eye, EyeOff, Globe, Lock, Plus, Search, X } from "lucide-react";
 
 interface CreateModalRightPanelProps {
 	tagOpen: boolean;
@@ -76,6 +77,7 @@ export default function CreateModalRightPanel({
 	handleAddSeries,
 	onCancel,
 }: CreateModalRightPanelProps) {
+	const [showPassword, setShowPassword] = useState(false);
 	return (
 		<div className="w-full md:w-1/2">
 			<div className="flex flex-col justify-between h-full">
@@ -360,23 +362,34 @@ export default function CreateModalRightPanel({
 								</Button>
 							</div>
 							{value.visibility === "password" && (
-								<Input
-									type="password"
-									placeholder="비밀번호를 입력하세요"
-									value={value.password ?? ""}
-									onChange={(event) =>
-										onChange({
-											...value,
-											password: event.target.value,
-										})
-									}
-									onBlur={() => setPasswordTouched(true)}
-									className={cn(
-										"mt-3 bg-card border-card rounded-card",
-										shouldShowPasswordError &&
-											"border-red-400 focus-visible:ring-red-400"
-									)}
-								/>
+								<div className="relative mt-3">
+									<Input
+										type="text"
+										placeholder="비밀번호를 입력하세요"
+										style={showPassword ? undefined : ({ WebkitTextSecurity: "disc" } as React.CSSProperties)}
+										value={value.password ?? ""}
+										onChange={(event) =>
+											onChange({
+												...value,
+												password: event.target.value,
+											})
+										}
+										onBlur={() => setPasswordTouched(true)}
+										className={cn(
+											"pr-10 bg-card border-card rounded-card",
+											shouldShowPasswordError &&
+												"border-red-400 focus-visible:ring-red-400"
+										)}
+									/>
+									<button
+										type="button"
+										onClick={() => setShowPassword((prev) => !prev)}
+										className="absolute right-3 top-1/2 -translate-y-1/2 text-sub-text hover:text-main-text"
+										tabIndex={-1}
+									>
+										{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+									</button>
+								</div>
 							)}
 							{shouldShowPasswordError && (
 								<p className="text-xs text-red-400 mt-1">

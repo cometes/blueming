@@ -355,7 +355,7 @@ export async function fetchLibraryDetailDirect(
 			slug: metadata.slug || undefined,
 			createdAt: formattedCreatedAt,
 			allow: metadata.allow,
-			password: null,
+			password: bypassPassword ? (metadata.password ?? null) : null,
 			thumbnail: metadata.thumbnail,
 			series: metadata.series,
 			tags: metadata.tags,

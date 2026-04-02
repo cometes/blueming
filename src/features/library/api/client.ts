@@ -70,7 +70,7 @@ export const fetchLibraryDetailWithAccess = async (
 ) => {
 	const headers: Record<string, string> = {};
 	if (options.password) {
-		headers["x-post-password"] = options.password;
+		headers["x-post-password"] = encodeURIComponent(options.password);
 	}
 	if (options.includeAuth) {
 		const authHeaders = await getAuthHeader();

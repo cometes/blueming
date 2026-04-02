@@ -86,7 +86,7 @@ export async function PUT(
 
 		const previousData = docSnapshot.data() ?? {};
 		const authorUid = typeof previousData?.authorUid === "string" ? previousData.authorUid : null;
-		if (authorUid !== auth.auth.uid && !auth.auth.isAdmin) {
+		if (authorUid !== auth.auth.uid && !auth.auth.isAdmin && auth.auth.role !== "manager") {
 			return jsonError(403, "수정 권한이 없습니다.");
 		}
 		const body = await req.json();
