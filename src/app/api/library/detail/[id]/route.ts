@@ -138,6 +138,7 @@ export async function GET(
 			series: metadata.series,
 			tags: metadata.tags,
 			pinned: metadata.pinned === true,
+			viewCount: typeof metadata.viewCount === "number" ? metadata.viewCount : 0,
 			content,
 			requiresPassword: false,
 			prevPost: prevPost

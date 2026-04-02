@@ -55,6 +55,11 @@ export interface LibraryDetailAccessOptions {
 	includeAuth?: boolean;
 }
 
+export interface RecordViewResponse {
+	counted: boolean;
+	viewCount: number;
+}
+
 export interface LibraryComment {
 	id: string;
 	postId: string;

@@ -8,6 +8,7 @@ import type {
 	FetchLibraryListParams,
 	LibraryDetailAccessOptions,
 	LibraryPinResponse,
+	RecordViewResponse,
 	UpdateLibraryResponse,
 } from "@/features/library/types";
 
@@ -181,6 +182,17 @@ export const setLibraryPin = async (
 		return response.data as LibraryPinResponse;
 	} catch (error) {
 		throw new Error(getApiErrorMessage(error, "고정 상태 변경에 실패했습니다."));
+	}
+};
+
+export const recordLibraryView = async (postId: string): Promise<RecordViewResponse> => {
+	try {
+		const response = await httpClient.post<RecordViewResponse>(
+			`/library/view/${postId}`,
+		);
+		return response.data;
+	} catch {
+		return { counted: false, viewCount: 0 };
 	}
 };
 

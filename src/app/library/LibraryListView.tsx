@@ -27,6 +27,7 @@ interface LibraryItem {
 	thumbnail?: string;
 	pinned?: boolean;
 	commentCount?: number;
+	viewCount?: number;
 	allow?: "all" | "password" | "secret";
 }
 

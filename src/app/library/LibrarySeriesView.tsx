@@ -38,7 +38,7 @@ export default function LibrarySeriesView({
 			style={{ ["--library-cols"]: postsPerRow } as CSSProperties}
 		>
 			{seriesItems.map((el) => (
-				<ItemCard data={el} key={el.id} />
+				<ItemCard data={el} key={el.series ?? el.id} />
 			))}
 		</div>
 	);
