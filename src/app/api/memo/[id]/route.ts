@@ -71,7 +71,7 @@ export async function GET(
 			!canBypass &&
 			providedPassword !== (data.password as string | undefined)
 		) {
-			return jsonError(403, "Invalid password.", { requiresPassword: true });
+			return jsonError(403, "비밀번호가 일치하지 않습니다.", { requiresPassword: true });
 		}
 
 		if (visibility === "secret" && !canBypass) {

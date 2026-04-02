@@ -9,6 +9,8 @@ import {
 	Pencil,
 	Trash2,
 	Lock,
+	Eye,
+	EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/shared/lib/utils";
@@ -22,7 +24,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/tiptap-ui-primitive/tooltip/tooltip";
-import { useEffect, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { renderRichText } from "@/shared/lib/richText";
@@ -74,9 +76,6 @@ export default function DetailClient({
 		requiresPassword,
 		requiresSecretAccess,
 		canShowComments,
-		backgroundType,
-		backgroundColor,
-		backgroundImage,
 		enableBackdrop,
 		backgroundStyle,
 		handleDelete,
@@ -92,6 +91,7 @@ export default function DetailClient({
 			router.refresh();
 		},
 	});
+	const [showPassword, setShowPassword] = useState(false);
 	const authorName =
 		typeof localDetail?.author === "string" && localDetail.author.trim()
 			? localDetail.author
@@ -146,44 +146,6 @@ export default function DetailClient({
 		const fallbackHtml = renderRichText(rawContent);
 		return fallbackHtml || null;
 	}, [contentSource]);
-	useEffect(() => {
-		const body = document.body;
-		const prevStyles = {
-			backgroundColor: body.style.backgroundColor,
-			backgroundImage: body.style.backgroundImage,
-			backgroundSize: body.style.backgroundSize,
-			backgroundPosition: body.style.backgroundPosition,
-			backgroundRepeat: body.style.backgroundRepeat,
-			backgroundAttachment: body.style.backgroundAttachment,
-		};
-
-		if (backgroundType === "color" && backgroundColor) {
-			body.style.backgroundColor = backgroundColor;
-			body.style.backgroundImage = "";
-		} else if (backgroundType === "image" && backgroundImage) {
-			body.style.backgroundImage = `url(${backgroundImage})`;
-			body.style.backgroundSize = "cover";
-			body.style.backgroundPosition = "center";
-			body.style.backgroundRepeat = "no-repeat";
-			body.style.backgroundAttachment = "fixed";
-		} else {
-			body.style.backgroundColor = "";
-			body.style.backgroundImage = "";
-			body.style.backgroundSize = "";
-			body.style.backgroundPosition = "";
-			body.style.backgroundRepeat = "";
-			body.style.backgroundAttachment = "";
-		}
-
-		return () => {
-			body.style.backgroundColor = prevStyles.backgroundColor;
-			body.style.backgroundImage = prevStyles.backgroundImage;
-			body.style.backgroundSize = prevStyles.backgroundSize;
-			body.style.backgroundPosition = prevStyles.backgroundPosition;
-			body.style.backgroundRepeat = prevStyles.backgroundRepeat;
-			body.style.backgroundAttachment = prevStyles.backgroundAttachment;
-		};
-	}, [backgroundColor, backgroundImage, backgroundType]);
 
 	const sidebarDrawer = (
 		<div
@@ -305,19 +267,36 @@ export default function DetailClient({
 									</p>
 								</div>
 								<div className="w-full flex flex-col gap-3">
-									<div className="flex items-center justify-center gap-2">
-										<input
-											type="password"
-											value={password}
-											onChange={(e) => setPassword(e.target.value)}
-											onKeyDown={(e) => {
-												if (e.key === "Enter") {
-													handleVerifyPassword();
-												}
-											}}
-											placeholder="비밀번호를 입력해주세요."
-											className="w-44 rounded-card border-card bg-card-bg px-3 py-2 text-sm text-main-text focus:outline-none focus:ring-0 focus:border-theme-primary"
-										/>
+									<div className="flex items-center gap-2 justify-center">
+										<div className="relative">
+											<input
+												type="text"
+												value={password}
+												onChange={(e) => setPassword(e.target.value)}
+												onKeyDown={(e) => {
+													if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+														handleVerifyPassword();
+													}
+												}}
+												placeholder="비밀번호를 입력해주세요."
+												style={showPassword ? undefined : ({ WebkitTextSecurity: "disc" } as React.CSSProperties)}
+												className="w-46 pr-9 rounded-card border-card bg-card-bg px-3 py-2 text-sm text-main-text focus:outline-none focus:ring-0 focus:border-theme-primary"
+											/>
+											<button
+												type="button"
+												onClick={() => setShowPassword((prev) => !prev)}
+												className="absolute right-2 top-1/2 -translate-y-1/2 text-sub-text hover:text-main-text"
+												tabIndex={-1}
+											>
+												{showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+											</button>
+										</div>
+										<Button
+											variant="default"
+											onClick={handleVerifyPassword}
+										>
+											확인
+										</Button>
 									</div>
 									{passwordError && (
 										<p className="text-sm text-red-500 text-center">

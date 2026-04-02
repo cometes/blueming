@@ -58,7 +58,7 @@ export async function DELETE(
 
 		const metadata = docSnapshot.data() ?? {};
 		const authorUid = typeof metadata?.authorUid === "string" ? metadata.authorUid : null;
-		if (authorUid !== auth.auth.uid && !auth.auth.isAdmin) {
+		if (authorUid !== auth.auth.uid && !auth.auth.isAdmin && auth.auth.role !== "manager") {
 			return jsonError(403, "삭제 권한이 없습니다.");
 		}
 		const series = typeof metadata?.series === "string" ? metadata.series : "";

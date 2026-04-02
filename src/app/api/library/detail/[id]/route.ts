@@ -55,7 +55,8 @@ export async function GET(
 			return jsonError(403, "이 게시글은 작성자와 관리자만 열람할 수 있습니다.");
 		}
 
-		const headerPassword = req.headers.get("x-post-password") || "";
+		const rawHeaderPassword = req.headers.get("x-post-password") || "";
+		const headerPassword = rawHeaderPassword ? decodeURIComponent(rawHeaderPassword) : "";
 		const queryPassword = req.nextUrl.searchParams.get("password") || "";
 		const providedPassword = headerPassword || queryPassword;
 
@@ -89,7 +90,7 @@ export async function GET(
 		}
 
 		if (requiresPassword && !bypassPassword && providedPassword !== metadata.password) {
-			return jsonError(403, "Invalid password.", { requiresPassword: true });
+			return jsonError(403, "비밀번호가 일치하지 않습니다.", { requiresPassword: true });
 		}
 
 		const contentPath = `library/create/contents/${resolvedId}/content.json`;

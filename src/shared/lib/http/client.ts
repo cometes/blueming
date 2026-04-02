@@ -19,11 +19,10 @@ export const http = {
 
 export const getApiErrorMessage = (error: unknown, fallback: string) => {
 	if (axios.isAxiosError(error)) {
-		const status = error.response?.status;
 		const apiMessage =
 			error.response?.data?.error || error.response?.data?.message;
 		if (apiMessage) {
-			return status ? `${status} ${apiMessage}` : apiMessage;
+			return apiMessage;
 		}
 	}
 	return fallback;
