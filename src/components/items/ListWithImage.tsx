@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/shared/lib/utils";
 import { Fragment, useState } from "react";
 import type { ReactNode } from "react";
-import { CircleSlash, MessageCircle, Lock, Pin } from "lucide-react";
+import { CircleSlash, MessageCircle, Lock, Pin, Eye } from "lucide-react";
 
 interface ItemListProps {
 	data: {
@@ -19,6 +19,7 @@ interface ItemListProps {
 		thumbnail?: string;
 		pinned?: boolean;
 		commentCount?: number;
+		viewCount?: number;
 		allow?: "all" | "password" | "secret";
 	};
 	detailQuery?: string;
@@ -60,6 +61,14 @@ export default function ItemListWithImage({
 			{dateConvert(data.createdAt)}
 		</time>,
 	);
+	if (typeof data.viewCount === "number") {
+		metaItems.push(
+			<span key="views" className="inline-flex items-center gap-1">
+				<Eye className="w-3.5 h-3.5" aria-hidden="true" />
+				<span>{data.viewCount}</span>
+			</span>,
+		);
+	}
 
 	return (
 		<article

@@ -210,6 +210,7 @@ export type LibraryDetailResult = {
 	series?: string;
 	tags?: string[];
 	pinned?: boolean;
+	viewCount?: number;
 	content: string | null;
 	requiresPassword?: boolean;
 	prevPost?: { id?: string; title?: string; slug?: string } | null;
@@ -360,6 +361,7 @@ export async function fetchLibraryDetailDirect(
 			series: metadata.series,
 			tags: metadata.tags,
 			pinned: metadata.pinned === true,
+			viewCount: typeof metadata.viewCount === "number" ? metadata.viewCount : 0,
 			content,
 			requiresPassword: false,
 			prevPost: prevPost

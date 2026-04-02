@@ -36,6 +36,7 @@ export const toLibraryItem = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
 		tags: data.tags,
 		pinned: data.pinned === true,
 		commentCount: typeof data.commentCount === "number" ? data.commentCount : 0,
+		viewCount: typeof data.viewCount === "number" ? data.viewCount : 0,
 	};
 };
 

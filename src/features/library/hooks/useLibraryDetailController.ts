@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
 	deleteLibraryPost,
 	fetchLibraryDetailWithAccess,
+	recordLibraryView,
 	setLibraryPin,
 } from "@/features/library/api/client";
 import { getApiErrorMessage } from "@/shared/lib/http/client";
@@ -18,6 +19,7 @@ export interface LibraryDetailData extends Partial<LibraryPinResponse> {
 	content?: unknown;
 	allow?: string;
 	requiresPassword?: boolean;
+	viewCount?: number;
 	authorId?: string | null;
 	author?: string | { id?: string | null } | null;
 	authorPhotoURL?: string | null;
@@ -223,6 +225,28 @@ export function useLibraryDetailController({
 		}
 		setSecretAuthChecked(true);
 	}, [isSecret, isAuthLoading, isAdmin, isOwner]);
+
+	const viewFiredRef = useRef<Set<string>>(new Set());
+	useEffect(() => {
+		if (!detailId) return;
+		if (isAuthLoading) return;
+		if (!localDetail?.content) return;
+		if (isSecret && !canViewSecret) return;
+		if (viewFiredRef.current.has(detailId)) return;
+
+		viewFiredRef.current.add(detailId);
+		recordLibraryView(detailId)
+			.then((result) => {
+				if (typeof result.viewCount === "number" && result.viewCount > 0) {
+					setLocalDetail((prev) =>
+						prev ? { ...prev, viewCount: result.viewCount } : prev,
+					);
+				}
+			})
+			.catch(() => {
+				// silent fail — 조회수 오류가 페이지에 영향을 주면 안 됨
+			});
+	}, [detailId, isAuthLoading, localDetail?.content, isSecret, canViewSecret]);
 
 	useEffect(() => {
 		if (!isSecret || !detailId) {

@@ -402,6 +402,11 @@ export default function DetailClient({
 									</span>
 									<span className="text-border">•</span>
 									<span suppressHydrationWarning>{dateTimeConvert(localDetail?.createdAt ?? "")}</span>
+									<span className="text-border">•</span>
+									<span className="inline-flex items-center gap-1 text-sub-text">
+										<Eye size={13} aria-hidden="true" />
+										<span>{localDetail?.viewCount ?? 0}</span>
+									</span>
 								</div>
 								{(localDetail?.tags?.length ?? 0) > 0 && (
 									<div className="TagBox flex mt-4">

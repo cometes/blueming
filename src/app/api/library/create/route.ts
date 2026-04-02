@@ -126,6 +126,7 @@ export async function POST(req: NextRequest) {
 			thumbnail: normalizedThumbnail,
 			pinned: false,
 			commentCount: 0,
+			viewCount: 0,
 			searchTokens: buildSearchTokens({
 				title: normalizedTitle,
 				subtitle: normalizedSubtitle,

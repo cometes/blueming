@@ -166,7 +166,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 	const favicon = settings?.general?.general?.favicon;
 
+	const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_BASE_URL ?? "";
+
 	return {
+		...(siteUrl && { metadataBase: new URL(siteUrl) }),
 		title,
 		description,
 		icons: {
@@ -191,7 +194,14 @@ export async function generateMetadata(): Promise<Metadata> {
 			title,
 			description,
 			...(shareImage && {
-				images: [shareImage],
+				images: [
+					{
+						url: shareImage,
+						width: 1200,
+						height: 630,
+						alt: title,
+					},
+				],
 			}),
 		},
 	};
