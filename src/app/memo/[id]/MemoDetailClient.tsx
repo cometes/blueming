@@ -173,7 +173,7 @@ export default function MemoDetailClient({
 								)}
 							</div>
 							<span>{memo.author?.name ?? "게스트"}</span>
-							<span>
+							<span suppressHydrationWarning>
 								{memo.createdAt ? dateTimeConvert(memo.createdAt) : ""}
 							</span>
 						</div>

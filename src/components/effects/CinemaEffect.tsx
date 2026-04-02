@@ -109,8 +109,8 @@ const CinemaEffect = () => {
 		document.head.appendChild(style);
 
 		return () => {
-			document.head.removeChild(link);
-			document.head.removeChild(style);
+			if (document.head.contains(link)) document.head.removeChild(link);
+			if (document.head.contains(style)) document.head.removeChild(style);
 		};
 	}, []);
 
