@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import { BulletList } from "@tiptap/extension-bullet-list";
@@ -73,10 +73,21 @@ export default function LibraryContentViewer({ content }: { content: Content }) 
 		},
 	});
 
+	const editorRef = useRef(editor);
+	useEffect(() => {
+		editorRef.current = editor;
+	}, [editor]);
+
 	useEffect(() => {
 		if (!editor || content == null) return;
 		editor.commands.setContent(content as Parameters<typeof editor.commands.setContent>[0]);
 	}, [editor, content]);
+
+	useEffect(() => {
+		return () => {
+			editorRef.current?.destroy();
+		};
+	}, []);
 
 	if (!content || !editor || editor.isEmpty) {
 		return <p className="text-sub-text">내용이 없습니다.</p>;

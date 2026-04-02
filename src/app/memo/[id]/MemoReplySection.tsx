@@ -78,7 +78,7 @@ export default function MemoReplySection({
 											)}
 										</div>
 										<span>{reply.author?.name ?? "게스트"}</span>
-										<span>
+										<span suppressHydrationWarning>
 											{reply.createdAt ? dateTimeConvert(reply.createdAt) : ""}
 										</span>
 									</div>

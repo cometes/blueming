@@ -401,7 +401,7 @@ export default function DetailClient({
 										{authorName}
 									</span>
 									<span className="text-border">•</span>
-									<span>{dateTimeConvert(localDetail?.createdAt ?? "")}</span>
+									<span suppressHydrationWarning>{dateTimeConvert(localDetail?.createdAt ?? "")}</span>
 								</div>
 								{(localDetail?.tags?.length ?? 0) > 0 && (
 									<div className="TagBox flex mt-4">
