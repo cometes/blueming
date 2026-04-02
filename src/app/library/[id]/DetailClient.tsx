@@ -11,6 +11,8 @@ import {
 	Lock,
 	Eye,
 	EyeOff,
+	Link as LinkIcon,
+	Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/shared/lib/utils";
@@ -92,6 +94,15 @@ export default function DetailClient({
 		},
 	});
 	const [showPassword, setShowPassword] = useState(false);
+	const [linkCopied, setLinkCopied] = useState(false);
+
+	const handleCopyLink = () => {
+		const url = decodeURIComponent(window.location.href);
+		navigator.clipboard.writeText(url).then(() => {
+			setLinkCopied(true);
+			setTimeout(() => setLinkCopied(false), 2000);
+		}).catch(() => {});
+	};
 	const authorName =
 		typeof localDetail?.author === "string" && localDetail.author.trim()
 			? localDetail.author
@@ -317,63 +328,82 @@ export default function DetailClient({
 						<div>
 							<div className="flex items-center justify-between mt-10">
 								<Button onClick={onClickMoveToPage(listPath)}>목록으로</Button>
-								{isAdmin || isOwner ? (
-									<div className="flex items-center gap-3">
-										{isAdmin && (
+								<div className="flex items-center gap-3">
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<button
+												type="button"
+												onClick={handleCopyLink}
+												className={cn(
+													"w-8 h-8 rounded-full bg-card flex items-center justify-center border border-card cursor-pointer",
+													linkCopied ? "text-theme-primary" : "text-sub-text",
+												)}
+												style={{ transition: "color 200ms ease-out" }}
+												aria-label="링크 복사"
+											>
+												{linkCopied ? <Check size={16} /> : <LinkIcon size={16} />}
+											</button>
+										</TooltipTrigger>
+										<TooltipContent className="text-xs">
+											{linkCopied ? "복사됨!" : "링크 복사"}
+										</TooltipContent>
+									</Tooltip>
+									{(isAdmin || isOwner) && (
+										<>
+											{isAdmin && (
+												<Tooltip>
+													<TooltipTrigger asChild>
+														<button
+															type="button"
+															onClick={handleTogglePin}
+															className={cn(
+																"w-8 h-8 rounded-full bg-card flex items-center justify-center border border-card cursor-pointer",
+																isPinned ? "text-theme-primary" : "text-sub-text",
+															)}
+															style={{ transition: "color 200ms ease-out" }}
+															aria-label="공지로 설정"
+														>
+															<Pin size={16} />
+														</button>
+													</TooltipTrigger>
+													<TooltipContent className="text-xs">
+														{isPinned ? "공지 해제" : "공지로 설정"}
+													</TooltipContent>
+												</Tooltip>
+											)}
 											<Tooltip>
 												<TooltipTrigger asChild>
 													<button
 														type="button"
-														onClick={handleTogglePin}
-														className={cn(
-															"w-8 h-8 rounded-full bg-card flex items-center justify-center border border-card cursor-pointer",
-															isPinned ? "text-theme-primary" : "text-sub-text",
+														onClick={onClickMoveToPage(
+															`/library/${localDetail?.id}/edit`,
 														)}
+														className="w-8 h-8 rounded-full bg-card flex items-center justify-center border border-card text-sub-text cursor-pointer"
 														style={{ transition: "color 200ms ease-out" }}
-														aria-label="공지로 설정"
+														aria-label="수정"
 													>
-														<Pin size={16} />
+														<Pencil size={16} />
 													</button>
 												</TooltipTrigger>
-												<TooltipContent className="text-xs">
-													{isPinned ? "공지 해제" : "공지로 설정"}
-												</TooltipContent>
+												<TooltipContent className="text-xs">수정</TooltipContent>
 											</Tooltip>
-										)}
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<button
-													type="button"
-													onClick={onClickMoveToPage(
-														`/library/${localDetail?.id}/edit`,
-													)}
-													className="w-8 h-8 rounded-full bg-card flex items-center justify-center border border-card text-sub-text cursor-pointer"
-													style={{ transition: "color 200ms ease-out" }}
-													aria-label="수정"
-												>
-													<Pencil size={16} />
-												</button>
-											</TooltipTrigger>
-											<TooltipContent className="text-xs">수정</TooltipContent>
-										</Tooltip>
-										<Tooltip>
-											<TooltipTrigger asChild>
-												<button
-													type="button"
-													onClick={handleDelete}
-													className="w-8 h-8 rounded-full bg-card  flex items-center justify-center border border-card text-sub-text cursor-pointer"
-													style={{ transition: "color 200ms ease-out" }}
-													aria-label="삭제"
-												>
-													<Trash2 size={16} />
-												</button>
-											</TooltipTrigger>
-											<TooltipContent className="text-xs">삭제</TooltipContent>
-										</Tooltip>
-									</div>
-								) : (
-									<div />
-								)}
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<button
+														type="button"
+														onClick={handleDelete}
+														className="w-8 h-8 rounded-full bg-card flex items-center justify-center border border-card text-sub-text cursor-pointer"
+														style={{ transition: "color 200ms ease-out" }}
+														aria-label="삭제"
+													>
+														<Trash2 size={16} />
+													</button>
+												</TooltipTrigger>
+												<TooltipContent className="text-xs">삭제</TooltipContent>
+											</Tooltip>
+										</>
+									)}
+								</div>
 							</div>
 							<div className="TitleWrap mt-15">
 								<h1 className="Title text-2xl text-main-text font-bold tracking-normal font-title">
