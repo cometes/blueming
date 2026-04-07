@@ -2,65 +2,46 @@ import "server-only";
 import crypto from "crypto";
 import admin from "firebase-admin";
 import { getDb } from "@/app/api/_lib/admin";
+import {
+	parsePositiveInt as _parsePositiveInt,
+	normalizeString,
+	normalizeBoolean as _normalizeBoolean,
+	normalizeImageUrls as _normalizeImageUrls,
+} from "@/app/api/_lib/normalizers";
+import { hashPin as _hashPin, verifyPin as _verifyPin } from "@/app/api/_lib/crypto";
 
 export const PIN_REGEX = /^\d{4}$/;
 export const MAX_MESSAGE_LENGTH = 500;
 export const MAX_NAME_LENGTH = 20;
 export const MAX_IMAGE_COUNT = 8;
-export const HASH_ITERATIONS = 100_000;
-export const HASH_KEYLEN = 64;
-export const HASH_DIGEST = "sha256";
 export const COOLDOWN_MS = 20_000;
 export const MINUTE_LIMIT = 5;
 export const HOUR_LIMIT = 30;
 export const MINUTE_WINDOW_MS = 60_000;
 export const HOUR_WINDOW_MS = 3_600_000;
 
-export const hashPin = (pin: string, salt?: string) => {
-	const nextSalt = salt ?? crypto.randomBytes(16).toString("hex");
-	const hash = crypto
-		.pbkdf2Sync(pin, nextSalt, HASH_ITERATIONS, HASH_KEYLEN, HASH_DIGEST)
-		.toString("hex");
-	return { salt: nextSalt, hash };
-};
+// ── 공통 유틸 re-export (기존 import 경로 호환 유지) ────────────────────────
+export const parsePositiveInt = (value: unknown, fallback: number) =>
+	_parsePositiveInt(value, fallback);
+
+export const hashPin = (pin: string, salt?: string) => _hashPin(pin, salt);
 
 export const verifyPin = (pin: string, salt: string, hash: string) =>
-	hashPin(pin, salt).hash === hash;
+	_verifyPin(pin, salt, hash);
 
-export const parsePositiveInt = (value: unknown, fallback: number) => {
-	const parsed = Number.parseInt(String(value ?? ""), 10);
-	if (Number.isNaN(parsed) || parsed <= 0) return fallback;
-	return parsed;
-};
+export const normalizeBoolean = (value: unknown) => _normalizeBoolean(value);
 
-export const normalizeMessage = (value: unknown) => {
-	if (typeof value !== "string") return "";
-	return value.trim().slice(0, MAX_MESSAGE_LENGTH);
-};
+export const normalizeImageUrls = (value: unknown) =>
+	_normalizeImageUrls(value, MAX_IMAGE_COUNT);
 
-export const normalizeName = (value: unknown) => {
-	if (typeof value !== "string") return "";
-	return value.trim().slice(0, MAX_NAME_LENGTH);
-};
+// ── feature 전용 정규화 ───────────────────────────────────────────────────────
+export const normalizeMessage = (value: unknown) =>
+	normalizeString(value, MAX_MESSAGE_LENGTH);
 
-export const normalizeBoolean = (value: unknown) => value === true;
+export const normalizeName = (value: unknown) =>
+	normalizeString(value, MAX_NAME_LENGTH);
 
-export const normalizeImageUrls = (value: unknown) => {
-	if (!Array.isArray(value)) return [];
-	const urls = value
-		.map((item) => {
-			if (typeof item !== "string") return "";
-			try {
-				const parsed = new URL(item);
-				return parsed.protocol.startsWith("http") ? item : "";
-			} catch {
-				return "";
-			}
-		})
-		.filter((url) => url.length > 0);
-	return Array.from(new Set(urls)).slice(0, MAX_IMAGE_COUNT);
-};
-
+// ── IP / Rate limit 유틸 ─────────────────────────────────────────────────────
 export const getRequestIp = (req: Request) => {
 	const forwarded = req.headers.get("x-forwarded-for");
 	if (forwarded && forwarded.length > 0) {

@@ -1,16 +1,15 @@
 import { useState, useCallback, useMemo } from "react";
+import {
+	type CommentImage,
+	createImageId,
+} from "@/features/comment/hooks/useCommentForm";
 
-export type GuestbookImage = {
-	id: string;
-	url: string;
-	file?: File;
-};
+// 기존 import 경로 호환을 위해 re-export
+export type GuestbookImage = CommentImage;
+export { createImageId };
 
 const PIN_REGEX = /^\d{4}$/;
 const MAX_IMAGE_COUNT = 8;
-
-export const createImageId = () =>
-	`img_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
 interface UseGuestbookFormProps {
 	mode: "user" | "anon";

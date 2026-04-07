@@ -80,7 +80,7 @@ export function useDesignSettingsController() {
 			}
 
 			imagePicker.actions.clearAllPendingImages();
-			design.onClickSubmit(nextDesign);
+			design.handleSave(nextDesign);
 		} catch (error) {
 			const message =
 				error instanceof Error ? error.message : "저장에 실패했습니다.";
@@ -90,7 +90,7 @@ export function useDesignSettingsController() {
 
 	const handleReset = useCallback(() => {
 		imagePicker.actions.clearAllPendingImages();
-		design.onClickReset();
+		design.handleReset();
 		setShowResetDialog(false);
 	}, [design, imagePicker.actions]);
 

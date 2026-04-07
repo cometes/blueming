@@ -2,13 +2,9 @@ import { httpClient } from "@/shared/lib/http/client";
 import { getAuthHeader } from "@/shared/lib/auth/client";
 import { uploadSingleFile } from "@/shared/lib/http/uploads";
 import type { GalleryImage, GallerySettings } from "@/features/gallery/types";
+import type { PaginatedResponse } from "@/shared/types/api";
 
-export interface GalleryListResponse {
-	items: GalleryImage[];
-	total: number;
-	page: number;
-	limit: number;
-}
+export type GalleryListResponse = PaginatedResponse<GalleryImage>;
 
 export interface GalleryListParams {
 	page?: number;
@@ -61,7 +57,7 @@ export const updateGalleryImage = async (
 	},
 ) => {
 	const headers = await getAuthHeader();
-	const response = await httpClient.put<GalleryImage>(`/gallery/${id}`, payload, {
+	const response = await httpClient.patch<GalleryImage>(`/gallery/${id}`, payload, {
 		headers,
 	});
 	return response.data;

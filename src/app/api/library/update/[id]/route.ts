@@ -60,7 +60,7 @@ const removeCollectionPost = async (
 	await docRef.set({ posts: nextPosts }, { merge: true });
 };
 
-export async function PUT(
+export async function PATCH(
 	req: NextRequest,
 	{ params }: { params: Promise<{ id?: string }> }
 ) {
