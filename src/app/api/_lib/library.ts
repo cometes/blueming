@@ -1,12 +1,12 @@
 import "server-only";
 import { v4 as uuidv4 } from "uuid";
+import { parsePositiveInt as _parsePositiveInt } from "@/app/api/_lib/normalizers";
 
-export const parsePositiveInt = (value: unknown, fallback: number) => {
-	const parsed = Number.parseInt(String(value ?? ""), 10);
-	if (Number.isNaN(parsed) || parsed <= 0) return fallback;
-	return parsed;
-};
+// ── 공통 유틸 re-export (기존 import 경로 호환 유지) ────────────────────────
+export const parsePositiveInt = (value: unknown, fallback: number) =>
+	_parsePositiveInt(value, fallback);
 
+// ── 검색 토큰 ─────────────────────────────────────────────────────────────────
 export const buildQueryTokens = (query: string) =>
 	query
 		.toLowerCase()
@@ -15,6 +15,7 @@ export const buildQueryTokens = (query: string) =>
 		.filter(Boolean)
 		.slice(0, 10);
 
+// ── Firestore 변환 ────────────────────────────────────────────────────────────
 export const toLibraryItem = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
 	const data = doc.data();
 	const formattedCreatedAt =

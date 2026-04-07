@@ -126,7 +126,7 @@ export const updateLibraryPost = async (
 		const allow = payload.visibility;
 		const slug = payload.slug?.trim() || undefined;
 		const headers = await getAuthHeader();
-		const response = await httpClient.put<UpdateLibraryResponse>(
+		const response = await httpClient.patch<UpdateLibraryResponse>(
 			`/library/update/${postId}`,
 			{
 				title: payload.title,

@@ -166,34 +166,18 @@ export const useSettingGeneral = () => {
     }
   }, [generalData, setValue]);
 
-  // Memoize handlers to prevent unnecessary re-renders
+  // 단일 setter - 모든 필드 업데이트에 사용
   const updateGeneralSetting = useCallback((field: string, value: unknown) => {
-    setGeneralSetting(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setGeneralSetting(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  const updateColorSetting = useCallback((field: string, value: string) => {
-    setGeneralSetting(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  }, []);
-
-  const handleImageUpload = useCallback((field: string, value: string) => {
-    setGeneralSetting(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  }, []);
-
-  const handleClearImage = useCallback((field: string) => {
-    setGeneralSetting(prev => ({
-      ...prev,
-      [field]: ""
-    }));
-  }, []);
+  // 아래 세 함수는 updateGeneralSetting과 동일한 동작 - 인터페이스 호환성을 위해 유지
+  const updateColorSetting = updateGeneralSetting;
+  const handleImageUpload = updateGeneralSetting;
+  const handleClearImage = useCallback(
+    (field: string) => updateGeneralSetting(field, ""),
+    [updateGeneralSetting],
+  );
 
   // Update form when settings change - with proper dependency check
   useEffect(() => {

@@ -1,20 +1,25 @@
 import "server-only";
+import {
+	parsePositiveInt as _parsePositiveInt,
+	formatTimestamp as _formatTimestamp,
+	normalizeTags as _normalizeTags,
+	normalizeString,
+} from "@/app/api/_lib/normalizers";
 
 export const COLLECTION_NAME = "gallery";
 export const MAX_TITLE_LENGTH = 120;
 export const MAX_TAGS = 20;
 export const MAX_LIMIT = 50;
 
-export const parsePositiveInt = (value: unknown, fallback: number) => {
-	const parsed = Number.parseInt(String(value ?? ""), 10);
-	if (Number.isNaN(parsed) || parsed <= 0) return fallback;
-	return parsed;
-};
+// ── 공통 유틸 re-export (기존 import 경로 호환 유지) ────────────────────────
+export const parsePositiveInt = (value: unknown, fallback: number) =>
+	_parsePositiveInt(value, fallback);
 
-export const normalizeTitle = (value: unknown) => {
-	if (typeof value !== "string") return "";
-	return value.trim().slice(0, MAX_TITLE_LENGTH);
-};
+export const formatTimestamp = (value: unknown) => _formatTimestamp(value);
+
+// ── feature 전용 정규화 ───────────────────────────────────────────────────────
+export const normalizeTitle = (value: unknown) =>
+	normalizeString(value, MAX_TITLE_LENGTH);
 
 export const normalizeCategory = (value: unknown) => {
 	if (typeof value !== "string") return "";
@@ -26,27 +31,10 @@ export const normalizeDescription = (value: unknown) => {
 	return value.trim();
 };
 
-export const normalizeTags = (value: unknown) => {
-	if (!Array.isArray(value)) return [];
-	const tags = value
-		.map((tag) => (typeof tag === "string" ? tag.trim() : ""))
-		.filter(Boolean)
-		.map((tag) => tag.replace(/^#/, ""));
-	return Array.from(new Set(tags)).slice(0, MAX_TAGS);
-};
+export const normalizeTags = (value: unknown) =>
+	_normalizeTags(value, MAX_TAGS);
 
-export const formatTimestamp = (value: unknown) => {
-	if (!value) return null;
-	if (typeof (value as { toDate?: () => Date }).toDate === "function") {
-		const date = (value as { toDate: () => Date }).toDate();
-		return Number.isNaN(date.getTime()) ? null : date.toISOString();
-	}
-	if (value instanceof Date) {
-		return Number.isNaN(value.getTime()) ? null : value.toISOString();
-	}
-	return null;
-};
-
+// ── 타입 및 Firestore 변환 ────────────────────────────────────────────────────
 export type GalleryAuthor = {
 	id: string;
 	name: string;

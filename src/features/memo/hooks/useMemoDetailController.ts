@@ -1,297 +1,66 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth/store";
-import {
-	createMemoReply,
-	deleteMemo,
-	deleteMemoReply,
-	fetchMemoDetail,
-	updateMemo,
-	updateMemoReply,
-	uploadMemoImages,
-} from "@/features/memo/api/client";
-import type { MemoDetail } from "@/features/memo/types";
-import { useAssets } from "@/features/comment/hooks/useAssets";
-import { useCommentImageDialog } from "@/features/comment/hooks/useCommentImageDialog";
-import { createImageId, type CommentImage } from "@/features/comment/hooks/useCommentForm";
-import { resolveUploadedImageUrls } from "@/shared/lib/http/uploads";
+import { deleteMemo, updateMemo, uploadMemoImages } from "@/features/memo/api/client";
+import { useMemoData } from "@/features/memo/hooks/useMemoData";
+import { useMemoReply } from "@/features/memo/hooks/useMemoReply";
+import { useCommentImageManager } from "@/features/comment/hooks/useCommentImageManager";
+import type { CommentImage } from "@/features/comment/hooks/useCommentForm";
 
 interface UseMemoDetailControllerArgs {
 	memoId: string;
-	initialMemo?: MemoDetail | null;
+	initialMemo?: import("@/features/memo/types").MemoDetail | null;
 }
 
+/**
+ * 메모 상세 페이지 오케스트레이터.
+ * useMemoData + useMemoReply를 조합하고, 메모 수정/삭제를 추가로 담당.
+ */
 export const useMemoDetailController = ({
 	memoId,
 	initialMemo,
 }: UseMemoDetailControllerArgs) => {
 	const router = useRouter();
 	const { user, isLoading: isAuthLoading } = useAuthStore();
-	const [memo, setMemo] = useState<MemoDetail | null>(initialMemo ?? null);
-	const [isLoading, setIsLoading] = useState(!initialMemo);
-	const [password, setPassword] = useState("");
-	const [passwordError, setPasswordError] = useState("");
-	const [isVerifying, setIsVerifying] = useState(false);
-	const [message, setMessage] = useState("");
-	const [images, setImages] = useState<CommentImage[]>([]);
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [isEditOpen, setIsEditOpen] = useState(false);
-	const [isDeleting, setIsDeleting] = useState(false);
-	const [isReplyEditOpen, setIsReplyEditOpen] = useState(false);
-	const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
-	const [replyMessage, setReplyMessage] = useState("");
-	const [replyImages, setReplyImages] = useState<CommentImage[]>([]);
-	const [isReplySubmitting, setIsReplySubmitting] = useState(false);
 	const [isMounted, setIsMounted] = useState(false);
-	const messageRef = useRef<HTMLTextAreaElement | null>(null);
+
+	// ── 이미지 뷰어 모달 상태 ─────────────────────────────────────────────────
 	const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 	const [imageModalIndex, setImageModalIndex] = useState(0);
 	const [imageModalImages, setImageModalImages] = useState<string[]>([]);
 
-	const imageDialog = useCommentImageDialog();
-	const assets = useAssets(imageDialog.isOpen);
+	// ── 메모 수정 다이얼로그 ──────────────────────────────────────────────────
+	const [isEditOpen, setIsEditOpen] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
 
-	const isOwner = Boolean(memo?.authorId && user?.uid === memo.authorId);
-	const requiresPassword = memo?.requiresPassword === true;
-	const requiresSecretAccess = memo?.requiresSecretAccess === true;
-	const canSubmit = isOwner && message.trim().length > 0 && !isSubmitting;
+	// ── 하위 훅 조합 ──────────────────────────────────────────────────────────
+	const memoData = useMemoData({ memoId, initialMemo });
+	const isOwner = Boolean(memoData.memo?.authorId && user?.uid === memoData.memo.authorId);
 
-	const loadDetail = useCallback(
-		async (options: { password?: string } = {}) => {
-			try {
-				setIsLoading(true);
-				const data = await fetchMemoDetail(memoId, {
-					password: options.password,
-					includeAuth: true,
-				});
-				setMemo(data);
-				return data;
-			} catch (error) {
-				const message =
-					error instanceof Error ? error.message : "메모를 불러오지 못했습니다.";
-				toast.error(message);
-				throw error;
-			} finally {
-				setIsLoading(false);
-			}
-		},
-		[memoId],
-	);
+	const memoReply = useMemoReply({
+		memoId: memoData.memo?.id,
+		isOwner,
+		onReplyChange: memoData.loadDetail,
+	});
 
-	useEffect(() => {
-		loadDetail().catch(() => undefined);
-	}, [loadDetail, user?.uid]);
+	// 메모 수정 시 이미지 업로드
+	const memoImageManager = useCommentImageManager({ maxImageCount: 4 });
 
 	useEffect(() => {
 		setIsMounted(true);
 	}, []);
 
-	const handleVerifyPassword = useCallback(async () => {
-		if (isVerifying) return;
-		if (!password.trim()) {
-			setPasswordError("비밀번호를 입력해주세요.");
-			return;
-		}
-		setIsVerifying(true);
-		setPasswordError("");
-		try {
-			await loadDetail({ password: password.trim() });
-			setPassword("");
-		} catch {
-			setPasswordError("비밀번호가 올바르지 않습니다.");
-		} finally {
-			setIsVerifying(false);
-		}
-	}, [isVerifying, loadDetail, password]);
-
-	const handleImageDialogOpen = useCallback(
-		(target: "create" | "edit") => {
-			const currentImages = target === "create" ? images : replyImages;
-			if (currentImages.length >= 4) {
-				toast.error("이미지는 최대 4개까지 첨부할 수 있어요.");
-				return;
-			}
-			imageDialog.openDialog(target, currentImages.length);
-		},
-		[imageDialog, images, replyImages],
-	);
-
-	const removeImage = useCallback((id: string) => {
-		setImages((prev) => {
-			const targetImage = prev.find((image) => image.id === id);
-			if (targetImage?.url.startsWith("blob:")) URL.revokeObjectURL(targetImage.url);
-			return prev.filter((image) => image.id !== id);
-		});
-	}, []);
-
-	const removeReplyImage = useCallback((id: string) => {
-		setReplyImages((prev) => {
-			const targetImage = prev.find((image) => image.id === id);
-			if (targetImage?.url.startsWith("blob:")) URL.revokeObjectURL(targetImage.url);
-			return prev.filter((image) => image.id !== id);
-		});
-	}, []);
-
-	const handleImageUpload = useCallback(
-		(url: string) => {
-			if (!imageDialog.target || !url) return;
-			const isCreateTarget = imageDialog.target === "create";
-			const currentImages = isCreateTarget ? images : replyImages;
-			const setTargetImages = isCreateTarget ? setImages : setReplyImages;
-			if (currentImages.length >= 4) {
-				toast.error("이미지는 최대 4개까지 첨부할 수 있어요.");
-				return;
-			}
-			if (imageDialog.previewFiles.length > 0 && imageDialog.previewUrls.length > 0) {
-				if (imageDialog.addImagesToTarget(setTargetImages)) {
-					toast.success("이미지가 추가되었습니다.");
-				}
-				return;
-			}
-			imageDialog.addSingleImageToTarget(setTargetImages, url);
-			toast.success("이미지가 추가되었습니다.");
-		},
-		[imageDialog, images, replyImages],
-	);
-
-	const openEditReply = useCallback((reply: {
-		id: string;
-		content: string;
-		imageUrls?: string[];
-	}) => {
-		setEditingReplyId(reply.id);
-		setReplyMessage(reply.content || "");
-		setReplyImages(
-			Array.isArray(reply.imageUrls)
-				? reply.imageUrls.map((url) => ({ id: createImageId(), url }))
-				: [],
-		);
-		setIsReplyEditOpen(true);
-	}, []);
-
-	const closeEditReply = useCallback(() => {
-		setIsReplyEditOpen(false);
-		setEditingReplyId(null);
-		setReplyMessage("");
-		setReplyImages([]);
-	}, []);
-
-	const uploadReplyImages = useCallback(async (targetImages: CommentImage[]) => {
-		const fileImages = targetImages.filter((img) => img.file);
-		const uploadedUrls =
-			fileImages.length > 0
-				? await uploadMemoImages(fileImages.map((img) => img.file as File))
-				: [];
-		return resolveUploadedImageUrls(targetImages, uploadedUrls);
-	}, []);
-
-	const handleUpdateReply = useCallback(async () => {
-		if (!memo?.id || !editingReplyId || !replyMessage.trim()) {
-			toast.error("내용을 입력해주세요.");
-			return;
-		}
-		if (isReplySubmitting) return;
-		setIsReplySubmitting(true);
-		try {
-			const finalImageUrls = await uploadReplyImages(replyImages);
-			await updateMemoReply(memo.id, editingReplyId, {
-				content: replyMessage.trim(),
-				imageUrls: finalImageUrls,
-			});
-			await loadDetail();
-			closeEditReply();
-			toast.success("답글이 수정되었습니다.");
-		} catch (error) {
-			const message =
-				error instanceof Error ? error.message : "답글 수정에 실패했습니다.";
-			toast.error(message);
-		} finally {
-			setIsReplySubmitting(false);
-		}
-	}, [
-		closeEditReply,
-		editingReplyId,
-		isReplySubmitting,
-		loadDetail,
-		memo?.id,
-		replyImages,
-		replyMessage,
-		uploadReplyImages,
-	]);
-
-	const handleDeleteReply = useCallback(
-		async (replyId: string) => {
-			if (!memo?.id) return;
-			const confirmed = window.confirm("답글을 삭제할까요? 삭제 후 복구할 수 없습니다.");
-			if (!confirmed) return;
-			try {
-				await deleteMemoReply(memo.id, replyId);
-				await loadDetail();
-				toast.success("답글이 삭제되었습니다.");
-			} catch (error) {
-				const message =
-					error instanceof Error ? error.message : "답글 삭제에 실패했습니다.";
-				toast.error(message);
-			}
-		},
-		[loadDetail, memo?.id],
-	);
-
-	useEffect(() => {
-		return () => {
-			images.forEach((image) => {
-				if (image.url.startsWith("blob:")) URL.revokeObjectURL(image.url);
-			});
-		};
-	}, [images]);
-
-	useEffect(() => {
-		return () => {
-			replyImages.forEach((image) => {
-				if (image.url.startsWith("blob:")) URL.revokeObjectURL(image.url);
-			});
-		};
-	}, [replyImages]);
-
+	// ── 이미지 뷰어 ───────────────────────────────────────────────────────────
 	const openImageModal = useCallback((urls: string[], index: number) => {
 		setImageModalImages(urls);
 		setImageModalIndex(index);
 		setIsImageModalOpen(true);
 	}, []);
 
-	const handleMessageChange = useCallback((value: string) => {
-		setMessage(value);
-		if (!messageRef.current) return;
-		messageRef.current.style.height = "auto";
-		messageRef.current.style.height = `${messageRef.current.scrollHeight}px`;
-	}, []);
-
-	const handleCreateReply = useCallback(async () => {
-		if (!canSubmit || !memo?.id) return;
-		setIsSubmitting(true);
-		try {
-			const finalImageUrls = await uploadReplyImages(images);
-			await createMemoReply(memo.id, {
-				content: message.trim(),
-				imageUrls: finalImageUrls,
-			});
-			setMessage("");
-			setImages([]);
-			if (messageRef.current) messageRef.current.style.height = "auto";
-			await loadDetail();
-			toast.success("답글이 추가되었습니다.");
-		} catch (error) {
-			const message =
-				error instanceof Error ? error.message : "답글 작성에 실패했습니다.";
-			toast.error(message);
-		} finally {
-			setIsSubmitting(false);
-		}
-	}, [canSubmit, images, loadDetail, memo?.id, message, uploadReplyImages]);
-
+	// ── 메모 수정 ────────────────────────────────────────────────────────────
 	const handleUpdateMemo = useCallback(
 		async (payload: {
 			title: string;
@@ -301,9 +70,12 @@ export const useMemoDetailController = ({
 			password?: string;
 			images: CommentImage[];
 		}) => {
-			if (!memo?.id) return;
-			const finalImageUrls = await uploadReplyImages(payload.images);
-			await updateMemo(memo.id, {
+			if (!memoData.memo?.id) return;
+			const finalImageUrls = await memoImageManager.resolveImageUrls(
+				payload.images,
+				uploadMemoImages,
+			);
+			await updateMemo(memoData.memo.id, {
 				title: payload.title,
 				content: payload.content,
 				tags: payload.tags,
@@ -311,81 +83,87 @@ export const useMemoDetailController = ({
 				password: payload.password,
 				imageUrls: finalImageUrls,
 			});
-			await loadDetail();
+			await memoData.loadDetail();
 			toast.success("메모가 수정되었습니다.");
 		},
-		[loadDetail, memo?.id, uploadReplyImages],
+		[memoData, memoImageManager],
 	);
 
+	// ── 메모 삭제 ────────────────────────────────────────────────────────────
 	const handleDeleteMemo = useCallback(async () => {
-		if (!memo?.id || isDeleting) return;
+		if (!memoData.memo?.id || isDeleting) return;
 		const confirmed = window.confirm("메모를 삭제할까요? 삭제 후 복구할 수 없습니다.");
 		if (!confirmed) return;
 		setIsDeleting(true);
 		try {
-			await deleteMemo(memo.id);
+			await deleteMemo(memoData.memo.id);
 			toast.success("메모가 삭제되었습니다.");
 			router.push("/memo");
 		} catch (error) {
-			const message =
+			const msg =
 				error instanceof Error ? error.message : "메모 삭제에 실패했습니다.";
-			toast.error(message);
+			toast.error(msg);
 		} finally {
 			setIsDeleting(false);
 		}
-	}, [isDeleting, memo?.id, router]);
+	}, [isDeleting, memoData.memo?.id, router]);
 
-	const replies = useMemo(() => memo?.replies ?? [], [memo?.replies]);
+	const replies = useMemo(() => memoData.memo?.replies ?? [], [memoData.memo?.replies]);
 
+	// ── return: 기존 consumer 코드와 동일한 인터페이스 유지 ──────────────────
 	return {
 		router,
 		user,
 		isAuthLoading,
-		memo,
-		isLoading,
-		password,
-		setPassword,
-		passwordError,
-		isVerifying,
-		message,
-		images,
-		isSubmitting,
+		isMounted,
+		// memoData
+		memo: memoData.memo,
+		isLoading: memoData.isLoading,
+		password: memoData.password,
+		setPassword: memoData.setPassword,
+		passwordError: memoData.passwordError,
+		isVerifying: memoData.isVerifying,
+		requiresPassword: memoData.requiresPassword,
+		requiresSecretAccess: memoData.requiresSecretAccess,
+		loadDetail: memoData.loadDetail,
+		handleVerifyPassword: memoData.handleVerifyPassword,
+		// memoReply
+		message: memoReply.message,
+		images: memoReply.images,
+		isSubmitting: memoReply.isSubmitting,
+		canSubmit: memoReply.canSubmit,
+		messageRef: memoReply.messageRef,
+		isReplyEditOpen: memoReply.isReplyEditOpen,
+		setIsReplyEditOpen: memoReply.setIsReplyEditOpen,
+		replyMessage: memoReply.replyMessage,
+		setReplyMessage: memoReply.setReplyMessage,
+		replyImages: memoReply.replyImages,
+		isReplySubmitting: memoReply.isReplySubmitting,
+		imageDialog: memoReply.imageDialog,
+		assets: memoReply.assets,
+		handleMessageChange: memoReply.handleMessageChange,
+		handleCreateReply: memoReply.handleCreateReply,
+		openEditReply: memoReply.openEditReply,
+		closeEditReply: memoReply.closeEditReply,
+		handleUpdateReply: memoReply.handleUpdateReply,
+		handleDeleteReply: memoReply.handleDeleteReply,
+		handleImageDialogOpen: memoReply.handleImageDialogOpen,
+		removeImage: memoReply.removeImage,
+		removeReplyImage: memoReply.removeReplyImage,
+		handleImageUpload: memoReply.handleImageUpload,
+		// 메모 수정/삭제
 		isEditOpen,
 		setIsEditOpen,
 		isDeleting,
-		isReplyEditOpen,
-		setIsReplyEditOpen,
-		replyMessage,
-		setReplyMessage,
-		replyImages,
-		isReplySubmitting,
-		isMounted,
-		messageRef,
+		isOwner,
+		replies,
+		handleUpdateMemo,
+		handleDeleteMemo,
+		// 이미지 뷰어
 		isImageModalOpen,
 		setIsImageModalOpen,
 		imageModalIndex,
 		imageModalImages,
-		imageDialog,
-		assets,
-		isOwner,
-		requiresPassword,
-		requiresSecretAccess,
-		canSubmit,
-		replies,
-		loadDetail,
-		handleVerifyPassword,
-		handleImageDialogOpen,
-		removeImage,
-		removeReplyImage,
-		handleImageUpload,
-		openEditReply,
-		closeEditReply,
-		handleUpdateReply,
-		handleDeleteReply,
 		openImageModal,
-		handleMessageChange,
-		handleCreateReply,
-		handleUpdateMemo,
-		handleDeleteMemo,
 	};
 };

@@ -34,6 +34,7 @@ const makeItem = (overrides: Partial<{
 	tags: overrides.tags ?? [],
 	pinned: overrides.pinned ?? false,
 	commentCount: 0,
+	viewCount: 0,
 });
 
 // ─── parsePositiveInt ────────────────────────────────────────────────────────

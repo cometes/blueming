@@ -1,3 +1,5 @@
+import type { PaginatedResponse, PaginatedParams } from "@/shared/types/api";
+
 export type MemoVisibility = "public" | "secret" | "protected";
 
 export interface MemoAuthor {
@@ -35,16 +37,8 @@ export interface MemoDetail extends MemoItem {
 	requiresSecretAccess?: boolean;
 }
 
-export interface MemoListResponse {
-	items: MemoItem[];
-	total: number;
-	page: number;
-	limit: number;
-}
+export type MemoListResponse = PaginatedResponse<MemoItem>;
 
-export interface MemoListParams {
-	page?: number;
-	limit?: number;
+export interface MemoListParams extends PaginatedParams {
 	query?: string;
 }
-

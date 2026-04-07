@@ -197,7 +197,7 @@ export const useSettingDesign = () => {
   };
 
 
-  const onClickSubmit = async (overrideDesign?: typeof currentDesignSetting) => {
+  const handleSave = async (overrideDesign?: typeof currentDesignSetting) => {
     const source = overrideDesign ?? currentDesignSetting;
     // getChangedValues는 기본값과 비교해 변경된 항목만 추출하지만,
     // 이 방식은 기본값으로 되돌릴 때 빈 객체를 보내 Firestore의 기존 값이 남는 버그가 있음.
@@ -221,7 +221,7 @@ export const useSettingDesign = () => {
     }
   };
 
-  const onClickReset = async () => {
+  const handleReset = async () => {
     try {
       await runSettingsMutation({
         execute: () => setSettingsGeneralDesign(defaultValues),
@@ -261,10 +261,10 @@ export const useSettingDesign = () => {
     font: currentDesignSetting.font,
     widget: currentDesignSetting.widget,
     isDirty,
-    onClickSubmit,
+    handleSave,
     openReset,
     setOpenReset,
-    onClickReset,
+    handleReset,
     design
   };
 };

@@ -1,34 +1,8 @@
-export interface GuestbookEntry {
-	id: string;
-	authorType: "user" | "anon";
-	displayName: string;
-	uid?: string | null;
-	photoURL?: string | null;
-	imageUrls: string[];
-	message: string;
-	isSecret?: boolean;
-	isAdmin?: boolean;
-	canEdit?: boolean;
-	canDelete?: boolean;
-	canViewSecret?: boolean;
-	masked?: boolean;
-	isOwn?: boolean;
-	displayMessage?: string;
-	displayImageUrls?: string[];
-	authorLabel?: string;
-	createdAt: string | null;
-	updatedAt: string | null;
-}
+import type { BaseCommentEntry } from "@/shared/types/comment";
+import type { PaginatedResponse, PaginatedParams } from "@/shared/types/api";
 
-export interface GuestbookListResponse {
-	items: GuestbookEntry[];
-	total: number;
-	page: number;
-	limit: number;
-}
+export type GuestbookEntry = BaseCommentEntry;
 
-export interface GuestbookListParams {
-	page?: number;
-	limit?: number;
-}
+export type GuestbookListResponse = PaginatedResponse<GuestbookEntry>;
 
+export type GuestbookListParams = PaginatedParams;

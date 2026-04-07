@@ -1,5 +1,6 @@
-import { httpClient, getApiErrorMessage, API_BASE } from "@/shared/lib/http/client";
+import { httpClient, getApiErrorMessage } from "@/shared/lib/http/client";
 import { getAuthHeader } from "@/shared/lib/auth/client";
+import { uploadFiles } from "@/shared/lib/http/uploads";
 import type {
 	MemoDetail,
 	MemoItem,
@@ -131,28 +132,5 @@ export const deleteMemo = async (id: string) => {
 	}
 };
 
-export const uploadMemoImages = async (files: File[]) => {
-	if (files.length === 0) return [];
-	const formData = new FormData();
-	files.forEach((file) => {
-		formData.append("file", file);
-	});
-	const headers = await getAuthHeader();
-	const response = await fetch(`${API_BASE}/memo/uploadImage`, {
-		method: "POST",
-		body: formData,
-		headers,
-		credentials: "include",
-	});
-	if (!response.ok) {
-		throw new Error(`Upload failed: ${response.statusText}`);
-	}
-	const data = await response.json();
-	const urls = Array.isArray(data.files)
-		? data.files.map((file: { url?: string }) => file.url).filter(Boolean)
-		: [];
-	if (urls.length === 0) {
-		throw new Error("서버에서 올바른 응답을 받지 못했습니다.");
-	}
-	return urls as string[];
-};
+export const uploadMemoImages = async (files: File[]) =>
+	uploadFiles({ files, endpoint: "/api/memo/uploadImage" });

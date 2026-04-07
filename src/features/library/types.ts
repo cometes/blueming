@@ -1,3 +1,6 @@
+import type { BaseCommentEntry } from "@/shared/types/comment";
+import type { PaginatedResponse, PaginatedParams } from "@/shared/types/api";
+
 export interface FetchLibraryListParams {
 	page?: number;
 	limit?: number;
@@ -60,37 +63,11 @@ export interface RecordViewResponse {
 	viewCount: number;
 }
 
-export interface LibraryComment {
-	id: string;
+// LibraryComment는 BaseCommentEntry에 postId가 추가된 형태
+export interface LibraryComment extends BaseCommentEntry {
 	postId: string;
-	authorType: "user" | "anon";
-	displayName: string;
-	uid?: string | null;
-	photoURL?: string | null;
-	imageUrls: string[];
-	message: string;
-	isSecret?: boolean;
-	isAdmin?: boolean;
-	canEdit?: boolean;
-	canDelete?: boolean;
-	canViewSecret?: boolean;
-	masked?: boolean;
-	isOwn?: boolean;
-	displayMessage?: string;
-	displayImageUrls?: string[];
-	authorLabel?: string;
-	createdAt: string | null;
-	updatedAt: string | null;
 }
 
-export interface LibraryCommentListResponse {
-	items: LibraryComment[];
-	total: number;
-	page: number;
-	limit: number;
-}
+export type LibraryCommentListResponse = PaginatedResponse<LibraryComment>;
 
-export interface FetchLibraryCommentListParams {
-	page?: number;
-	limit?: number;
-}
+export type FetchLibraryCommentListParams = PaginatedParams;

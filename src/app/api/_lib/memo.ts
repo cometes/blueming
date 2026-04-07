@@ -1,5 +1,12 @@
 import "server-only";
 import { getDb } from "@/app/api/_lib/admin";
+import {
+	parsePositiveInt as _parsePositiveInt,
+	formatTimestamp as _formatTimestamp,
+	normalizeTags as _normalizeTags,
+	normalizeImageUrls as _normalizeImageUrls,
+	normalizeString,
+} from "@/app/api/_lib/normalizers";
 
 export const COLLECTION_NAME = "memos";
 export const REPLY_COLLECTION = "replies";
@@ -9,64 +16,31 @@ export const MAX_CONTENT_LENGTH = 5000;
 export const MAX_TAGS = 10;
 export const MAX_IMAGE_COUNT = 4;
 
-export const parsePositiveInt = (value: unknown, fallback: number) => {
-	const parsed = Number.parseInt(String(value ?? ""), 10);
-	if (Number.isNaN(parsed) || parsed <= 0) return fallback;
-	return parsed;
-};
+// ── 공통 유틸 re-export (기존 import 경로 호환 유지) ────────────────────────
+export const parsePositiveInt = (value: unknown, fallback: number) =>
+	_parsePositiveInt(value, fallback);
 
-export const normalizeTitle = (value: unknown) => {
-	if (typeof value !== "string") return "";
-	return value.trim().slice(0, MAX_TITLE_LENGTH);
-};
+export const formatTimestamp = (value: unknown) => _formatTimestamp(value);
 
-export const normalizeContent = (value: unknown) => {
-	if (typeof value !== "string") return "";
-	return value.trim().slice(0, MAX_CONTENT_LENGTH);
-};
+// ── feature 전용 정규화 (상수를 고정하여 단순 호출) ─────────────────────────
+export const normalizeTitle = (value: unknown) =>
+	normalizeString(value, MAX_TITLE_LENGTH);
 
-export const normalizeTags = (value: unknown) => {
-	if (!Array.isArray(value)) return [];
-	const tags = value
-		.map((tag) => (typeof tag === "string" ? tag.trim() : ""))
-		.filter(Boolean)
-		.map((tag) => tag.replace(/^#/, ""));
-	return Array.from(new Set(tags)).slice(0, MAX_TAGS);
-};
+export const normalizeContent = (value: unknown) =>
+	normalizeString(value, MAX_CONTENT_LENGTH);
+
+export const normalizeTags = (value: unknown) =>
+	_normalizeTags(value, MAX_TAGS);
+
+export const normalizeImageUrls = (value: unknown) =>
+	_normalizeImageUrls(value, MAX_IMAGE_COUNT);
 
 export const normalizeVisibility = (value: unknown) => {
 	if (value === "secret" || value === "protected") return value;
 	return "public";
 };
 
-export const normalizeImageUrls = (value: unknown) => {
-	if (!Array.isArray(value)) return [];
-	const urls = value
-		.map((item) => {
-			if (typeof item !== "string") return "";
-			try {
-				const parsed = new URL(item);
-				return parsed.protocol.startsWith("http") ? item : "";
-			} catch {
-				return "";
-			}
-		})
-		.filter((url) => url.length > 0);
-	return Array.from(new Set(urls)).slice(0, MAX_IMAGE_COUNT);
-};
-
-export const formatTimestamp = (value: unknown) => {
-	if (!value) return null;
-	if (typeof (value as { toDate?: () => Date }).toDate === "function") {
-		const date = (value as { toDate: () => Date }).toDate();
-		return Number.isNaN(date.getTime()) ? null : date.toISOString();
-	}
-	if (value instanceof Date) {
-		return Number.isNaN(value.getTime()) ? null : value.toISOString();
-	}
-	return null;
-};
-
+// ── Firestore 변환 ────────────────────────────────────────────────────────────
 export const toMemoItem = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
 	const data = doc.data() as Record<string, unknown>;
 	const visibility = (data.visibility as string) || "public";
