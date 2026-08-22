@@ -5,6 +5,7 @@ import * as React from "react";
 import { NodeViewWrapper } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { ImageBubbleMenu } from "@/components/tiptap-ui/image-bubble-menu/image-bubble-menu";
+import { IMAGE_MOVE_MIME } from "@/shared/lib/tiptapImage";
 
 export const ImageNodeView: React.FC<NodeViewProps> = ({
 	node,
@@ -208,12 +209,20 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 						/>
 					</>
 				)}
+				{/* 드래그 시 커스텀 MIME으로 원본 위치를 기록해 에디터 handleDrop이
+				    "이동"으로 처리하게 한다. (네이티브 이미지 드래그로 빠지면 복제됨) */}
 				<img
 					ref={imgRef}
 					src={src}
 					alt={alt}
 					title={title}
 					style={imgStyle}
+					draggable
+					data-drag-handle=""
+					onDragStart={(e) => {
+						e.dataTransfer.setData(IMAGE_MOVE_MIME, String(getPos()));
+						e.dataTransfer.effectAllowed = "move";
+					}}
 				/>
 			</div>
 		</NodeViewWrapper>

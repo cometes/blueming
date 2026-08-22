@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { extensions } from "@/components/editor/TiptapEditor";
 import { handleImageUpload } from "@/shared/lib/tiptap-utils";
 import {
+	IMAGE_MOVE_MIME,
 	isHttpUrl,
 	resolveImageAttrs,
 } from "@/shared/lib/tiptapImage";
@@ -105,6 +106,36 @@ export function useLibraryEditor(
 				class: "prose max-w-none focus:outline-none min-h-[400px] p-0",
 			},
 			handleDrop: (view, event, _slice, moved) => {
+				// 0) 에디터 내 이미지 이동: dragstart에서 기록한 원본 위치를 삭제하고
+				//    드롭 지점에 같은 노드를 삽입 (복제 방지, 한 트랜잭션 = 언두 1회)
+				const moveData = event.dataTransfer?.getData(IMAGE_MOVE_MIME);
+				if (moveData && editor) {
+					const from = Number(moveData);
+					const node = view.state.doc.nodeAt(from);
+					const coords = view.posAtCoords({
+						left: event.clientX,
+						top: event.clientY,
+					});
+					if (node && coords) {
+						event.preventDefault();
+						let target = coords.pos;
+						// 원본 삭제만큼 뒤쪽 좌표 보정
+						if (target > from) {
+							target = Math.max(from, target - node.nodeSize);
+						}
+						editor
+							.chain()
+							.focus()
+							.deleteRange({ from, to: from + node.nodeSize })
+							.insertContentAt(target, node.toJSON())
+							.run();
+						editor.commands.focus(
+							Math.min(target + 1, editor.state.doc.content.size),
+						);
+						return true;
+					}
+				}
+
 				// moved = 에디터 내부 콘텐츠 이동(드래그) — 기본 동작 유지
 				if (moved) return false;
 				const files = Array.from(event.dataTransfer?.files ?? []).filter(

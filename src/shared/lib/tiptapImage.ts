@@ -3,6 +3,9 @@
 
 const MAX_INSERT_WIDTH = 800;
 
+/** 에디터 내 이미지 노드 이동 드래그를 식별하는 커스텀 MIME (dragstart 위치 기록) */
+export const IMAGE_MOVE_MIME = "application/x-blueming-image-move";
+
 export const IMAGE_URL_PATTERN =
 	/^https?:\/\/\S+\.(png|jpe?g|gif|webp|avif|svg)(\?\S*)?$/i;
 
