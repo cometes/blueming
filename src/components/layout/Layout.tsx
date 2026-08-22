@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import { cn } from "@/shared/lib/utils";
@@ -17,32 +16,9 @@ export default function Layout({ children }: LayoutProps) {
 	const router = useRouter();
 	const { general } = useSettings();
 
-	// 파비콘 동적 변경
-	useEffect(() => {
-		const favicon = general?.general?.favicon;
-		if (favicon) {
-			// 기존 파비콘 링크 제거
-			const existingFavicon = document.querySelector('link[rel="icon"]');
-			if (existingFavicon) {
-				existingFavicon.remove();
-			}
-
-			// 새 파비콘 링크 추가
-			const link = document.createElement("link");
-			link.rel = "icon";
-			link.type = "image/png";
-			link.href = favicon;
-			document.head.appendChild(link);
-		}
-	}, [general?.general?.favicon]);
-
-	// 타이틀 동적 변경
-	useEffect(() => {
-		const title = general?.general?.title;
-		if (title) {
-			document.title = title;
-		}
-	}, [general?.general?.title]);
+	// 파비콘/타이틀은 app/layout.tsx의 generateMetadata가 설정한다.
+	// 여기서 document.head의 <link rel="icon">을 직접 제거/추가하면 React가 소유한
+	// 노드를 지우게 되어 라우트 이동 시 removeChild 크래시가 발생하므로 금지.
 
 	const isMainPage = pathname === "/";
 	const isStickerBoardEditPage = pathname === "/setting/stickerBoard/edit";

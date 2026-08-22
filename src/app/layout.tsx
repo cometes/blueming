@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Layout from "@/components/layout/Layout";
 import Providers from "@/providers/Providers";
-import { getServerSettings, type ServerSettings, type FontRegistryItem } from "@/app/api/_lib/settingsServer";
-import { getFontFormat, isFontFileUrl } from "@/shared/lib/fonts";
+import { getServerSettings, type ServerSettings } from "@/app/api/_lib/settingsServer";
 
 type AppSettings = ServerSettings;
 
@@ -137,25 +136,6 @@ const getPreloadImageUrls = (settings: AppSettings | null) => {
 	);
 };
 
-const getFontRegistry = (settings: ServerSettings | null): FontRegistryItem[] =>
-	settings?.general?.fontRegistry ?? [];
-
-
-const buildFontFaceCSS = (fonts: FontRegistryItem[]) =>
-	fonts
-		.filter(
-			(font) =>
-				font?.family &&
-				font?.url &&
-				(font?.source === "file" || isFontFileUrl(font.url))
-		)
-		.map((font) => {
-			const format = getFontFormat(font.url as string);
-			const formatValue = format ? ` format("${format}")` : "";
-			return `@font-face{font-family:"${font.family}";src:url("${font.url}")${formatValue};font-display:swap;}`;
-		})
-		.join("");
-
 const getSettings = getServerSettings;
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -215,8 +195,6 @@ export default async function RootLayout({
 	const settings = await getSettings();
 	const themeStyle = buildThemeStyle(settings);
 	const preloadImages = getPreloadImageUrls(settings);
-	const fontRegistry = getFontRegistry(settings);
-	const fontFaceCSS = buildFontFaceCSS(fontRegistry);
 
 	return (
 		<html lang="en">
@@ -229,22 +207,8 @@ export default async function RootLayout({
 				{preloadImages.map((url) => (
 					<link key={url} rel="preload" as="image" href={url} />
 				))}
-				{fontRegistry
-					.filter(
-						(font) =>
-							font?.source === "url" && font?.url && !isFontFileUrl(font.url)
-					)
-					.map((font) => (
-						<link
-							key={font.id || font.url}
-							rel="stylesheet"
-							href={font.url as string}
-							data-font-registry="true"
-						/>
-					))}
-				{fontFaceCSS ? (
-					<style data-font-registry="true">{fontFaceCSS}</style>
-				) : null}
+				{/* 폰트 레지스트리 <link>/<style>은 ThemeProvider(FontRegistryAssets)가
+				    SSR 포함 전 구간에서 렌더링한다. 여기서 중복 렌더링하면 소유권이 갈라진다. */}
 				{themeStyle ? <style>{themeStyle}</style> : null}
 			</head>
 			<body>

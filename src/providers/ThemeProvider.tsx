@@ -29,30 +29,33 @@ const buildFontFace = (font: FontRegistryItem) => {
 	return `@font-face{font-family:"${font.family}";src:url("${font.url}")${formatValue};font-display:swap;}`;
 };
 
-const syncFontAssets = (fonts: FontRegistryItem[]) => {
-	const head = document.head;
-	if (!head) return;
-
-	head.querySelectorAll("[data-font-registry]").forEach((node) => node.remove());
-
-	fonts.forEach((font) => {
-		if (!font?.url || !font?.family) return;
-		if (font.source === "url" && !isFontFileUrl(font.url)) {
-			const link = document.createElement("link");
-			link.rel = "stylesheet";
-			link.href = font.url;
-			link.setAttribute("data-font-registry", "true");
-			link.setAttribute("data-font-id", font.id || font.family);
-			head.appendChild(link);
-			return;
-		}
-
-		const style = document.createElement("style");
-		style.setAttribute("data-font-registry", "true");
-		style.setAttribute("data-font-id", font.id || font.family);
-		style.textContent = buildFontFace(font);
-		head.appendChild(style);
-	});
+// 폰트 레지스트리를 JSX로 렌더링한다. React 19가 <link>/<style precedence>를
+// document.head로 호이스팅하고 href 기준으로 중복 제거해주므로,
+// head를 querySelector로 뒤져서 노드를 지우는 방식(React 소유 노드 파괴 → removeChild 크래시)을 쓰면 안 된다.
+const FontRegistryAssets = ({ fonts }: { fonts: FontRegistryItem[] }) => {
+	return (
+		<>
+			{fonts.map((font) => {
+				if (!font?.url || !font?.family) return null;
+				const key = font.id || font.family;
+				if (font.source === "url" && !isFontFileUrl(font.url)) {
+					return (
+						<link
+							key={key}
+							rel="stylesheet"
+							href={font.url}
+							precedence="font-registry"
+						/>
+					);
+				}
+				return (
+					<style key={key} href={`font-registry-${key}`} precedence="font-registry">
+						{buildFontFace(font)}
+					</style>
+				);
+			})}
+		</>
+	);
 };
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
@@ -238,12 +241,6 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 		}
 	}, [design, general]);
 
-	useEffect(() => {
-		if (typeof window !== "undefined") {
-			syncFontAssets(fontRegistry);
-		}
-	}, [fontRegistry]);
-
 	// 초기 로딩 시 즉시 적용 (hydration 전에)
 	useEffect(() => {
 		if (typeof window !== 'undefined' && (design || general)) {
@@ -260,7 +257,12 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 		setCSSVariables,
 	};
 
-	return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+	return (
+		<ThemeContext.Provider value={value}>
+			<FontRegistryAssets fonts={fontRegistry} />
+			{children}
+		</ThemeContext.Provider>
+	);
 }
 
 // 테마 컨텍스트 사용을 위한 커스텀 훅
