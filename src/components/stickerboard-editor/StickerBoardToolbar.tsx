@@ -25,11 +25,11 @@ export function StickerBoardToolbar({
 				</h1>
 
 				{editingGroup && (
-					<div className="mt-3 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs text-blue-700">
+					<div className="mt-3 inline-flex items-center gap-2 rounded-full border border-theme-primary/30 bg-theme-primary/10 px-3 py-1 text-xs text-theme-primary">
 						<span className="font-medium">
 							그룹 편집 중: {editingGroup.name ?? "그룹"}
 						</span>
-						<span className="text-blue-600/80">Esc로 종료</span>
+						<span className="text-theme-primary/80">Esc로 종료</span>
 					</div>
 				)}
 			</div>

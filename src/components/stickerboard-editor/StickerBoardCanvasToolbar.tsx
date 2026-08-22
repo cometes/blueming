@@ -22,18 +22,18 @@ export function StickerBoardCanvasToolbar({
 		<div className="flex items-center justify-between">
 			<div>
 				<div className="text-sm font-semibold text-main-text">캔버스</div>
-				<p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-					고정 폭 768px 캔버스 영역
+				<p className="mt-1 text-xs text-sub-text">
+					메인 페이지 위젯과 동일한 비율로 표시됩니다
 				</p>
 			</div>
-			<ButtonGroup className="items-center rounded-md border border-stone-700 bg-stone-800 overflow-hidden divide-x divide-stone-700">
+			<ButtonGroup className="items-center rounded-md border border-card-color bg-card-bg overflow-hidden divide-x divide-[color:var(--color-card-border)]">
 				<Button
 					type="button"
 					variant="ghost"
 					size="icon"
 					className={[
-						"h-8 w-8 rounded-none hover:bg-stone-700",
-						isImageDialogOpen ? "bg-stone-700 text-white" : "",
+						"h-8 w-8 rounded-none hover:bg-theme-primary/10 hover:text-theme-primary",
+						isImageDialogOpen ? "bg-theme-primary text-white" : "",
 					].join(" ")}
 					onClick={onToggleImageDialog}
 					aria-label="이미지 스티커 추가"
@@ -46,8 +46,8 @@ export function StickerBoardCanvasToolbar({
 					variant="ghost"
 					size="icon"
 					className={[
-						"h-8 w-8 rounded-none hover:bg-stone-700",
-						isTextInsertMode ? "bg-stone-700 text-white" : "",
+						"h-8 w-8 rounded-none hover:bg-theme-primary/10 hover:text-theme-primary",
+						isTextInsertMode ? "bg-theme-primary text-white" : "",
 					].join(" ")}
 					onClick={onToggleTextInsertMode}
 					aria-label="텍스트 스티커 추가"
@@ -59,7 +59,7 @@ export function StickerBoardCanvasToolbar({
 					containerClassName=""
 					compactTrigger
 					triggerVariant="ghost"
-					triggerClassName="h-8 w-8 rounded-none hover:bg-stone-700"
+					triggerClassName="h-8 w-8 rounded-none hover:bg-theme-primary/10 hover:text-theme-primary"
 				/>
 			</ButtonGroup>
 		</div>

@@ -9,30 +9,14 @@ import {
 	STICKER_ASSET_DND_MIME,
 	type StickerBoardComponent,
 } from "@/features/stickerboard-editor/model";
-
-const GRID_BASE = 12;
-
-interface TextDraft {
-	mode: "insert" | "edit";
-	id?: number;
-	text: string;
-	xPct: number;
-	yPct: number;
-	widthPct?: number;
-	heightPct?: number;
-	widthPx: number;
-	fontSize: number;
-	textColor: string;
-	textAlign: "left" | "center" | "right";
-	backgroundColor?: string;
-}
+import type { StickerTextDraft } from "@/features/stickerboard-editor/hooks/useStickerTextDraft";
 
 interface StickerBoardCanvasStageProps {
 	ratio: { w: number; h: number } | null;
 	boundsRef: RefObject<HTMLDivElement | null>;
 	setCanvasRef: (element: HTMLDivElement | null) => void;
 	visibleDraft: StickerBoardComponent[];
-	textDraft: TextDraft | null;
+	textDraft: StickerTextDraft | null;
 	textDraftRef: RefObject<HTMLDivElement | null>;
 	moveableRef: RefObject<Moveable | null>;
 	moveableTargets: HTMLElement[];
@@ -96,35 +80,25 @@ export function StickerBoardCanvasStage({
 	onDoubleClickComponent,
 	isEditingComponent,
 }: StickerBoardCanvasStageProps) {
+	// 메인 페이지(데스크톱)는 12×12 그리드에 전체 5:4 비율이므로,
+	// w×h 블록 위젯의 실제 화면 비율은 (w/h) × (5/4)가 된다.
+	// 스티커 좌표가 모두 %(퍼센트) 기반이라 캔버스를 이 비율로만 유지하면
+	// 어떤 크기로 스케일돼도 메인 페이지 위젯과 동일하게 보인다.
+	const canvasAspect = ratio ? (ratio.w * 5) / (ratio.h * 4) : 1;
+
 	return (
 		<div
 			ref={boundsRef}
 			className="mt-4 w-full overflow-hidden rounded-card border border-card bg-card-bg p-2"
 		>
-			<div className="relative grid grid-cols-12 grid-rows-12 aspect-[5/4] w-full overflow-visible">
-				<div
-					className="absolute inset-0 pointer-events-none"
-					style={{
-						backgroundImage:
-							"linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px)",
-						backgroundSize: "calc(100% / 12) calc(100% / 12)",
-					}}
-				/>
-
-				{ratio ? (
+			{ratio ? (
+				<div className="flex w-full items-center justify-center">
 					<div
 						className="relative bg-widget-bg rounded-widget border-widget overflow-visible shadow-[0_10px_25px_rgba(0,0,0,0.08)] stickerboard-canvas"
 						style={{
-							gridColumn: (() => {
-								const span = Math.max(1, Math.min(GRID_BASE, ratio.w || 1));
-								const start = Math.floor((GRID_BASE - span) / 2) + 1;
-								return `${start} / span ${span}`;
-							})(),
-							gridRow: (() => {
-								const span = Math.max(1, Math.min(GRID_BASE, ratio.h || 1));
-								const start = Math.floor((GRID_BASE - span) / 2) + 1;
-								return `${start} / span ${span}`;
-							})(),
+							aspectRatio: `${ratio.w * 5} / ${ratio.h * 4}`,
+							// 가로는 컨테이너에 맞추되, 세로가 화면(70vh)을 넘으면 비율 유지한 채 축소
+							width: `min(100%, calc(70vh * ${canvasAspect}))`,
 						}}
 						ref={setCanvasRef}
 						onPointerDown={onPointerInsertText}
@@ -175,17 +149,17 @@ export function StickerBoardCanvasStage({
 							</div>
 						)}
 					</div>
-				) : (
-					<div className="absolute inset-0 flex items-center justify-center">
-						<div className="text-center py-10">
-							<div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-theme-primary border-r-transparent" />
-							<div className="mt-4 text-xs text-gray-500">
-								캔버스를 불러오는 중...
-							</div>
+				</div>
+			) : (
+				<div className="flex min-h-[300px] items-center justify-center">
+					<div className="text-center py-10">
+						<div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-theme-primary border-r-transparent" />
+						<div className="mt-4 text-xs text-gray-500">
+							캔버스를 불러오는 중...
 						</div>
 					</div>
-				)}
-			</div>
+				</div>
+			)}
 		</div>
 	);
 }
