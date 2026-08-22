@@ -44,7 +44,16 @@ export const editorHasContent = (editor: Editor) => {
 
 /** 삽입 시작 위치 계산: 노드 선택(이미지 등)을 대체하지 않도록 항상 selection 끝 기준 */
 const resolveInsertPos = (editor: Editor, insertPos?: number | "end") => {
-	if (insertPos === "end") return editor.state.doc.content.size;
+	if (insertPos === "end") {
+		// "문서 끝" = 트레일링 빈 문단이 있으면 그 앞.
+		// doc.content.size(빈 문단 뒤)에 넣으면 그 빈 문단이 이미지 위에 남는다.
+		const { doc } = editor.state;
+		const last = doc.lastChild;
+		if (last && last.isTextblock && last.content.size === 0) {
+			return doc.content.size - last.nodeSize;
+		}
+		return doc.content.size;
+	}
 	if (typeof insertPos === "number") return insertPos;
 	return editor.state.selection.to;
 };
@@ -161,10 +170,11 @@ export const uploadAndInsertImages = async (
 				url,
 				file.name.replace(/\.[^/.]+$/, "") || "이미지",
 			);
-			const sizeBefore = editor.state.doc.content.size;
 			const insertedAt = insertBlockAt(editor, { type: "image", attrs }, pos);
-			// 삽입된 만큼 다음 위치를 뒤로 이동 (여러 장이 순서대로 이어짐)
-			pos = insertedAt + (editor.state.doc.content.size - sizeBefore);
+			// 다음 삽입 위치 = 방금 넣은 이미지 노드 바로 뒤.
+			// (문서 크기 증가분으로 계산하면 TrailingNode가 덧붙인 문단까지
+			//  포함되어 다음 이미지가 빈 줄 뒤에 삽입되는 문제가 있었음)
+			pos = insertedAt + (editor.state.doc.nodeAt(insertedAt)?.nodeSize ?? 1);
 			// 커서를 이미지 뒤로 이동 (TrailingNode가 마지막 문단을 보장)
 			editor.commands.focus(Math.min(pos, editor.state.doc.content.size));
 		} catch (error) {
