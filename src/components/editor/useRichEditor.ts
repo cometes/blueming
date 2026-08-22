@@ -132,8 +132,12 @@ export function useRichEditor({
 				class: editorClass,
 			},
 			handleDrop: (view, event, _slice, moved) => {
-				// 0) 에디터 내 이미지 이동: dragstart에서 기록한 원본 위치를 삭제하고
-				//    드롭 지점에 같은 노드를 삽입 (복제 방지, 한 트랜잭션 = 언두 1회)
+				// 에디터 내부 이동(드래그): NodeView dragstart에서 view.dragging을
+				// 세팅해두면 PM 네이티브 이동이 dropPoint(블록 경계 스냅)까지 처리한다.
+				if (moved) return false;
+
+				// 폴백) view.dragging이 소실된 환경: dragstart에 기록한 원본 위치를
+				//        삭제하고 드롭 지점에 같은 노드를 삽입 (복제 방지)
 				const moveData = event.dataTransfer?.getData(IMAGE_MOVE_MIME);
 				if (moveData && editor) {
 					const from = Number(moveData);
@@ -162,8 +166,6 @@ export function useRichEditor({
 					}
 				}
 
-				// moved = 에디터 내부 콘텐츠 이동(드래그) — 기본 동작 유지
-				if (moved) return false;
 				const files = Array.from(event.dataTransfer?.files ?? []).filter(
 					(file) => file.type.startsWith("image/"),
 				);

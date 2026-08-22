@@ -220,8 +220,17 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 					draggable
 					data-drag-handle=""
 					onDragStart={(e) => {
-						e.dataTransfer.setData(IMAGE_MOVE_MIME, String(getPos()));
+						const pos = getPos();
+						e.dataTransfer.setData(IMAGE_MOVE_MIME, String(pos));
 						e.dataTransfer.effectAllowed = "move";
+						// PM이 NodeView 내부 dragstart를 무시(stopEvent)해 view.dragging이
+						// 비어 있으면 드롭커서가 블록 경계에 스냅되지 않고 이동도 네이티브로
+						// 처리되지 않는다. 노드를 선택하고 dragging 상태를 직접 세팅한다.
+						editor.commands.setNodeSelection(pos);
+						editor.view.dragging = {
+							slice: editor.view.state.selection.content(),
+							move: true,
+						};
 					}}
 				/>
 			</div>
