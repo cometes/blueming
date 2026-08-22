@@ -47,6 +47,10 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
               .deleteRange({ from: pos, to: pos + 1 })
               .insertContentAt(pos, { type: "image", attrs })
               .run()
+            // 커서를 이미지 뒤로 이동해 바로 이어서 쓸 수 있게 (TrailingNode가 문단 보장)
+            props.editor.commands.focus(
+              Math.min(pos + 1, props.editor.state.doc.content.size)
+            )
           } catch {}
         }, 100)
       })()

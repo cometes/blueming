@@ -82,7 +82,11 @@ export const ImageBubbleMenu: React.FC<ImageBubbleMenuProps> = ({
   }, [editor, nodeType])
 
   return (
-    <div className="image-bubble-menu">
+    <div
+      className="image-bubble-menu"
+      // 버튼 mousedown으로 에디터가 블러되면 메뉴가 사라져 클릭이 씹히므로 포커스 유지
+      onMouseDown={(e) => e.preventDefault()}
+    >
       <div className="image-bubble-menu-content">
         <Button
           type="button"

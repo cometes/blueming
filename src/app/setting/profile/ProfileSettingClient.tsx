@@ -34,7 +34,11 @@ export default function ProfileSettingClient() {
 		extensions: [
 			...extensions.filter((ext) => ext.name !== "placeholder"),
 			// Override placeholder
-			extensions.find((ext) => ext.name === "placeholder")?.configure({
+			(
+				extensions.find((ext) => ext.name === "placeholder") as
+					| AnyExtension
+					| undefined
+			)?.configure({
 				placeholder: PLACEHOLDERS.INTRODUCTION,
 			}) || extensions.find((ext) => ext.name === "placeholder"),
 		].filter(Boolean) as AnyExtension[],

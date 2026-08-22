@@ -21,6 +21,7 @@ import { Placeholder } from "@tiptap/extension-placeholder";
 import { CustomImage } from "@/components/tiptap-extension/custom-image";
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node";
 import { CustomYoutubeNode } from "@/components/tiptap-node/youtube-node/youtube-node";
+import { TrailingNode } from "@/components/tiptap-extension/trailing-node";
 import { MAX_FILE_SIZE, handleImageUpload } from "@/shared/lib/tiptap-utils";
 
 import "@/styles/tiptap-variables.css";
@@ -74,6 +75,7 @@ export const extensions = [
 	}),
 	CustomYoutubeNode,
 	CustomImage,
+	TrailingNode,
 	ImageUploadNode.configure({
 		accept: "image/*",
 		maxSize: MAX_FILE_SIZE,

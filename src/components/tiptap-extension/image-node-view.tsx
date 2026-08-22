@@ -20,6 +20,9 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 	const initialWidth = node.attrs.width;
 
 	const [isResizing, setIsResizing] = React.useState(false);
+	// 플로팅/핸들은 노드 선택(selected) 기반으로 표시.
+	// 에디터가 블러되면 useLibraryEditor의 onBlur가 노드 선택을 해제하므로 함께 사라진다.
+	const showControls = selected && editor.isEditable;
 	const [currentWidth, setCurrentWidth] = React.useState<number | null>(
 		typeof initialWidth === "number" ? initialWidth : null
 	);
@@ -190,10 +193,10 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 				}`}
 				style={boxStyle}
 			>
-				{selected && editor.isEditable && (
+				{showControls && (
 					<ImageBubbleMenu editor={editor} currentAlign={align} />
 				)}
-				{selected && editor.isEditable && (
+				{showControls && (
 					<>
 						<div
 							className="resize-handle resize-handle-left"

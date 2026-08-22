@@ -3,8 +3,9 @@
   top: -48px;
   left: 50%;
   transform: translateX(-50%);
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--color-card-bg);
+  border: 1px solid var(--card-border-color);
+  backdrop-filter: blur(var(--card-blur, 0px));
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 4px;
@@ -31,16 +32,16 @@
   transition: background-color 0.2s;
 
   &:hover {
-    background: #f3f4f6;
+    background: color-mix(in srgb, var(--color-theme-primary) 12%, transparent);
   }
 
   &[data-active-state="on"] {
-    background: #e5e7eb;
+    background: color-mix(in srgb, var(--color-theme-primary) 25%, transparent);
   }
 }
 
 .image-bubble-menu .tiptap-button-icon {
   width: 20px;
   height: 20px;
-  color: #374151;
+  color: var(--color-main-text);
 }

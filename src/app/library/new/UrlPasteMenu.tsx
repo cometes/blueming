@@ -79,6 +79,10 @@ export default function UrlPasteMenu({ editor, info, onClose }: UrlPasteMenuProp
 			.deleteRange({ from: info.from, to })
 			.insertContentAt(info.from, content)
 			.run();
+		// 커서를 임베드된 노드 뒤로 이동 (TrailingNode가 마지막 문단을 보장)
+		editor.commands.focus(
+			Math.min(info.from + 1, editor.state.doc.content.size),
+		);
 	};
 
 	const handleEmbedImage = async () => {

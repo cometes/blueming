@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useEditor, type Content, type Editor } from "@tiptap/react";
+import { NodeSelection } from "@tiptap/pm/state";
 import { toast } from "sonner";
 import { extensions } from "@/components/editor/TiptapEditor";
 import { handleImageUpload } from "@/shared/lib/tiptap-utils";
@@ -58,6 +59,8 @@ export const uploadAndInsertImages = async (
 				.run();
 			// 삽입된 만큼 다음 위치를 뒤로 이동 (여러 장이 순서대로 이어짐)
 			pos = clamped + (editor.state.doc.content.size - sizeBefore);
+			// 커서를 이미지 뒤로 이동 (TrailingNode가 마지막 문단을 보장)
+			editor.commands.focus(Math.min(pos, editor.state.doc.content.size));
 		} catch (error) {
 			const message =
 				error instanceof Error ? error.message : "이미지 업로드에 실패했습니다.";
@@ -90,6 +93,13 @@ export function useLibraryEditor(
 		extensions: extensions,
 		content: initialContent,
 		immediatelyRender: false,
+		// 에디터 밖을 클릭해 포커스가 떠나면 이미지 등 노드 선택을 해제해
+		// 정렬 플로팅/리사이즈 핸들이 남아있지 않게 한다.
+		onBlur: ({ editor: ed }) => {
+			if (ed.state.selection instanceof NodeSelection) {
+				ed.commands.setTextSelection(ed.state.selection.to);
+			}
+		},
 		editorProps: {
 			attributes: {
 				class: "prose max-w-none focus:outline-none min-h-[400px] p-0",
@@ -177,6 +187,20 @@ export function useLibraryEditor(
 		if (!initialContent) return;
 		editor.commands.setContent(initialContent);
 	}, [editor, initialContent]);
+
+	// 에디터 바깥을 클릭하면 이미지 등 노드 선택을 해제 (tiptap blur 이벤트가
+	// 환경에 따라 불안정해서 document 레벨에서 직접 처리)
+	useEffect(() => {
+		if (!editor) return;
+		const onDocMouseDown = (e: MouseEvent) => {
+			if (!(editor.state.selection instanceof NodeSelection)) return;
+			const target = e.target as Node | null;
+			if (target && editor.view.dom.contains(target)) return;
+			editor.commands.setTextSelection(editor.state.selection.to);
+		};
+		document.addEventListener("mousedown", onDocMouseDown);
+		return () => document.removeEventListener("mousedown", onDocMouseDown);
+	}, [editor]);
 
 	return editor;
 }
