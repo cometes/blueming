@@ -1,26 +1,32 @@
 import type { StickerAsset, StickerAssetTab } from "@/features/stickerboard-editor/types";
 import { API_BASE } from "@/shared/lib/http/client";
 
+// 크기는 부가 메타데이터일 뿐이므로 어떤 경우에도 업로드를 막지 않는다.
+// (기존 구현은 decode 실패 시 이미 발생한 onload를 기다리며 영원히 멈출 수 있었음)
 const readImageSize = async (
 	file: File,
 ): Promise<{ width?: number; height?: number }> => {
 	try {
 		const url = URL.createObjectURL(file);
 		try {
-			const img = new Image();
-			img.src = url;
-			try {
-				await img.decode();
-			} catch {
-				await new Promise<void>((resolve, reject) => {
-					img.onload = () => resolve();
-					img.onerror = () => reject(new Error("failed to load image"));
-				});
-			}
-			return {
-				width: img.naturalWidth || undefined,
-				height: img.naturalHeight || undefined,
-			};
+			return await new Promise<{ width?: number; height?: number }>(
+				(resolve) => {
+					const img = new Image();
+					const timer = setTimeout(() => resolve({}), 3000);
+					img.onload = () => {
+						clearTimeout(timer);
+						resolve({
+							width: img.naturalWidth || undefined,
+							height: img.naturalHeight || undefined,
+						});
+					};
+					img.onerror = () => {
+						clearTimeout(timer);
+						resolve({});
+					};
+					img.src = url;
+				},
+			);
 		} finally {
 			URL.revokeObjectURL(url);
 		}
