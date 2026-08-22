@@ -214,11 +214,12 @@ export default function NoticeSettingClient() {
 										gridRow: `span ${ratio.h || 12}`,
 									}}
 								>
-									<ScrollArea className="h-full w-full">
-										<EditorImageDropZone editor={editor}>
+									{/* 드롭존이 위젯 박스(스크롤 영역 포함) 전체를 덮도록 ScrollArea 바깥에 배치 */}
+									<EditorImageDropZone editor={editor} className="h-full w-full">
+										<ScrollArea className="h-full w-full">
 											<EditorContent editor={editor} className="h-full w-full" />
-										</EditorImageDropZone>
-									</ScrollArea>
+										</ScrollArea>
+									</EditorImageDropZone>
 								</div>
 							</div>
 						</div>

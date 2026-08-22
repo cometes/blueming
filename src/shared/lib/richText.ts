@@ -167,5 +167,8 @@ export const renderRichText = (content: unknown): string => {
 	return "";
 };
 
-export const isRichTextEmpty = (html: string) =>
-	html.replace(/<[^>]+>/g, "").trim().length === 0;
+export const isRichTextEmpty = (html: string) => {
+	// 이미지/동영상 임베드는 텍스트가 없어도 콘텐츠로 취급
+	if (/<(img|iframe|video)\b/i.test(html)) return false;
+	return html.replace(/<[^>]+>/g, "").trim().length === 0;
+};
