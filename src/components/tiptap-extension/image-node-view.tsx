@@ -224,20 +224,14 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 					draggable
 					data-drag-handle=""
 					onDragStart={(e) => {
+						// 실제 드래그(mousedown→dragstart)에서는 tiptap stopEvent가 dragstart를
+						// PM에 통과시키고, PM 네이티브가 직렬화·이동·경계 스냅·빈 문단 처리까지
+						// 전부 수행한다. 여기서 selection/view.dragging을 건드리면 PM이 만든
+						// 올바른 Dragging을 망가뜨리므로 절대 개입하지 않는다.
+						// 에디터 밖 드롭 지원을 위한 식별 정보만 기록한다.
 						const pos = getPos();
-						e.dataTransfer.setData(IMAGE_MOVE_MIME, String(pos));
-						e.dataTransfer.effectAllowed = "move";
-						// 자체 드래그 소스 추적: window 레벨 dragover/drop 판별용
-						// (PM의 view.dragging은 실제 파이프라인에서 소실될 수 있어 보조로만 사용)
 						setImageDragSource(editor, pos);
-						// PM이 NodeView 내부 dragstart를 무시(stopEvent)해 view.dragging이
-						// 비어 있으면 드롭커서가 블록 경계에 스냅되지 않고 이동도 네이티브로
-						// 처리되지 않는다. 노드를 선택하고 dragging 상태를 직접 세팅한다.
-						editor.commands.setNodeSelection(pos);
-						editor.view.dragging = {
-							slice: editor.view.state.selection.content(),
-							move: true,
-						};
+						e.dataTransfer.setData(IMAGE_MOVE_MIME, String(pos));
 					}}
 					onDragEnd={() => {
 						clearImageDragSource();

@@ -8,7 +8,7 @@ import {
 	type Editor,
 } from "@tiptap/react";
 import { NodeSelection } from "@tiptap/pm/state";
-import { Slice, Fragment } from "@tiptap/pm/model";
+import { Slice, Fragment, type Slice as SliceType } from "@tiptap/pm/model";
 import { dropPoint } from "@tiptap/pm/transform";
 import { toast } from "sonner";
 import { extensions as defaultExtensions } from "@/components/editor/TiptapEditor";
@@ -158,39 +158,9 @@ export function useRichEditor({
 				class: editorClass,
 			},
 			handleDrop: (view, event, _slice, moved) => {
-				// 에디터 내부 이동(드래그): NodeView dragstart에서 view.dragging을
-				// 세팅해두면 PM 네이티브 이동이 dropPoint(블록 경계 스냅)까지 처리한다.
+				// 에디터 내부 이동: 실제 드래그에서는 PM 네이티브가 Dragging(node 포함)을
+				// 만들어 이동·경계 스냅·빈 문단 처리까지 전부 수행한다. 개입하지 않는다.
 				if (moved) return false;
-
-				// 폴백) view.dragging이 소실된 환경: dragstart에 기록한 원본 위치를
-				//        삭제하고 드롭 지점에 같은 노드를 삽입 (복제 방지)
-				const moveData = event.dataTransfer?.getData(IMAGE_MOVE_MIME);
-				if (moveData && editor) {
-					const from = Number(moveData);
-					const node = view.state.doc.nodeAt(from);
-					const coords = view.posAtCoords({
-						left: event.clientX,
-						top: event.clientY,
-					});
-					if (node && coords) {
-						event.preventDefault();
-						let target = coords.pos;
-						// 원본 삭제만큼 뒤쪽 좌표 보정
-						if (target > from) {
-							target = Math.max(from, target - node.nodeSize);
-						}
-						editor
-							.chain()
-							.focus()
-							.deleteRange({ from, to: from + node.nodeSize })
-							.insertContentAt(target, node.toJSON())
-							.run();
-						editor.commands.focus(
-							Math.min(target + 1, editor.state.doc.content.size),
-						);
-						return true;
-					}
-				}
 
 				const files = Array.from(event.dataTransfer?.files ?? []).filter(
 					(file) => file.type.startsWith("image/"),
@@ -289,54 +259,64 @@ export function useRichEditor({
 
 		const onWindowDrop = (e: DragEvent) => {
 			// 드롭 처리(문서 변경)는 드래그를 시작한 소스 에디터만 수행
-			// (dragover의 느슨한 판별과 달리 정확한 소유권 필요)
 			if (imageDragSource.editor !== editor) return;
-			// 본문 위 드롭은 PM 네이티브가 이미 처리(preventDefault)함
+			// 본문(view.dom) 위 드롭은 PM 네이티브가 이미 처리함
 			if (e.defaultPrevented) return;
-			// drop 시점에는 getData가 가능하지만, 소실 대비 자체 추적값을 우선 사용
-			const rawFrom = e.dataTransfer?.getData(IMAGE_MOVE_MIME);
-			const from =
-				rawFrom !== undefined && rawFrom !== ""
-					? Number(rawFrom)
-					: imageDragSource.from;
 			const view = editor.view;
-			const node = from >= 0 ? view.state.doc.nodeAt(from) : null;
-			if (!node || node.type.name !== "image") return;
+
+			// PM이 실제 드래그에서 만든 Dragging(슬라이스+원본 NodeSelection)을 우선 사용,
+			// 없으면 자체 기록(from)으로 복원 — 이하는 PM 드롭 핸들러의 미러링이다.
+			const dragging = view.dragging as
+				| { slice: SliceType; node?: { replace: (tr: unknown) => void } }
+				| null;
+			let slice = dragging?.slice ?? null;
+			const sourceFrom = imageDragSource.from;
+			if (!slice && sourceFrom >= 0) {
+				const sourceNode = view.state.doc.nodeAt(sourceFrom);
+				if (sourceNode && sourceNode.type.name === "image") {
+					slice = new Slice(Fragment.from(sourceNode), 0, 0);
+				}
+			}
+			if (!slice) return;
 			e.preventDefault();
 
-			// 커서를 본문 영역 안으로 클램프해 가장 가까운 문서 위치를 얻는다
+			// 커서 좌표를 본문 영역으로 클램프해 가장 가까운 문서 위치를 얻는다
 			const rect = view.dom.getBoundingClientRect();
 			const x = Math.min(Math.max(e.clientX, rect.left + 2), rect.right - 2);
 			const y = Math.min(Math.max(e.clientY, rect.top + 2), rect.bottom - 2);
 			const coords = view.posAtCoords({ left: x, top: y });
-			let target =
+			const rawPos =
 				coords?.pos ??
 				(e.clientY < rect.top ? 0 : view.state.doc.content.size);
-			// 블록 경계로 스냅
-			const snapped = dropPoint(
-				view.state.doc,
-				target,
-				new Slice(Fragment.from(node), 0, 0),
-			);
-			if (snapped != null) target = snapped;
-			// 원본 삭제에 따른 위치 보정
-			const adjusted =
-				target <= from
-					? target
-					: target >= from + node.nodeSize
-						? target - node.nodeSize
-						: from;
-			editor
-				.chain()
-				.focus()
-				.deleteRange({ from, to: from + node.nodeSize })
-				.insertContentAt(adjusted, node.toJSON())
-				.run();
-			editor.commands.focus(
-				Math.min(adjusted + 1, editor.state.doc.content.size),
-			);
+			const insertPos = dropPoint(view.state.doc, rawPos, slice) ?? rawPos;
+
+			const tr = view.state.tr;
+			// 원본 삭제: PM Dragging의 NodeSelection이 있으면 그대로(위치 리매핑 포함),
+			// 없으면 자체 기록 위치로 삭제
+			if (dragging?.node) {
+				dragging.node.replace(tr);
+			} else if (sourceFrom >= 0) {
+				const sourceNode = view.state.doc.nodeAt(sourceFrom);
+				if (sourceNode) {
+					tr.delete(sourceFrom, sourceFrom + sourceNode.nodeSize);
+				}
+			}
+			const mapped = tr.mapping.map(insertPos);
+			const isSingleNode =
+				slice.openStart === 0 &&
+				slice.openEnd === 0 &&
+				slice.content.childCount === 1;
+			if (isSingleNode && slice.content.firstChild) {
+				tr.replaceRangeWith(mapped, mapped, slice.content.firstChild);
+			} else {
+				tr.replaceRange(mapped, mapped, slice);
+			}
+			view.dispatch(tr.setMeta("uiEvent", "drop"));
 			view.dragging = null;
 			clearImageDragSource();
+			editor.commands.focus(
+				Math.min(mapped + 1, editor.state.doc.content.size),
+			);
 		};
 
 		// capture 단계: 중간 요소의 stopPropagation 영향 없이 항상 수신
