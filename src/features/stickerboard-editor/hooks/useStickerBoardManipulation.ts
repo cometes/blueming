@@ -2,7 +2,6 @@
 
 import { useCallback } from "react";
 import {
-	clamp,
 	cloneDraft,
 	isPctSticker,
 } from "@/features/stickerboard-editor/lib/stickerboard-utils";
@@ -53,7 +52,6 @@ export function useStickerBoardManipulation({
 	presentRef,
 	isRestoringHistoryRef,
 	canvasRef,
-	boundsRef,
 	setComponentsDraft,
 	setSelectedId,
 	setSelection,
@@ -157,35 +155,9 @@ export function useStickerBoardManipulation({
 				}
 			})();
 
-			const boundsCanvas = canvasRef.current?.getBoundingClientRect();
-			const boundsBox = boundsRef.current?.getBoundingClientRect();
-			let dx = desiredDelta.dx;
-			let dy = desiredDelta.dy;
-			if (boundsCanvas && boundsBox && boundsCanvas.width > 0 && boundsCanvas.height > 0) {
-				const minXPct =
-					((boundsBox.left - boundsCanvas.left) / boundsCanvas.width) * 100;
-				const maxXPct =
-					((boundsBox.right - boundsCanvas.left) / boundsCanvas.width) * 100;
-				const minYPct =
-					((boundsBox.top - boundsCanvas.top) / boundsCanvas.height) * 100;
-				const maxYPct =
-					((boundsBox.bottom - boundsCanvas.top) / boundsCanvas.height) * 100;
-
-				let dxMin = -Infinity;
-				let dxMax = Infinity;
-				let dyMin = -Infinity;
-				let dyMax = Infinity;
-				groupItems.forEach((item) => {
-					const maxXForItem = maxXPct - item.widthPct;
-					const maxYForItem = maxYPct - item.heightPct;
-					dxMin = Math.max(dxMin, minXPct - item.xPct);
-					dxMax = Math.min(dxMax, maxXForItem - item.xPct);
-					dyMin = Math.max(dyMin, minYPct - item.yPct);
-					dyMax = Math.min(dyMax, maxYForItem - item.yPct);
-				});
-				dx = clamp(dx, dxMin, dxMax);
-				dy = clamp(dy, dyMin, dyMax);
-			}
+			// 캔버스 밖 배치를 허용하므로 정렬 이동량을 bounds로 제한하지 않는다.
+			const dx = desiredDelta.dx;
+			const dy = desiredDelta.dy;
 
 			setComponentsDraft((prev) =>
 				prev.map((component) => {
@@ -204,7 +176,6 @@ export function useStickerBoardManipulation({
 			commitHistoryBase(base);
 		},
 		[
-			boundsRef,
 			canvasRef,
 			clampStickerToEditorBounds,
 			commitHistoryBase,

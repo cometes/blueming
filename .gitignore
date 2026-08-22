@@ -42,3 +42,4 @@ next-env.d.ts
 
 # claude code worktrees (임시 에이전트 작업 디렉토리)
 .claude/worktrees/
+.claude/

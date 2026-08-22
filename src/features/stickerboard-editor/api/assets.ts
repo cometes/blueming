@@ -1,26 +1,41 @@
 import type { StickerAsset, StickerAssetTab } from "@/features/stickerboard-editor/types";
 import { API_BASE } from "@/shared/lib/http/client";
 
+/** 에셋이 추가/변경되면 발행되는 이벤트. useStickerBoardAssets가 듣고 목록을 갱신한다. */
+export const STICKER_ASSETS_CHANGED_EVENT = "stickerboard:assets-changed";
+
+const notifyAssetsChanged = () => {
+	if (typeof window !== "undefined") {
+		window.dispatchEvent(new Event(STICKER_ASSETS_CHANGED_EVENT));
+	}
+};
+
+// 크기는 부가 메타데이터일 뿐이므로 어떤 경우에도 업로드를 막지 않는다.
+// (기존 구현은 decode 실패 시 이미 발생한 onload를 기다리며 영원히 멈출 수 있었음)
 const readImageSize = async (
 	file: File,
 ): Promise<{ width?: number; height?: number }> => {
 	try {
 		const url = URL.createObjectURL(file);
 		try {
-			const img = new Image();
-			img.src = url;
-			try {
-				await img.decode();
-			} catch {
-				await new Promise<void>((resolve, reject) => {
-					img.onload = () => resolve();
-					img.onerror = () => reject(new Error("failed to load image"));
-				});
-			}
-			return {
-				width: img.naturalWidth || undefined,
-				height: img.naturalHeight || undefined,
-			};
+			return await new Promise<{ width?: number; height?: number }>(
+				(resolve) => {
+					const img = new Image();
+					const timer = setTimeout(() => resolve({}), 3000);
+					img.onload = () => {
+						clearTimeout(timer);
+						resolve({
+							width: img.naturalWidth || undefined,
+							height: img.naturalHeight || undefined,
+						});
+					};
+					img.onerror = () => {
+						clearTimeout(timer);
+						resolve({});
+					};
+					img.src = url;
+				},
+			);
 		} finally {
 			URL.revokeObjectURL(url);
 		}
@@ -81,7 +96,9 @@ export async function createStickerAssetFromFile(
 		throw new Error(error.error || "스티커 자산 생성에 실패했습니다.");
 	}
 
-	return await response.json();
+	const asset = (await response.json()) as StickerAsset;
+	notifyAssetsChanged();
+	return asset;
 }
 
 export async function setStickerAssetFavorite(assetId: string, favorite: boolean) {
@@ -134,4 +151,5 @@ export async function deleteStickerAsset(asset: Pick<StickerAsset, "id">) {
 		const error = await response.json().catch(() => ({}));
 		throw new Error(error.error || "스티커 자산 삭제에 실패했습니다.");
 	}
+	notifyAssetsChanged();
 }

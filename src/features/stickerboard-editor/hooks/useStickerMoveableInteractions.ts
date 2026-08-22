@@ -95,6 +95,20 @@ export function useStickerMoveableInteractions() {
 		return () => window.cancelAnimationFrame(raf);
 	}, [componentsDraft, selectionIds]);
 
+	// 캔버스가 리사이즈되면(창 크기 변경 등) Moveable의 px 기반 선택 프레임을
+	// 다시 계산해 %기반 스티커 위치와 어긋나지 않게 한다.
+	useEffect(() => {
+		const canvas = canvasRef.current;
+		if (!canvas) return;
+		const observer = new ResizeObserver(() => {
+			window.requestAnimationFrame(() => {
+				moveableRef.current?.updateRect();
+			});
+		});
+		observer.observe(canvas);
+		return () => observer.disconnect();
+	}, [canvasRef, moveableTargets]);
+
 	const getCanvasRect = () => {
 		const canvas = canvasRef.current;
 		if (!canvas) return null;

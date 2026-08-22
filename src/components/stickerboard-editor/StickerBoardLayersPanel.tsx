@@ -61,17 +61,17 @@ export function StickerBoardLayersPanel() {
 	};
 
 	return (
-		<aside className="rounded-card border-card bg-card p-4 blur-proxy">
+		<aside className="h-full min-h-0 overflow-y-auto rounded-card border-card bg-card p-4 blur-proxy">
 			<div className="flex items-center justify-between gap-3">
 				<div className="flex items-center gap-2">
-					<Layers className="h-4 w-4 text-gray-500" />
+					<Layers className="h-4 w-4 text-sub-text" />
 					<div className="text-sm font-semibold text-main-text">레이어</div>
 				</div>
-				<div className="text-[11px] text-gray-500">
+				<div className="text-[11px] text-sub-text">
 					{layerItems.length}개
 				</div>
 			</div>
-			<p className="mt-2 text-xs text-gray-500">
+			<p className="mt-2 text-xs text-sub-text">
 				레이어 목록/정렬/숨김/잠금 영역
 			</p>
 
@@ -136,8 +136,8 @@ export function StickerBoardLayersPanel() {
 																"flex items-center gap-2 rounded-md border px-1 py-1",
 																snapshot.isDragging ? "opacity-80" : "",
 																isSelected
-																	? "border-theme-primary bg-theme-primary "
-																	: "border-card bg-card hover:bg-theme-primary/60",
+																	? "border-theme-primary bg-theme-primary/15"
+																	: "border-card bg-card hover:bg-theme-primary/10",
 															].join(" ")}
 															onClick={() => {
 																setSelection(new Set([layer.id]), layer.id);
@@ -151,7 +151,7 @@ export function StickerBoardLayersPanel() {
 														>
 															{/* drag handle */}
 															<div
-																className="flex h-7 w-7 items-center justify-center rounded hover:bg-black/5 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
+																className="flex h-7 w-7 items-center justify-center rounded hover:bg-black/5 text-sub-text/70 hover:text-sub-text cursor-grab active:cursor-grabbing"
 																onClick={(e) => e.stopPropagation()}
 																{...provided.dragHandleProps}
 															>
@@ -163,7 +163,7 @@ export function StickerBoardLayersPanel() {
 																	{isGroup && (
 																		<button
 																			type="button"
-																			className="p-1 -ml-1 rounded hover:bg-black/5 text-gray-500"
+																			className="p-1 -ml-1 rounded hover:bg-black/5 text-sub-text"
 																			onClick={(e) => {
 																				e.stopPropagation();
 																				setExpandedGroupIds((prev) => {
@@ -192,7 +192,7 @@ export function StickerBoardLayersPanel() {
 																		{label}
 																	</span>
 																	{layer.groupId && (
-																		<span className="shrink-0 rounded-full border border-gray-300/70 bg-background/50 px-1.5 py-0.5 text-[10px] leading-none text-gray-500">
+																		<span className="shrink-0 rounded-full border border-card-color bg-background/50 px-1.5 py-0.5 text-[10px] leading-none text-sub-text">
 																			G{String(layer.groupId).slice(-4)}
 																		</span>
 																	)}
@@ -254,7 +254,7 @@ export function StickerBoardLayersPanel() {
 																							tabIndex={0}
 																						>
 																							<span
-																								className="text-[11px] text-gray-500 truncate"
+																								className="text-[11px] text-sub-text truncate"
 																								title={childLabel}
 																								aria-label={childLabel}
 																							>
@@ -279,9 +279,9 @@ export function StickerBoardLayersPanel() {
 																title={isVisible ? "숨기기" : "표시"}
 															>
 																{isVisible ? (
-																	<Eye className={cn("h-4 w-4", isSelected ? "text-main-text" : "text-gray-600")} />
+																	<Eye className={cn("h-4 w-4", isSelected ? "text-main-text" : "text-sub-text")} />
 																) : (
-																	<EyeOff className={cn("h-4 w-4", isSelected ? "text-main-text" : "text-gray-500")} />
+																	<EyeOff className={cn("h-4 w-4", isSelected ? "text-main-text" : "text-sub-text")} />
 																)}
 															</button>
 
@@ -298,7 +298,7 @@ export function StickerBoardLayersPanel() {
 																{isLocked ? (
 																	<Lock className={cn("h-4 w-4", isSelected ? "text-main-text" : "text-amber-600")} />
 																) : (
-																	<Unlock className={cn("h-4 w-4", isSelected ? "text-main-text" : "text-gray-600")} />
+																	<Unlock className={cn("h-4 w-4", isSelected ? "text-main-text" : "text-sub-text")} />
 																)}
 															</button>
 
@@ -323,7 +323,7 @@ export function StickerBoardLayersPanel() {
 																		: "삭제"
 																}
 															>
-																<Trash2 className="h-4 w-4 text-gray-600 group-hover:text-red-500" />
+																<Trash2 className="h-4 w-4 text-sub-text group-hover:text-red-500" />
 															</button>
 														</div>
 													)}
@@ -337,7 +337,7 @@ export function StickerBoardLayersPanel() {
 						</Droppable>
 					</DragDropContext>
 				) : (
-					<div className="rounded-md border border-dashed border-gray-300/70 bg-background/40 p-3 text-xs text-gray-400">
+					<div className="rounded-md border border-dashed border-card-color bg-background/40 p-3 text-xs text-sub-text/70">
 						레이어가 없습니다.
 					</div>
 				)}

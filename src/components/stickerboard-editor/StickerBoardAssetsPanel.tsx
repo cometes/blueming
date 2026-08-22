@@ -114,7 +114,7 @@ export function StickerBoardAssetsPanel({
 				<button
 					type="button"
 					onClick={() => setIsOpen(false)}
-					className="rounded p-1 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+					className="rounded p-1 text-sub-text hover:text-theme-primary hover:bg-theme-primary/10"
 					aria-label="닫기"
 				>
 					<X className="h-4 w-4" />
@@ -132,14 +132,14 @@ export function StickerBoardAssetsPanel({
 
 			<div className="mt-3">
 				{assetsLoading ? (
-					<div className="py-6 flex flex-col items-center justify-center text-xs text-gray-400">
+					<div className="py-6 flex flex-col items-center justify-center text-xs text-sub-text/70">
 						<div className="h-6 w-6 animate-spin rounded-full border-2 border-solid border-card border-r-transparent" />
 						<div className="mt-2">불러오는 중...</div>
 					</div>
 				) : assetsError ? (
 					<div className="py-3 text-xs text-red-500">{assetsError}</div>
 				) : filteredAssets.length === 0 ? (
-					<div className="py-6 text-center text-xs text-gray-400">
+					<div className="py-6 text-center text-xs text-sub-text/70">
 						에셋이 없습니다.
 					</div>
 				) : (

@@ -94,7 +94,7 @@ export function StickerRenderer({
 								>
 									{child.type === "text" ? (
 										<div
-											className="w-full h-full rounded-md bg-transparent text-gray-800"
+											className="w-full h-full rounded-md bg-transparent text-main-text"
 											style={{
 												backgroundColor:
 													child.style?.backgroundColor ?? "transparent",
@@ -129,7 +129,7 @@ export function StickerRenderer({
 											draggable={false}
 										/>
 									) : (
-										<div className="w-full h-full rounded-md border border-dashed border-gray-300 bg-gray-50/60 flex items-center justify-center text-[11px] text-gray-400">
+										<div className="w-full h-full rounded-md border border-dashed border-gray-300 bg-gray-50/60 flex items-center justify-center text-[11px] text-sub-text/70">
 											알 수 없는 스티커
 										</div>
 									)}
@@ -139,7 +139,7 @@ export function StickerRenderer({
 				</div>
 			) : isTextSticker(component) ? (
 				<div
-					className="w-full h-full rounded-md bg-transparent text-gray-800"
+					className="w-full h-full rounded-md bg-transparent text-main-text"
 					style={{
 						backgroundColor: component.style?.backgroundColor ?? "transparent",
 						color: component.style?.textColor ?? "#1f2937",
@@ -168,7 +168,7 @@ export function StickerRenderer({
 					draggable={false}
 				/>
 			) : (
-				<div className="w-full h-full rounded-md border border-dashed border-gray-300 bg-gray-50/60 flex items-center justify-center text-[11px] text-gray-400">
+				<div className="w-full h-full rounded-md border border-dashed border-gray-300 bg-gray-50/60 flex items-center justify-center text-[11px] text-sub-text/70">
 					알 수 없는 스티커
 				</div>
 			)}

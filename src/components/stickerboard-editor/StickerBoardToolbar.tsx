@@ -39,7 +39,7 @@ export function StickerBoardToolbar({
 					variant="outline"
 					onClick={undo}
 					disabled={historyPast.length === 0}
-					className="px-3"
+					className="px-3 rounded-card border-card bg-card-bg text-main-text hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
 					aria-label="Undo"
 					title="Undo (⌘/Ctrl+Z)"
 				>
@@ -50,7 +50,7 @@ export function StickerBoardToolbar({
 					variant="outline"
 					onClick={redo}
 					disabled={historyFuture.length === 0}
-					className="px-3"
+					className="px-3 rounded-card border-card bg-card-bg text-main-text hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/10"
 					aria-label="Redo"
 					title="Redo (⌘/Ctrl+Shift+Z)"
 				>

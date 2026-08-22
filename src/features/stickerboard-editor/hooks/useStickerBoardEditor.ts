@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
 	clamp,
-	clampStickerToEditorBounds as clampStickerToEditorBoundsBase,
+	normalizeStickerSize,
 	cloneDraft,
 	computeAutoSizePct as computeAutoSizePctBase,
 	DEFAULT_TEXT_MAX_WIDTH_PX,
 	DEFAULT_TEXT_PADDING,
 	isTextSticker,
-	normalizeStickerSize,
 } from "@/features/stickerboard-editor/lib/stickerboard-utils";
 import type {
 	StickerBoardComponent,
@@ -99,17 +98,15 @@ export function useStickerBoardEditor(initialComponents: StickerBoardComponent[]
 		[setCanvasElement],
 	);
 
+	// 캔버스 밖으로 삐져나간 배치는 연출의 일환이므로 위치를 되밀지 않는다.
+	// 크기 최소값/NaN 방지만 수행 (normalizeStickerSize).
 	const clampStickerToEditorBounds = useCallback(
 		(
 			sticker: Pick<
 				StickerBoardComponent,
 				"xPct" | "yPct" | "widthPct" | "heightPct"
 			>,
-		) =>
-			clampStickerToEditorBoundsBase(sticker, {
-				canvas: canvasRef.current,
-				bounds: boundsRef.current,
-			}),
+		) => normalizeStickerSize(sticker),
 		[],
 	);
 

@@ -38,10 +38,10 @@ export function StickerBoardAlignmentSection({
 }: StickerBoardAlignmentSectionProps) {
 	return (
 		<div className="mt-4 space-y-2">
-			<div className="text-xs font-medium text-gray-600">효과</div>
+			<div className="text-xs font-medium text-sub-text">효과</div>
 			<div className="grid grid-cols-2 gap-3">
 				<div>
-					<div className="text-xs font-medium text-gray-600">불투명도(%)</div>
+					<div className="text-xs font-medium text-sub-text">불투명도(%)</div>
 					<Input
 						className="mt-2"
 						type="number"
@@ -63,7 +63,7 @@ export function StickerBoardAlignmentSection({
 				</div>
 
 				<div>
-					<div className="text-xs font-medium text-gray-600">블렌드</div>
+					<div className="text-xs font-medium text-sub-text">블렌드</div>
 					<div className="mt-2">
 						<Select
 							value={selectedComponent.blendMode ?? "normal"}
@@ -102,13 +102,13 @@ export function StickerBoardAlignmentSection({
 				</div>
 			</div>
 
-			<div className="text-xs font-medium text-gray-600">스티커 정렬</div>
+			<div className="text-xs font-medium text-sub-text">스티커 정렬</div>
 			<ButtonGroup className="flex w-full items-center justify-between gap-2">
-				<ButtonGroup className="flex-1 justify-center rounded-md border border-stone-700 bg-stone-800 overflow-hidden divide-x divide-stone-700">
+				<ButtonGroup className="flex-1 justify-center rounded-md border border-card-color bg-card-bg overflow-hidden divide-x divide-[color:var(--color-card-border)]">
 					<Button
 						type="button"
 						variant="ghost"
-						className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700"
+						className="h-8 flex-1 min-w-0 rounded-none hover:bg-theme-primary/10 hover:text-theme-primary"
 						disabled={selectedComponent.isLocked === true}
 						onClick={() => onAlign("left")}
 						title="왼쪽 정렬"
@@ -118,7 +118,7 @@ export function StickerBoardAlignmentSection({
 					<Button
 						type="button"
 						variant="ghost"
-						className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700"
+						className="h-8 flex-1 min-w-0 rounded-none hover:bg-theme-primary/10 hover:text-theme-primary"
 						disabled={selectedComponent.isLocked === true}
 						onClick={() => onAlign("hcenter")}
 						title="가로 가운데 정렬"
@@ -128,7 +128,7 @@ export function StickerBoardAlignmentSection({
 					<Button
 						type="button"
 						variant="ghost"
-						className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700 focus:z-10"
+						className="h-8 flex-1 min-w-0 rounded-none hover:bg-theme-primary/10 hover:text-theme-primary focus:z-10"
 						disabled={selectedComponent.isLocked === true}
 						onClick={() => onAlign("right")}
 						title="오른쪽 정렬"
@@ -137,11 +137,11 @@ export function StickerBoardAlignmentSection({
 					</Button>
 				</ButtonGroup>
 
-				<ButtonGroup className="flex-1 justify-center rounded-md border border-stone-700 bg-stone-800 overflow-hidden divide-x divide-stone-700">
+				<ButtonGroup className="flex-1 justify-center rounded-md border border-card-color bg-card-bg overflow-hidden divide-x divide-[color:var(--color-card-border)]">
 					<Button
 						type="button"
 						variant="ghost"
-						className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700"
+						className="h-8 flex-1 min-w-0 rounded-none hover:bg-theme-primary/10 hover:text-theme-primary"
 						disabled={selectedComponent.isLocked === true}
 						onClick={() => onAlign("top")}
 						title="위 정렬"
@@ -151,7 +151,7 @@ export function StickerBoardAlignmentSection({
 					<Button
 						type="button"
 						variant="ghost"
-						className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700"
+						className="h-8 flex-1 min-w-0 rounded-none hover:bg-theme-primary/10 hover:text-theme-primary"
 						disabled={selectedComponent.isLocked === true}
 						onClick={() => onAlign("vcenter")}
 						title="세로 가운데 정렬"
@@ -161,7 +161,7 @@ export function StickerBoardAlignmentSection({
 					<Button
 						type="button"
 						variant="ghost"
-						className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700"
+						className="h-8 flex-1 min-w-0 rounded-none hover:bg-theme-primary/10 hover:text-theme-primary"
 						disabled={selectedComponent.isLocked === true}
 						onClick={() => onAlign("bottom")}
 						title="아래 정렬"

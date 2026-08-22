@@ -1,6 +1,6 @@
 "use client";
 
-import type { RefObject } from "react";
+import { useEffect, useState, type RefObject } from "react";
 import type Moveable from "react-moveable";
 import { StickerRenderer } from "@/components/stickerboard-editor/StickerRenderer";
 import { StickerBoardCanvasInteraction } from "@/components/stickerboard-editor/StickerBoardCanvasInteraction";
@@ -86,20 +86,43 @@ export function StickerBoardCanvasStage({
 	// 어떤 크기로 스케일돼도 메인 페이지 위젯과 동일하게 보인다.
 	const canvasAspect = ratio ? (ratio.w * 5) / (ratio.h * 4) : 1;
 
+	// 피그마처럼 캔버스를 작업 영역(가로·세로 모두)에 맞춰 최대 크기로 피팅
+	const [fit, setFit] = useState<{ width: number; height: number } | null>(null);
+	useEffect(() => {
+		const el = boundsRef.current;
+		if (!el || !ratio) return;
+		const aspect = (ratio.w * 5) / (ratio.h * 4);
+		const measure = () => {
+			// p-2(8px) 패딩 제외한 내부 영역
+			const cw = Math.max(0, el.clientWidth - 16);
+			const ch = Math.max(0, el.clientHeight - 16);
+			if (cw <= 0 || ch <= 0) return;
+			const width = Math.min(cw, ch * aspect);
+			setFit({ width, height: width / aspect });
+		};
+		const observer = new ResizeObserver(measure);
+		observer.observe(el);
+		measure();
+		return () => observer.disconnect();
+	}, [boundsRef, ratio]);
+
 	return (
 		<div
 			ref={boundsRef}
-			className="mt-4 w-full overflow-hidden rounded-card border border-card bg-card-bg p-2"
+			className="mt-4 w-full flex-1 min-h-0 overflow-hidden rounded-card border border-card bg-card-bg p-2"
 		>
 			{ratio ? (
-				<div className="flex w-full items-center justify-center">
+				<div className="flex h-full w-full items-center justify-center">
 					<div
 						className="relative bg-widget-bg rounded-widget border-widget overflow-visible shadow-[0_10px_25px_rgba(0,0,0,0.08)] stickerboard-canvas"
-						style={{
-							aspectRatio: `${ratio.w * 5} / ${ratio.h * 4}`,
-							// 가로는 컨테이너에 맞추되, 세로가 화면(70vh)을 넘으면 비율 유지한 채 축소
-							width: `min(100%, calc(70vh * ${canvasAspect}))`,
-						}}
+						style={
+							fit
+								? { width: `${fit.width}px`, height: `${fit.height}px` }
+								: {
+										aspectRatio: `${ratio.w * 5} / ${ratio.h * 4}`,
+										width: `min(100%, calc(70vh * ${canvasAspect}))`,
+									}
+						}
 						ref={setCanvasRef}
 						onPointerDown={onPointerInsertText}
 						onDragOver={(e) => {
@@ -134,27 +157,32 @@ export function StickerBoardCanvasStage({
 								onCancel={onCancelTextDraft}
 							/>
 						) : null}
-						{visibleDraft.length > 0 ? (
-							visibleDraft.map((component) => (
-								<StickerRenderer
-									key={component.id}
-									component={component}
-									onDoubleClick={() => onDoubleClickComponent(component)}
-									isEditing={isEditingComponent(component.id)}
-								/>
-							))
-						) : (
-							<div className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">
-								저장된 스티커가 없습니다.
-							</div>
-						)}
+						{/* 스티커 클리핑 레이어: 캔버스 밖으로 나간 부분은 메인 위젯과
+						    동일하게 숨긴다. 좌표는 유지되며, Moveable 선택 프레임은
+						    이 레이어 밖에 있어 밖으로 나간 스티커도 계속 조작 가능. */}
+						<div className="absolute inset-0 overflow-hidden rounded-widget">
+							{visibleDraft.length > 0 ? (
+								visibleDraft.map((component) => (
+									<StickerRenderer
+										key={component.id}
+										component={component}
+										onDoubleClick={() => onDoubleClickComponent(component)}
+										isEditing={isEditingComponent(component.id)}
+									/>
+								))
+							) : (
+								<div className="absolute inset-0 flex items-center justify-center text-xs text-sub-text/70">
+									저장된 스티커가 없습니다.
+								</div>
+							)}
+						</div>
 					</div>
 				</div>
 			) : (
-				<div className="flex min-h-[300px] items-center justify-center">
+				<div className="flex h-full min-h-[300px] items-center justify-center">
 					<div className="text-center py-10">
 						<div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-theme-primary border-r-transparent" />
-						<div className="mt-4 text-xs text-gray-500">
+						<div className="mt-4 text-xs text-sub-text">
 							캔버스를 불러오는 중...
 						</div>
 					</div>
