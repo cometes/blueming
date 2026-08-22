@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store/auth/store";
 import {
 	listStickerAssets,
 	markStickerAssetUsed,
+	STICKER_ASSETS_CHANGED_EVENT,
 } from "@/features/stickerboard-editor/api/assets";
 import type { StickerAsset, StickerAssetTab } from "@/features/stickerboard-editor/types";
 
@@ -68,6 +69,17 @@ export function useStickerBoardAssets(initialTab: StickerAssetTab = "all") {
 	useEffect(() => {
 		if (!authReady || !isAuthenticated) return;
 		void refreshAssets(assetTab);
+	}, [assetTab, authReady, isAuthenticated, refreshAssets]);
+
+	// 다른 경로(캔버스 파일 드롭 등)로 에셋이 추가/삭제되면 목록 자동 갱신
+	useEffect(() => {
+		if (!authReady || !isAuthenticated) return;
+		const onAssetsChanged = () => {
+			void refreshAssets(assetTab);
+		};
+		window.addEventListener(STICKER_ASSETS_CHANGED_EVENT, onAssetsChanged);
+		return () =>
+			window.removeEventListener(STICKER_ASSETS_CHANGED_EVENT, onAssetsChanged);
 	}, [assetTab, authReady, isAuthenticated, refreshAssets]);
 
 	return {
