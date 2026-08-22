@@ -44,7 +44,7 @@ export function StickerBoardTextPropertiesSection({
 		<div className="mt-4 space-y-4">
 			<div className="grid grid-cols-2 gap-3">
 				<div className="flex items-center justify-between gap-3 rounded-md border border-card bg-card-bg px-3 py-2">
-					<div className="text-xs font-medium text-gray-700 dark:text-gray-200">
+					<div className="text-xs font-medium text-main-text">
 						자동 크기
 					</div>
 					<input
@@ -69,7 +69,7 @@ export function StickerBoardTextPropertiesSection({
 				</div>
 
 				<div>
-					<div className="text-xs font-medium text-gray-600">최대 폭(px)</div>
+					<div className="text-xs font-medium text-sub-text">최대 폭(px)</div>
 					<Input
 						className="mt-2"
 						type="number"
@@ -100,7 +100,7 @@ export function StickerBoardTextPropertiesSection({
 			</div>
 
 			<div className="flex items-center justify-between gap-3 rounded-md border border-card bg-card-bg px-3 py-2">
-				<div className="text-xs font-medium text-gray-700">비율 고정</div>
+				<div className="text-xs font-medium text-sub-text">비율 고정</div>
 				<input
 					type="checkbox"
 					checked={component.lockAspectRatio === true}
@@ -116,7 +116,7 @@ export function StickerBoardTextPropertiesSection({
 
 			<div className="grid grid-cols-2 gap-3">
 				<div>
-					<div className="text-xs font-medium text-gray-600">글자색</div>
+					<div className="text-xs font-medium text-sub-text">글자색</div>
 					<Input
 						className="mt-2"
 						type="color"
@@ -133,7 +133,7 @@ export function StickerBoardTextPropertiesSection({
 				</div>
 
 				<div>
-					<div className="text-xs font-medium text-gray-600">폰트 크기(px)</div>
+					<div className="text-xs font-medium text-sub-text">폰트 크기(px)</div>
 					<Input
 						className="mt-2"
 						type="number"
@@ -163,7 +163,7 @@ export function StickerBoardTextPropertiesSection({
 
 			<div className="grid grid-cols-2 gap-3">
 				<div>
-					<div className="text-xs font-medium text-gray-600">굵기</div>
+					<div className="text-xs font-medium text-sub-text">굵기</div>
 					<div className="mt-2">
 						<Select
 							value={String(component.style?.fontWeight ?? 400)}
@@ -200,7 +200,7 @@ export function StickerBoardTextPropertiesSection({
 				</div>
 
 				<div>
-					<div className="text-xs font-medium text-gray-600">정렬</div>
+					<div className="text-xs font-medium text-sub-text">정렬</div>
 					<div className="mt-2">
 						<Select
 							value={component.style?.textAlign ?? "left"}
@@ -235,7 +235,7 @@ export function StickerBoardTextPropertiesSection({
 
 			<div className="grid grid-cols-2 gap-3">
 				<div>
-					<div className="text-xs font-medium text-gray-600">회전(°)</div>
+					<div className="text-xs font-medium text-sub-text">회전(°)</div>
 					<Input
 						className="mt-2"
 						type="number"
@@ -252,7 +252,7 @@ export function StickerBoardTextPropertiesSection({
 					/>
 				</div>
 				<div>
-					<div className="text-xs font-medium text-gray-600">투명도(%)</div>
+					<div className="text-xs font-medium text-sub-text">투명도(%)</div>
 					<Input
 						className="mt-2"
 						type="number"

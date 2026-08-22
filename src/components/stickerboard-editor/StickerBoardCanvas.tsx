@@ -49,7 +49,7 @@ export function StickerBoardCanvas({
 	}, [isTextInsertMode, setIsTextInsertMode]);
 
 	return (
-		<div className="rounded-card border-card bg-card blur-proxy p-4">
+		<div className="flex h-full min-h-0 flex-col rounded-card border-card bg-card blur-proxy p-4">
 			<StickerBoardCanvasToolbar
 				isImageDialogOpen={isImageDialogOpen}
 				isTextInsertMode={isTextInsertMode}

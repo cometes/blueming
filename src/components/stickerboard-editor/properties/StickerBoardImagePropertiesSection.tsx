@@ -40,7 +40,7 @@ export function StickerBoardImagePropertiesSection({
 	return (
 		<div className="mt-4 space-y-4">
 			<div className="flex items-center justify-between gap-3 rounded-md border border-card bg-card-bg px-3 py-2">
-				<div className="text-xs font-medium text-gray-700">비율 고정</div>
+				<div className="text-xs font-medium text-sub-text">비율 고정</div>
 				<Checkbox
 					checked={component.lockAspectRatio === true}
 					disabled={component.isLocked === true}
@@ -55,7 +55,7 @@ export function StickerBoardImagePropertiesSection({
 
 			<div className="grid grid-cols-2 gap-3">
 				<div>
-					<div className="text-xs font-medium text-gray-600">맞춤</div>
+					<div className="text-xs font-medium text-sub-text">맞춤</div>
 					<div className="mt-2">
 						<Select
 							value={component.imageFit ?? "contain"}
@@ -79,13 +79,13 @@ export function StickerBoardImagePropertiesSection({
 				</div>
 
 				<div>
-					<div className="text-xs font-medium text-gray-600">뒤집기</div>
+					<div className="text-xs font-medium text-sub-text">뒤집기</div>
 					<div className="mt-2">
-						<ButtonGroup className="flex-1 justify-center rounded-md border border-stone-700 bg-stone-800 overflow-hidden divide-x divide-stone-700">
+						<ButtonGroup className="flex-1 justify-center rounded-md border border-card-color bg-card-bg overflow-hidden divide-x divide-[color:var(--color-card-border)]">
 							<Button
 								type="button"
 								variant="ghost"
-								className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700"
+								className="h-8 flex-1 min-w-0 rounded-none hover:bg-theme-primary/10 hover:text-theme-primary"
 								disabled={component.isLocked === true}
 								onClick={() => {
 									onUpdate(component.id, (prev) => ({
@@ -99,7 +99,7 @@ export function StickerBoardImagePropertiesSection({
 							<Button
 								type="button"
 								variant="ghost"
-								className="h-8 flex-1 min-w-0 rounded-none hover:bg-stone-700 focus:z-10"
+								className="h-8 flex-1 min-w-0 rounded-none hover:bg-theme-primary/10 hover:text-theme-primary focus:z-10"
 								disabled={component.isLocked === true}
 								onClick={() => {
 									onUpdate(component.id, (prev) => ({
@@ -117,7 +117,7 @@ export function StickerBoardImagePropertiesSection({
 
 			<div className="grid grid-cols-2 gap-3">
 				<div>
-					<div className="text-xs font-medium text-gray-600">회전(°)</div>
+					<div className="text-xs font-medium text-sub-text">회전(°)</div>
 					<Input
 						className="mt-2"
 						type="number"
@@ -134,7 +134,7 @@ export function StickerBoardImagePropertiesSection({
 					/>
 				</div>
 				<div>
-					<div className="text-xs font-medium text-gray-600">투명도(%)</div>
+					<div className="text-xs font-medium text-sub-text">투명도(%)</div>
 					<Input
 						className="mt-2"
 						type="number"

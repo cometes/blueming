@@ -35,7 +35,7 @@ export function StickerBoardTransformFields({
 		<div className="grid grid-cols-2 gap-3">
 			{FIELD_CONFIG.map(({ field, label, min }) => (
 				<div key={field}>
-					<div className="text-xs font-medium text-gray-600">{label}</div>
+					<div className="text-xs font-medium text-sub-text">{label}</div>
 					<Input
 						className="mt-2"
 						type="number"
