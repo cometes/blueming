@@ -37,7 +37,6 @@ const LayoutPreservingViewer = React.memo<{
 	viewerHeight: number;
 }>(({ children, editorWidth, editorHeight, viewerWidth, viewerHeight }) => {
 	const contentRef = useRef<HTMLDivElement>(null);
-	const { general } = useSettings();
 
 	useLayoutEffect(() => {
 		if (!contentRef.current || !editorWidth || !editorHeight) return;
@@ -53,19 +52,15 @@ const LayoutPreservingViewer = React.memo<{
 			height: `${editorHeight}px`,
 			padding: "16px",
 			boxSizing: "border-box",
+			// flex 컨테이너가 콘텐츠를 찌그러뜨리면 에디터와 비율이 어긋난다
+			flexShrink: "0",
 		});
 	}, [editorWidth, editorHeight, viewerWidth, viewerHeight]);
 
+	// 콘텐츠는 항상 뷰어에 맞게 축소되므로 스크롤이 필요 없다.
+	// overflow-y-scroll은 스크롤바 폭만큼 가용 영역을 줄여 비율을 틀어뜨렸음.
 	return (
-		<div
-			className="overflow-y-scroll relative w-full h-full flex justify-center items-center"
-			style={{
-				scrollbarColor: `${
-					general?.design?.widget?.borderColor || "#ccc"
-				} transparent`,
-				scrollbarWidth: "thin",
-			}}
-		>
+		<div className="overflow-hidden relative w-full h-full flex justify-center items-center">
 			<div ref={contentRef}>{children}</div>
 		</div>
 	);
@@ -76,6 +71,8 @@ LayoutPreservingViewer.displayName = "LayoutPreservingViewer";
 export default function WidgetNotice() {
 	const { main } = useSettings();
 	const noticeData = main?.notice;
+	// 배율 계산은 콘텐츠가 실제로 놓이는 안쪽 박스 기준이어야 한다
+	// (widget-wrapper의 패딩/보더를 포함해 재면 배율이 커져 가장자리가 잘림)
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	// Widget (viewer) dimensions via custom hook - must be called before any early returns
@@ -101,8 +98,11 @@ export default function WidgetNotice() {
 
 	// Render
 	return (
-		<div className="widget-wrapper" ref={containerRef}>
-			<div className="w-full h-full flex items-center justify-center">
+		<div className="widget-wrapper">
+			<div
+				ref={containerRef}
+				className="w-full h-full flex items-center justify-center"
+			>
 				<LayoutPreservingViewer
 					editorWidth={editorDimensions.width}
 					editorHeight={editorDimensions.height}

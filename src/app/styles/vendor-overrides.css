@@ -80,6 +80,23 @@
 	display: block;
 }
 
+/* 에디터 NodeView(image-wrapper/image-align-*)와 동일한 시각 결과를
+   정적 렌더에서 재현 — 위젯이 편집 화면과 같은 비율로 보이게 한다 */
+.rich-text-viewer img[data-align="center"] {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.rich-text-viewer img[data-align="right"] {
+	margin-left: auto;
+}
+
+/* 에디터의 빈 문단(<p><br></p>)은 한 줄 높이를 차지하지만 정적 렌더의
+   <p></p>는 높이가 0으로 접혀 세로 비율이 틀어진다 — 한 줄 높이 유지 */
+.rich-text-viewer p:empty {
+	min-height: 1.6em;
+}
+
 .rich-text-viewer iframe {
 	width: 100%;
 	min-height: 260px;
