@@ -162,6 +162,10 @@ export function useRichEditor({
 				// 만들어 이동·경계 스냅·빈 문단 처리까지 전부 수행한다. 개입하지 않는다.
 				if (moved) return false;
 
+				// Chrome은 <img> 드래그에 Files를 포함시키므로, 내부 이미지 이동이
+				// 파일 업로드 브랜치로 새지 않게 가드 (재업로드-복제 방지)
+				if (imageDragSource.editor !== null) return false;
+
 				const files = Array.from(event.dataTransfer?.files ?? []).filter(
 					(file) => file.type.startsWith("image/"),
 				);
@@ -319,11 +323,14 @@ export function useRichEditor({
 			);
 		};
 
-		// capture 단계: 중간 요소의 stopPropagation 영향 없이 항상 수신
+		// capture 단계: 중간 요소의 stopPropagation 영향 없이 항상 수신.
+		// dragenter도 함께 차단해야 요소 경계를 넘을 때 금지 커서가 번쩍이지 않는다.
 		window.addEventListener("dragover", onWindowDragOver, true);
+		window.addEventListener("dragenter", onWindowDragOver, true);
 		window.addEventListener("drop", onWindowDrop);
 		return () => {
 			window.removeEventListener("dragover", onWindowDragOver, true);
+			window.removeEventListener("dragenter", onWindowDragOver, true);
 			window.removeEventListener("drop", onWindowDrop);
 		};
 	}, [editor]);
