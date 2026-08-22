@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
 	createImageId,
@@ -10,6 +10,7 @@ import {
 	revokeCommentImageUrls,
 	useCommentImageManager,
 } from "@/features/comment/hooks/useCommentImageManager";
+import { useTagPicker } from "@/hooks/useTagPicker";
 
 export const MAX_MEMO_TAGS = 6;
 export const MAX_MEMO_IMAGE_COUNT = 4;
@@ -43,9 +44,6 @@ interface UseMemoComposerArgs {
 	onSubmit?: (payload: MemoComposerPayload) => void | Promise<void>;
 }
 
-const normalizeTag = (value: string) =>
-	value.replace(/^#/, "").replace(/\s+/g, "").trim();
-
 /** MemoCreateModal의 작성 상태(제목/내용/태그/공개설정/이미지)와 제출 로직 */
 export function useMemoComposer({
 	isOpen,
@@ -57,15 +55,11 @@ export function useMemoComposer({
 }: UseMemoComposerArgs) {
 	const [titleInput, setTitleInput] = useState("");
 	const [contentInput, setContentInput] = useState("");
-	const [tagInput, setTagInput] = useState("");
-	const [tagSearchInput, setTagSearchInput] = useState("");
-	const [tagInputOpen, setTagInputOpen] = useState(false);
-	const [tags, setTags] = useState<string[]>([]);
 	const [visibility, setVisibility] = useState("public");
 	const [password, setPassword] = useState("");
 	const [images, setImages] = useState<CommentImage[]>([]);
-	const tagJustAddedRef = useRef(false);
-	const isComposingRef = useRef(false);
+	const tagPicker = useTagPicker({ tagsOptions, maxTags: MAX_MEMO_TAGS });
+	const { tags, setTags, reset: resetTagPicker, setTagInput, setTagSearchInput, setTagInputOpen } = tagPicker;
 	const imageManager = useCommentImageManager({
 		maxImageCount: MAX_MEMO_IMAGE_COUNT,
 	});
@@ -74,14 +68,11 @@ export function useMemoComposer({
 	const resetComposer = useCallback(() => {
 		setTitleInput("");
 		setContentInput("");
-		setTagInput("");
-		setTagSearchInput("");
-		setTagInputOpen(false);
-		setTags([]);
+		resetTagPicker();
 		setVisibility("public");
 		setPassword("");
 		setImages([]);
-	}, []);
+	}, [resetTagPicker]);
 
 	useEffect(() => {
 		if (!isOpen) {
@@ -107,81 +98,14 @@ export function useMemoComposer({
 					}))
 				: [],
 		);
-	}, [isOpen, initialValues]);
-
-	const normalizedTags = useMemo(() => {
-		return Array.from(
-			new Set(
-				tagsOptions.map((tag) => tag.trim()).filter((tag) => Boolean(tag)),
-			),
-		);
-	}, [tagsOptions]);
-
-	const filteredTags = useMemo(() => {
-		if (!tagSearchInput.trim()) return normalizedTags;
-		return normalizedTags.filter((tag) =>
-			tag.toLowerCase().includes(tagSearchInput.toLowerCase()),
-		);
-	}, [normalizedTags, tagSearchInput]);
-
-	const handleAddTag = (value: string) => {
-		const normalized = normalizeTag(value);
-		if (!normalized) return;
-		if (tags.length >= MAX_MEMO_TAGS) return;
-		if (tags.includes(normalized)) {
-			setTagInput("");
-			return;
-		}
-		setTags((prev) => [...prev, normalized]);
-		setTagInput("");
-		setTagInputOpen(false);
-		tagJustAddedRef.current = true;
-	};
-
-	const handleRemoveTag = (value: string) => {
-		setTags((prev) => prev.filter((tag) => tag !== value));
-	};
-
-	const toggleTag = (value: string) => {
-		if (!value) return;
-		const isRemoving = tags.includes(value);
-		if (!isRemoving && tags.length >= MAX_MEMO_TAGS) return;
-		setTags((prev) =>
-			isRemoving ? prev.filter((tag) => tag !== value) : [...prev, value],
-		);
-	};
-
-	const handleTagKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-		if (event.key === "Enter") {
-			if (event.nativeEvent.isComposing || isComposingRef.current) return;
-			event.preventDefault();
-			handleAddTag(tagInput);
-		}
-	};
-
-	const handleTagInputBlur = () => {
-		if (isComposingRef.current) return;
-		if (tagJustAddedRef.current) {
-			tagJustAddedRef.current = false;
-			setTagInput("");
-			setTagInputOpen(false);
-			return;
-		}
-		if (tagInput.trim()) {
-			handleAddTag(tagInput);
-			return;
-		}
-		setTagInput("");
-		setTagInputOpen(false);
-	};
-
-	const handleTagCompositionStart = () => {
-		isComposingRef.current = true;
-	};
-
-	const handleTagCompositionEnd = () => {
-		isComposingRef.current = false;
-	};
+	}, [
+		isOpen,
+		initialValues,
+		setTagInput,
+		setTagSearchInput,
+		setTagInputOpen,
+		setTags,
+	]);
 
 	const handleImageDialogOpen = useCallback(() => {
 		if (images.length >= MAX_MEMO_IMAGE_COUNT) {
@@ -255,21 +179,8 @@ export function useMemoComposer({
 		setTitleInput,
 		contentInput,
 		setContentInput,
-		tagInput,
-		setTagInput,
-		tagSearchInput,
-		setTagSearchInput,
-		tagInputOpen,
-		setTagInputOpen,
+		tagPicker,
 		tags,
-		filteredTags,
-		handleAddTag,
-		handleRemoveTag,
-		toggleTag,
-		handleTagKeyDown,
-		handleTagInputBlur,
-		handleTagCompositionStart,
-		handleTagCompositionEnd,
 		visibility,
 		setVisibility,
 		password,
