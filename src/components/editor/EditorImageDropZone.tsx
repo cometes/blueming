@@ -3,22 +3,27 @@
 import * as React from "react";
 import { ImagePlus } from "lucide-react";
 import type { Editor } from "@tiptap/react";
+import { cn } from "@/shared/lib/utils";
 import { uploadAndInsertImages } from "@/components/editor/useRichEditor";
 import { imageDragSource } from "@/shared/lib/tiptapImage";
 
 interface EditorImageDropZoneProps {
 	editor: Editor | null;
 	children: React.ReactNode;
+	/** 드롭존 루트에 적용할 클래스. 미지정 시 flex-1 (에디터 박스 내부 배치용) */
+	className?: string;
 }
 
 /**
  * 에디터 영역 위로 이미지 파일을 드래그하면 안내 오버레이를 띄우는 드롭존.
  * - 실제 삽입은 ProseMirror handleDrop이 드롭 좌표 기준으로 처리하고,
  *   본문 밖 여백에 떨어뜨린 경우만 여기서 문서 끝에 삽입한다.
+ * - className으로 페이지 컨테이너 자체를 드롭존으로 쓸 수도 있다.
  */
 export default function EditorImageDropZone({
 	editor,
 	children,
+	className,
 }: EditorImageDropZoneProps) {
 	const [isDragOver, setIsDragOver] = React.useState(false);
 	// 자식 요소 경계를 지날 때마다 enter/leave가 반복 발생하므로 깊이 카운터로 판정
@@ -41,7 +46,7 @@ export default function EditorImageDropZone({
 
 	return (
 		<div
-			className="relative flex flex-1 flex-col"
+			className={cn("relative flex flex-col", className ?? "flex-1")}
 			onDragEnter={(e) => {
 				if (!hasImageFiles(e)) return;
 				e.preventDefault();

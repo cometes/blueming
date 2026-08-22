@@ -101,10 +101,11 @@ export default function LibararyNewClient({
 				<MobileToolbarContainer>
 					<TiptapToolbar editor={editor} />
 				</MobileToolbarContainer>
-				{/* Body */}
-				<div
+				{/* Body — 컨테이너(패딩 포함) 전체가 이미지 드롭존 */}
+				<EditorImageDropZone
+					editor={editor}
 					className={cn(
-						"Container pt-[100px] md:pt-[120px] px-6 md:px-12 bg-card backdrop-blur-card max-w-3xl min-h-dvh border-card flex flex-col m-auto",
+						"Container pt-[100px] md:pt-[120px] px-6 md:px-12 bg-card backdrop-blur-card max-w-3xl min-h-dvh border-card m-auto",
 						"pb-[120px] sm:pb-[100px]",
 					)}
 				>
@@ -126,17 +127,15 @@ export default function LibararyNewClient({
 								onVerify={composer.handleVerifyPassword}
 							/>
 						)}
-							{/* Editor Content */}
-						<EditorImageDropZone editor={editor}>
-							<div className="flex-1">
-								<EditorContent
-									editor={editor}
-									className="prose max-w-none focus:outline-none w-full h-full"
-								/>
-							</div>
-						</EditorImageDropZone>
+						{/* Editor Content */}
+						<div className="flex-1">
+							<EditorContent
+								editor={editor}
+								className="prose max-w-none focus:outline-none w-full h-full"
+							/>
+						</div>
 					</div>
-				</div>
+				</EditorImageDropZone>
 			</div>
 			{urlPaste && (
 				<UrlPasteMenu editor={editor} info={urlPaste} onClose={closeUrlPaste} />
