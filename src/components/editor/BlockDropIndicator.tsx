@@ -22,9 +22,8 @@ export default function BlockDropIndicator({
 			style={{
 				left: rect.left,
 				width: rect.width,
-				top: y - 2,
-				height: 4,
-				boxShadow: "0 0 6px color-mix(in srgb, var(--color-theme-primary) 60%, transparent)",
+				top: y - 1.5,
+				height: 3,
 			}}
 		/>
 	);

@@ -321,18 +321,6 @@ export function useRichEditor({
 		if (!editor) return;
 
 		const isOwnImageDrag = () => imageDragSource.editor === editor;
-		const isFileDrag = (e: DragEvent) =>
-			imageDragSource.editor === null &&
-			Boolean(e.dataTransfer?.types.includes("Files"));
-		const nearEditor = (e: DragEvent) => {
-			const r = editor.view.dom.getBoundingClientRect();
-			return (
-				e.clientX > r.left - 120 &&
-				e.clientX < r.right + 120 &&
-				e.clientY > r.top - 160 &&
-				e.clientY < r.bottom + 160
-			);
-		};
 
 		const onWindowDragOver = (e: DragEvent) => {
 			if (isOwnImageDrag()) {
@@ -340,12 +328,9 @@ export function useRichEditor({
 				e.preventDefault();
 				if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
 				setIndicator(getBlockDrop(editor, e.clientY).lineY);
-				return;
 			}
-			if (isFileDrag(e) && nearEditor(e)) {
-				// 파일 드래그: 에디터 근처에서 가이드선 표시
-				setIndicator(getBlockDrop(editor, e.clientY).lineY);
-			}
+			// 파일 드래그에는 가이드선을 표시하지 않는다
+			// (드롭존 오버레이가 이미 안내 역할을 하므로 이중 표시 방지)
 		};
 
 		const onWindowDrop = (e: DragEvent) => {
