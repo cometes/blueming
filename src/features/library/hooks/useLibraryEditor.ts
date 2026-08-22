@@ -14,12 +14,13 @@ import {
 const MAX_DROP_IMAGES = 5;
 
 // 드롭/붙여넣기로 받은 이미지 파일들을 순서대로 업로드해 현재 커서 위치에 삽입
-const uploadAndInsertImages = async (
+// (insertPos: 숫자 = 해당 위치, "end" = 문서 끝)
+export const uploadAndInsertImages = async (
 	editor: Editor,
 	files: File[],
-	insertPos?: number,
+	insertPos?: number | "end",
 ) => {
-	if (typeof insertPos === "number") {
+	if (insertPos !== undefined) {
 		editor.commands.focus(insertPos);
 	}
 	const targets = files.slice(0, MAX_DROP_IMAGES);

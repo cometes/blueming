@@ -16,6 +16,7 @@ import {
 import { useLibraryEditor } from "@/features/library/hooks/useLibraryEditor";
 import NewTitleFields from "./NewTitleFields";
 import ProtectedContentGate from "./ProtectedContentGate";
+import EditorImageDropZone from "./EditorImageDropZone";
 import { toast } from "sonner";
 import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import { useAuthStore } from "@/store/auth/store";
@@ -119,13 +120,15 @@ export default function LibararyNewClient({
 								onVerify={composer.handleVerifyPassword}
 							/>
 						)}
-						{/* Editor Content */}
-						<div className="flex-1">
-							<EditorContent
-								editor={editor}
-								className="prose max-w-none focus:outline-none w-full h-full"
-							/>
-						</div>
+							{/* Editor Content */}
+						<EditorImageDropZone editor={editor}>
+							<div className="flex-1">
+								<EditorContent
+									editor={editor}
+									className="prose max-w-none focus:outline-none w-full h-full"
+								/>
+							</div>
+						</EditorImageDropZone>
 					</div>
 				</div>
 			</div>
