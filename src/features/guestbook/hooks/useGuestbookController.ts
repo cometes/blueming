@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { isAxiosError } from "axios";
+import { isHttpError } from "@/shared/lib/http/client";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth/store";
 import { createGuestbookEntry, uploadGuestbookImages } from "@/features/guestbook/api/client";
@@ -110,7 +110,7 @@ export function useGuestbookController({
 			list.setCurrentPage(1);
 			await list.loadPage();
 		} catch (error) {
-			if (isAxiosError(error)) {
+			if (isHttpError(error)) {
 				const serverMessage =
 					typeof error.response?.data?.error === "string"
 						? error.response?.data?.error

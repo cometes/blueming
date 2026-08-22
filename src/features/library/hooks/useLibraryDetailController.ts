@@ -9,38 +9,10 @@ import {
 	setLibraryPin,
 } from "@/features/library/api/client";
 import { getApiErrorMessage } from "@/shared/lib/http/client";
-import type { LibraryPinResponse } from "@/features/library/types";
+import type { LibraryDetailData } from "@/features/library/types";
 
-export interface LibraryDetailData extends Partial<LibraryPinResponse> {
-	id?: string;
-	slug?: string;
-	title?: string;
-	subtitle?: string;
-	content?: unknown;
-	allow?: string;
-	requiresPassword?: boolean;
-	viewCount?: number;
-	authorId?: string | null;
-	author?: string | { id?: string | null } | null;
-	authorPhotoURL?: string | null;
-	uid?: string | null;
-	createdAt?: string | null;
-	tags?: string[];
-	backgroundType?: string;
-	backgroundColor?: string;
-	backgroundImage?: string;
-	enableBackdrop?: boolean;
-	prevPost?: {
-		id?: string;
-		slug?: string;
-		title?: string;
-	} | null;
-	nextPost?: {
-		id?: string;
-		slug?: string;
-		title?: string;
-	} | null;
-}
+// 타입 정의는 features/library/types.ts로 이동. 기존 import 경로 호환을 위해 재노출.
+export type { LibraryDetailData };
 
 interface UseLibraryDetailControllerArgs {
 	detailData: LibraryDetailData | null | undefined;

@@ -7,6 +7,8 @@ import type {
 	FetchLibraryListOptions,
 	FetchLibraryListParams,
 	LibraryDetailAccessOptions,
+	LibraryDetailData,
+	LibraryListResponseData,
 	LibraryPinResponse,
 	RecordViewResponse,
 	UpdateLibraryResponse,
@@ -27,7 +29,7 @@ export const fetchLibraryList = async (
 		requestParams.query = params.query;
 	}
 
-	const result = await httpClient.get("/library/list", {
+	const result = await httpClient.get<LibraryListResponseData>("/library/list", {
 		params: requestParams,
 	});
 
@@ -44,7 +46,7 @@ export const fetchLibraryDetail = async (
 	options: FetchLibraryListOptions = {},
 ) => {
 	void options;
-	const request = await httpClient.get(`/library/detail/${id}`);
+	const request = await httpClient.get<LibraryDetailData>(`/library/detail/${id}`);
 	return { data: request.data };
 };
 
@@ -78,9 +80,10 @@ export const fetchLibraryDetailWithAccess = async (
 		Object.assign(headers, authHeaders);
 	}
 
-	const response = await httpClient.get(`/library/detail/${id}`, {
-		headers,
-	});
+	const response = await httpClient.get<LibraryDetailData>(
+		`/library/detail/${id}`,
+		{ headers },
+	);
 	return response.data;
 };
 

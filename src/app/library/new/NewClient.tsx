@@ -214,7 +214,8 @@ export default function LibararyNewClient({
 			const data = await fetchLibraryDetailWithAccess(detailId, {
 				password: passwordInput.trim(),
 			});
-			applyDetailData(data);
+			// 상세 API 응답은 편집 모드에서 initialData와 같은 형태로 내려온다
+			applyDetailData(data as LibraryNewClientProps["initialData"]);
 			setPasswordInput("");
 			setPasswordError("");
 		} catch (error) {
@@ -237,7 +238,7 @@ export default function LibararyNewClient({
 					includeAuth: true,
 				});
 				if (isMounted && data?.content) {
-					applyDetailData(data);
+					applyDetailData(data as LibraryNewClientProps["initialData"]);
 				}
 			} catch {
 				// Ignore: user isn't author or no auth
