@@ -44,42 +44,26 @@
 		backdrop-filter: blur(var(--widget-blur));
 	}
 
-	/* 보더 이미지 코너만 적용 */
-	.widget-wrapper[data-border-image-type="corner"] {
-		position: relative;
-	}
-
-	.widget-wrapper[data-border-image-type="corner"]::before {
+	/* 보더 이미지: :root의 data-widget-border-image-type 속성으로 전환 (ThemeProvider가 설정)
+	   — DOM 노드 주입 없이 pseudo-element 하나로 4개 코너를 모두 그린다 */
+	:root[data-widget-border-image-type="corner"] .widget-wrapper::before {
 		content: '';
 		position: absolute;
-		top: 0;
-		left: 0;
-		width: 30px;
-		height: 30px;
-		background-image: var(--widget-corner-image);
-		background-size: contain;
+		inset: 0;
+		background-image: var(--widget-corner-image), var(--widget-corner-image),
+			var(--widget-corner-image), var(--widget-corner-image);
+		background-position: top left, top right, bottom left, bottom right;
+		background-size: 30px 30px;
 		background-repeat: no-repeat;
-		background-position: top left;
 		pointer-events: none;
 		z-index: 10;
 	}
 
-	.widget-wrapper[data-border-image-type="corner"]::after {
-		content: '';
-		position: absolute;
-		top: 0;
-		right: 0;
-		width: 30px;
-		height: 30px;
-		background-image: var(--widget-corner-image);
-		background-size: contain;
-		background-repeat: no-repeat;
-		background-position: top right;
-		pointer-events: none;
-		z-index: 10;
+	/* 보더 이미지: 전체 적용 */
+	:root[data-widget-border-image-type="full"] .widget-wrapper {
+		border-image: var(--widget-border-image) var(--widget-border-image-slice, 1) fill;
 	}
 
-	/* 하단 코너는 별도 요소로 추가 필요 (CSS만으로는 제한적) */
 	.card-wrapper {
 		background: var(--card-bg);
 		border-color: var(--card-border-color);

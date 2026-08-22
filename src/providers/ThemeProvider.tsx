@@ -187,56 +187,23 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 		if (design || general) {
 			// DOM이 준비되면 즉시 CSS 변수 설정
 			setCSSVariables(design, general);
-			
-			// 보더 이미지 적용
+
+			// 보더 이미지 적용: React가 렌더링한 .widget-wrapper 내부에 노드를 주입하지 않고,
+			// :root의 데이터 속성 + CSS 변수만 바꿔 components.css 규칙이 그리게 한다.
+			const root = document.documentElement;
 			const widget = design?.widget;
 			if (widget && "borderImage" in widget && widget.borderImage) {
-				const widgetWrappers = document.querySelectorAll('.widget-wrapper');
-				widgetWrappers.forEach((wrapper) => {
-					const element = wrapper as HTMLElement;
-					
-					// 기존 코너 요소 제거
-					const existingCorners = element.querySelectorAll('.widget-corner-image');
-					existingCorners.forEach((corner) => corner.remove());
-					
-					if (widget.borderImageType === 'corner') {
-						element.setAttribute('data-border-image-type', 'corner');
-						// 코너 이미지 적용 (4개 코너 모두)
-						element.style.setProperty('--widget-corner-image', `url("${widget.borderImage}")`);
-						
-						// 4개 코너에 이미지 요소 추가
-						const corners = [
-							{ position: 'top-left', top: '0', left: '0' },
-							{ position: 'top-right', top: '0', right: '0' },
-							{ position: 'bottom-left', bottom: '0', left: '0' },
-							{ position: 'bottom-right', bottom: '0', right: '0' },
-						];
-						
-						corners.forEach(({ position, ...styles }) => {
-							const cornerEl = document.createElement('div');
-							cornerEl.className = 'widget-corner-image';
-							cornerEl.setAttribute('data-corner', position);
-							Object.assign(cornerEl.style, {
-								position: 'absolute',
-								width: '30px',
-								height: '30px',
-								backgroundImage: `url("${design.widget.borderImage}")`,
-								backgroundSize: 'contain',
-								backgroundRepeat: 'no-repeat',
-								backgroundPosition: position.replace('-', ' '),
-								pointerEvents: 'none',
-								zIndex: '10',
-								...styles,
-							});
-							element.appendChild(cornerEl);
-						});
-					} else {
-						element.setAttribute('data-border-image-type', 'full');
-						// 전체 보더 이미지 적용
-						element.style.borderImage = `url("${widget.borderImage}") ${widget.borderWidth ?? 1} fill`;
-						element.style.borderImageSlice = `${widget.borderWidth ?? 1}`;
-					}
-				});
+				if (widget.borderImageType === 'corner') {
+					root.setAttribute('data-widget-border-image-type', 'corner');
+					root.style.setProperty('--widget-corner-image', `url("${widget.borderImage}")`);
+				} else {
+					root.setAttribute('data-widget-border-image-type', 'full');
+					root.style.setProperty('--widget-border-image-slice', `${widget.borderWidth ?? 1}`);
+				}
+			} else {
+				root.removeAttribute('data-widget-border-image-type');
+				root.style.removeProperty('--widget-corner-image');
+				root.style.removeProperty('--widget-border-image-slice');
 			}
 		}
 	}, [design, general]);
