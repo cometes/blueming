@@ -157,20 +157,25 @@ export function StickerBoardCanvasStage({
 								onCancel={onCancelTextDraft}
 							/>
 						) : null}
-						{visibleDraft.length > 0 ? (
-							visibleDraft.map((component) => (
-								<StickerRenderer
-									key={component.id}
-									component={component}
-									onDoubleClick={() => onDoubleClickComponent(component)}
-									isEditing={isEditingComponent(component.id)}
-								/>
-							))
-						) : (
-							<div className="absolute inset-0 flex items-center justify-center text-xs text-sub-text/70">
-								저장된 스티커가 없습니다.
-							</div>
-						)}
+						{/* 스티커 클리핑 레이어: 캔버스 밖으로 나간 부분은 메인 위젯과
+						    동일하게 숨긴다. 좌표는 유지되며, Moveable 선택 프레임은
+						    이 레이어 밖에 있어 밖으로 나간 스티커도 계속 조작 가능. */}
+						<div className="absolute inset-0 overflow-hidden rounded-widget">
+							{visibleDraft.length > 0 ? (
+								visibleDraft.map((component) => (
+									<StickerRenderer
+										key={component.id}
+										component={component}
+										onDoubleClick={() => onDoubleClickComponent(component)}
+										isEditing={isEditingComponent(component.id)}
+									/>
+								))
+							) : (
+								<div className="absolute inset-0 flex items-center justify-center text-xs text-sub-text/70">
+									저장된 스티커가 없습니다.
+								</div>
+							)}
+						</div>
 					</div>
 				</div>
 			) : (
