@@ -24,6 +24,15 @@
 	}
 }
 
+@keyframes marqueeHorizontal {
+	0% {
+		transform: translate3d(0, 0, 0);
+	}
+	100% {
+		transform: translate3d(-50%, 0, 0);
+	}
+}
+
 @keyframes marqueeVertical {
 	0% {
 		transform: translate3d(0, 0, 0);
@@ -77,6 +86,26 @@
 			transform: translateY(var(--card-translate-y));
 			border-color: var(--card-border-active);
 		}
+	}
+
+	/* 가로 마퀴 (기존 react-fast-marquee 대체) — 세로 버전과 동일한 2세그먼트 순환 방식 */
+	.marquee-horizontal-track {
+		display: flex;
+		width: 200%;
+		height: 100%;
+		animation: marqueeHorizontal var(--marquee-h-duration, 12s) linear infinite;
+		will-change: transform;
+		backface-visibility: hidden;
+	}
+
+	.marquee-horizontal-segment {
+		width: 50%;
+		height: 100%;
+		flex: none;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		white-space: nowrap;
 	}
 
 	.marquee-vertical-track {

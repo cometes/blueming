@@ -1,4 +1,3 @@
-import Marquee from "react-fast-marquee";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useSettings } from "@/contexts/SettingsContext";
 
@@ -82,19 +81,57 @@ export default function WidgetMarquee() {
 						</div>
 					</div>
 				) : (
-					<Marquee
-						gradient={marqueeSettings.marqueeType === "컬러"}
-						gradientColor={marqueeSettings.gradientColor}
-						gradientWidth={marqueeSettings.gradientWidth}
-						style={{ height: "100%" }}
-					>
+					<div className="relative w-full h-full overflow-hidden">
 						<div
-							className="min-h-6 flex items-center px-2 font-title"
-							style={{ color: marqueeSettings.textColor }}
+							className="marquee-horizontal-track"
+							style={
+								{
+									// 기존 라이브러리의 기본 속도(50px/s)에 맞춰 트랙 길이 기반으로 계산
+									"--marquee-h-duration": `${Math.max(
+										(containerSize.width * 2) / 50,
+										6,
+									)}s`,
+								} as React.CSSProperties
+							}
 						>
-							{bannerText}
+							{[0, 1].map((segment) => (
+								<div key={segment} className="marquee-horizontal-segment">
+									<div
+										className="min-h-6 flex items-center px-2 font-title"
+										style={{ color: marqueeSettings.textColor }}
+									>
+										{bannerText}
+									</div>
+								</div>
+							))}
 						</div>
-					</Marquee>
+						{marqueeSettings.marqueeType === "컬러" && (
+							<>
+								<div
+									aria-hidden="true"
+									className="absolute inset-y-0 left-0 z-10 pointer-events-none"
+									style={{
+										width:
+											typeof marqueeSettings.gradientWidth === "number"
+												? `${marqueeSettings.gradientWidth}px`
+												: marqueeSettings.gradientWidth,
+										background: `linear-gradient(90deg, ${marqueeSettings.gradientColor}, transparent)`,
+									}}
+								/>
+								<div
+									aria-hidden="true"
+									className="absolute inset-y-0 right-0 z-10 pointer-events-none"
+									style={{
+										width:
+											typeof marqueeSettings.gradientWidth === "number"
+												? `${marqueeSettings.gradientWidth}px`
+												: marqueeSettings.gradientWidth,
+										background: `linear-gradient(270deg, ${marqueeSettings.gradientColor}, transparent)`,
+									}}
+								/>
+							</>
+						)}
+					</div>
 				)}
 			</div>
 		</div>

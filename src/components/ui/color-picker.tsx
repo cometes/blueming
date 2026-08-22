@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { SketchPicker, ColorResult } from "react-color";
+import {
+	SketchColorPicker,
+	type ColorResult,
+} from "@/components/ui/sketch-color-picker";
 import {
 	Popover,
 	PopoverContent,
@@ -55,7 +58,7 @@ export function ColorPicker({
 				align="start"
 				portal={false}
 			>
-				<SketchPicker color={color} onChange={handleChange} />
+				<SketchColorPicker color={color} onChange={handleChange} />
 			</PopoverContent>
 		</Popover>
 	);
