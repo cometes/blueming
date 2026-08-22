@@ -13,14 +13,11 @@ import {
 	useLibraryComposer,
 	type LibraryComposerInitialData,
 } from "@/features/library/hooks/useLibraryComposer";
-import {
-	useLibraryEditor,
-	type UrlPasteInfo,
-} from "@/features/library/hooks/useLibraryEditor";
+import { useLibraryEditor } from "@/features/library/hooks/useLibraryEditor";
 import NewTitleFields from "./NewTitleFields";
 import ProtectedContentGate from "./ProtectedContentGate";
-import EditorImageDropZone from "./EditorImageDropZone";
-import UrlPasteMenu from "./UrlPasteMenu";
+import EditorImageDropZone from "@/components/editor/EditorImageDropZone";
+import UrlPasteMenu from "@/components/editor/UrlPasteMenu";
 import { toast } from "sonner";
 import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import { useAuthStore } from "@/store/auth/store";
@@ -55,11 +52,10 @@ export default function LibararyNewClient({
 
 	const editorRef = React.useRef<Editor | null>(null);
 	const composer = useLibraryComposer({ editorRef, mode, initialData });
-	// URL 붙여넣기 시 링크/임베드 전환 메뉴 (노션 스타일)
-	const [urlPaste, setUrlPaste] = React.useState<UrlPasteInfo | null>(null);
-	const editor = useLibraryEditor(composer.initialContent, {
-		onUrlPasted: setUrlPaste,
-	});
+	// URL 붙여넣기 시 링크/임베드 전환 메뉴 상태는 useRichEditor가 관리
+	const { editor, urlPaste, closeUrlPaste } = useLibraryEditor(
+		composer.initialContent,
+	);
 	editorRef.current = editor;
 
 	// 수정 모드는 관리자만 접근 가능
@@ -141,11 +137,7 @@ export default function LibararyNewClient({
 				</div>
 			</div>
 			{urlPaste && (
-				<UrlPasteMenu
-					editor={editor}
-					info={urlPaste}
-					onClose={() => setUrlPaste(null)}
-				/>
+				<UrlPasteMenu editor={editor} info={urlPaste} onClose={closeUrlPaste} />
 			)}
 			<CreateModal
 				open={composer.metaOpen}

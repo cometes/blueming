@@ -1,6 +1,9 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { EditorContent } from "@tiptap/react";
+import { useRichEditor } from "@/components/editor/useRichEditor";
+import EditorImageDropZone from "@/components/editor/EditorImageDropZone";
+import UrlPasteMenu from "@/components/editor/UrlPasteMenu";
 import type { AnyExtension } from "@tiptap/core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,8 +32,8 @@ const PLACEHOLDERS = {
 } as const;
 
 export default function ProfileSettingClient() {
-	// Initialize Tiptap editor
-	const editor = useEditor({
+	// 공용 리치 에디터 (이미지 드롭/이동·URL 전환 메뉴 포함)
+	const { editor, urlPaste, closeUrlPaste } = useRichEditor({
 		extensions: [
 			...extensions.filter((ext) => ext.name !== "placeholder"),
 			// Override placeholder
@@ -43,12 +46,7 @@ export default function ProfileSettingClient() {
 			}) || extensions.find((ext) => ext.name === "placeholder"),
 		].filter(Boolean) as AnyExtension[],
 		content: "<p></p>",
-		immediatelyRender: false,
-		editorProps: {
-			attributes: {
-				class: "tiptap ProseMirror focus:outline-none min-h-[88px]",
-			},
-		},
+		editorClass: "tiptap ProseMirror focus:outline-none min-h-[88px]",
 	});
 	const controller = useProfileSettingsController(editor);
 	const {
@@ -192,11 +190,20 @@ export default function ProfileSettingClient() {
 
 										{/* Editor */}
 										<div className="border-card rounded-card bg-card-bg p-3.5 min-h-[120px]">
-											<EditorContent
-												editor={editor}
-												className="h-full w-full"
-											/>
+											<EditorImageDropZone editor={editor}>
+												<EditorContent
+													editor={editor}
+													className="h-full w-full"
+												/>
+											</EditorImageDropZone>
 										</div>
+										{urlPaste && (
+											<UrlPasteMenu
+												editor={editor}
+												info={urlPaste}
+												onClose={closeUrlPaste}
+											/>
+										)}
 									</div>
 								)}
 							</div>

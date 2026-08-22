@@ -3,7 +3,7 @@
 import * as React from "react";
 import { ImagePlus } from "lucide-react";
 import type { Editor } from "@tiptap/react";
-import { uploadAndInsertImages } from "@/features/library/hooks/useLibraryEditor";
+import { uploadAndInsertImages } from "@/components/editor/useRichEditor";
 
 interface EditorImageDropZoneProps {
 	editor: Editor | null;

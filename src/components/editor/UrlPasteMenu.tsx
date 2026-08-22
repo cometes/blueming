@@ -4,7 +4,7 @@ import * as React from "react";
 import { ImagePlus, Link as LinkIcon, Youtube } from "lucide-react";
 import { toast } from "sonner";
 import type { Editor } from "@tiptap/react";
-import type { UrlPasteInfo } from "@/features/library/hooks/useLibraryEditor";
+import type { UrlPasteInfo } from "@/components/editor/useRichEditor";
 import {
 	filenameFromUrl,
 	isYoutubeUrl,

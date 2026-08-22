@@ -1,6 +1,8 @@
 "use client";
 
 import { EditorContent } from "@tiptap/react";
+import EditorImageDropZone from "@/components/editor/EditorImageDropZone";
+import UrlPasteMenu from "@/components/editor/UrlPasteMenu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -37,10 +39,12 @@ export default function NoticeSettingClient() {
 			ratio,
 			showResetDialog,
 			editor,
+			urlPaste,
 			canvasRef,
 			isDirty,
 		},
 		actions: {
+			closeUrlPaste,
 			setBannerText,
 			setCurrentType,
 			setGradientColor,
@@ -209,7 +213,9 @@ export default function NoticeSettingClient() {
 									}}
 								>
 									<ScrollArea className="h-full w-full">
-										<EditorContent editor={editor} className="h-full w-full" />
+										<EditorImageDropZone editor={editor}>
+											<EditorContent editor={editor} className="h-full w-full" />
+										</EditorImageDropZone>
 									</ScrollArea>
 								</div>
 							</div>
@@ -217,6 +223,10 @@ export default function NoticeSettingClient() {
 					)}
 				</div>
 			</section>
+
+			{urlPaste && (
+				<UrlPasteMenu editor={editor} info={urlPaste} onClose={closeUrlPaste} />
+			)}
 
 			<Separator className="my-12" />
 

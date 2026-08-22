@@ -146,7 +146,7 @@ export default function DetailClient({
 			<div className="Wrapper min-h-100vh w-full">
 				<div
 					className={cn(
-						"Container relative w-full max-w-2xl min-h-dvh m-auto px-6 pt-10 pb-10 flex flex-col justify-between",
+						"Container relative w-full max-w-3xl min-h-dvh m-auto px-6 pt-10 pb-10 flex flex-col justify-between",
 						enableBackdrop ? "bg-card backdrop-blur-card border-card" : "",
 					)}
 					style={{ borderTop: "none", borderBottom: "none" }}
