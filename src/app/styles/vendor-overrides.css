@@ -44,31 +44,6 @@
 	z-index: 50;
 }
 
-/* React Colorful 커스텀 스타일 */
-.react-colorful {
-	width: 100% !important;
-	height: 200px !important;
-}
-
-.react-colorful__saturation {
-	border-radius: 8px 8px 0 0;
-}
-
-.react-colorful__hue,
-.react-colorful__alpha {
-	height: 24px;
-	border-radius: 0 0 8px 8px;
-}
-
-.react-colorful__pointer {
-	width: 18px;
-	height: 18px;
-}
-
-.react-colorful__interactive {
-	border-radius: 8px;
-}
-
 /* Tiptap Image 스타일 - 드래그 차단, 리사이징/align 허용 */
 .tiptap-image-resizable {
 	cursor: default !important;
@@ -202,36 +177,6 @@
 	button[aria-pressed="true"] .tiptap-button-text {
 		color: var(--color-theme-primary);
 	}
-}
-
-.sketch-picker input {
-	border: 1px solid var(--card-border-color) !important;
-	border-radius: 6px !important;
-	box-shadow: none !important;
-	background-color: var(--color-card-bg) !important;
-	color: var(--color-main-text) !important;
-}
-
-.sketch-picker {
-	background: var(--color-card-bg) !important;
-	border: 1px solid var(--card-border-color) !important;
-	border-radius: var(--card-border-radius) !important;
-	box-shadow: none !important;
-	backdrop-filter: var(--size-card-blur) !important;
-}
-
-.sketch-picker input:focus {
-	border-color: var(--color-theme-primary) !important;
-	outline: none !important;
-	box-shadow: 0 0 0 1px var(--color-theme-primary) !important;
-}
-
-.sketch-picker label {
-	color: #666 !important;
-}
-
-.sketch-picker .flexbox-fix {
-	border-top: none !important;
 }
 
 .tiptap-image-upload-dragger {

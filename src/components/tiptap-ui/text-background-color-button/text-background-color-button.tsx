@@ -2,8 +2,10 @@
 
 import * as React from "react";
 import { type Editor } from "@tiptap/react";
-import { SketchPicker } from "react-color";
-import type { ColorResult } from "react-color";
+import {
+	SketchColorPicker,
+	type ColorResult,
+} from "@/components/ui/sketch-color-picker";
 
 // --- Hooks ---
 import { useTiptapEditor } from "@/hooks/use-tiptap-editor";
@@ -288,7 +290,7 @@ export function TextBackgroundColorButton({
 							}
 						}}
 					>
-						<SketchPicker
+						<SketchColorPicker
 							color={pickerColor}
 							onChange={handleColorChange}
 							onChangeComplete={(color: ColorResult) => {
