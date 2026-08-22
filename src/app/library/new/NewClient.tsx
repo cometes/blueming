@@ -3,21 +3,19 @@
 import * as React from "react";
 import { useMoveToPage } from "@/hooks/useMoveToPage";
 import { useRouter } from "next/navigation";
-import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/shared/lib/utils";
-import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
-import { extensions } from "@/components/editor/TiptapEditor";
+import { EditorContent, EditorContext, type Editor } from "@tiptap/react";
 import TiptapToolbar from "@/components/tiptap/TiptapToolbar";
 import { MobileToolbarContainer } from "@/components/tiptap/MobileToolbarContainer";
-import CreateModal, { CreateMetaValue } from "@/features/library/components/CreateModal";
+import CreateModal from "@/features/library/components/CreateModal";
 import {
-	createLibraryPost,
-	fetchLibraryDetailWithAccess,
-	updateLibraryPost,
-} from "@/features/library/api/client";
-import { getApiErrorMessage } from "@/shared/lib/http/client";
+	useLibraryComposer,
+	type LibraryComposerInitialData,
+} from "@/features/library/hooks/useLibraryComposer";
+import { useLibraryEditor } from "@/features/library/hooks/useLibraryEditor";
+import NewTitleFields from "./NewTitleFields";
+import ProtectedContentGate from "./ProtectedContentGate";
 import { toast } from "sonner";
 import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import { useAuthStore } from "@/store/auth/store";
@@ -35,23 +33,7 @@ interface TagItem {
 interface LibraryNewClientProps {
 	seriesData: SeriesItem[];
 	tagsData: TagItem[];
-	initialData?: {
-		id: string;
-		title: string;
-		subtitle?: string;
-		content: string;
-		slug?: string | null;
-		tags?: string[];
-		series?: string;
-		backgroundType?: "default" | "color" | "image";
-		backgroundColor?: string | null;
-		backgroundImage?: string | null;
-		enableBackdrop?: boolean;
-		allow?: "all" | "password" | "secret";
-		password?: string | null;
-		thumbnail?: string;
-		pinned?: boolean;
-	};
+	initialData?: LibraryComposerInitialData;
 	mode?: "create" | "edit";
 }
 
@@ -65,76 +47,13 @@ export default function LibararyNewClient({
 	const router = useRouter();
 	const { isAdmin } = useAdmin();
 	const isAuthLoading = useAuthStore((state) => state.isLoading);
-	const [subOpen, setSubOpen] = React.useState(false);
-	const [title, setTitle] = React.useState("");
-	const [subtitle, setSubtitle] = React.useState("");
-	const [metaOpen, setMetaOpen] = React.useState(false);
-	const [isSubmitting, setIsSubmitting] = React.useState(false);
-	const [contentOverride, setContentOverride] = React.useState<string | null>(
-		null,
-	);
-	const [passwordInput, setPasswordInput] = React.useState("");
-	const [passwordError, setPasswordError] = React.useState("");
-	const [isVerifyingPassword, setIsVerifyingPassword] = React.useState(false);
-	const [metaValue, setMetaValue] = React.useState<CreateMetaValue>({
-		tags: [],
-		series: "",
-		slug: "",
-		visibility: "all",
-		password: "",
-		thumbnail: "",
-		pinned: false,
-		backgroundType: "default",
-		backgroundColor: "#fff",
-		backgroundImage: "",
-		enableBackdrop: true,
-	});
 
-	const initialContent = React.useMemo(() => {
-		const raw = contentOverride ?? initialData?.content;
-		if (!raw) return "";
-		try {
-			return JSON.parse(raw);
-		} catch {
-			return "";
-		}
-	}, [contentOverride, initialData?.content]);
+	const editorRef = React.useRef<Editor | null>(null);
+	const composer = useLibraryComposer({ editorRef, mode, initialData });
+	const editor = useLibraryEditor(composer.initialContent);
+	editorRef.current = editor;
 
-	const editor = useEditor({
-		extensions: extensions,
-		content: initialContent,
-		immediatelyRender: false,
-		editorProps: {
-			attributes: {
-				class: "prose max-w-none focus:outline-none min-h-[400px] p-0",
-			},
-			handlePaste: (_view, event) => {
-				const html = event.clipboardData?.getData("text/html");
-				if (html) return false; // HTML이 있으면 Tiptap 기본 처리
-
-				const text = event.clipboardData?.getData("text/plain");
-				if (!text) return false;
-
-				const escapeHtml = (str: string) =>
-					str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-				const paragraphs = text
-					.split(/\r?\n/)
-					.map((line) => `<p>${line ? escapeHtml(line) : "<br>"}</p>`)
-					.join("");
-
-				editor?.commands.insertContent(paragraphs);
-				return true;
-			},
-		},
-	});
-
-	React.useEffect(() => {
-		if (!editor) return;
-		if (!initialContent) return;
-		editor.commands.setContent(initialContent);
-	}, [editor, initialContent]);
-
+	// 수정 모드는 관리자만 접근 가능
 	React.useEffect(() => {
 		if (mode !== "edit" || isAuthLoading) return;
 		if (!isAdmin) {
@@ -144,201 +63,9 @@ export default function LibararyNewClient({
 		}
 	}, [mode, isAdmin, isAuthLoading, router]);
 
-	React.useEffect(() => {
-		if (!initialData) return;
-
-		setTitle(initialData.title || "");
-		setSubtitle(initialData.subtitle || "");
-		setMetaValue({
-			tags: initialData.tags ?? [],
-			series: initialData.series ?? "",
-			slug: initialData.slug ?? "",
-			visibility: initialData.allow ?? "all",
-			password:
-				initialData.allow === "password" ? (initialData.password ?? "") : "",
-			thumbnail: initialData.thumbnail ?? "",
-			pinned: initialData.pinned ?? false,
-			backgroundType: initialData.backgroundType ?? "default",
-			backgroundColor: initialData.backgroundColor ?? "#fff",
-			backgroundImage: initialData.backgroundImage ?? "",
-			enableBackdrop:
-				typeof initialData.enableBackdrop === "boolean"
-					? initialData.enableBackdrop
-					: true,
-		});
-	}, [initialData]);
-
-	const needsPasswordForEdit =
-		mode === "edit" &&
-		initialData?.allow === "password" &&
-		!initialData?.content &&
-		!contentOverride;
-
-	const applyDetailData = React.useCallback(
-		(data: LibraryNewClientProps["initialData"]) => {
-		if (!data) return;
-		setTitle(data.title || "");
-		setSubtitle(data.subtitle || "");
-		setMetaValue({
-			tags: data.tags ?? [],
-			series: data.series ?? "",
-			slug: data.slug ?? "",
-			visibility: data.allow ?? "all",
-			password: data.allow === "password" ? (data.password ?? "") : "",
-			thumbnail: data.thumbnail ?? "",
-			pinned: data.pinned ?? false,
-			backgroundType: data.backgroundType ?? "default",
-			backgroundColor: data.backgroundColor ?? "#fff",
-			backgroundImage: data.backgroundImage ?? "",
-			enableBackdrop:
-				typeof data.enableBackdrop === "boolean" ? data.enableBackdrop : true,
-		});
-		if (data.content) {
-			setContentOverride(data.content);
-		}
-		},
-		[],
-	);
-
-	const handleVerifyPassword = async () => {
-		if (!initialData?.id || isVerifyingPassword) return;
-		if (!passwordInput.trim()) {
-			setPasswordError("비밀번호를 입력해주세요.");
-			return;
-		}
-
-		setIsVerifyingPassword(true);
-		setPasswordError("");
-		try {
-			const detailId = initialData?.id;
-			const data = await fetchLibraryDetailWithAccess(detailId, {
-				password: passwordInput.trim(),
-			});
-			// 상세 API 응답은 편집 모드에서 initialData와 같은 형태로 내려온다
-			applyDetailData(data as LibraryNewClientProps["initialData"]);
-			setPasswordInput("");
-			setPasswordError("");
-		} catch (error) {
-			setPasswordError(
-				getApiErrorMessage(error, "비밀번호가 올바르지 않습니다."),
-			);
-		} finally {
-			setIsVerifyingPassword(false);
-		}
-	};
-
-	React.useEffect(() => {
-		if (!needsPasswordForEdit || !initialData?.id) return;
-		let isMounted = true;
-
-		const fetchWithAuth = async () => {
-			try {
-				const detailId = initialData?.id;
-				const data = await fetchLibraryDetailWithAccess(detailId, {
-					includeAuth: true,
-				});
-				if (isMounted && data?.content) {
-					applyDetailData(data as LibraryNewClientProps["initialData"]);
-				}
-			} catch {
-				// Ignore: user isn't author or no auth
-			}
-		};
-
-		fetchWithAuth();
-
-		return () => {
-			isMounted = false;
-		};
-	}, [
-		applyDetailData,
-		initialData?.id,
-		initialData?.slug,
-		needsPasswordForEdit,
-	]);
-
 	if (mode === "edit" && !isAuthLoading && !isAdmin) {
 		return null;
 	}
-
-	const handleOpenMeta = () => {
-		const plainText = editor?.getText().trim() ?? "";
-
-		if (!title.trim()) {
-			toast.error("제목을 입력해 주세요.");
-			return;
-		}
-
-		if (!plainText) {
-			toast.error("내용을 입력해 주세요.");
-			return;
-		}
-
-		setMetaValue((prev) => ({ ...prev, title }));
-		setMetaOpen(true);
-	};
-
-	const handleConfirmSubmit = async () => {
-		if (!editor) {
-			toast.error("에디터를 불러오지 못했습니다.");
-			return;
-		}
-
-		const contentJson = editor.getJSON();
-		const contentText = editor.getText().trim();
-
-		if (!title.trim() || !contentText) {
-			toast.error("제목과 내용을 입력해주세요.");
-			return;
-		}
-
-		setIsSubmitting(true);
-		try {
-		const payload = {
-			title: title.trim(),
-			subtitle: subtitle.trim() || undefined,
-			content: JSON.stringify(contentJson),
-			slug: metaValue.slug,
-			tags: metaValue.tags,
-				series: metaValue.series,
-				backgroundType: metaValue.backgroundType,
-				backgroundColor: metaValue.backgroundColor,
-				backgroundImage: metaValue.backgroundImage,
-				enableBackdrop: metaValue.enableBackdrop,
-				visibility: metaValue.visibility,
-				password: metaValue.password,
-				thumbnail: metaValue.thumbnail,
-				pinned: metaValue.pinned,
-			};
-
-			if (mode === "edit") {
-				if (!initialData?.id) {
-					toast.error("수정할 게시글을 찾지 못했습니다.");
-					return;
-				}
-				const response = await updateLibraryPost(initialData.id, payload);
-				toast.success("게시글이 수정되었습니다.");
-				setMetaOpen(false);
-				const detailId = response.slug ?? initialData.id;
-				router.push(`/library/${detailId}`);
-				router.refresh();
-				return;
-			}
-
-			const response = await createLibraryPost(payload);
-			toast.success("게시글이 저장되었습니다.");
-			setMetaOpen(false);
-			const detailId = response.slug ?? response.postId;
-			router.push(`/library/${detailId}`);
-			router.refresh();
-		} catch (error) {
-			const message =
-				error instanceof Error ? error.message : "게시글 저장에 실패했습니다.";
-			toast.error(message);
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
 
 	return (
 		<EditorContext.Provider value={{ editor }}>
@@ -358,7 +85,7 @@ export default function LibararyNewClient({
 						<div className="flex-1 mx-4 overflow-hidden hidden sm:flex">
 							<TiptapToolbar editor={editor} />
 						</div>
-						<Button onClick={handleOpenMeta}>
+						<Button onClick={composer.handleOpenMeta}>
 							{mode === "edit" ? "수정하기" : "글쓰기"}
 						</Button>
 					</div>
@@ -374,80 +101,23 @@ export default function LibararyNewClient({
 						"pb-[120px] sm:pb-[100px]",
 					)}
 				>
-					<div className="TitleWrap relative">
-						<input
-							type="text"
-							placeholder="제목을 입력해주세요."
-							value={title}
-							onChange={(e) => setTitle(e.target.value)}
-							className="text-2xl md:text-3xl border-none border-transparent text-main-text bg-background-none w-full placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 focus-visible:border-transparent p-0 font-title"
-						/>
-					</div>
-					<div className="flex items-center mt-5">
-						<span
-							className={cn(
-								"SubTitleIconBox flex items-center justify-center w-[18px] h-[18px] sm:w-6 sm:h-6 bg-gray-300 border border-gray-400 text-gray-400 rounded-[3px] cursor-pointer",
-							)}
-							style={{ transition: "all 300ms ease" }}
-							onClick={() => {
-								setSubOpen((prev) => !prev);
-							}}
-						>
-							{subOpen ? <X size={16} /> : <Plus size={16} />}
-						</span>
-						<div
-							className={cn(
-								"SubTitleWrap relative overflow-hidden",
-								subOpen ? "flex-1 min-w-0" : "flex-none",
-							)}
-							style={{
-								maxWidth: subOpen ? "100%" : "0px",
-								marginLeft: subOpen ? "12px" : "0px",
-								opacity: subOpen ? 1 : 0,
-								pointerEvents: subOpen ? "auto" : "none",
-								transition:
-									"max-width 300ms ease, margin-left 300ms ease, opacity 300ms ease",
-							}}
-						>
-							<input
-								type="text"
-								placeholder="소제목을 입력해주세요."
-								value={subtitle}
-								onChange={(e) => setSubtitle(e.target.value)}
-								onFocus={() => setSubOpen(true)}
-								className="text-sm md:text-base border-0 text-sub-text w-full bg-background-none placeholder:text-sub-text focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-ring focus-visible:outline-0 pl-1"
-								style={{ transition: "all 300ms ease" }}
-							/>
-						</div>
-					</div>
+					<NewTitleFields
+						title={composer.title}
+						onTitleChange={composer.setTitle}
+						subtitle={composer.subtitle}
+						onSubtitleChange={composer.setSubtitle}
+					/>
 
 					<hr className="mt-7 border-gray-600" />
 					<div className="EditorBox pt-8 relative flex flex-col grow min-h-[400px]">
-						{needsPasswordForEdit && (
-							<div className="mb-6 p-4 rounded-card border-card bg-card-bg">
-								<p className="text-main-text text-sm">
-									보호글입니다. 비밀번호를 입력하면 내용을 불러옵니다.
-								</p>
-								<div className="mt-3 flex items-center gap-2">
-									<Input
-										type="password"
-										value={passwordInput}
-										onChange={(e) => setPasswordInput(e.target.value)}
-										placeholder="비밀번호를 입력해주세요."
-										className="flex-1"
-									/>
-									<Button
-										type="button"
-										onClick={handleVerifyPassword}
-										disabled={isVerifyingPassword}
-									>
-										확인
-									</Button>
-								</div>
-								{passwordError && (
-									<p className="mt-2 text-xs text-red-500">{passwordError}</p>
-								)}
-							</div>
+						{composer.needsPasswordForEdit && (
+							<ProtectedContentGate
+								passwordInput={composer.passwordInput}
+								onPasswordInputChange={composer.setPasswordInput}
+								passwordError={composer.passwordError}
+								isVerifying={composer.isVerifyingPassword}
+								onVerify={composer.handleVerifyPassword}
+							/>
 						)}
 						{/* Editor Content */}
 						<div className="flex-1">
@@ -460,14 +130,14 @@ export default function LibararyNewClient({
 				</div>
 			</div>
 			<CreateModal
-				open={metaOpen}
-				onOpenChange={setMetaOpen}
+				open={composer.metaOpen}
+				onOpenChange={composer.setMetaOpen}
 				tagsOptions={tagsData}
 				seriesOptions={seriesData}
-				value={metaValue}
-				onChange={setMetaValue}
-				onConfirm={handleConfirmSubmit}
-				isSubmitting={isSubmitting}
+				value={composer.metaValue}
+				onChange={composer.setMetaValue}
+				onConfirm={composer.handleConfirmSubmit}
+				isSubmitting={composer.isSubmitting}
 			/>
 		</EditorContext.Provider>
 	);

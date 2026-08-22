@@ -13,7 +13,7 @@ import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
 import MenuAddModal from "@/features/settings/components/menu/MenuAddModal";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { MenuPreviewSection } from "@/features/settings/components/menu/MenuPreviewSection";
-import { MenuResetDialog } from "@/features/settings/components/menu/MenuResetDialog";
+import { SettingResetDialog } from "@/features/settings/components/SettingResetDialog";
 import { MenuDesignSection } from "@/features/settings/components/menu/MenuDesignSection";
 import { useMenuImageManager } from "@/features/settings/hooks/menu/useMenuImageManager";
 import { AssetPickerDialog } from "@/features/settings/components/AssetPickerDialog";
@@ -205,9 +205,11 @@ export default function MenuSettingClient() {
 					{/* 저장 버튼은 헤더로 이동 */}
 				</div>
 
-				<MenuResetDialog
+				<SettingResetDialog
 					open={showResetDialog}
 					onOpenChange={setShowResetDialog}
+					title="메뉴 초기화"
+					description="정말 메뉴 설정을 초기화할까요? 모든 메뉴가 삭제됩니다."
 					onConfirm={() => {
 						handleReset();
 						setShowResetDialog(false);
