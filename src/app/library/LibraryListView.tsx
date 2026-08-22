@@ -16,20 +16,7 @@ import {
 	PaginationPrevious,
 } from "@/components/ui/pagination";
 
-interface LibraryItem {
-	id: string;
-	title: string;
-	subtitle?: string;
-	author?: string;
-	slug?: string;
-	createdAt: string;
-	tags?: string[];
-	thumbnail?: string;
-	pinned?: boolean;
-	commentCount?: number;
-	viewCount?: number;
-	allow?: "all" | "password" | "secret";
-}
+import type { LibraryItemSummary as LibraryItem } from "@/features/library/types";
 
 interface LibraryListViewProps {
 	listItems: LibraryItem[];

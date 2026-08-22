@@ -100,9 +100,12 @@ const CINEMA_CSS = `
 const CinemaEffect = () => {
 	return (
 		<div className="cinema-container">
+			{/* 이펙트 전용 폰트 — 전역 문서 폰트가 아니라 lazy 로드되는 효과에서만 쓰므로
+			    no-page-custom-font 규칙 대상이 아님 */}
+			{/* eslint-disable-next-line @next/next/no-page-custom-font */}
 			<link
 				rel="stylesheet"
-				href="https://fonts.googleapis.com/css?family=Roboto:100"
+				href="https://fonts.googleapis.com/css?family=Roboto:100&display=swap"
 				precedence="effect-cinema"
 			/>
 			<style href="effect-cinema" precedence="effect-cinema">

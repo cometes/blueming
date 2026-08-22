@@ -1,19 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchLibraryList, fetchLibraryTags } from "@/features/library/api/client";
 
-interface LibraryItem {
-	id: string;
-	title: string;
-	subtitle?: string;
-	author?: string;
-	slug?: string;
-	createdAt: string;
-	tags?: string[];
-	thumbnail?: string;
-	pinned?: boolean;
-	commentCount?: number;
-	allow?: "all" | "password" | "secret";
-}
+import type { LibraryItemSummary as LibraryItem } from "@/features/library/types";
 
 interface UseLibraryListDataParams {
 	initialList: LibraryItem[];

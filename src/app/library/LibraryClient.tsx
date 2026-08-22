@@ -17,19 +17,10 @@ import LibraryListView from "./LibraryListView";
 import LibrarySeriesView from "./LibrarySeriesView";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-export interface LibraryItem {
-	id: string;
-	title: string;
-	subtitle?: string;
-	author?: string;
-	slug?: string;
-	createdAt: string;
-	tags?: string[];
-	thumbnail?: string;
-	pinned?: boolean;
-	commentCount?: number;
-	allow?: "all" | "password" | "secret";
-}
+import type { LibraryItemSummary } from "@/features/library/types";
+
+// 목록 아이템 타입은 features/library/types.ts의 LibraryItemSummary가 단일 소스
+export type LibraryItem = LibraryItemSummary;
 
 interface LibraryClientProps {
 	listData: LibraryItem[];

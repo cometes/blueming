@@ -4,21 +4,7 @@ import { cn } from "@/shared/lib/utils";
 import type { CSSProperties } from "react";
 import ItemCard from "@/components/items/Card";
 
-interface LibraryItem {
-	id: string;
-	title: string;
-	subtitle?: string;
-	slug?: string;
-	createdAt: string;
-	tags?: string[];
-	thumbnail?: string;
-	pinned?: boolean;
-	allow?: "all" | "password" | "secret";
-	series?: string;
-	postLength?: number;
-	lastUpdatedThumbnail?: string;
-	lastUpdatedDate?: string;
-}
+import type { LibraryItemSummary as LibraryItem } from "@/features/library/types";
 
 interface LibrarySeriesViewProps {
 	postsPerRow: number;
