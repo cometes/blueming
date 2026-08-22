@@ -13,20 +13,28 @@ import {
 
 const MAX_DROP_IMAGES = 5;
 
-// 드롭/붙여넣기로 받은 이미지 파일들을 순서대로 업로드해 현재 커서 위치에 삽입
-// (insertPos: 숫자 = 해당 위치, "end" = 문서 끝)
+/** 삽입 시작 위치 계산: 노드 선택(이미지 등)을 대체하지 않도록 항상 selection 끝 기준 */
+const resolveInsertPos = (editor: Editor, insertPos?: number | "end") => {
+	if (insertPos === "end") return editor.state.doc.content.size;
+	if (typeof insertPos === "number") return insertPos;
+	return editor.state.selection.to;
+};
+
+// 드롭/붙여넣기로 받은 이미지 파일들을 순서대로 업로드해 지정 위치에 삽입
+// (insertPos: 숫자 = 해당 위치, "end" = 문서 끝, 생략 = 현재 커서 끝)
+// insertContentAt + 위치 추적을 쓰는 이유:
+// insertContent는 "선택 영역을 대체"하므로, 직전에 삽입된 이미지가
+// 노드 선택 상태일 때 다음 이미지가 그 자리를 덮어써 유실되는 버그가 있었음.
 export const uploadAndInsertImages = async (
 	editor: Editor,
 	files: File[],
 	insertPos?: number | "end",
 ) => {
-	if (insertPos !== undefined) {
-		editor.commands.focus(insertPos);
-	}
 	const targets = files.slice(0, MAX_DROP_IMAGES);
 	if (files.length > MAX_DROP_IMAGES) {
 		toast.info(`이미지는 한 번에 ${MAX_DROP_IMAGES}개까지 삽입됩니다.`);
 	}
+	let pos = resolveInsertPos(editor, insertPos);
 	for (const file of targets) {
 		try {
 			const url = await handleImageUpload(file);
@@ -34,11 +42,15 @@ export const uploadAndInsertImages = async (
 				url,
 				file.name.replace(/\.[^/.]+$/, "") || "이미지",
 			);
+			const clamped = Math.min(pos, editor.state.doc.content.size);
+			const sizeBefore = editor.state.doc.content.size;
 			editor
 				.chain()
 				.focus()
-				.insertContent({ type: "image", attrs })
+				.insertContentAt(clamped, { type: "image", attrs })
 				.run();
+			// 삽입된 만큼 다음 위치를 뒤로 이동 (여러 장이 순서대로 이어짐)
+			pos = clamped + (editor.state.doc.content.size - sizeBefore);
 		} catch (error) {
 			const message =
 				error instanceof Error ? error.message : "이미지 업로드에 실패했습니다.";
@@ -103,12 +115,17 @@ export function useLibraryEditor(initialContent: Content) {
 				// 2) 이미지 URL 단독 붙여넣기 → 이미지로 변환
 				if (isImageUrl(text)) {
 					const url = text.trim();
+					const insertAt = editor ? resolveInsertPos(editor) : 0;
 					void (async () => {
+						if (!editor) return;
 						const attrs = await resolveImageAttrs(url, filenameFromUrl(url));
 						editor
-							?.chain()
+							.chain()
 							.focus()
-							.insertContent({ type: "image", attrs })
+							.insertContentAt(
+								Math.min(insertAt, editor.state.doc.content.size),
+								{ type: "image", attrs },
+							)
 							.run();
 					})();
 					return true;
