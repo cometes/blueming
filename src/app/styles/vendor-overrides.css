@@ -44,20 +44,6 @@
 	z-index: 50;
 }
 
-/* Slick Slider 커스텀 스타일 */
-.custom-slider {
-	height: 100%;
-}
-
-.custom-slider .slick-list,
-.custom-slider .slick-track {
-	height: 100%;
-}
-
-.custom-slider .slick-slide > div {
-	height: 100%;
-}
-
 /* React Colorful 커스텀 스타일 */
 .react-colorful {
 	width: 100% !important;
