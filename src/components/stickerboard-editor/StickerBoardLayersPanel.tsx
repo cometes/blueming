@@ -239,7 +239,7 @@ export function StickerBoardLayersPanel() {
 																							className={[
 																								"flex items-center gap-2 rounded border px-2 py-1",
 																								isChildSelected
-																							? "border-blue-300 bg-blue-50/60"
+																							? "border-theme-primary/40 bg-theme-primary/10"
 																							: "border-transparent bg-transparent hover:bg-black/5",
 																					].join(" ")}
 																							onClick={(e) => {

@@ -82,7 +82,7 @@ export function StickerBoardTextDraftOverlay({
 						fontSize: `${textDraft.fontSize}px`,
 						textAlign: textDraft.textAlign,
 						backgroundColor: "transparent",
-						caretColor: "#3b82f6",
+						caretColor: "var(--color-theme-primary)",
 					}
 			}
 		>
