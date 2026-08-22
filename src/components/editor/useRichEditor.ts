@@ -52,6 +52,33 @@ const resolveInsertPos = (editor: Editor, insertPos?: number | "end") => {
 	return editor.state.selection.to;
 };
 
+/**
+ * 블록 노드(이미지 등)를 pos에 삽입하되, pos가 "빈 문단" 내부라면
+ * 그 문단을 통째로 교체한다 — 빈 에디터/빈 줄에 드롭했을 때
+ * 이미지 위에 빈 줄이 남는 문제 방지. 삽입된 시작 위치를 반환.
+ */
+export const insertBlockAt = (
+	editor: Editor,
+	content: Record<string, unknown>,
+	pos: number,
+): number => {
+	const { doc } = editor.state;
+	const clamped = Math.min(Math.max(0, pos), doc.content.size);
+	const $pos = doc.resolve(clamped);
+	if (
+		$pos.depth > 0 &&
+		$pos.parent.isTextblock &&
+		$pos.parent.content.size === 0
+	) {
+		const from = $pos.before();
+		const to = $pos.after();
+		editor.chain().focus().insertContentAt({ from, to }, content).run();
+		return from;
+	}
+	editor.chain().focus().insertContentAt(clamped, content).run();
+	return clamped;
+};
+
 // 드롭/붙여넣기로 받은 이미지 파일들을 순서대로 업로드해 지정 위치에 삽입
 // (insertPos: 숫자 = 해당 위치, "end" = 문서 끝, 생략 = 현재 커서 끝)
 // insertContentAt + 위치 추적을 쓰는 이유:
@@ -74,15 +101,10 @@ export const uploadAndInsertImages = async (
 				url,
 				file.name.replace(/\.[^/.]+$/, "") || "이미지",
 			);
-			const clamped = Math.min(pos, editor.state.doc.content.size);
 			const sizeBefore = editor.state.doc.content.size;
-			editor
-				.chain()
-				.focus()
-				.insertContentAt(clamped, { type: "image", attrs })
-				.run();
+			const insertedAt = insertBlockAt(editor, { type: "image", attrs }, pos);
 			// 삽입된 만큼 다음 위치를 뒤로 이동 (여러 장이 순서대로 이어짐)
-			pos = clamped + (editor.state.doc.content.size - sizeBefore);
+			pos = insertedAt + (editor.state.doc.content.size - sizeBefore);
 			// 커서를 이미지 뒤로 이동 (TrailingNode가 마지막 문단을 보장)
 			editor.commands.focus(Math.min(pos, editor.state.doc.content.size));
 		} catch (error) {

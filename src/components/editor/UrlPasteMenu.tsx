@@ -72,17 +72,29 @@ export default function UrlPasteMenu({ editor, info, onClose }: UrlPasteMenuProp
 
 	const replaceRange = (content: Record<string, unknown>) => {
 		if (!editor) return;
-		const to = Math.min(info.to, editor.state.doc.content.size);
+		const doc = editor.state.doc;
+		let from = info.from;
+		let to = Math.min(info.to, doc.content.size);
+		// 링크 텍스트가 문단 내용 전체라면 문단째 교체해 빈 줄이 남지 않게 한다
+		try {
+			const $from = doc.resolve(from);
+			if (
+				$from.depth > 0 &&
+				$from.parent.isTextblock &&
+				from === $from.start() &&
+				to === $from.end()
+			) {
+				from = $from.before();
+				to = $from.after();
+			}
+		} catch {}
 		editor
 			.chain()
 			.focus()
-			.deleteRange({ from: info.from, to })
-			.insertContentAt(info.from, content)
+			.insertContentAt({ from, to }, content)
 			.run();
 		// 커서를 임베드된 노드 뒤로 이동 (TrailingNode가 마지막 문단을 보장)
-		editor.commands.focus(
-			Math.min(info.from + 1, editor.state.doc.content.size),
-		);
+		editor.commands.focus(Math.min(from + 1, editor.state.doc.content.size));
 	};
 
 	const handleEmbedImage = async () => {
