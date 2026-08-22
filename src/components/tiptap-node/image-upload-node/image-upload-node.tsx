@@ -16,6 +16,8 @@ import {
   ImageUploadPreview,
 } from "@/components/tiptap-node/image-upload-node/image-upload-node-parts"
 import { ImageUploadAssetPicker } from "@/components/tiptap-node/image-upload-node/image-upload-asset-picker"
+import { ImageUploadUrlInput } from "@/components/tiptap-node/image-upload-node/image-upload-url-input"
+import { resolveImageAttrs } from "@/shared/lib/tiptapImage"
 
 export type { FileItem } from "@/components/tiptap-node/image-upload-node/use-image-upload-file"
 
@@ -34,58 +36,21 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
         filesRef.current[0]?.name.replace(/\.[^/.]+$/, "") ||
         "알 수 없음"
 
-      // Load image to get natural dimensions
-      const img = new Image()
-      img.onload = () => {
-        const naturalWidth = img.naturalWidth
-        const maxWidth = 800 // Maximum width for inserted images
-        const initialWidth = Math.min(naturalWidth, maxWidth)
-
-        // Replace the upload node with the actual image
+      void (async () => {
+        // natural 크기 기반 width 계산 (실패 시 width 없이 삽입)
+        const attrs = await resolveImageAttrs(url, filename)
+        // Dialog/Popover 정리와의 DOM 충돌을 피하기 위해 한 틱 뒤 교체
         setTimeout(() => {
           try {
             props.editor
               .chain()
               .focus()
               .deleteRange({ from: pos, to: pos + 1 })
-              .insertContentAt(pos, {
-                type: "image",
-                attrs: {
-                  src: url,
-                  alt: filename,
-                  title: filename,
-                  width: initialWidth,
-                  "data-align": "left",
-                },
-              })
+              .insertContentAt(pos, { type: "image", attrs })
               .run()
           } catch {}
         }, 100)
-      }
-
-      img.onerror = () => {
-        // Insert without width if image fails to load
-        setTimeout(() => {
-          try {
-            props.editor
-              .chain()
-              .focus()
-              .deleteRange({ from: pos, to: pos + 1 })
-              .insertContentAt(pos, {
-                type: "image",
-                attrs: {
-                  src: url,
-                  alt: filename,
-                  title: filename,
-                  "data-align": "left",
-                },
-              })
-              .run()
-          } catch {}
-        }, 100)
-      }
-
-      img.src = url
+      })()
     },
     [props]
   )
@@ -156,6 +121,7 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
             <DropZoneContent maxSize={maxSize} />
           </ImageUploadDragArea>
           <ImageUploadAssetPicker onSelect={handleSelectAsset} />
+          <ImageUploadUrlInput onSubmit={handleImageInsert} />
         </>
       )}
 

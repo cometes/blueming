@@ -187,18 +187,6 @@
 	backdrop-filter: var(--size-card-blur) !important;
 }
 
-.tiptap-image-upload .tiptap-image-upload-dropzone-rect-primary {
-	color: var(--card-border-color) !important;
-}
-
-.tiptap-image-upload-text {
-	color: var(--color-sub-text) !important;
-}
-
-.tiptap-image-upload-icon-container {
-	background-color: var(--color-theme-primary) !important;
-}
-
 /* ScrollArea thumb 색상을 위젯 보더 색으로 */
 [data-radix-scroll-area-thumb] {
 	background-color: var(--widget-border-color) !important;

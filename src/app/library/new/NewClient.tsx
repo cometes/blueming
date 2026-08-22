@@ -97,7 +97,7 @@ export default function LibararyNewClient({
 				{/* Body */}
 				<div
 					className={cn(
-						"Container pt-[100px] md:pt-[120px] px-6 md:px-12 bg-card backdrop-blur-card max-w-2xl min-h-dvh border-card flex flex-col m-auto",
+						"Container pt-[100px] md:pt-[120px] px-6 md:px-12 bg-card backdrop-blur-card max-w-3xl min-h-dvh border-card flex flex-col m-auto",
 						"pb-[120px] sm:pb-[100px]",
 					)}
 				>
