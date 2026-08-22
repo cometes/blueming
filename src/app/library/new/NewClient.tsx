@@ -17,6 +17,7 @@ import { useLibraryEditor } from "@/features/library/hooks/useLibraryEditor";
 import NewTitleFields from "./NewTitleFields";
 import ProtectedContentGate from "./ProtectedContentGate";
 import EditorImageDropZone from "@/components/editor/EditorImageDropZone";
+import DragDebugHud from "./DragDebugHud";
 import UrlPasteMenu from "@/components/editor/UrlPasteMenu";
 import { toast } from "sonner";
 import { useAdmin } from "@/features/admin/hooks/useAdmin";
@@ -139,6 +140,8 @@ export default function LibararyNewClient({
 			{urlPaste && (
 				<UrlPasteMenu editor={editor} info={urlPaste} onClose={closeUrlPaste} />
 			)}
+			{/* 임시 진단 도구 — 드래그 문제 원인 파악용, dev 전용 */}
+			{process.env.NODE_ENV === "development" && <DragDebugHud />}
 			<CreateModal
 				open={composer.metaOpen}
 				onOpenChange={composer.setMetaOpen}
