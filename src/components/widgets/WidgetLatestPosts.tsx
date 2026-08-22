@@ -6,13 +6,7 @@ import { dateConvert } from "@/shared/lib/date";
 import Link from "next/link";
 import { useSettings } from "@/contexts/SettingsContext";
 
-interface LibraryItem {
-	id: string;
-	slug?: string;
-	title: string;
-	createdAt: string;
-	allow?: "all" | "password" | "secret";
-}
+import type { LibraryItemSummary as LibraryItem } from "@/features/library/types";
 
 const MAX_ITEMS = 5;
 

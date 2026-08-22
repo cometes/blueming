@@ -1,5 +1,4 @@
-import axios from "axios";
-import { API_BASE } from "@/shared/lib/http/client";
+import { httpClient, API_BASE } from "@/shared/lib/http/client";
 import type {
 	FetchLibraryCommentListParams,
 	LibraryCommentListResponse,
@@ -10,21 +9,15 @@ export const fetchCommentList = async (
 	postId: string,
 	params: FetchLibraryCommentListParams = {},
 ) => {
-	const searchParams = new URLSearchParams();
-	if (params.page) {
-		searchParams.set("page", params.page.toString());
-	}
-	if (params.limit) {
-		searchParams.set("limit", params.limit.toString());
-	}
-
-	const url = searchParams.toString()
-		? `${API_BASE}/library/${postId}/comments?${searchParams.toString()}`
-		: `${API_BASE}/library/${postId}/comments`;
-
-	const response = await axios.get<LibraryCommentListResponse>(url, {
-		withCredentials: true,
-	});
+	const response = await httpClient.get<LibraryCommentListResponse>(
+		`/library/${postId}/comments`,
+		{
+			params: {
+				page: params.page,
+				limit: params.limit,
+			},
+		},
+	);
 	return response.data;
 };
 
@@ -38,12 +31,11 @@ export const createComment = async (
 		imageUrls?: string[];
 	},
 ) => {
-	const response = await axios.post(
-		`${API_BASE}/library/${postId}/comments`,
+	const response = await httpClient.post<{ id: string }>(
+		`/library/${postId}/comments`,
 		payload,
-		{ withCredentials: true },
 	);
-	return response.data as { id: string };
+	return response.data;
 };
 
 export const updateComment = async (
@@ -56,12 +48,11 @@ export const updateComment = async (
 		imageUrls?: string[];
 	},
 ) => {
-	const response = await axios.put(
-		`${API_BASE}/library/${postId}/comments/${commentId}`,
+	const response = await httpClient.put<{ id: string }>(
+		`/library/${postId}/comments/${commentId}`,
 		payload,
-		{ withCredentials: true },
 	);
-	return response.data as { id: string };
+	return response.data;
 };
 
 export const deleteComment = async (
@@ -69,14 +60,11 @@ export const deleteComment = async (
 	commentId: string,
 	payload?: { pin?: string },
 ) => {
-	const response = await axios.delete(
-		`${API_BASE}/library/${postId}/comments/${commentId}`,
-		{
-			data: payload,
-			withCredentials: true,
-		},
+	const response = await httpClient.delete<{ id: string }>(
+		`/library/${postId}/comments/${commentId}`,
+		{ data: payload },
 	);
-	return response.data as { id: string };
+	return response.data;
 };
 
 export const verifyCommentSecret = async (
@@ -84,15 +72,11 @@ export const verifyCommentSecret = async (
 	commentId: string,
 	payload?: { pin?: string },
 ) => {
-	const response = await axios.post(
-		`${API_BASE}/library/${postId}/comments/${commentId}/verify`,
-		payload,
-		{ withCredentials: true },
-	);
-	return response.data as {
+	const response = await httpClient.post<{
 		message: string;
 		imageUrls?: string[];
-	};
+	}>(`/library/${postId}/comments/${commentId}/verify`, payload);
+	return response.data;
 };
 
 export const uploadCommentImages = async (files: File[]) =>
