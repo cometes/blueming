@@ -3,6 +3,8 @@ import "./globals.css";
 import Layout from "@/components/layout/Layout";
 import Providers from "@/providers/Providers";
 import { getServerSettings, type ServerSettings } from "@/app/api/_lib/settingsServer";
+import { buildThemeStyleCSS } from "@/shared/lib/theme";
+import type { Design, General } from "@/features/settings/types";
 
 type AppSettings = ServerSettings;
 
@@ -25,93 +27,11 @@ const resolveGeneralSettings = (settings: ServerSettings | null) => {
 
 const buildThemeStyle = (settings: ServerSettings | null) => {
 	const { general, design } = resolveGeneralSettings(settings);
-	if (!general && !design) return "";
-
-	const variables: string[] = [];
-
-	if (general?.primaryColor !== undefined) {
-		variables.push(`--primary-color:${general.primaryColor}`);
-	}
-	if (general?.secondaryColor !== undefined) {
-		variables.push(`--secondary-color:${general.secondaryColor}`);
-	}
-
-	const font = (design as Record<string, unknown> | undefined)?.font as Record<string, unknown> | undefined;
-	// 멀티 워드 폰트명은 따옴표로 감싸야 CSS font-family에서 올바르게 동작 (예: "Noto Sans KR")
-	const formatFontFamilySSR = (value: string) => {
-		const v = value.trim();
-		if (!v) return v;
-		if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) return v;
-		if (v.includes(" ")) return `"${v}"`;
-		return v;
-	};
-	if (font?.bodyFontFamily !== undefined) {
-		variables.push(`--font-body:${formatFontFamilySSR(String(font.bodyFontFamily))}`);
-	}
-	if (font?.titleFontFamily !== undefined) {
-		variables.push(`--font-title:${formatFontFamilySSR(String(font.titleFontFamily))}`);
-	}
-	if (font?.mainFontColor !== undefined) {
-		variables.push(`--color-main:${font.mainFontColor}`);
-	}
-	if (font?.subFontColor !== undefined) {
-		variables.push(`--color-sub:${font.subFontColor}`);
-	}
-
-	const background = (design as Record<string, unknown> | undefined)?.background as
-		| { type?: string; color?: string; image?: string }
-		| undefined;
-	if (background?.color !== undefined) {
-		variables.push(`--bg-color:${background.color}`);
-	}
-	if (background?.type === "이미지" && background.image) {
-		variables.push(`--bg-image:url("${background.image}")`);
-	}
-
-	const widget = (design as Record<string, unknown> | undefined)?.widget as Record<string, unknown> | undefined;
-	if (widget?.background !== undefined) {
-		variables.push(`--widget-bg:${widget.background}`);
-	}
-	if (widget?.borderColor !== undefined) {
-		variables.push(`--widget-border-color:${widget.borderColor}`);
-	}
-	if (widget?.borderRadius !== undefined) {
-		variables.push(`--widget-border-radius:${widget.borderRadius}px`);
-	}
-	if (widget?.borderWidth !== undefined) {
-		variables.push(`--widget-border-width:${widget.borderWidth}px`);
-	}
-	if (widget?.borderStyle !== undefined) {
-		variables.push(`--widget-border-style:${widget.borderStyle}`);
-	}
-	if (widget?.blur !== undefined) {
-		variables.push(`--widget-blur:${widget.blur}px`);
-	}
-
-	const card = (design as Record<string, unknown> | undefined)?.card as Record<string, unknown> | undefined;
-	if (card?.background !== undefined) {
-		variables.push(`--card-bg:${card.background}`);
-	}
-	if (card?.borderColor !== undefined) {
-		variables.push(`--card-border-color:${card.borderColor}`);
-	}
-	if (card?.borderActiveColor !== undefined) {
-		variables.push(`--card-border-active:${card.borderActiveColor}`);
-	}
-	if (card?.borderRadius !== undefined) {
-		variables.push(`--card-border-radius:${card.borderRadius}px`);
-	}
-	if (card?.borderStyle !== undefined) {
-		variables.push(`--card-border-style:${card.borderStyle}`);
-	}
-	if (card?.boxShadow !== undefined) {
-		variables.push(`--card-shadow:${card.boxShadow}`);
-	}
-	if (card?.translateY !== undefined) {
-		variables.push(`--card-translate-y:${card.translateY}px`);
-	}
-
-	return variables.length > 0 ? `:root{${variables.join(";")}}` : "";
+	// CSS 변수 매핑은 shared/lib/theme.ts가 단일 소스 (클라이언트 ThemeProvider와 공유)
+	return buildThemeStyleCSS(
+		design as Partial<Design> | undefined,
+		general as Partial<General> | undefined
+	);
 };
 
 const getPreloadImageUrls = (settings: AppSettings | null) => {
