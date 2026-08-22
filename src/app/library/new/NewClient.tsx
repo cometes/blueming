@@ -19,6 +19,7 @@ import ProtectedContentGate from "./ProtectedContentGate";
 import EditorImageDropZone from "@/components/editor/EditorImageDropZone";
 import DragDebugHud from "./DragDebugHud";
 import UrlPasteMenu from "@/components/editor/UrlPasteMenu";
+import BlockDropIndicator from "@/components/editor/BlockDropIndicator";
 import { toast } from "sonner";
 import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import { useAuthStore } from "@/store/auth/store";
@@ -54,7 +55,7 @@ export default function LibararyNewClient({
 	const editorRef = React.useRef<Editor | null>(null);
 	const composer = useLibraryComposer({ editorRef, mode, initialData });
 	// URL 붙여넣기 시 링크/임베드 전환 메뉴 상태는 useRichEditor가 관리
-	const { editor, urlPaste, closeUrlPaste } = useLibraryEditor(
+	const { editor, urlPaste, closeUrlPaste, dropIndicatorY } = useLibraryEditor(
 		composer.initialContent,
 	);
 	editorRef.current = editor;
@@ -139,6 +140,9 @@ export default function LibararyNewClient({
 			</div>
 			{urlPaste && (
 				<UrlPasteMenu editor={editor} info={urlPaste} onClose={closeUrlPaste} />
+			)}
+			{dropIndicatorY != null && (
+				<BlockDropIndicator editor={editor} y={dropIndicatorY} />
 			)}
 			{/* 임시 진단 도구 — 드래그 문제 원인 파악용, dev 전용 */}
 			{process.env.NODE_ENV === "development" && <DragDebugHud />}

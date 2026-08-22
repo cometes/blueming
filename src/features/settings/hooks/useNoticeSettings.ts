@@ -76,7 +76,7 @@ export function useNoticeSettings() {
 	const [editorContent, setEditorContent] = useState("<p></p>");
 
 	// 공용 리치 에디터 (이미지 드롭/이동·URL 전환 메뉴 포함)
-	const { editor, urlPaste, closeUrlPaste } = useRichEditor({
+	const { editor, urlPaste, closeUrlPaste, dropIndicatorY } = useRichEditor({
 		extensions,
 		content: "<p></p>",
 		editorClass: "prose prose-sm max-w-none focus:outline-none h-full p-4",
@@ -276,6 +276,7 @@ export function useNoticeSettings() {
 			showResetDialog,
 			editor,
 			urlPaste,
+			dropIndicatorY,
 			canvasRef,
 			isDirty,
 		},

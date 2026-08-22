@@ -3,6 +3,7 @@
 import { EditorContent } from "@tiptap/react";
 import EditorImageDropZone from "@/components/editor/EditorImageDropZone";
 import UrlPasteMenu from "@/components/editor/UrlPasteMenu";
+import BlockDropIndicator from "@/components/editor/BlockDropIndicator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -40,6 +41,7 @@ export default function NoticeSettingClient() {
 			showResetDialog,
 			editor,
 			urlPaste,
+			dropIndicatorY,
 			canvasRef,
 			isDirty,
 		},
@@ -226,6 +228,9 @@ export default function NoticeSettingClient() {
 
 			{urlPaste && (
 				<UrlPasteMenu editor={editor} info={urlPaste} onClose={closeUrlPaste} />
+			)}
+			{dropIndicatorY != null && (
+				<BlockDropIndicator editor={editor} y={dropIndicatorY} />
 			)}
 
 			<Separator className="my-12" />

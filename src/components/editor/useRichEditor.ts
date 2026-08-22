@@ -8,13 +8,10 @@ import {
 	type Editor,
 } from "@tiptap/react";
 import { NodeSelection } from "@tiptap/pm/state";
-import { Slice, Fragment, type Slice as SliceType } from "@tiptap/pm/model";
-import { dropPoint } from "@tiptap/pm/transform";
 import { toast } from "sonner";
 import { extensions as defaultExtensions } from "@/components/editor/TiptapEditor";
 import { handleImageUpload } from "@/shared/lib/tiptap-utils";
 import {
-	IMAGE_MOVE_MIME,
 	clearImageDragSource,
 	imageDragSource,
 	isHttpUrl,
@@ -50,6 +47,69 @@ const resolveInsertPos = (editor: Editor, insertPos?: number | "end") => {
 	if (insertPos === "end") return editor.state.doc.content.size;
 	if (typeof insertPos === "number") return insertPos;
 	return editor.state.selection.to;
+};
+
+/**
+ * 노션 방식 블록 드롭 위치 계산: 마우스의 "세로 위치"만 사용한다.
+ * 각 최상위 블록의 세로 중앙과 비교해 — 위쪽 절반이면 그 블록 앞,
+ * 아래쪽 절반이면 다음 블록 앞(=그 블록 뒤)에 놓는다. 가로 위치는 무시.
+ * 마지막 트레일링 빈 문단은 "문서 끝 영역"으로 취급해 그 앞에 놓는다.
+ */
+export const getBlockDrop = (
+	editor: Editor,
+	clientY: number,
+): { pos: number; lineY: number } => {
+	const view = editor.view;
+	const { doc } = view.state;
+	const editorRect = view.dom.getBoundingClientRect();
+	let result: { pos: number; lineY: number } | null = null;
+	let lastBottom = editorRect.top;
+	let endPos = doc.content.size;
+	let endLineY = editorRect.top;
+
+	doc.forEach((node, offset) => {
+		const isTrailingEmpty =
+			node.isTextblock &&
+			node.content.size === 0 &&
+			offset + node.nodeSize === doc.content.size;
+		const dom = view.nodeDOM(offset) as HTMLElement | null;
+		const rect = dom?.getBoundingClientRect?.();
+		if (!rect) return;
+		if (isTrailingEmpty) {
+			// 트레일링 빈 문단은 후보에서 제외하고, "맨 아래" 위치를 그 앞으로 정의
+			endPos = offset;
+			endLineY = lastBottom;
+			return;
+		}
+		if (!result && clientY < rect.top + rect.height / 2) {
+			result = { pos: offset, lineY: rect.top };
+		}
+		lastBottom = rect.bottom;
+		endPos = offset + node.nodeSize;
+		endLineY = rect.bottom;
+	});
+
+	return result ?? { pos: endPos, lineY: endLineY };
+};
+
+/** 추적 중인 이미지(imageDragSource)를 clientY 기준 블록 위치로 이동 (한 트랜잭션) */
+const moveTrackedImageTo = (editor: Editor, clientY: number) => {
+	const from = imageDragSource.from;
+	const view = editor.view;
+	const node = from >= 0 ? view.state.doc.nodeAt(from) : null;
+	if (!node || node.type.name !== "image") return false;
+	const { pos: target } = getBlockDrop(editor, clientY);
+
+	const tr = view.state.tr;
+	tr.delete(from, from + node.nodeSize);
+	const mapped = tr.mapping.map(target);
+	// replaceRangeWith는 빈 텍스트블록을 자동으로 교체한다 (PM 내장 동작)
+	tr.replaceRangeWith(mapped, mapped, node);
+	view.dispatch(tr.setMeta("uiEvent", "drop"));
+	view.dragging = null;
+	clearImageDragSource();
+	editor.commands.focus(Math.min(mapped + 1, editor.state.doc.content.size));
+	return true;
 };
 
 /**
@@ -138,6 +198,14 @@ export function useRichEditor({
 	editorClass = "prose max-w-none focus:outline-none min-h-[400px] p-0",
 }: UseRichEditorOptions = {}) {
 	const [urlPaste, setUrlPaste] = useState<UrlPasteInfo | null>(null);
+	// 노션 스타일 드롭 가이드선의 viewport Y (드래그 중에만 값 존재)
+	const [dropIndicatorY, setDropIndicatorY] = useState<number | null>(null);
+	const indicatorYRef = useRef<number | null>(null);
+	const setIndicator = (y: number | null) => {
+		if (indicatorYRef.current === y) return;
+		indicatorYRef.current = y;
+		setDropIndicatorY(y);
+	};
 	// editorProps 클로저는 에디터 생성 시점에 고정되므로 ref로 최신 상태 전달
 	const setUrlPasteRef = useRef(setUrlPaste);
 	setUrlPasteRef.current = setUrlPaste;
@@ -158,26 +226,32 @@ export function useRichEditor({
 				class: editorClass,
 			},
 			handleDrop: (view, event, _slice, moved) => {
-				// 에디터 내부 이동: 실제 드래그에서는 PM 네이티브가 Dragging(node 포함)을
-				// 만들어 이동·경계 스냅·빈 문단 처리까지 전부 수행한다. 개입하지 않는다.
-				if (moved) return false;
+				setIndicator(null);
 
-				// Chrome은 <img> 드래그에 Files를 포함시키므로, 내부 이미지 이동이
-				// 파일 업로드 브랜치로 새지 않게 가드 (재업로드-복제 방지)
+				// 1) 에디터 내 이미지 이동: 노션 방식(세로 위치 기준 블록 드롭)으로 직접 처리.
+				//    PM 기본은 텍스트 커서 위치 기반이라 같은 줄에서도 가로 위치에 따라
+				//    위/아래가 갈리는 이질적인 감각을 준다.
+				if (imageDragSource.editor === editor && editor) {
+					event.preventDefault();
+					moveTrackedImageTo(editor, event.clientY);
+					return true;
+				}
+
+				// 다른 내부 드래그(텍스트 선택 이동 등)는 PM 기본 동작
+				if (moved) return false;
+				// Chrome은 <img> 드래그에 Files를 포함시키므로 내부 이동이
+				// 파일 업로드 브랜치로 새지 않게 가드
 				if (imageDragSource.editor !== null) return false;
 
+				// 2) 이미지 파일 드롭: 동일한 블록 로직으로 삽입 위치 결정
 				const files = Array.from(event.dataTransfer?.files ?? []).filter(
 					(file) => file.type.startsWith("image/"),
 				);
 				if (files.length === 0) return false;
 
 				event.preventDefault();
-				const coords = view.posAtCoords({
-					left: event.clientX,
-					top: event.clientY,
-				});
-				const pos = coords?.pos ?? view.state.selection.to;
 				if (editor) {
+					const { pos } = getBlockDrop(editor, event.clientY);
 					void uploadAndInsertImages(editor, files, pos);
 				}
 				return true;
@@ -241,86 +315,56 @@ export function useRichEditor({
 		},
 	});
 
-	// 노션처럼 이미지를 본문 영역 밖으로 끌어도 금지 커서 없이 드롭을 허용하고,
-	// 놓으면 가장 가까운 블록 경계로 스냅해 이동한다.
-	// (드롭 허용은 dragover의 preventDefault로 결정되는데, PM은 .ProseMirror
-	//  내부에서만 해주므로 밖으로 나가면 🚫가 뜬다 — window 레벨에서 보완)
+	// 노션처럼: 드래그 중 전체 폭 가이드선을 세로 위치 기준으로 표시하고,
+	// 본문 밖으로 끌어도 금지 커서 없이 드롭을 허용하며, 놓으면 가이드선 위치로 이동.
 	useEffect(() => {
 		if (!editor) return;
 
-		const isOurImageDrag = (e: DragEvent) =>
-			// 이 에디터에서 시작한 드래그만 처리.
-			// PM의 view.dragging은 신뢰하지 않고 자체 추적(imageDragSource) 사용,
-			// MIME types는 드래그 중에도 읽을 수 있으므로 이중 확인.
-			imageDragSource.editor === editor ||
-			Boolean(e.dataTransfer?.types.includes(IMAGE_MOVE_MIME));
+		const isOwnImageDrag = () => imageDragSource.editor === editor;
+		const isFileDrag = (e: DragEvent) =>
+			imageDragSource.editor === null &&
+			Boolean(e.dataTransfer?.types.includes("Files"));
+		const nearEditor = (e: DragEvent) => {
+			const r = editor.view.dom.getBoundingClientRect();
+			return (
+				e.clientX > r.left - 120 &&
+				e.clientX < r.right + 120 &&
+				e.clientY > r.top - 160 &&
+				e.clientY < r.bottom + 160
+			);
+		};
 
 		const onWindowDragOver = (e: DragEvent) => {
-			if (!isOurImageDrag(e)) return;
-			e.preventDefault();
-			if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+			if (isOwnImageDrag()) {
+				// 내부 이미지 이동: 어디서든 드롭 허용 + 가이드선 갱신
+				e.preventDefault();
+				if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+				setIndicator(getBlockDrop(editor, e.clientY).lineY);
+				return;
+			}
+			if (isFileDrag(e) && nearEditor(e)) {
+				// 파일 드래그: 에디터 근처에서 가이드선 표시
+				setIndicator(getBlockDrop(editor, e.clientY).lineY);
+			}
 		};
 
 		const onWindowDrop = (e: DragEvent) => {
+			setIndicator(null);
 			// 드롭 처리(문서 변경)는 드래그를 시작한 소스 에디터만 수행
 			if (imageDragSource.editor !== editor) return;
-			// 본문(view.dom) 위 드롭은 PM 네이티브가 이미 처리함
+			// 본문(view.dom) 위 드롭은 handleDrop이 이미 처리함
 			if (e.defaultPrevented) return;
-			const view = editor.view;
-
-			// PM이 실제 드래그에서 만든 Dragging(슬라이스+원본 NodeSelection)을 우선 사용,
-			// 없으면 자체 기록(from)으로 복원 — 이하는 PM 드롭 핸들러의 미러링이다.
-			const dragging = view.dragging as
-				| { slice: SliceType; node?: { replace: (tr: unknown) => void } }
-				| null;
-			let slice = dragging?.slice ?? null;
-			const sourceFrom = imageDragSource.from;
-			if (!slice && sourceFrom >= 0) {
-				const sourceNode = view.state.doc.nodeAt(sourceFrom);
-				if (sourceNode && sourceNode.type.name === "image") {
-					slice = new Slice(Fragment.from(sourceNode), 0, 0);
-				}
-			}
-			if (!slice) return;
 			e.preventDefault();
+			moveTrackedImageTo(editor, e.clientY);
+		};
 
-			// 커서 좌표를 본문 영역으로 클램프해 가장 가까운 문서 위치를 얻는다
-			const rect = view.dom.getBoundingClientRect();
-			const x = Math.min(Math.max(e.clientX, rect.left + 2), rect.right - 2);
-			const y = Math.min(Math.max(e.clientY, rect.top + 2), rect.bottom - 2);
-			const coords = view.posAtCoords({ left: x, top: y });
-			const rawPos =
-				coords?.pos ??
-				(e.clientY < rect.top ? 0 : view.state.doc.content.size);
-			const insertPos = dropPoint(view.state.doc, rawPos, slice) ?? rawPos;
-
-			const tr = view.state.tr;
-			// 원본 삭제: PM Dragging의 NodeSelection이 있으면 그대로(위치 리매핑 포함),
-			// 없으면 자체 기록 위치로 삭제
-			if (dragging?.node) {
-				dragging.node.replace(tr);
-			} else if (sourceFrom >= 0) {
-				const sourceNode = view.state.doc.nodeAt(sourceFrom);
-				if (sourceNode) {
-					tr.delete(sourceFrom, sourceFrom + sourceNode.nodeSize);
-				}
-			}
-			const mapped = tr.mapping.map(insertPos);
-			const isSingleNode =
-				slice.openStart === 0 &&
-				slice.openEnd === 0 &&
-				slice.content.childCount === 1;
-			if (isSingleNode && slice.content.firstChild) {
-				tr.replaceRangeWith(mapped, mapped, slice.content.firstChild);
-			} else {
-				tr.replaceRange(mapped, mapped, slice);
-			}
-			view.dispatch(tr.setMeta("uiEvent", "drop"));
-			view.dragging = null;
+		const onWindowDragEnd = () => {
+			setIndicator(null);
 			clearImageDragSource();
-			editor.commands.focus(
-				Math.min(mapped + 1, editor.state.doc.content.size),
-			);
+		};
+		const onWindowDragLeave = (e: DragEvent) => {
+			// 창 밖으로 나가면(relatedTarget 없음) 가이드선 제거
+			if (!e.relatedTarget) setIndicator(null);
 		};
 
 		// capture 단계: 중간 요소의 stopPropagation 영향 없이 항상 수신.
@@ -328,10 +372,14 @@ export function useRichEditor({
 		window.addEventListener("dragover", onWindowDragOver, true);
 		window.addEventListener("dragenter", onWindowDragOver, true);
 		window.addEventListener("drop", onWindowDrop);
+		window.addEventListener("dragend", onWindowDragEnd);
+		window.addEventListener("dragleave", onWindowDragLeave);
 		return () => {
 			window.removeEventListener("dragover", onWindowDragOver, true);
 			window.removeEventListener("dragenter", onWindowDragOver, true);
 			window.removeEventListener("drop", onWindowDrop);
+			window.removeEventListener("dragend", onWindowDragEnd);
+			window.removeEventListener("dragleave", onWindowDragLeave);
 		};
 	}, [editor]);
 
@@ -353,5 +401,6 @@ export function useRichEditor({
 		editor,
 		urlPaste,
 		closeUrlPaste: () => setUrlPaste(null),
+		dropIndicatorY,
 	};
 }

@@ -38,11 +38,8 @@ export const extensions = [
 		bulletList: false,
 		orderedList: false,
 		listItem: false,
-		// 드래그 중 어디에 놓일지 보여주는 가이드 선 (노션 스타일)
-		dropcursor: {
-			color: "var(--color-theme-primary)",
-			width: 3,
-		},
+		// 가이드선은 자체 BlockDropIndicator(노션 방식, 세로 위치 기준)가 대체
+		dropcursor: false,
 	}),
 	Link.configure({ openOnClick: false }),
 	Placeholder.configure({

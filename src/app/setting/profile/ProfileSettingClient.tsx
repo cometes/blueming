@@ -4,6 +4,7 @@ import { EditorContent } from "@tiptap/react";
 import { useRichEditor } from "@/components/editor/useRichEditor";
 import EditorImageDropZone from "@/components/editor/EditorImageDropZone";
 import UrlPasteMenu from "@/components/editor/UrlPasteMenu";
+import BlockDropIndicator from "@/components/editor/BlockDropIndicator";
 import type { AnyExtension } from "@tiptap/core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +34,7 @@ const PLACEHOLDERS = {
 
 export default function ProfileSettingClient() {
 	// 공용 리치 에디터 (이미지 드롭/이동·URL 전환 메뉴 포함)
-	const { editor, urlPaste, closeUrlPaste } = useRichEditor({
+	const { editor, urlPaste, closeUrlPaste, dropIndicatorY } = useRichEditor({
 		extensions: [
 			...extensions.filter((ext) => ext.name !== "placeholder"),
 			// Override placeholder
@@ -203,6 +204,9 @@ export default function ProfileSettingClient() {
 												info={urlPaste}
 												onClose={closeUrlPaste}
 											/>
+										)}
+										{dropIndicatorY != null && (
+											<BlockDropIndicator editor={editor} y={dropIndicatorY} />
 										)}
 									</div>
 								)}
