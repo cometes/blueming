@@ -1,18 +1,9 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 
-const CinemaEffect = () => {
-	useEffect(() => {
-		// 폰트 로드
-		const link = document.createElement("link");
-		link.href = "https://fonts.googleapis.com/css?family=Roboto:100";
-		link.rel = "stylesheet";
-		document.head.appendChild(link);
-
-		// 스타일 추가
-		const style = document.createElement("style");
-		style.textContent = `
+// 이펙트 전용 스타일. head DOM 조작 대신 JSX로 렌더링해 React가 수명주기를 소유한다.
+const CINEMA_CSS = `
       .cinema-container {
         position: fixed;
         top: 0;
@@ -106,16 +97,17 @@ const CinemaEffect = () => {
       }
     `;
 
-		document.head.appendChild(style);
-
-		return () => {
-			if (document.head.contains(link)) document.head.removeChild(link);
-			if (document.head.contains(style)) document.head.removeChild(style);
-		};
-	}, []);
-
+const CinemaEffect = () => {
 	return (
 		<div className="cinema-container">
+			<link
+				rel="stylesheet"
+				href="https://fonts.googleapis.com/css?family=Roboto:100"
+				precedence="effect-cinema"
+			/>
+			<style href="effect-cinema" precedence="effect-cinema">
+				{CINEMA_CSS}
+			</style>
 			<div className="outer-scratch">
 				<div className="inner-scratch">
 					<div className="background grain"></div>

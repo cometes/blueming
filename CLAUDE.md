@@ -200,6 +200,7 @@ GOOGLE_WEB_API_KEY=             # Firebase Web API Key
 - **훅/유틸 파일명**: camelCase (`useMyHook.ts`, `myUtil.ts`)
 - **import 순서**: 외부 라이브러리 → `@/` 내부 모듈
 - **서버/클라이언트 경계**: Firebase Admin SDK(`getDb`, `getBucket`, `getFireAuth`)는 API Route 또는 Server Component에서만 사용. 클라이언트에서 절대 import 금지.
+- **React 소유 DOM 불변 원칙**: React(또는 Next.js metadata)가 렌더링한 노드를 `querySelector`로 찾아 `remove()`/`appendChild()` 하지 않는다. 위반 시 라우트 이동에서 `removeChild` null 크래시가 발생한다. `<head>` 태그(favicon·title·link·style)는 metadata API 또는 JSX(`<link>`/`<style precedence>` — React 19가 head로 호이스팅)로만 관리하고, 전역 시각 효과는 `:root`의 CSS 변수·데이터 속성으로 제어한다.
 - `"use client"` 디렉티브는 클라이언트 컴포넌트 최상단에 명시
 
 ---
