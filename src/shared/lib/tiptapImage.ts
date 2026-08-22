@@ -9,6 +9,33 @@ export const IMAGE_URL_PATTERN =
 /** 단독 한 줄 텍스트가 이미지 URL인지 */
 export const isImageUrl = (text: string) => IMAGE_URL_PATTERN.test(text.trim());
 
+/** 단독 한 줄 텍스트가 http(s) URL인지 (공백 없는 단일 토큰) */
+export const isHttpUrl = (text: string) => /^https?:\/\/\S+$/i.test(text.trim());
+
+/** 유튜브 동영상 URL인지 */
+export const isYoutubeUrl = (text: string) =>
+	/^https?:\/\/(www\.)?(youtube\.com\/watch\?|youtube\.com\/shorts\/|youtu\.be\/)/i.test(
+		text.trim(),
+	);
+
+/** 이미지를 실제로 로드해 성공 여부와 natural width를 반환 (5초 타임아웃) */
+export const loadImageSize = (
+	url: string,
+): Promise<{ ok: boolean; width?: number }> =>
+	new Promise((resolve) => {
+		const img = new Image();
+		const timer = setTimeout(() => resolve({ ok: false }), 5000);
+		img.onload = () => {
+			clearTimeout(timer);
+			resolve({ ok: true, width: img.naturalWidth || undefined });
+		};
+		img.onerror = () => {
+			clearTimeout(timer);
+			resolve({ ok: false });
+		};
+		img.src = url;
+	});
+
 /** URL 마지막 세그먼트에서 확장자를 뗀 파일명 (실패 시 "이미지") */
 export const filenameFromUrl = (url: string) => {
 	try {
@@ -32,7 +59,7 @@ export interface EditorImageAttrs {
  * 이미지를 미리 로드해 natural 크기 기반 width(최대 800px)를 계산한 attrs를 반환.
  * 로드 실패 시 width 없이 반환한다 (삽입 자체는 항상 성공).
  */
-export const resolveImageAttrs = (
+export const resolveImageAttrs = async (
 	url: string,
 	filename: string,
 ): Promise<EditorImageAttrs> => {
@@ -42,20 +69,10 @@ export const resolveImageAttrs = (
 		title: filename,
 		"data-align": "left",
 	};
-	return new Promise((resolve) => {
-		const img = new Image();
-		const timer = setTimeout(() => resolve(base), 5000);
-		img.onload = () => {
-			clearTimeout(timer);
-			resolve({
-				...base,
-				width: Math.min(img.naturalWidth || MAX_INSERT_WIDTH, MAX_INSERT_WIDTH),
-			});
-		};
-		img.onerror = () => {
-			clearTimeout(timer);
-			resolve(base);
-		};
-		img.src = url;
-	});
+	const size = await loadImageSize(url);
+	if (!size.ok) return base;
+	return {
+		...base,
+		width: Math.min(size.width ?? MAX_INSERT_WIDTH, MAX_INSERT_WIDTH),
+	};
 };

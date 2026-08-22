@@ -16,7 +16,6 @@ import {
   ImageUploadPreview,
 } from "@/components/tiptap-node/image-upload-node/image-upload-node-parts"
 import { ImageUploadAssetPicker } from "@/components/tiptap-node/image-upload-node/image-upload-asset-picker"
-import { ImageUploadUrlInput } from "@/components/tiptap-node/image-upload-node/image-upload-url-input"
 import { resolveImageAttrs } from "@/shared/lib/tiptapImage"
 
 export type { FileItem } from "@/components/tiptap-node/image-upload-node/use-image-upload-file"
@@ -121,7 +120,6 @@ export const ImageUploadNode: React.FC<NodeViewProps> = (props) => {
             <DropZoneContent maxSize={maxSize} />
           </ImageUploadDragArea>
           <ImageUploadAssetPicker onSelect={handleSelectAsset} />
-          <ImageUploadUrlInput onSubmit={handleImageInsert} />
         </>
       )}
 

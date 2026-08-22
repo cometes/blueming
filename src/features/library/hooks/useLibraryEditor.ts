@@ -1,17 +1,24 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useEditor, type Content, type Editor } from "@tiptap/react";
 import { toast } from "sonner";
 import { extensions } from "@/components/editor/TiptapEditor";
 import { handleImageUpload } from "@/shared/lib/tiptap-utils";
 import {
-	filenameFromUrl,
-	isImageUrl,
+	isHttpUrl,
 	resolveImageAttrs,
 } from "@/shared/lib/tiptapImage";
 
 const MAX_DROP_IMAGES = 5;
+
+/** URL 붙여넣기 직후 표시할 선택 메뉴 정보 (노션 스타일 링크/임베드 전환) */
+export interface UrlPasteInfo {
+	url: string;
+	/** 링크 텍스트로 삽입된 문서 범위 (임베드 선택 시 이 범위를 교체) */
+	from: number;
+	to: number;
+}
 
 /** 삽입 시작 위치 계산: 노드 선택(이미지 등)을 대체하지 않도록 항상 selection 끝 기준 */
 const resolveInsertPos = (editor: Editor, insertPos?: number | "end") => {
@@ -66,7 +73,19 @@ export const uploadAndInsertImages = async (
  * - 이미지 파일을 에디터 아무 곳에나 드롭하면 그 위치에 업로드·삽입
  * - 이미지 파일/이미지 URL 붙여넣기도 이미지로 삽입
  */
-export function useLibraryEditor(initialContent: Content) {
+interface UseLibraryEditorOptions {
+	/** 단일 URL 붙여넣기 시 호출 — 링크로 우선 삽입된 뒤 전환 메뉴를 띄우는 용도 */
+	onUrlPasted?: (info: UrlPasteInfo) => void;
+}
+
+export function useLibraryEditor(
+	initialContent: Content,
+	options?: UseLibraryEditorOptions,
+) {
+	// editorProps 클로저는 에디터 생성 시점에 고정되므로 최신 콜백을 ref로 전달
+	const onUrlPastedRef = useRef(options?.onUrlPasted);
+	onUrlPastedRef.current = options?.onUrlPasted;
+
 	const editor = useEditor({
 		extensions: extensions,
 		content: initialContent,
@@ -112,22 +131,26 @@ export function useLibraryEditor(initialContent: Content) {
 				const text = event.clipboardData?.getData("text/plain");
 				if (!text) return false;
 
-				// 2) 이미지 URL 단독 붙여넣기 → 이미지로 변환
-				if (isImageUrl(text)) {
+				// 2) URL 단독 붙여넣기 → 링크로 삽입 후 전환 메뉴(링크/임베드) 표시
+				if (isHttpUrl(text)) {
 					const url = text.trim();
-					const insertAt = editor ? resolveInsertPos(editor) : 0;
-					void (async () => {
-						if (!editor) return;
-						const attrs = await resolveImageAttrs(url, filenameFromUrl(url));
-						editor
-							.chain()
-							.focus()
-							.insertContentAt(
-								Math.min(insertAt, editor.state.doc.content.size),
-								{ type: "image", attrs },
-							)
-							.run();
-					})();
+					if (!editor) return false;
+					const from = Math.min(
+						resolveInsertPos(editor),
+						editor.state.doc.content.size,
+					);
+					const sizeBefore = editor.state.doc.content.size;
+					editor
+						.chain()
+						.focus()
+						.insertContentAt(from, {
+							type: "text",
+							text: url,
+							marks: [{ type: "link", attrs: { href: url } }],
+						})
+						.run();
+					const to = from + (editor.state.doc.content.size - sizeBefore);
+					onUrlPastedRef.current?.({ url, from, to });
 					return true;
 				}
 
