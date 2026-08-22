@@ -15,6 +15,8 @@ import { extensions as defaultExtensions } from "@/components/editor/TiptapEdito
 import { handleImageUpload } from "@/shared/lib/tiptap-utils";
 import {
 	IMAGE_MOVE_MIME,
+	clearImageDragSource,
+	imageDragSource,
 	isHttpUrl,
 	resolveImageAttrs,
 } from "@/shared/lib/tiptapImage";
@@ -251,11 +253,11 @@ export function useRichEditor({
 		if (!editor) return;
 
 		const isOurImageDrag = (e: DragEvent) =>
-			// 이 에디터에서 시작한 드래그만 처리 (dragstart에서 view.dragging 세팅됨)
-			Boolean(
-				editor.view.dragging &&
-					e.dataTransfer?.types.includes(IMAGE_MOVE_MIME),
-			);
+			// 이 에디터에서 시작한 드래그만 처리.
+			// PM의 view.dragging은 신뢰하지 않고 자체 추적(imageDragSource) 사용,
+			// MIME types는 드래그 중에도 읽을 수 있으므로 이중 확인.
+			imageDragSource.editor === editor ||
+			Boolean(e.dataTransfer?.types.includes(IMAGE_MOVE_MIME));
 
 		const onWindowDragOver = (e: DragEvent) => {
 			if (!isOurImageDrag(e)) return;
@@ -264,13 +266,20 @@ export function useRichEditor({
 		};
 
 		const onWindowDrop = (e: DragEvent) => {
-			if (!isOurImageDrag(e)) return;
+			// 드롭 처리(문서 변경)는 드래그를 시작한 소스 에디터만 수행
+			// (dragover의 느슨한 판별과 달리 정확한 소유권 필요)
+			if (imageDragSource.editor !== editor) return;
 			// 본문 위 드롭은 PM 네이티브가 이미 처리(preventDefault)함
 			if (e.defaultPrevented) return;
-			const from = Number(e.dataTransfer?.getData(IMAGE_MOVE_MIME));
+			// drop 시점에는 getData가 가능하지만, 소실 대비 자체 추적값을 우선 사용
+			const rawFrom = e.dataTransfer?.getData(IMAGE_MOVE_MIME);
+			const from =
+				rawFrom !== undefined && rawFrom !== ""
+					? Number(rawFrom)
+					: imageDragSource.from;
 			const view = editor.view;
-			const node = view.state.doc.nodeAt(from);
-			if (!node) return;
+			const node = from >= 0 ? view.state.doc.nodeAt(from) : null;
+			if (!node || node.type.name !== "image") return;
 			e.preventDefault();
 
 			// 커서를 본문 영역 안으로 클램프해 가장 가까운 문서 위치를 얻는다
@@ -305,12 +314,14 @@ export function useRichEditor({
 				Math.min(adjusted + 1, editor.state.doc.content.size),
 			);
 			view.dragging = null;
+			clearImageDragSource();
 		};
 
-		window.addEventListener("dragover", onWindowDragOver);
+		// capture 단계: 중간 요소의 stopPropagation 영향 없이 항상 수신
+		window.addEventListener("dragover", onWindowDragOver, true);
 		window.addEventListener("drop", onWindowDrop);
 		return () => {
-			window.removeEventListener("dragover", onWindowDragOver);
+			window.removeEventListener("dragover", onWindowDragOver, true);
 			window.removeEventListener("drop", onWindowDrop);
 		};
 	}, [editor]);

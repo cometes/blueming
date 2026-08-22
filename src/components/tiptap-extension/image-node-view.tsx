@@ -5,7 +5,11 @@ import * as React from "react";
 import { NodeViewWrapper } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { ImageBubbleMenu } from "@/components/tiptap-ui/image-bubble-menu/image-bubble-menu";
-import { IMAGE_MOVE_MIME } from "@/shared/lib/tiptapImage";
+import {
+	IMAGE_MOVE_MIME,
+	clearImageDragSource,
+	setImageDragSource,
+} from "@/shared/lib/tiptapImage";
 
 export const ImageNodeView: React.FC<NodeViewProps> = ({
 	node,
@@ -223,6 +227,9 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 						const pos = getPos();
 						e.dataTransfer.setData(IMAGE_MOVE_MIME, String(pos));
 						e.dataTransfer.effectAllowed = "move";
+						// 자체 드래그 소스 추적: window 레벨 dragover/drop 판별용
+						// (PM의 view.dragging은 실제 파이프라인에서 소실될 수 있어 보조로만 사용)
+						setImageDragSource(editor, pos);
 						// PM이 NodeView 내부 dragstart를 무시(stopEvent)해 view.dragging이
 						// 비어 있으면 드롭커서가 블록 경계에 스냅되지 않고 이동도 네이티브로
 						// 처리되지 않는다. 노드를 선택하고 dragging 상태를 직접 세팅한다.
@@ -231,6 +238,9 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 							slice: editor.view.state.selection.content(),
 							move: true,
 						};
+					}}
+					onDragEnd={() => {
+						clearImageDragSource();
 					}}
 				/>
 			</div>

@@ -6,6 +6,27 @@ const MAX_INSERT_WIDTH = 800;
 /** 에디터 내 이미지 노드 이동 드래그를 식별하는 커스텀 MIME (dragstart 위치 기록) */
 export const IMAGE_MOVE_MIME = "application/x-blueming-image-move";
 
+/**
+ * 진행 중인 이미지 이동 드래그의 소스 정보.
+ * PM의 view.dragging은 실제 드래그 파이프라인에서 소실될 수 있어(브라우저/확장
+ * 개입, NodeView stopEvent 등) 신뢰하지 않고 자체적으로 추적한다.
+ * editor는 순환 의존을 피하기 위해 unknown으로 보관.
+ */
+export const imageDragSource: { editor: unknown | null; from: number } = {
+	editor: null,
+	from: -1,
+};
+
+export const setImageDragSource = (editor: unknown, from: number) => {
+	imageDragSource.editor = editor;
+	imageDragSource.from = from;
+};
+
+export const clearImageDragSource = () => {
+	imageDragSource.editor = null;
+	imageDragSource.from = -1;
+};
+
 export const IMAGE_URL_PATTERN =
 	/^https?:\/\/\S+\.(png|jpe?g|gif|webp|avif|svg)(\?\S*)?$/i;
 
