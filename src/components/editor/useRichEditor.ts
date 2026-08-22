@@ -8,6 +8,8 @@ import {
 	type Editor,
 } from "@tiptap/react";
 import { NodeSelection } from "@tiptap/pm/state";
+import { Slice, Fragment } from "@tiptap/pm/model";
+import { dropPoint } from "@tiptap/pm/transform";
 import { toast } from "sonner";
 import { extensions as defaultExtensions } from "@/components/editor/TiptapEditor";
 import { handleImageUpload } from "@/shared/lib/tiptap-utils";
@@ -240,6 +242,78 @@ export function useRichEditor({
 			},
 		},
 	});
+
+	// 노션처럼 이미지를 본문 영역 밖으로 끌어도 금지 커서 없이 드롭을 허용하고,
+	// 놓으면 가장 가까운 블록 경계로 스냅해 이동한다.
+	// (드롭 허용은 dragover의 preventDefault로 결정되는데, PM은 .ProseMirror
+	//  내부에서만 해주므로 밖으로 나가면 🚫가 뜬다 — window 레벨에서 보완)
+	useEffect(() => {
+		if (!editor) return;
+
+		const isOurImageDrag = (e: DragEvent) =>
+			// 이 에디터에서 시작한 드래그만 처리 (dragstart에서 view.dragging 세팅됨)
+			Boolean(
+				editor.view.dragging &&
+					e.dataTransfer?.types.includes(IMAGE_MOVE_MIME),
+			);
+
+		const onWindowDragOver = (e: DragEvent) => {
+			if (!isOurImageDrag(e)) return;
+			e.preventDefault();
+			if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+		};
+
+		const onWindowDrop = (e: DragEvent) => {
+			if (!isOurImageDrag(e)) return;
+			// 본문 위 드롭은 PM 네이티브가 이미 처리(preventDefault)함
+			if (e.defaultPrevented) return;
+			const from = Number(e.dataTransfer?.getData(IMAGE_MOVE_MIME));
+			const view = editor.view;
+			const node = view.state.doc.nodeAt(from);
+			if (!node) return;
+			e.preventDefault();
+
+			// 커서를 본문 영역 안으로 클램프해 가장 가까운 문서 위치를 얻는다
+			const rect = view.dom.getBoundingClientRect();
+			const x = Math.min(Math.max(e.clientX, rect.left + 2), rect.right - 2);
+			const y = Math.min(Math.max(e.clientY, rect.top + 2), rect.bottom - 2);
+			const coords = view.posAtCoords({ left: x, top: y });
+			let target =
+				coords?.pos ??
+				(e.clientY < rect.top ? 0 : view.state.doc.content.size);
+			// 블록 경계로 스냅
+			const snapped = dropPoint(
+				view.state.doc,
+				target,
+				new Slice(Fragment.from(node), 0, 0),
+			);
+			if (snapped != null) target = snapped;
+			// 원본 삭제에 따른 위치 보정
+			const adjusted =
+				target <= from
+					? target
+					: target >= from + node.nodeSize
+						? target - node.nodeSize
+						: from;
+			editor
+				.chain()
+				.focus()
+				.deleteRange({ from, to: from + node.nodeSize })
+				.insertContentAt(adjusted, node.toJSON())
+				.run();
+			editor.commands.focus(
+				Math.min(adjusted + 1, editor.state.doc.content.size),
+			);
+			view.dragging = null;
+		};
+
+		window.addEventListener("dragover", onWindowDragOver);
+		window.addEventListener("drop", onWindowDrop);
+		return () => {
+			window.removeEventListener("dragover", onWindowDragOver);
+			window.removeEventListener("drop", onWindowDrop);
+		};
+	}, [editor]);
 
 	// 에디터 바깥을 클릭하면 이미지 등 노드 선택을 해제 (tiptap blur 이벤트가
 	// 환경에 따라 불안정해서 document 레벨에서 직접 처리)
