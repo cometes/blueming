@@ -16,6 +16,9 @@ import {
 import { useLibraryEditor } from "@/features/library/hooks/useLibraryEditor";
 import NewTitleFields from "./NewTitleFields";
 import ProtectedContentGate from "./ProtectedContentGate";
+import EditorImageDropZone from "@/components/editor/EditorImageDropZone";
+import UrlPasteMenu from "@/components/editor/UrlPasteMenu";
+import BlockDropIndicator from "@/components/editor/BlockDropIndicator";
 import { toast } from "sonner";
 import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import { useAuthStore } from "@/store/auth/store";
@@ -50,7 +53,10 @@ export default function LibararyNewClient({
 
 	const editorRef = React.useRef<Editor | null>(null);
 	const composer = useLibraryComposer({ editorRef, mode, initialData });
-	const editor = useLibraryEditor(composer.initialContent);
+	// URL 붙여넣기 시 링크/임베드 전환 메뉴 상태는 useRichEditor가 관리
+	const { editor, urlPaste, closeUrlPaste, dropIndicatorY } = useLibraryEditor(
+		composer.initialContent,
+	);
 	editorRef.current = editor;
 
 	// 수정 모드는 관리자만 접근 가능
@@ -94,10 +100,11 @@ export default function LibararyNewClient({
 				<MobileToolbarContainer>
 					<TiptapToolbar editor={editor} />
 				</MobileToolbarContainer>
-				{/* Body */}
-				<div
+				{/* Body — 컨테이너(패딩 포함) 전체가 이미지 드롭존 */}
+				<EditorImageDropZone
+					editor={editor}
 					className={cn(
-						"Container pt-[100px] md:pt-[120px] px-6 md:px-12 bg-card backdrop-blur-card max-w-2xl min-h-dvh border-card flex flex-col m-auto",
+						"Container pt-[100px] md:pt-[120px] px-6 md:px-12 bg-card backdrop-blur-card max-w-3xl min-h-dvh border-card m-auto",
 						"pb-[120px] sm:pb-[100px]",
 					)}
 				>
@@ -127,8 +134,14 @@ export default function LibararyNewClient({
 							/>
 						</div>
 					</div>
-				</div>
+				</EditorImageDropZone>
 			</div>
+			{urlPaste && (
+				<UrlPasteMenu editor={editor} info={urlPaste} onClose={closeUrlPaste} />
+			)}
+			{dropIndicatorY != null && (
+				<BlockDropIndicator editor={editor} y={dropIndicatorY} />
+			)}
 			<CreateModal
 				open={composer.metaOpen}
 				onOpenChange={composer.setMetaOpen}

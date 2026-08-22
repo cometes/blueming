@@ -38,6 +38,21 @@
   // margin: 2rem 0;
   position: relative;
 
+  // 사이트 테마 토큰으로 오버라이드: 템플릿의 .dark 클래스 기반 토큰은
+  // 이 프로젝트의 테마(커스텀 CSS 변수)와 무관해서 어두운 배경에서
+  // 파일 아이콘/보더가 보이지 않던 문제를 해결한다.
+  --tiptap-image-upload-active: var(--color-theme-primary);
+  --tiptap-image-upload-progress-bg: color-mix(in srgb, var(--color-theme-primary) 15%, transparent);
+  --tiptap-image-upload-icon-bg: var(--color-theme-primary);
+  --tiptap-image-upload-text-color: var(--color-sub-text);
+  --tiptap-image-upload-subtext-color: var(--color-sub-text);
+  --tiptap-image-upload-border: var(--card-border-color);
+  --tiptap-image-upload-border-hover: color-mix(in srgb, var(--color-theme-primary) 60%, transparent);
+  --tiptap-image-upload-border-active: var(--color-theme-primary);
+  --tiptap-image-upload-icon-doc-bg: color-mix(in srgb, var(--color-sub-text) 60%, transparent);
+  --tiptap-image-upload-icon-doc-border: var(--color-sub-text);
+  --tiptap-image-upload-icon-color: #ffffff;
+
   input[type="file"] {
     display: none;
   }

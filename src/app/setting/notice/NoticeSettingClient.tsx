@@ -1,6 +1,9 @@
 "use client";
 
 import { EditorContent } from "@tiptap/react";
+import EditorImageDropZone from "@/components/editor/EditorImageDropZone";
+import UrlPasteMenu from "@/components/editor/UrlPasteMenu";
+import BlockDropIndicator from "@/components/editor/BlockDropIndicator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -37,10 +40,13 @@ export default function NoticeSettingClient() {
 			ratio,
 			showResetDialog,
 			editor,
+			urlPaste,
+			dropIndicatorY,
 			canvasRef,
 			isDirty,
 		},
 		actions: {
+			closeUrlPaste,
 			setBannerText,
 			setCurrentType,
 			setGradientColor,
@@ -208,15 +214,25 @@ export default function NoticeSettingClient() {
 										gridRow: `span ${ratio.h || 12}`,
 									}}
 								>
-									<ScrollArea className="h-full w-full">
-										<EditorContent editor={editor} className="h-full w-full" />
-									</ScrollArea>
+									{/* 드롭존이 위젯 박스(스크롤 영역 포함) 전체를 덮도록 ScrollArea 바깥에 배치 */}
+									<EditorImageDropZone editor={editor} className="h-full w-full">
+										<ScrollArea className="h-full w-full">
+											<EditorContent editor={editor} className="h-full w-full" />
+										</ScrollArea>
+									</EditorImageDropZone>
 								</div>
 							</div>
 						</div>
 					)}
 				</div>
 			</section>
+
+			{urlPaste && (
+				<UrlPasteMenu editor={editor} info={urlPaste} onClose={closeUrlPaste} />
+			)}
+			{dropIndicatorY != null && (
+				<BlockDropIndicator editor={editor} y={dropIndicatorY} />
+			)}
 
 			<Separator className="my-12" />
 

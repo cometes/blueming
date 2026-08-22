@@ -11,6 +11,7 @@ import {
 	updateLibraryPost,
 } from "@/features/library/api/client";
 import { getApiErrorMessage } from "@/shared/lib/http/client";
+import { editorHasContent } from "@/components/editor/useRichEditor";
 
 export interface LibraryComposerInitialData {
 	id: string;
@@ -182,14 +183,15 @@ export function useLibraryComposer({
 	]);
 
 	const handleOpenMeta = () => {
-		const plainText = editorRef.current?.getText().trim() ?? "";
+		const editor = editorRef.current;
 
 		if (!title.trim()) {
 			toast.error("제목을 입력해 주세요.");
 			return;
 		}
 
-		if (!plainText) {
+		// 텍스트가 없어도 이미지/동영상만 있으면 작성 가능
+		if (!editor || !editorHasContent(editor)) {
 			toast.error("내용을 입력해 주세요.");
 			return;
 		}
@@ -206,9 +208,8 @@ export function useLibraryComposer({
 		}
 
 		const contentJson = editor.getJSON();
-		const contentText = editor.getText().trim();
 
-		if (!title.trim() || !contentText) {
+		if (!title.trim() || !editorHasContent(editor)) {
 			toast.error("제목과 내용을 입력해주세요.");
 			return;
 		}

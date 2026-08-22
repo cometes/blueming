@@ -1,5 +1,6 @@
 import { mergeAttributes, Node } from "@tiptap/react"
 import { ReactNodeViewRenderer } from "@tiptap/react"
+import { NodeSelection } from "@tiptap/pm/state"
 import { ImageUploadNode as ImageUploadNodeComponent } from "@/components/tiptap-node/image-upload-node/image-upload-node"
 
 export type UploadFunction = (
@@ -107,7 +108,15 @@ export const ImageUploadNode = Node.create<ImageUploadNodeOptions>({
     return {
       setImageUploadNode:
         (options = {}) =>
-        ({ commands }) => {
+        ({ state, commands }) => {
+          // 이미지 등 노드가 선택된 상태에서 호출되면 insertContent가 그 노드를
+          // "대체"해버리므로(기존 이미지 유실 버그), 노드 선택일 때는 뒤에 삽입한다.
+          if (state.selection instanceof NodeSelection) {
+            return commands.insertContentAt(state.selection.to, {
+              type: this.name,
+              attrs: options,
+            })
+          }
           return commands.insertContent({
             type: this.name,
             attrs: options,

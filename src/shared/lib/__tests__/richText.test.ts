@@ -32,6 +32,11 @@ describe("isRichTextEmpty", () => {
 	it("태그 사이에 공백만 있으면 → true", () => {
 		expect(isRichTextEmpty("<p>  </p>")).toBe(true);
 	});
+
+	it("텍스트 없이 이미지/동영상만 있어도 → false (콘텐츠로 취급)", () => {
+		expect(isRichTextEmpty('<p></p><img src="https://a.com/a.png" /><p></p>')).toBe(false);
+		expect(isRichTextEmpty('<iframe src="https://youtube.com/embed/x"></iframe>')).toBe(false);
+	});
 });
 
 describe("renderRichText", () => {

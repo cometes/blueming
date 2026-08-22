@@ -21,6 +21,7 @@ import { Placeholder } from "@tiptap/extension-placeholder";
 import { CustomImage } from "@/components/tiptap-extension/custom-image";
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node";
 import { CustomYoutubeNode } from "@/components/tiptap-node/youtube-node/youtube-node";
+import { TrailingNode } from "@/components/tiptap-extension/trailing-node";
 import { MAX_FILE_SIZE, handleImageUpload } from "@/shared/lib/tiptap-utils";
 
 import "@/styles/tiptap-variables.css";
@@ -37,6 +38,7 @@ export const extensions = [
 		bulletList: false,
 		orderedList: false,
 		listItem: false,
+		// 가이드선은 자체 BlockDropIndicator(노션 방식, 세로 위치 기준)가 대체
 		dropcursor: false,
 	}),
 	Link.configure({ openOnClick: false }),
@@ -74,6 +76,7 @@ export const extensions = [
 	}),
 	CustomYoutubeNode,
 	CustomImage,
+	TrailingNode,
 	ImageUploadNode.configure({
 		accept: "image/*",
 		maxSize: MAX_FILE_SIZE,

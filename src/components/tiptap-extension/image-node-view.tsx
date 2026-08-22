@@ -5,6 +5,11 @@ import * as React from "react";
 import { NodeViewWrapper } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { ImageBubbleMenu } from "@/components/tiptap-ui/image-bubble-menu/image-bubble-menu";
+import {
+	IMAGE_MOVE_MIME,
+	clearImageDragSource,
+	setImageDragSource,
+} from "@/shared/lib/tiptapImage";
 
 export const ImageNodeView: React.FC<NodeViewProps> = ({
 	node,
@@ -20,6 +25,9 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 	const initialWidth = node.attrs.width;
 
 	const [isResizing, setIsResizing] = React.useState(false);
+	// 플로팅/핸들은 노드 선택(selected) 기반으로 표시.
+	// 에디터가 블러되면 useLibraryEditor의 onBlur가 노드 선택을 해제하므로 함께 사라진다.
+	const showControls = selected && editor.isEditable;
 	const [currentWidth, setCurrentWidth] = React.useState<number | null>(
 		typeof initialWidth === "number" ? initialWidth : null
 	);
@@ -190,10 +198,10 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 				}`}
 				style={boxStyle}
 			>
-				{selected && editor.isEditable && (
+				{showControls && (
 					<ImageBubbleMenu editor={editor} currentAlign={align} />
 				)}
-				{selected && editor.isEditable && (
+				{showControls && (
 					<>
 						<div
 							className="resize-handle resize-handle-left"
@@ -205,12 +213,29 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 						/>
 					</>
 				)}
+				{/* 드래그 시 커스텀 MIME으로 원본 위치를 기록해 에디터 handleDrop이
+				    "이동"으로 처리하게 한다. (네이티브 이미지 드래그로 빠지면 복제됨) */}
 				<img
 					ref={imgRef}
 					src={src}
 					alt={alt}
 					title={title}
 					style={imgStyle}
+					draggable
+					data-drag-handle=""
+					onDragStart={(e) => {
+						// 실제 드래그(mousedown→dragstart)에서는 tiptap stopEvent가 dragstart를
+						// PM에 통과시키고, PM 네이티브가 직렬화·이동·경계 스냅·빈 문단 처리까지
+						// 전부 수행한다. 여기서 selection/view.dragging을 건드리면 PM이 만든
+						// 올바른 Dragging을 망가뜨리므로 절대 개입하지 않는다.
+						// 에디터 밖 드롭 지원을 위한 식별 정보만 기록한다.
+						const pos = getPos();
+						setImageDragSource(editor, pos);
+						e.dataTransfer.setData(IMAGE_MOVE_MIME, String(pos));
+					}}
+					onDragEnd={() => {
+						clearImageDragSource();
+					}}
 				/>
 			</div>
 		</NodeViewWrapper>

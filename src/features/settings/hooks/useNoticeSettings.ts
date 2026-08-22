@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useEditor } from "@tiptap/react";
 import { toast } from "sonner";
 import { extensions } from "@/components/editor/TiptapEditor";
+import { useRichEditor } from "@/components/editor/useRichEditor";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { setSettingsNotice } from "@/features/settings/api/main";
@@ -75,15 +75,11 @@ export function useNoticeSettings() {
 	const [isSyncing, setIsSyncing] = useState(true);
 	const [editorContent, setEditorContent] = useState("<p></p>");
 
-	const editor = useEditor({
+	// 공용 리치 에디터 (이미지 드롭/이동·URL 전환 메뉴 포함)
+	const { editor, urlPaste, closeUrlPaste, dropIndicatorY } = useRichEditor({
 		extensions,
 		content: "<p></p>",
-		immediatelyRender: false,
-		editorProps: {
-			attributes: {
-				class: "prose prose-sm max-w-none focus:outline-none h-full p-4",
-			},
-		},
+		editorClass: "prose prose-sm max-w-none focus:outline-none h-full p-4",
 	});
 
 	useEffect(() => {
@@ -279,10 +275,13 @@ export function useNoticeSettings() {
 			ratio,
 			showResetDialog,
 			editor,
+			urlPaste,
+			dropIndicatorY,
 			canvasRef,
 			isDirty,
 		},
 		actions: {
+			closeUrlPaste,
 			setBannerText,
 			setCurrentType,
 			setGradientColor,
