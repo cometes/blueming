@@ -4,35 +4,21 @@ import { Search, X } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-	MAX_MEMO_TAGS,
-	type MemoComposer,
-} from "@/features/memo/hooks/useMemoComposer";
+import type { TagPickerState } from "@/hooks/useTagPicker";
 
-interface MemoTagPickerProps {
-	composer: Pick<
-		MemoComposer,
-		| "tags"
-		| "filteredTags"
-		| "tagInput"
-		| "setTagInput"
-		| "tagSearchInput"
-		| "setTagSearchInput"
-		| "tagInputOpen"
-		| "setTagInputOpen"
-		| "handleAddTag"
-		| "handleRemoveTag"
-		| "toggleTag"
-		| "handleTagKeyDown"
-		| "handleTagInputBlur"
-		| "handleTagCompositionStart"
-		| "handleTagCompositionEnd"
-	>;
+interface TagPickerProps {
+	picker: TagPickerState;
+	/** 기존 태그 목록 스크롤 영역 높이 등 (기본 h-60) */
+	scrollAreaClassName?: string;
 }
 
-/** 메모 작성 모달 우측의 태그 검색·선택·추가 패널 */
-export default function MemoTagPicker({ composer }: MemoTagPickerProps) {
+/** 태그 검색·선택·직접 추가 패널. 상태는 useTagPicker가 관리한다. */
+export default function TagPicker({
+	picker,
+	scrollAreaClassName = "h-60 pr-4",
+}: TagPickerProps) {
 	const {
+		maxTags,
 		tags,
 		filteredTags,
 		tagInput,
@@ -47,7 +33,7 @@ export default function MemoTagPicker({ composer }: MemoTagPickerProps) {
 		handleTagInputBlur,
 		handleTagCompositionStart,
 		handleTagCompositionEnd,
-	} = composer;
+	} = picker;
 
 	return (
 		<div className="space-y-2">
@@ -68,7 +54,7 @@ export default function MemoTagPicker({ composer }: MemoTagPickerProps) {
 				</div>
 				<div className="space-y-2">
 					<p className="text-xs text-sub-text px-1">
-						선택된 태그 ({tags.length}/{MAX_MEMO_TAGS})
+						선택된 태그 ({tags.length}/{maxTags})
 					</p>
 					<div className="flex flex-wrap items-center gap-2">
 						{tags.map((tag) => (
@@ -104,7 +90,7 @@ export default function MemoTagPicker({ composer }: MemoTagPickerProps) {
 							<button
 								type="button"
 								onClick={() => setTagInputOpen(true)}
-								disabled={tags.length >= MAX_MEMO_TAGS}
+								disabled={tags.length >= maxTags}
 								className="px-3 py-1.5 rounded-full text-xs font-medium border border-dashed border-card text-sub-text hover:border-theme-primary/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								+ 태그 추가
@@ -116,13 +102,13 @@ export default function MemoTagPicker({ composer }: MemoTagPickerProps) {
 				{filteredTags.length > 0 && (
 					<div className="space-y-2">
 						<p className="text-xs text-sub-text px-1">
-							기존 태그에서 선택 ({tags.length}/{MAX_MEMO_TAGS})
+							기존 태그에서 선택 ({tags.length}/{maxTags})
 						</p>
-						<ScrollArea className="h-60 pr-4">
+						<ScrollArea className={scrollAreaClassName}>
 							<div className="flex flex-wrap gap-2">
 								{filteredTags.map((tag) => {
 									const isSelected = tags.includes(tag);
-									const canSelect = !isSelected && tags.length < MAX_MEMO_TAGS;
+									const canSelect = !isSelected && tags.length < maxTags;
 									return (
 										<button
 											key={tag}

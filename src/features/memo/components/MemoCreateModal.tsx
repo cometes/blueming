@@ -11,7 +11,7 @@ import {
 	type MemoComposerInitialValues,
 	type MemoComposerPayload,
 } from "@/features/memo/hooks/useMemoComposer";
-import MemoTagPicker from "@/features/memo/components/MemoTagPicker";
+import TagPicker from "@/components/tag/TagPicker";
 import {
 	Dialog,
 	DialogContent,
@@ -195,7 +195,7 @@ export default function MemoCreateModal({
 					</div>
 
 					<div className="w-full md:w-[40%] p-4">
-						<MemoTagPicker composer={composer} />
+						<TagPicker picker={composer.tagPicker} />
 					</div>
 				</div>
 

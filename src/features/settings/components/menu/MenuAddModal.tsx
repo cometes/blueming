@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -10,22 +9,14 @@ import {
 	DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Globe, Lock, ImagePlus, X } from "lucide-react";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import { toast } from "sonner";
-import { AssetPickerDialog } from "@/features/settings/components/AssetPickerDialog";
 import { useSettingsImagePicker } from "@/features/settings/hooks/useSettingsImagePicker";
+import MenuAssetPicker from "./MenuAssetPicker";
+import MenuNameVisibilityFields from "./MenuNameVisibilityFields";
+import MenuImageUploadField from "./MenuImageUploadField";
 import MenuPostingTab from "./MenuPostingTab";
 import MenuFolderTab from "./MenuFolderTab";
 import MenuCustomTab from "./MenuCustomTab";
@@ -42,6 +33,17 @@ type MenuFormData = {
 	subMenus: (string | SubMenu)[];
 	image: string;
 	iconImage: string;
+};
+
+const EMPTY_FORM: MenuFormData = {
+	name: "",
+	category: "",
+	url: "",
+	isPublic: true,
+	openInNewTab: false,
+	subMenus: [],
+	image: "",
+	iconImage: "",
 };
 
 interface MenuAddModalProps {
@@ -61,16 +63,7 @@ export default function MenuAddModal({
 }: MenuAddModalProps) {
 	const { uploadFile, state: uploadState } = useFileUpload();
 	const [activeTab, setActiveTab] = useState<MenuTab>("posting");
-	const [formData, setFormData] = useState<MenuFormData>({
-		name: "",
-		category: "",
-		url: "",
-		isPublic: true,
-		openInNewTab: false,
-		subMenus: [] as (string | SubMenu)[],
-		image: "",
-		iconImage: "",
-	});
+	const [formData, setFormData] = useState<MenuFormData>(EMPTY_FORM);
 	const [pendingSubMenuImages, setPendingSubMenuImages] = useState<
 		Record<string, PendingImage>
 	>({});
@@ -79,22 +72,9 @@ export default function MenuAddModal({
 		fields: ["image", "iconImage"] as const,
 	});
 	const {
-		state: {
-			activeField,
-			dialogThumbnail,
-			assets,
-			assetsLoading,
-			assetsError,
-			assetSearchQuery,
-			pendingImages,
-			imageSource,
-		},
+		state: { activeField, pendingImages, imageSource },
 		actions: {
-			setDialogThumbnail,
-			setAssetSearchQuery,
-			handleImageFileSelect,
 			closeImageDialog,
-			handleSelectAsset,
 			clearPendingImage,
 			clearAllPendingImages,
 			openImageDialog,
@@ -155,16 +135,7 @@ export default function MenuAddModal({
 			}
 
 			onAddMenu({ ...nextFormData, type: activeTab });
-			setFormData({
-				name: "",
-				category: "",
-				url: "",
-				isPublic: true,
-				openInNewTab: false,
-				subMenus: [],
-				image: "",
-				iconImage: "",
-			});
+			setFormData(EMPTY_FORM);
 			resetPendingImages();
 			setIsModalOpen(false);
 		} catch {
@@ -244,24 +215,11 @@ export default function MenuAddModal({
 
 	return (
 		<Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-			<AssetPickerDialog
-				isOpen={activeField !== null}
-				onOpenChange={(open) => {
-					if (!open) closeImageDialog();
-				}}
-				thumbnail={dialogThumbnail}
-				setThumbnail={setDialogThumbnail}
+			<MenuAssetPicker
+				picker={imagePicker}
 				onUpload={(url) => {
 					void handleImageDialogConfirm(url);
 				}}
-				onFileSelect={handleImageFileSelect}
-				assets={assets}
-				assetsLoading={assetsLoading}
-				assetsError={assetsError}
-				assetSearchQuery={assetSearchQuery}
-				onAssetSearchChange={setAssetSearchQuery}
-				onSelectAsset={handleSelectAsset}
-				className="gap-1.5"
 			/>
 			<DialogContent
 				className="max-w-md max-h-[85vh] bg-card-bg border-card rounded-card backdrop-blur-card flex flex-col"
@@ -302,47 +260,14 @@ export default function MenuAddModal({
 					</TabsList>
 
 					<div className="space-y-6 py-4 flex-1 overflow-y-auto menu-modal-scroll pr-1">
-						<div className="flex items-center gap-3">
-							<div className="flex-1 space-y-1.5">
-								<Label className="text-xs font-medium text-sub-text">
-									메뉴명
-								</Label>
-								<Input
-									value={formData.name}
-									onChange={(e) =>
-										setFormData({ ...formData, name: e.target.value })
-									}
-									placeholder="메뉴명을 입력하세요"
-									className="h-10 rounded-card border-card bg-card-bg focus:border-card-active transition-all"
-								/>
-							</div>
-							<div className="w-[120px] space-y-1.5">
-								<Label className="text-xs font-medium text-sub-text">
-									공개 여부
-								</Label>
-								<Select
-									value={formData.isPublic ? "public" : "private"}
-									onValueChange={(v) =>
-										setFormData({ ...formData, isPublic: v === "public" })
-									}
-								>
-									<SelectTrigger className="h-10 rounded-card border-card bg-card-bg">
-										<div className="flex items-center gap-2">
-											{formData.isPublic ? (
-												<Globe size={14} className="text-theme-primary" />
-											) : (
-												<Lock size={14} className="text-sub-text" />
-											)}
-											<SelectValue />
-										</div>
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="public">전체 공개</SelectItem>
-										<SelectItem value="private">비공개</SelectItem>
-									</SelectContent>
-								</Select>
-							</div>
-						</div>
+						<MenuNameVisibilityFields
+							name={formData.name}
+							onNameChange={(v) => setFormData({ ...formData, name: v })}
+							isPublic={formData.isPublic}
+							onPublicChange={(isPub) =>
+								setFormData({ ...formData, isPublic: isPub })
+							}
+						/>
 
 						<div className="space-y-3 pt-2 border-t border-card/40">
 							<TabsContent value="posting" className="mt-0">
@@ -371,9 +296,7 @@ export default function MenuAddModal({
 								<MenuCustomTab
 									url={formData.url}
 									openInNewTab={formData.openInNewTab}
-									onUrlChange={(v) =>
-										setFormData({ ...formData, url: v })
-									}
+									onUrlChange={(v) => setFormData({ ...formData, url: v })}
 									onOpenInNewTabChange={(v) =>
 										setFormData({ ...formData, openInNewTab: v })
 									}
@@ -384,115 +307,46 @@ export default function MenuAddModal({
 						{/* Image Settings */}
 						<div className="space-y-3 pt-2 border-t border-card/40">
 							<div className="grid grid-cols-2 gap-4 items-stretch">
-								{/* 왼쪽: 메뉴 이미지 */}
 								<div className="space-y-3 flex flex-col">
-									<Label className="text-xs font-medium text-sub-text">
-										메뉴 이미지
-									</Label>
-									<div className="p-3 bg-card-bg rounded-card border border-dashed border-card">
-										<p className="text-[10px] text-sub-text mb-2">
-											권장 사이즈: 220 * 80
-										</p>
-										{pendingImages.image?.previewUrl || formData.image ? (
-											<div className="relative aspect-[22/8] w-full max-w-[280px] min-h-[68px] rounded-card border border-card overflow-hidden bg-card-bg group">
-												<img
-													src={
-														pendingImages.image?.previewUrl || formData.image
-													}
-													alt="메뉴 이미지"
-													className="w-full h-full object-contain"
-												/>
-												<Button
-													variant="ghost"
-													size="icon"
-													onClick={() => {
-														if (pendingImages.image) {
-															clearPendingImage("image");
-														}
-														setFormData((prev) => ({ ...prev, image: "" }));
-													}}
-													className="absolute top-1 right-1 h-5 w-5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity p-0"
-													style={{ backgroundColor: "#111", color: "#fff" }}
-												>
-													<X size={12} />
-												</Button>
-											</div>
-										) : (
-											<button
-												type="button"
-												onClick={() =>
-													openImageDialog("image", formData.image || "")
-												}
-												className="flex flex-col items-center justify-center h-[68px] w-full cursor-pointer bg-card-bg hover:bg-card-bg/70 border border-dashed border-card rounded-card transition-all gap-1.5 group"
-											>
-												<ImagePlus
-													size={20}
-													className="text-sub-text group-hover:text-theme-primary transition-colors"
-												/>
-												<span className="text-[11px] font-medium text-sub-text group-hover:text-theme-primary transition-colors">
-													이미지 업로드
-												</span>
-											</button>
-										)}
-									</div>
+									<MenuImageUploadField
+										label="메뉴 이미지"
+										hint="권장 사이즈: 220 * 80"
+										uploadLabel="이미지 업로드"
+										variant="banner"
+										previewUrl={
+											pendingImages.image?.previewUrl || formData.image
+										}
+										onOpenPicker={() =>
+											openImageDialog("image", formData.image || "")
+										}
+										onClear={() => {
+											if (pendingImages.image) {
+												clearPendingImage("image");
+											}
+											setFormData((prev) => ({ ...prev, image: "" }));
+										}}
+									/>
 								</div>
 
-								{/* 오른쪽: 아이콘바 아이콘 이미지 */}
 								<div className="space-y-3 flex flex-col">
-									<Label className="text-xs font-medium text-sub-text">
-										아이콘바 아이콘 이미지
-									</Label>
-									<div className="p-3 bg-card-bg rounded-card border border-dashed border-card">
-										<p className="text-[10px] text-sub-text mb-2">
-											권장 사이즈: 64 * 64
-										</p>
-										{pendingImages.iconImage?.previewUrl ||
-										formData.iconImage ? (
-											<div className="relative aspect-square w-16 min-h-[68px] rounded-card border border-card overflow-hidden bg-card-bg group">
-												<img
-													src={
-														pendingImages.iconImage?.previewUrl ||
-														formData.iconImage
-													}
-													alt="아이콘 이미지"
-													className="w-full h-full object-contain"
-												/>
-												<Button
-													variant="ghost"
-													size="icon"
-													onClick={() => {
-														if (pendingImages.iconImage) {
-															clearPendingImage("iconImage");
-														}
-														setFormData((prev) => ({
-															...prev,
-															iconImage: "",
-														}));
-													}}
-													className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full opacity-0 group-hover:opacity-100 transition-opacity p-0"
-													style={{ backgroundColor: "#111", color: "#fff" }}
-												>
-													<X size={10} />
-												</Button>
-											</div>
-										) : (
-											<button
-												type="button"
-												onClick={() =>
-													openImageDialog("iconImage", formData.iconImage || "")
-												}
-												className="flex flex-col items-center justify-center h-[68px] w-full cursor-pointer bg-card-bg hover:bg-card-bg/70 border border-dashed border-card rounded-card transition-all gap-1.5 group"
-											>
-												<ImagePlus
-													size={20}
-													className="text-sub-text group-hover:text-theme-primary transition-colors"
-												/>
-												<span className="text-[11px] font-medium text-sub-text group-hover:text-theme-primary transition-colors">
-													아이콘 업로드
-												</span>
-											</button>
-										)}
-									</div>
+									<MenuImageUploadField
+										label="아이콘바 아이콘 이미지"
+										hint="권장 사이즈: 64 * 64"
+										uploadLabel="아이콘 업로드"
+										variant="icon"
+										previewUrl={
+											pendingImages.iconImage?.previewUrl || formData.iconImage
+										}
+										onOpenPicker={() =>
+											openImageDialog("iconImage", formData.iconImage || "")
+										}
+										onClear={() => {
+											if (pendingImages.iconImage) {
+												clearPendingImage("iconImage");
+											}
+											setFormData((prev) => ({ ...prev, iconImage: "" }));
+										}}
+									/>
 								</div>
 							</div>
 						</div>
