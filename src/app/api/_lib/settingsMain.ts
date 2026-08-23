@@ -5,12 +5,16 @@ type MusicPlayerItem = {
 	title: string;
 	videoId?: string;
 	playlistId?: string;
+	thumbnail?: string;
+	artist?: string;
 };
 
 type MusicPlayerSettings = {
 	enabled: boolean;
 	items: MusicPlayerItem[];
 	defaultItemId?: string;
+	/** 방문자 초기 볼륨(0~100). 방문자가 직접 조절하면 그 값이 우선 */
+	defaultVolume?: number;
 };
 
 type PhotoboardSettings = {
@@ -41,7 +45,7 @@ const validateUrl = (url: unknown): url is string => {
 	}
 };
 
-const extractYouTubeVideoId = (input: unknown): string | null => {
+export const extractYouTubeVideoId = (input: unknown): string | null => {
 	if (typeof input !== "string") return null;
 	const raw = input.trim();
 	if (!raw) return null;
@@ -73,7 +77,7 @@ const extractYouTubeVideoId = (input: unknown): string | null => {
 	}
 };
 
-const extractYouTubePlaylistId = (input: unknown): string | null => {
+export const extractYouTubePlaylistId = (input: unknown): string | null => {
 	if (typeof input !== "string") return null;
 	const raw = input.trim();
 	if (!raw) return null;
@@ -124,11 +128,21 @@ export const validateMusicPlayerSettings = (
 			(validateUrl(url) ? extractYouTubePlaylistId(url) : null);
 		if (!normalizedVideoId && !normalizedPlaylistId) return null;
 
+		const thumbnail = raw.thumbnail;
+		const artist = raw.artist;
+		const normalizedArtist =
+			typeof artist === "string" && artist.trim()
+				? artist.trim().slice(0, 100)
+				: null;
+
+		// 주의: Firestore는 undefined 값을 거부하므로 없는 필드는 키 자체를 뺀다
 		normalizedItems.push({
 			id: id.trim(),
 			title: title.trim(),
-			videoId: normalizedVideoId ?? undefined,
-			playlistId: normalizedPlaylistId ?? undefined,
+			...(normalizedVideoId ? { videoId: normalizedVideoId } : {}),
+			...(normalizedPlaylistId ? { playlistId: normalizedPlaylistId } : {}),
+			...(validateUrl(thumbnail) ? { thumbnail } : {}),
+			...(normalizedArtist ? { artist: normalizedArtist } : {}),
 		});
 	}
 
@@ -137,10 +151,16 @@ export const validateMusicPlayerSettings = (
 			? defaultItemId.trim() || undefined
 			: undefined;
 
+	const defaultVolumeRaw = Number(value.defaultVolume);
+	const defaultVolume = Number.isFinite(defaultVolumeRaw)
+		? clampNumber(Math.round(defaultVolumeRaw), 0, 100)
+		: null;
+
 	return {
 		enabled,
 		items: normalizedItems,
-		defaultItemId: normalizedDefaultItemId,
+		...(normalizedDefaultItemId ? { defaultItemId: normalizedDefaultItemId } : {}),
+		...(defaultVolume !== null ? { defaultVolume } : {}),
 	};
 };
 

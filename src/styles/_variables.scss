@@ -166,8 +166,10 @@
   ::before,
   ::after {
     box-sizing: border-box;
-    transition: none var(--tt-transition-duration-default)
-      var(--tt-transition-easing-default);
+    /* 주의: 여기에 transition: none을 전역으로 걸면 (:root * 가 Tailwind
+       transition-* 유틸리티와 동일 특이도 + 이후 로드라) 앱 전체의 Tailwind
+       트랜지션이 전부 무효화된다. tiptap 템플릿 유래 규칙이었으나 제거함 —
+       tt- 컴포넌트들은 각자 transition을 명시적으로 선언하므로 영향 없음. */
   }
 }
 

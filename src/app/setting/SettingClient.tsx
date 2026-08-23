@@ -33,6 +33,7 @@ const AccountSettingClient = dynamic(
 	() => import("./account/AccountSettingClient")
 );
 const AssetSettingClient = dynamic(() => import("./asset/AssetSettingClient"));
+const MusicSettingClient = dynamic(() => import("./music/MusicSettingClient"));
 const UserManagementSettingClient = dynamic(
 	() => import("./userManagement/UserManagementClient")
 );
@@ -158,6 +159,13 @@ export default function SettingClient({ initialSection }: SettingClientProps) {
 							title: "날씨&시계 설정",
 							desc: "메인 페이지 날씨&시계 위젯을 설정할 수 있습니다.",
 							Component: WeatherClockSettingClient,
+						},
+						{
+							id: "music",
+							label: "음악 플레이어 설정",
+							title: "음악 플레이어 설정",
+							desc: "유튜브 링크·재생목록으로 플로팅 음악 플레이어를 설정할 수 있습니다.",
+							Component: MusicSettingClient,
 						},
 					],
 				},
