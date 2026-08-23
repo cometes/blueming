@@ -11,6 +11,12 @@ import {
 	normalizeImageUrls,
 } from "@/app/api/_lib/memo";
 
+import {
+	actorFromAuth,
+	emitNotification,
+	getAdminRecipientUids,
+} from "@/app/api/_lib/notifications";
+
 export const runtime = "nodejs";
 
 export async function POST(
@@ -84,6 +90,21 @@ export async function POST(
 			updatedAt: admin.firestore.FieldValue.serverTimestamp(),
 			lastReplyAt: admin.firestore.FieldValue.serverTimestamp(),
 		});
+
+		try {
+			const memoTitle = typeof data.title === "string" ? data.title : "";
+			await emitNotification({
+				actor: actorFromAuth(auth.auth),
+				recipients: [...(await getAdminRecipientUids()), authorId],
+				type: "memoReply",
+				category: "comment",
+				message: `${authorName}님이 ${memoTitle ? `"${memoTitle}"에 ` : ""}답글을 남겼습니다`,
+				excerpt: content,
+				link: `/memo/${id}`,
+			});
+		} catch (notifyError) {
+			console.error("Error emitting memo reply notification:", notifyError);
+		}
 
 		const replySnapshot = await replyRef.get();
 		return jsonOk({ id: replySnapshot.id, ...replySnapshot.data() }, { status: 201 });

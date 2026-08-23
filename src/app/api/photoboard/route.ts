@@ -15,6 +15,12 @@ import {
 	toPhotoBoardAuthor,
 } from "@/app/api/_lib/photoboard";
 
+import {
+	actorFromAuth,
+	emitNotification,
+	getAdminRecipientUids,
+} from "@/app/api/_lib/notifications";
+
 export const runtime = "nodejs";
 
 const getPhotoboardWritePermission = async (
@@ -135,6 +141,20 @@ export async function POST(req: NextRequest) {
 		const data = snapshot.data() as Record<string, unknown> | undefined;
 		if (!data) {
 			return jsonError(500, "포토보드 저장에 실패했습니다.");
+		}
+
+		try {
+			await emitNotification({
+				actor: actorFromAuth(auth.auth),
+				recipients: await getAdminRecipientUids(),
+				type: "photoboard",
+				category: "activity",
+				message: `${authorName}님이 포토보드에 사진을 올렸습니다`,
+				excerpt: caption,
+				link: "/photoboard",
+			});
+		} catch (notifyError) {
+			console.error("Error emitting photoboard notification:", notifyError);
 		}
 
 		return jsonOk(

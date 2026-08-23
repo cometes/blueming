@@ -4,10 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { Menu, X, Bell } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useSettings } from "@/contexts/SettingsContext";
 import MenuAuthButton from "@/components/common/MenuAuthButton";
+import NotificationBell from "@/components/common/NotificationBell";
 import type { OpenFolders } from "@/features/settings/lib/widgetMenu";
 import type { MenuDesign, MenuItem } from "@/features/settings/types";
 
@@ -313,17 +314,7 @@ export default function WidgetMenuMobile({
 							</ul>
 
 							<div className={cn("flex gap-3", align.items)}>
-								<button
-									type="button"
-									className={cn(
-										"w-9 h-9 rounded-full flex items-center justify-center cursor-pointer",
-										"bg-card-bg/60 hover:bg-theme-primary/60 hover:animate-jingle",
-									)}
-									style={{ transition: "all 300ms ease-in-out" }}
-									aria-label="알림"
-								>
-									<Bell size={18} color={design?.fontColor || "#333"} />
-								</button>
+								<NotificationBell variant="mobile" iconColor={design?.fontColor || "#333"} />
 								<button
 									type="button"
 									className={cn(

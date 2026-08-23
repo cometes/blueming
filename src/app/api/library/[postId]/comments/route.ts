@@ -14,6 +14,13 @@ import {
 	hashPin,
 } from "@/app/api/_lib/libraryComments";
 import { buildRateLimitKey, checkRateLimit } from "@/app/api/_lib/rateLimit";
+import {
+	actorFromAuth,
+	anonActor,
+	emitNotification,
+	getAdminRecipientUids,
+	type NotificationActor,
+} from "@/app/api/_lib/notifications";
 
 export const runtime = "nodejs";
 
@@ -21,6 +28,37 @@ const getCommentCollection = (
 	db: FirebaseFirestore.Firestore,
 	postId: string
 ) => db.collection("library").doc(postId).collection("comments");
+
+// 새 댓글 알림: 관리자 + 글 소유자 (작성자 본인은 emit에서 자동 제외)
+const notifyNewComment = async (
+	db: FirebaseFirestore.Firestore,
+	postId: string,
+	actor: NotificationActor,
+	message: string,
+	isSecret: boolean
+) => {
+	const postSnapshot = await db.collection("library").doc(postId).get();
+	const postData = postSnapshot.exists ? postSnapshot.data() || {} : {};
+	const postAuthorId =
+		typeof postData.authorUid === "string"
+			? postData.authorUid
+			: typeof postData.authorId === "string"
+				? postData.authorId
+				: typeof postData.uid === "string"
+					? postData.uid
+					: null;
+	const title = typeof postData.title === "string" ? postData.title : "";
+	const admins = await getAdminRecipientUids();
+	await emitNotification({
+		actor,
+		recipients: [...admins, postAuthorId],
+		type: "comment",
+		category: "comment",
+		message: `${actor.name}님이 ${title ? `"${title}"에 ` : ""}댓글을 남겼습니다`,
+		excerpt: isSecret ? "비밀 댓글입니다." : message,
+		link: `/library/${postId}`,
+	});
+};
 
 export async function GET(
 	req: NextRequest,
@@ -176,6 +214,11 @@ export async function POST(
 
 			const docRef = await getCommentCollection(db, postId).add(entry);
 			await updateLibraryCommentCount(postId, 1);
+			try {
+				await notifyNewComment(db, postId, actorFromAuth(authContext), message, isSecret);
+			} catch (notifyError) {
+				console.error("Error emitting comment notification:", notifyError);
+			}
 			return jsonOk({ id: docRef.id }, { status: 201 });
 		}
 
@@ -202,6 +245,11 @@ export async function POST(
 
 		const docRef = await getCommentCollection(db, postId).add(entry);
 		await updateLibraryCommentCount(postId, 1);
+		try {
+			await notifyNewComment(db, postId, anonActor(displayName), message, isSecret);
+		} catch (notifyError) {
+			console.error("Error emitting comment notification:", notifyError);
+		}
 		return jsonOk({ id: docRef.id }, { status: 201 });
 	} catch (error) {
 		console.error("Error creating comment:", error);

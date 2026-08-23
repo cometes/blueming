@@ -15,7 +15,34 @@ import {
 	hashPin,
 } from "@/app/api/_lib/guestbook";
 
+import {
+	actorFromAuth,
+	anonActor,
+	emitNotification,
+	getAdminRecipientUids,
+	type NotificationActor,
+} from "@/app/api/_lib/notifications";
+
 export const runtime = "nodejs";
+
+// 새 방명록 알림: 관리자 수신 (작성자 본인은 emit에서 자동 제외)
+const notifyNewGuestbookEntry = async (
+	actor: NotificationActor,
+	message: string,
+	isSecret: boolean
+) => {
+	const admins = await getAdminRecipientUids();
+	await emitNotification({
+		actor,
+		recipients: admins,
+		type: "guestbook",
+		category: "comment",
+		message: `${actor.name}님이 방명록을 남겼습니다`,
+		excerpt: isSecret ? "비밀글입니다." : message,
+		link: "/guestbook",
+	});
+};
+
 
 export async function GET(req: NextRequest) {
 	try {
@@ -133,6 +160,11 @@ export async function POST(req: NextRequest) {
 			};
 
 			const docRef = await db.collection("guestbook").add(entry);
+			try {
+				await notifyNewGuestbookEntry(actorFromAuth(authContext), message, isSecret);
+			} catch (notifyError) {
+				console.error("Error emitting guestbook notification:", notifyError);
+			}
 			return jsonOk({ id: docRef.id }, { status: 201 });
 		}
 
@@ -157,6 +189,11 @@ export async function POST(req: NextRequest) {
 		};
 
 		const docRef = await db.collection("guestbook").add(entry);
+		try {
+			await notifyNewGuestbookEntry(anonActor(displayName), message, isSecret);
+		} catch (notifyError) {
+			console.error("Error emitting guestbook notification:", notifyError);
+		}
 		return jsonOk({ id: docRef.id }, { status: 201 });
 	} catch (error) {
 		console.error("Error creating guestbook entry:", error);

@@ -16,6 +16,12 @@ import {
 	toGalleryAuthor,
 } from "@/app/api/_lib/gallery";
 
+import {
+	actorFromAuth,
+	emitNotification,
+	getAdminRecipientUids,
+} from "@/app/api/_lib/notifications";
+
 export const runtime = "nodejs";
 
 const getGalleryWritePermission = async (
@@ -203,6 +209,20 @@ export async function POST(req: NextRequest) {
 		const snapshot = await docRef.get();
 		if (!snapshot.exists) {
 			return jsonError(500, "갤러리 저장에 실패했습니다.");
+		}
+
+		try {
+			await emitNotification({
+				actor: actorFromAuth(auth.auth),
+				recipients: await getAdminRecipientUids(),
+				type: "gallery",
+				category: "activity",
+				message: `${authorName}님이 갤러리에 이미지를 등록했습니다`,
+				excerpt: title,
+				link: "/gallery",
+			});
+		} catch (notifyError) {
+			console.error("Error emitting gallery notification:", notifyError);
 		}
 
 		const data = snapshot.data() as Record<string, unknown>;
