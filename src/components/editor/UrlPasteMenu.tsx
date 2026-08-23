@@ -106,11 +106,27 @@ export default function UrlPasteMenu({ editor, info, onClose }: UrlPasteMenuProp
 			onClose();
 			return;
 		}
+		// 외부 URL은 자체 Storage로 복사해 원본이 사라져도 깨지지 않게 한다.
+		// 가져오기 실패 시(차단 호스트·용량 초과 등)에는 원본 URL 그대로 임베드.
+		let src = info.url;
+		try {
+			const res = await fetch("/api/images/importFromUrl", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ url: info.url }),
+			});
+			if (res.ok) {
+				const data = (await res.json()) as { url?: string };
+				if (data?.url) src = data.url;
+			}
+		} catch {
+			// 원본 URL 폴백
+		}
 		const filename = filenameFromUrl(info.url);
 		replaceRange({
 			type: "image",
 			attrs: {
-				src: info.url,
+				src,
 				alt: filename,
 				title: filename,
 				width: Math.min(size.width ?? MAX_INSERT_WIDTH, MAX_INSERT_WIDTH),
@@ -161,7 +177,7 @@ export default function UrlPasteMenu({ editor, info, onClose }: UrlPasteMenuProp
 					className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs text-main-text hover:bg-theme-primary/10 hover:text-theme-primary disabled:opacity-50"
 				>
 					<ImagePlus size={13} />
-					{isEmbedding ? "확인 중..." : "이미지로 임베드"}
+					{isEmbedding ? "가져오는 중..." : "이미지로 임베드"}
 				</button>
 			)}
 		</div>
