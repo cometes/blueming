@@ -6,6 +6,7 @@ import {
 	COLLECTION_NAME,
 	DEFAULT_LIMIT,
 	TIMELINE_CAP,
+	attachPreviewReplies,
 	encodeThreadCursor,
 	toThreadItem,
 } from "@/app/api/_lib/thread";
@@ -27,9 +28,12 @@ export async function fetchThreadFeedDirect(
 			.get();
 
 		const docs = snapshot.docs.slice(0, DEFAULT_LIMIT);
-		const items = docs.map((doc) =>
-			toThreadItem(doc, { viewerIsMember: Boolean(authContext) }),
-		) as unknown as ThreadPost[];
+		const viewerIsMember = Boolean(authContext);
+		const items = (await attachPreviewReplies(
+			db,
+			docs.map((doc) => toThreadItem(doc, { viewerIsMember })),
+			{ viewerIsMember },
+		)) as unknown as ThreadPost[];
 		const last = docs[docs.length - 1];
 		const nextCursor =
 			snapshot.docs.length > DEFAULT_LIMIT && last

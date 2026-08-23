@@ -82,6 +82,12 @@ interface ThreadPostCardProps {
 	onQuote?: (post: ThreadPost) => void;
 	/** 상세 페이지에서 현재 보고 있는 글이면 강조 + 카드 클릭 이동 비활성 */
 	isFocused?: boolean;
+	/** 타래 연결선 — 카드 상단에서 아바타까지 (그룹 내 이어지는 글) */
+	connectTop?: boolean;
+	/** 타래 연결선 — 아바타 아래에서 카드 하단까지 (다음 글로 이어짐) */
+	connectBottom?: boolean;
+	/** 그룹 렌더링 시 개별 카드 하단 보더 제거 (그룹 래퍼가 보더 담당) */
+	noBorder?: boolean;
 }
 
 /** 트위터식 피드 카드 — 카드 클릭 시 스레드 상세로 이동, 내부 요소는 stopPropagation */
@@ -91,6 +97,9 @@ export default function ThreadPostCard({
 	onOpenImage,
 	onQuote,
 	isFocused = false,
+	connectTop = false,
+	connectBottom = false,
+	noBorder = false,
 }: ThreadPostCardProps) {
 	const router = useRouter();
 	const threadLink = `/thread/${post.rootId ?? post.id}`;
@@ -104,12 +113,21 @@ export default function ThreadPostCard({
 		<article
 			onClick={handleCardClick}
 			className={cn(
-				"border-b border-card-border px-4 py-3.5 transition-colors",
+				"relative px-4 py-3.5 transition-colors",
+				!noBorder && "border-b border-card-border",
 				!isFocused && "cursor-pointer hover:bg-card-bg/40",
 				isFocused && "bg-card-bg/30",
 			)}
 		>
-			{post.replyToAuthorName && (
+			{/* 타래 연결선 — 아바타 중심(left 16px 패딩 + 18px = 34px, 2px 선은 33px) */}
+			{connectTop && (
+				<span className="absolute left-[33px] top-0 h-3.5 w-0.5 bg-card-border" />
+			)}
+			{connectBottom && (
+				<span className="absolute bottom-0 left-[33px] top-[50px] w-0.5 bg-card-border" />
+			)}
+
+			{post.replyToAuthorName && !connectTop && (
 				<p className="mb-1 flex items-center gap-1 text-xs text-sub-text">
 					<CornerUpLeft size={12} />
 					{post.replyToAuthorName}님의 글에 답글

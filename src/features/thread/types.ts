@@ -38,6 +38,10 @@ export interface ThreadPost {
 	locked: boolean;
 	createdAt: string | null;
 	updatedAt: string | null;
+	/** 홈 피드 타래 미리보기 — 답글 ≤2개면 전부, ≥3개면 마지막 1개 */
+	previewReplies?: ThreadPost[];
+	/** 미리보기에서 생략된 답글 수 */
+	hiddenReplyCount?: number;
 }
 
 export type ThreadTab = "all" | "roots" | "mine" | "tag";

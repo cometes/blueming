@@ -98,6 +98,10 @@ export interface ThreadItemView {
 	updatedAt: string | null;
 	/** 커서 계산용 (직렬화 응답에는 포함하되 UI 미사용) */
 	createdAtMillis: number;
+	/** 피드 타래 미리보기 — 답글 ≤2개면 전부, ≥3개면 마지막 1개 (attachPreviewReplies) */
+	previewReplies?: ThreadItemView[];
+	/** 미리보기에서 생략된 답글 수 ("더 많은 답글 보기" 표시 조건) */
+	hiddenReplyCount?: number;
 }
 
 /**
@@ -146,6 +150,60 @@ export const toThreadItem = (
 		updatedAt: formatTimestamp(data.updatedAt),
 		createdAtMillis: createdAtRaw?.toMillis?.() ?? 0,
 	};
+};
+
+/**
+ * 홈(루트) 피드용 타래 미리보기 부착 — 트위터 타임라인 방식.
+ * 루트+답글 총 3개까지는 전부 연결 표시, 그 이상은 루트+마지막 답글만 남기고
+ * 사이를 "더 많은 답글 보기"로 접는다. 페이지의 루트들을 rootId `in` 쿼리
+ * (30개 청크)로 한 번에 조회 — rootId ASC + createdAt ASC 복합 인덱스 사용.
+ */
+export const attachPreviewReplies = async (
+	db: FirebaseFirestore.Firestore,
+	items: ThreadItemView[],
+	{ viewerIsMember }: { viewerIsMember: boolean },
+): Promise<ThreadItemView[]> => {
+	const targetIds = items
+		.filter((item) => !item.parentId && item.replyCount > 0)
+		.map((item) => item.id);
+	if (targetIds.length === 0) return items;
+
+	const chunks: string[][] = [];
+	for (let i = 0; i < targetIds.length; i += 30) {
+		chunks.push(targetIds.slice(i, i + 30));
+	}
+	const snapshots = await Promise.all(
+		chunks.map((ids) =>
+			db
+				.collection(COLLECTION_NAME)
+				.where("rootId", "in", ids)
+				.orderBy("createdAt", "asc")
+				.get(),
+		),
+	);
+
+	const repliesByRoot = new Map<string, ThreadItemView[]>();
+	for (const snapshot of snapshots) {
+		for (const doc of snapshot.docs) {
+			const rootId = (doc.get("rootId") as string) || "";
+			if (!rootId) continue;
+			const list = repliesByRoot.get(rootId) ?? [];
+			list.push(toThreadItem(doc, { viewerIsMember }));
+			repliesByRoot.set(rootId, list);
+		}
+	}
+
+	return items.map((item) => {
+		const replies = repliesByRoot.get(item.id);
+		if (!replies || replies.length === 0) return item;
+		const preview =
+			replies.length <= 2 ? replies : [replies[replies.length - 1]];
+		return {
+			...item,
+			previewReplies: preview,
+			hiddenReplyCount: replies.length - preview.length,
+		};
+	});
 };
 
 // ── 설정 ────────────────────────────────────────────────────────────────────

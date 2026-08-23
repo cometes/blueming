@@ -7,7 +7,7 @@ import { useAuthStore } from "@/store/auth/store";
 import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import { useThreadFeed } from "@/features/thread/hooks/useThreadFeed";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
-import ThreadPostCard from "@/features/thread/components/ThreadPostCard";
+import ThreadConversation from "@/features/thread/components/ThreadConversation";
 import ThreadComposer from "@/features/thread/components/ThreadComposer";
 import ThreadTabs from "@/features/thread/components/ThreadTabs";
 import ImageSlideModal from "@/components/modal/ImageSlideModal";
@@ -140,7 +140,7 @@ export default function ThreadClient({ initialData }: ThreadClientProps) {
 					</div>
 				) : (
 					items.map((post) => (
-						<ThreadPostCard
+						<ThreadConversation
 							key={post.id}
 							post={post}
 							onSelectTag={selectTag}

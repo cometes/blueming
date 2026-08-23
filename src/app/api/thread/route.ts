@@ -9,6 +9,7 @@ import {
 	COLLECTION_NAME,
 	DEFAULT_LIMIT,
 	MAX_LIMIT,
+	attachPreviewReplies,
 	decodeThreadCursor,
 	encodeThreadCursor,
 	getThreadsWritePermission,
@@ -84,7 +85,11 @@ export async function GET(req: NextRequest) {
 
 		const snapshot = await query.limit(limit + 1).get();
 		const docs = snapshot.docs.slice(0, limit);
-		const items = docs.map((doc) => toThreadItem(doc, { viewerIsMember }));
+		let items = docs.map((doc) => toThreadItem(doc, { viewerIsMember }));
+		if (tab === "roots") {
+			// 홈 탭은 트위터식 타래 미리보기 부착
+			items = await attachPreviewReplies(db, items, { viewerIsMember });
+		}
 		const last = docs[docs.length - 1];
 		const nextCursor =
 			snapshot.docs.length > limit && last
