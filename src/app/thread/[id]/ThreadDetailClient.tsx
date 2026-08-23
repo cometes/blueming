@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Lock, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -140,11 +139,24 @@ export default function ThreadDetailClient({
 		[user?.uid, isAdmin],
 	);
 
-	const renderPost = (post: ThreadPost, isFocused: boolean) => (
+	const renderPost = (
+		post: ThreadPost,
+		options: {
+			isFocused?: boolean;
+			connectTop?: boolean;
+			connectBottom?: boolean;
+			noBorder?: boolean;
+			hideReplyLabel?: boolean;
+		} = {},
+	) => (
 		<div key={post.id} id={`thread-post-${post.id}`} className="relative">
 			<ThreadPostCard
 				post={post}
-				isFocused={isFocused}
+				isFocused={options.isFocused}
+				connectTop={options.connectTop}
+				connectBottom={options.connectBottom}
+				noBorder={options.noBorder}
+				hideReplyLabel={options.hideReplyLabel}
 				onOpenImage={(urls, index) => setImageModal({ urls, index })}
 				onSelectTag={() => router.push("/thread")}
 			/>
@@ -180,17 +192,22 @@ export default function ThreadDetailClient({
 
 	return (
 		<div className="w-full max-w-xl mx-auto mt-[90px] mb-[40px]">
-			<Button
-				variant="default"
-				size="sm"
-				onClick={() => router.push("/thread")}
-				className="mb-4 gap-2"
-			>
-				<ArrowLeft size={16} />
-				스레드 목록
-			</Button>
-
 			<section className="bg-card rounded-card border-card backdrop-blur-card overflow-hidden">
+				{/* 트위터식 상단 헤더 — 뒤로가기 + 타이틀 */}
+				<header className="flex items-center gap-4 border-b border-card-border px-4 py-2.5">
+					<button
+						type="button"
+						onClick={() => router.push("/thread")}
+						className="flex h-8 w-8 items-center justify-center rounded-full text-main-text hover:bg-card-bg/60"
+						aria-label="스레드 목록으로"
+					>
+						<ArrowLeft size={17} />
+					</button>
+					<h1 className="text-[16px] font-semibold font-title text-main-text">
+						스레드
+					</h1>
+				</header>
+
 				{notFound ? (
 					<div className="py-16 text-center text-sm text-sub-text">
 						삭제되었거나 존재하지 않는 글입니다.
@@ -202,8 +219,7 @@ export default function ThreadDetailClient({
 					</div>
 				) : root ? (
 					<>
-						{renderPost(root, true)}
-						{replies.map((reply) => renderPost(reply, false))}
+						{renderPost(root, { isFocused: true })}
 						{canWrite && (
 							<ThreadComposer
 								parentId={root.id}
@@ -211,6 +227,14 @@ export default function ThreadDetailClient({
 								placeholder="답글을 남겨보세요..."
 								onPosted={handleReplyPosted}
 							/>
+						)}
+						{replies.map((reply, index) =>
+							renderPost(reply, {
+								connectTop: index > 0,
+								connectBottom: index < replies.length - 1,
+								noBorder: true,
+								hideReplyLabel: true,
+							}),
 						)}
 					</>
 				) : null}

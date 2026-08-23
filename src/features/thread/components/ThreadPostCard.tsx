@@ -88,6 +88,8 @@ interface ThreadPostCardProps {
 	connectBottom?: boolean;
 	/** 그룹 렌더링 시 개별 카드 하단 보더 제거 (그룹 래퍼가 보더 담당) */
 	noBorder?: boolean;
+	/** "OO님의 글에 답글" 라벨 숨김 (상세 타임라인 — 연결선으로 문맥 표현) */
+	hideReplyLabel?: boolean;
 }
 
 /** 트위터식 피드 카드 — 카드 클릭 시 스레드 상세로 이동, 내부 요소는 stopPropagation */
@@ -100,6 +102,7 @@ export default function ThreadPostCard({
 	connectTop = false,
 	connectBottom = false,
 	noBorder = false,
+	hideReplyLabel = false,
 }: ThreadPostCardProps) {
 	const router = useRouter();
 	const threadLink = `/thread/${post.rootId ?? post.id}`;
@@ -127,7 +130,7 @@ export default function ThreadPostCard({
 				<span className="absolute bottom-0 left-[33px] top-[50px] w-0.5 bg-card-border" />
 			)}
 
-			{post.replyToAuthorName && !connectTop && (
+			{post.replyToAuthorName && !connectTop && !hideReplyLabel && (
 				<p className="mb-1 flex items-center gap-1 text-xs text-sub-text">
 					<CornerUpLeft size={12} />
 					{post.replyToAuthorName}님의 글에 답글
@@ -187,7 +190,7 @@ export default function ThreadPostCard({
 							<div
 								className={cn(
 									"mt-0.5 whitespace-pre-wrap break-words text-main-text leading-relaxed",
-									isFocused ? "text-[16px]" : "text-sm",
+									isFocused ? "text-[17px]" : "text-sm",
 								)}
 							>
 								{renderContentWithMentions(post.content ?? "", post.mentions)}
@@ -233,7 +236,14 @@ export default function ThreadPostCard({
 					)}
 
 					{/* 액션 바 — 답글 수 + 인용 (onQuote 전달 시 버튼, 아니면 수 표시만) */}
-					<div className="mt-1.5 -mb-1 flex items-center gap-12 text-sub-text">
+					<div
+						className={cn(
+							"-mb-1 flex items-center gap-12 text-sub-text",
+							isFocused
+								? "mt-3 border-t border-card-border pt-2.5"
+								: "mt-1.5",
+						)}
+					>
 						<span className="-ml-1.5 flex items-center text-xs">
 							<span className="flex h-7 w-7 items-center justify-center rounded-full">
 								<MessageCircle size={15} />
