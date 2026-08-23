@@ -14,6 +14,7 @@ import {
 import ImageSlideModal from "@/components/modal/ImageSlideModal";
 import { useAuthStore } from "@/store/auth/store";
 import { useAdmin } from "@/features/admin/hooks/useAdmin";
+import { useSettings } from "@/contexts/SettingsContext";
 import ThreadPostCard from "@/features/thread/components/ThreadPostCard";
 import ThreadComposer from "@/features/thread/components/ThreadComposer";
 import {
@@ -39,7 +40,17 @@ export default function ThreadDetailClient({
 	const router = useRouter();
 	const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 	const user = useAuthStore((state) => state.user);
-	const { isAdmin } = useAdmin();
+	const { isAdmin, isManagerOrAdmin } = useAdmin();
+	const { main } = useSettings();
+
+	// 클라 표시용 작성 가능 여부 (서버가 최종 검증)
+	const writePermission = main?.threads?.writePermission ?? "member";
+	const canWrite =
+		writePermission === "admin"
+			? isAdmin
+			: writePermission === "manager"
+				? isManagerOrAdmin
+				: isAuthenticated;
 
 	const [requiresMemberAccess, setRequiresMemberAccess] = useState(
 		initialData?.requiresMemberAccess ?? false,
@@ -193,7 +204,7 @@ export default function ThreadDetailClient({
 					<>
 						{renderPost(root, true)}
 						{replies.map((reply) => renderPost(reply, false))}
-						{isAuthenticated && (
+						{canWrite && (
 							<ThreadComposer
 								parentId={root.id}
 								parentVisibility={root.visibility}

@@ -11,6 +11,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { renderContentWithMentions } from "@/features/mention/lib/renderMentions";
+import ThreadQuoteCard from "@/features/thread/components/ThreadQuoteCard";
 import type { ThreadPost } from "@/features/thread/types";
 
 /** 유튜브 lazy 임베드 — 클릭 전엔 썸네일만 */
@@ -76,6 +77,8 @@ interface ThreadPostCardProps {
 	post: ThreadPost;
 	onSelectTag?: (tag: string) => void;
 	onOpenImage?: (urls: string[], index: number) => void;
+	/** 인용 버튼 노출 + 클릭 콜백 (피드에서만 전달) */
+	onQuote?: (post: ThreadPost) => void;
 	/** 상세 페이지에서 현재 보고 있는 글이면 강조 + 카드 클릭 이동 비활성 */
 	isFocused?: boolean;
 }
@@ -85,6 +88,7 @@ export default function ThreadPostCard({
 	post,
 	onSelectTag,
 	onOpenImage,
+	onQuote,
 	isFocused = false,
 }: ThreadPostCardProps) {
 	const router = useRouter();
@@ -168,6 +172,8 @@ export default function ThreadPostCard({
 								</div>
 							)}
 
+							{post.quote && <ThreadQuoteCard quote={post.quote} />}
+
 							{post.tags.length > 0 && (
 								<div className="mt-2 flex flex-wrap gap-1.5">
 									{post.tags.map((tag) => (
@@ -188,17 +194,32 @@ export default function ThreadPostCard({
 						</>
 					)}
 
-					{/* 액션 바 — 1차: 답글 수 + 인용 수(표시만, 인용 플로우는 PR3) */}
+					{/* 액션 바 — 답글 수 + 인용 (onQuote 전달 시 버튼, 아니면 수 표시만) */}
 					<div className="mt-2 flex items-center gap-5 text-sub-text">
 						<span className="flex items-center gap-1 text-xs">
 							<MessageCircle size={14} />
 							{post.replyCount > 0 ? post.replyCount : ""}
 						</span>
-						{post.quoteCount > 0 && (
-							<span className="flex items-center gap-1 text-xs">
+						{onQuote && !post.locked ? (
+							<button
+								type="button"
+								onClick={(e) => {
+									e.stopPropagation();
+									onQuote(post);
+								}}
+								className="flex items-center gap-1 text-xs hover:text-theme-primary"
+								aria-label="인용하기"
+							>
 								<Quote size={13} />
-								{post.quoteCount}
-							</span>
+								{post.quoteCount > 0 ? post.quoteCount : ""}
+							</button>
+						) : (
+							post.quoteCount > 0 && (
+								<span className="flex items-center gap-1 text-xs">
+									<Quote size={13} />
+									{post.quoteCount}
+								</span>
+							)
 						)}
 					</div>
 				</div>

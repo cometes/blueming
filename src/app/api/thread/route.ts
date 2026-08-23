@@ -164,6 +164,11 @@ export async function POST(req: NextRequest) {
 		let visibility = normalizeVisibility(body?.visibility);
 		const parentId =
 			typeof body?.parentId === "string" && body.parentId ? body.parentId : null;
+		const quoteId =
+			typeof body?.quoteId === "string" && body.quoteId ? body.quoteId : null;
+		if (parentId && quoteId) {
+			return jsonError(400, "답글과 인용은 동시에 지정할 수 없습니다.");
+		}
 		const mentions = await validateMentions(body?.mentions, content);
 		const youtubeVideoId = extractFirstYouTubeVideoIdFromContent(content);
 
@@ -194,6 +199,45 @@ export async function POST(req: NextRequest) {
 			rootAuthorId = (parent.authorId as string) || null;
 		}
 
+		// 인용: 원본 스냅샷 생성 (원본 삭제 후에도 카드 표시용)
+		let quote: {
+			id: string;
+			authorId: string | null;
+			authorName: string;
+			excerpt: string;
+			imageUrl: string | null;
+			visibility: "public" | "member";
+		} | null = null;
+		let quoteAuthorId: string | null = null;
+		if (quoteId) {
+			const quotedSnapshot = await db
+				.collection(COLLECTION_NAME)
+				.doc(quoteId)
+				.get();
+			if (!quotedSnapshot.exists) {
+				return jsonError(404, "인용할 글을 찾을 수 없습니다.");
+			}
+			const quoted = quotedSnapshot.data() || {};
+			const quotedVisibility = normalizeVisibility(quoted.visibility);
+			quote = {
+				id: quoteId,
+				authorId: (quoted.authorId as string) ?? null,
+				authorName:
+					((quoted.author as { name?: string } | undefined)?.name ?? "") ||
+					"사용자",
+				excerpt: String(quoted.content ?? "").slice(0, 80),
+				imageUrl: Array.isArray(quoted.imageUrls)
+					? ((quoted.imageUrls as string[])[0] ?? null)
+					: null,
+				visibility: quotedVisibility,
+			};
+			quoteAuthorId = quote.authorId;
+			// member 글 인용 시 새 글도 member 강제 (발췌 유출 방지)
+			if (quotedVisibility === "member") {
+				visibility = "member";
+			}
+		}
+
 		const payload = {
 			content,
 			authorId: auth.auth.uid,
@@ -208,8 +252,8 @@ export async function POST(req: NextRequest) {
 			parentId,
 			rootId,
 			replyToAuthorName,
-			quoteId: null,
-			quote: null,
+			quoteId,
+			quote,
 			visibility,
 			tags,
 			replyCount: 0,
@@ -219,7 +263,16 @@ export async function POST(req: NextRequest) {
 		};
 
 		const newRef = db.collection(COLLECTION_NAME).doc();
-		if (rootId) {
+		if (quoteId) {
+			// 생성 + 원본 quoteCount 증가를 한 트랜잭션으로
+			const quotedRef = db.collection(COLLECTION_NAME).doc(quoteId);
+			await db.runTransaction(async (tx) => {
+				tx.set(newRef, payload);
+				tx.update(quotedRef, {
+					quoteCount: admin.firestore.FieldValue.increment(1),
+				});
+			});
+		} else if (rootId) {
 			// 생성 + 루트 replyCount 증가를 한 트랜잭션으로 (카운터 정합)
 			const rootRef = db.collection(COLLECTION_NAME).doc(rootId);
 			await db.runTransaction(async (tx) => {
@@ -254,6 +307,19 @@ export async function POST(req: NextRequest) {
 					message: `${actor.name}님이 스레드에 답글을 남겼습니다`,
 					excerpt: content,
 					link,
+				});
+			} else if (quoteId) {
+				await emitNotification({
+					actor,
+					recipients: [
+						...(await getAdminRecipientUids()),
+						quoteAuthorId,
+					].filter((uid) => !uid || !mentioned.includes(uid)),
+					type: "threadQuote",
+					category: "activity",
+					message: `${actor.name}님이 회원님의 글을 인용했습니다`,
+					excerpt: visibility === "member" ? "멤버 공개 게시글입니다." : content,
+					link: `/thread/${newRef.id}`,
 				});
 			} else {
 				await emitNotification({

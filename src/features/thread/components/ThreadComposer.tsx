@@ -22,6 +22,7 @@ import {
 import type { ThreadPost, ThreadVisibility } from "@/features/thread/types";
 import { extractFirstYouTubeVideoIdFromContent } from "@/shared/lib/youtube";
 import { YouTubeEmbed } from "@/features/thread/components/ThreadPostCard";
+import ThreadQuoteCard from "@/features/thread/components/ThreadQuoteCard";
 
 const MAX_CONTENT = 500;
 const MAX_IMAGES = 4;
@@ -30,6 +31,9 @@ interface ThreadComposerProps {
 	/** 답글 모드: 대상 글 id (공개범위는 루트값 고정) */
 	parentId?: string;
 	parentVisibility?: ThreadVisibility;
+	/** 인용 모드: 인용할 대상 글 (parentId와 배타) */
+	quoteTarget?: ThreadPost | null;
+	onClearQuote?: () => void;
 	placeholder?: string;
 	onPosted: (post: ThreadPost) => void;
 }
@@ -38,6 +42,8 @@ interface ThreadComposerProps {
 export default function ThreadComposer({
 	parentId,
 	parentVisibility,
+	quoteTarget = null,
+	onClearQuote,
 	placeholder = "무슨 일이 일어나고 있나요?",
 	onPosted,
 }: ThreadComposerProps) {
@@ -50,9 +56,13 @@ export default function ThreadComposer({
 	const { imageDialog, assets } = imageManager;
 
 	const isReply = Boolean(parentId);
+	// member 글 인용 시 새 글도 member 강제 (서버에서도 강제하지만 UI에 미리 반영)
+	const quoteForcesMember = quoteTarget?.visibility === "member";
 	const effectiveVisibility = isReply
 		? (parentVisibility ?? "public")
-		: visibility;
+		: quoteForcesMember
+			? "member"
+			: visibility;
 	const remaining = MAX_CONTENT - content.length;
 	const canSubmit = content.trim().length > 0 && remaining >= 0 && !isSubmitting;
 	// 본문에서 태그(#단어)와 유튜브 미리보기 파생
@@ -77,9 +87,11 @@ export default function ThreadComposer({
 				tags: tags.length > 0 ? tags : undefined,
 				visibility: effectiveVisibility,
 				parentId,
+				quoteId: quoteTarget?.id,
 				mentions: mentions.length > 0 ? mentions : undefined,
 			});
 			onPosted(post);
+			onClearQuote?.();
 			setContent("");
 			setMentions([]);
 			revokeCommentImageUrls(images);
@@ -100,8 +112,10 @@ export default function ThreadComposer({
 		images,
 		isReply,
 		mentions,
+		onClearQuote,
 		onPosted,
 		parentId,
+		quoteTarget,
 		tags,
 	]);
 
@@ -123,6 +137,30 @@ export default function ThreadComposer({
 					}
 				}}
 			/>
+
+			{quoteTarget && (
+				<div className="relative">
+					<ThreadQuoteCard
+						quote={{
+							id: quoteTarget.id,
+							authorId: quoteTarget.authorId,
+							authorName: quoteTarget.author?.name || "사용자",
+							excerpt: (quoteTarget.content ?? "").slice(0, 80),
+							imageUrl: quoteTarget.imageUrls[0] ?? null,
+							visibility: quoteTarget.visibility,
+						}}
+						interactive={false}
+					/>
+					<button
+						type="button"
+						onClick={onClearQuote}
+						className="absolute right-1.5 top-3.5 rounded-full bg-black/50 p-0.5 text-white"
+						aria-label="인용 해제"
+					>
+						<X size={11} />
+					</button>
+				</div>
+			)}
 
 			{images.length > 0 && (
 				<div className="mt-2 flex flex-wrap gap-1.5">
@@ -169,7 +207,7 @@ export default function ThreadComposer({
 						<ImagePlus size={14} />
 					</button>
 
-					{!isReply && (
+					{!isReply && !quoteForcesMember && (
 						<button
 							type="button"
 							onClick={() =>
@@ -192,6 +230,11 @@ export default function ThreadComposer({
 					{isReply && effectiveVisibility === "member" && (
 						<span className="flex items-center gap-1 text-[11px] text-sub-text">
 							<Lock size={11} /> 멤버 공개 스레드
+						</span>
+					)}
+					{!isReply && quoteForcesMember && (
+						<span className="flex items-center gap-1 text-[11px] text-sub-text">
+							<Lock size={11} /> 멤버 공개 글 인용 — 멤버 공개로 게시됩니다
 						</span>
 					)}
 				</div>

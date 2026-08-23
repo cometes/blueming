@@ -13,8 +13,9 @@ import { Lock, Save, Shield, User } from "lucide-react";
 interface PhotoboardSettingsDialogProps {
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
-	tempPostsPerRow: number;
-	setTempPostsPerRow: (count: number) => void;
+	/** 미지정 시 "카드뷰 칼럼 수" 섹션 숨김 (스레드 페이지 등) */
+	tempPostsPerRow?: number;
+	setTempPostsPerRow?: (count: number) => void;
 	tempWritePermission: "admin" | "manager" | "member";
 	setTempWritePermission: (permission: "admin" | "manager" | "member") => void;
 	showManagerOption?: boolean;
@@ -64,24 +65,26 @@ export default function PhotoboardSettingsDialog({
 					</DialogTitle>
 					<div className="px-5 py-4 text-main-text">
 						<div className="flex flex-col gap-4">
-							<div>
-								<p className="font-title">카드뷰 칼럼 수</p>
-								<div className="flex gap-1 mt-2">
-									{[2, 3, 4, 5].map((col) => (
-										<Button
-											key={col}
-											variant={tempPostsPerRow === col ? "default" : "ghost"}
-											onClick={() => setTempPostsPerRow(col)}
-											className="flex-1 px-3"
-										>
-											{col}
-										</Button>
-									))}
+							{tempPostsPerRow !== undefined && setTempPostsPerRow ? (
+								<div>
+									<p className="font-title">카드뷰 칼럼 수</p>
+									<div className="flex gap-1 mt-2">
+										{[2, 3, 4, 5].map((col) => (
+											<Button
+												key={col}
+												variant={tempPostsPerRow === col ? "default" : "ghost"}
+												onClick={() => setTempPostsPerRow(col)}
+												className="flex-1 px-3"
+											>
+												{col}
+											</Button>
+										))}
+									</div>
+									<p className="text-xs text-sub-text mt-1.5">
+										모바일/태블릿은 자동으로 조정됩니다
+									</p>
 								</div>
-								<p className="text-xs text-sub-text mt-1.5">
-									모바일/태블릿은 자동으로 조정됩니다
-								</p>
-							</div>
+							) : null}
 							<div>
 								<p className="font-title">게시글 작성 권한</p>
 								<div className="flex gap-2 mt-2">
