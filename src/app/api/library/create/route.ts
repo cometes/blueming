@@ -13,6 +13,12 @@ import {
 	normalizeStringArray,
 } from "@/app/api/_lib/library";
 
+import {
+	actorFromAuth,
+	emitNotification,
+	getAdminRecipientUids,
+} from "@/app/api/_lib/notifications";
+
 export const runtime = "nodejs";
 
 const getLibraryWritePermission = async (
@@ -194,6 +200,20 @@ export async function POST(req: NextRequest) {
 				}
 			}
 			revalidateTag("library-tags");
+		}
+
+		try {
+			await emitNotification({
+				actor: actorFromAuth(auth.auth),
+				recipients: await getAdminRecipientUids(),
+				type: "libraryPost",
+				category: "activity",
+				message: `${auth.auth.displayName || "사용자"}님이 새 글을 발행했습니다`,
+				excerpt: normalizedTitle,
+				link: `/library/${uniqueSlug || postId}`,
+			});
+		} catch (notifyError) {
+			console.error("Error emitting library post notification:", notifyError);
 		}
 
 		return jsonOk({ postId, createdAt: convertedCreatedAt, slug: uniqueSlug }, { status: 201 });

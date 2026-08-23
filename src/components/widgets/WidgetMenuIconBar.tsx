@@ -9,11 +9,11 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import MenuAuthButton from "@/components/common/MenuAuthButton";
+import NotificationBell from "@/components/common/NotificationBell";
 import { cn } from "@/shared/lib/utils";
 import type { OpenFolders } from "@/features/settings/lib/widgetMenu";
 import type { MenuDesign, MenuItem } from "@/features/settings/types";
 import {
-	Bell,
 	Square,
 	Book,
 	Archive,
@@ -176,13 +176,7 @@ export default function WidgetMenuIconBar({
 					</ul>
 
 					<div className="flex flex-col items-center gap-3">
-						<button
-							type="button"
-							className="w-10 h-10 rounded-full bg-card-bg/60 border border-card flex items-center justify-center opacity-80"
-							aria-label="알림"
-						>
-							<Bell size={18} className="text-sub-text" />
-						</button>
+						<NotificationBell variant="iconbar" />
 						<button
 							type="button"
 							className="w-10 h-10 rounded-full bg-card-bg/60 border border-card flex items-center justify-center opacity-80"

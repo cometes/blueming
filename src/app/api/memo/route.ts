@@ -18,6 +18,12 @@ import {
 	matchesQuery,
 } from "@/app/api/_lib/memo";
 
+import {
+	actorFromAuth,
+	emitNotification,
+	getAdminRecipientUids,
+} from "@/app/api/_lib/notifications";
+
 export const runtime = "nodejs";
 
 const getMemoWritePermission = async (
@@ -149,6 +155,20 @@ export async function POST(req: NextRequest) {
 		const snapshot = await docRef.get();
 		if (!snapshot.exists) {
 			return jsonError(500, "메모 저장에 실패했습니다.");
+		}
+
+		try {
+			await emitNotification({
+				actor: actorFromAuth(auth.auth),
+				recipients: await getAdminRecipientUids(),
+				type: "memo",
+				category: "activity",
+				message: `${authorName}님이 메모를 작성했습니다`,
+				excerpt: visibility === "public" ? content : "비공개 메모입니다.",
+				link: `/memo/${docRef.id}`,
+			});
+		} catch (notifyError) {
+			console.error("Error emitting memo notification:", notifyError);
 		}
 
 		return jsonOk(toMemoItemFromDoc(snapshot), { status: 201 });

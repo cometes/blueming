@@ -3,10 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import MenuAuthButton from "@/components/common/MenuAuthButton";
+import NotificationBell from "@/components/common/NotificationBell";
 import { cn } from "@/shared/lib/utils";
 import type { OpenFolders } from "@/features/settings/lib/widgetMenu";
 import type { MenuDesign, MenuItem } from "@/features/settings/types";
-import { Bell } from "lucide-react";
 
 type Props = {
 	design: Partial<MenuDesign>;
@@ -162,17 +162,7 @@ export default function WidgetMenuDesktop({
 				</ul>
 
 				<div className="flex gap-2 flex-col items-center my-3">
-					<button
-						type="button"
-						className={cn(
-							"w-9 h-9 rounded-full flex items-center justify-center cursor-pointer",
-							"hover:bg-theme-primary/60 hover:animate-jingle",
-						)}
-						style={{ transition: "all 300ms ease-in-out" }}
-						aria-label="알림"
-					>
-						<Bell size={20} color={design?.fontColor || "#333"} />
-					</button>
+					<NotificationBell variant="desktop" iconColor={design?.fontColor || "#333"} />
 
 					<button
 						type="button"
