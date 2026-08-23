@@ -5,7 +5,7 @@ import { ImagePlus } from "lucide-react";
 import type { Editor } from "@tiptap/react";
 import { cn } from "@/shared/lib/utils";
 import { uploadAndInsertImages } from "@/components/editor/useRichEditor";
-import { imageDragSource } from "@/shared/lib/tiptapImage";
+import { blockDragSource } from "@/shared/lib/tiptapImage";
 
 interface EditorImageDropZoneProps {
 	editor: Editor | null;
@@ -33,7 +33,7 @@ export default function EditorImageDropZone({
 		// 주의: Chrome은 <img> 요소 드래그(에디터 내 이미지 이동)에도 Files를
 		// dataTransfer에 넣는다. 내부 이동을 파일 업로드로 오인하면
 		// 오버레이가 뜨고 드롭 시 재업로드-복제되므로 반드시 제외한다.
-		if (imageDragSource.editor !== null) return false;
+		if (blockDragSource.editor !== null) return false;
 		return Array.from(e.dataTransfer?.items ?? []).some(
 			(item) => item.kind === "file" && item.type.startsWith("image/"),
 		);
@@ -67,7 +67,7 @@ export default function EditorImageDropZone({
 			onDrop={(e) => {
 				resetDragOver();
 				// 내부 이미지 이동 드래그는 window 핸들러/PM이 처리 — 파일 업로드 금지
-				if (imageDragSource.editor !== null) return;
+				if (blockDragSource.editor !== null) return;
 				// ProseMirror handleDrop이 이미 처리한 드롭(본문 위)은 건너뜀
 				if (e.defaultPrevented) return;
 				const files = Array.from(e.dataTransfer?.files ?? []).filter((file) =>

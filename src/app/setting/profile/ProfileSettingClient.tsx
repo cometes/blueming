@@ -5,6 +5,7 @@ import { useRichEditor } from "@/components/editor/useRichEditor";
 import EditorImageDropZone from "@/components/editor/EditorImageDropZone";
 import UrlPasteMenu from "@/components/editor/UrlPasteMenu";
 import BlockDropIndicator from "@/components/editor/BlockDropIndicator";
+import BlockDragHandle from "@/components/editor/BlockDragHandle";
 import type { AnyExtension } from "@tiptap/core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -208,6 +209,7 @@ export default function ProfileSettingClient() {
 										{dropIndicatorY != null && (
 											<BlockDropIndicator editor={editor} y={dropIndicatorY} />
 										)}
+			<BlockDragHandle editor={editor} />
 									</div>
 								)}
 							</div>

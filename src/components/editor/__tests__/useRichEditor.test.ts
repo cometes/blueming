@@ -18,6 +18,7 @@ import { Schema, type Node as PMNode } from "@tiptap/pm/model";
 import type { Editor } from "@tiptap/react";
 import {
 	editorHasContent,
+	findBlockAtY,
 	getBlockDrop,
 	insertBlockAt,
 	resolveInsertPos,
@@ -101,6 +102,28 @@ describe("getBlockDrop (노션식 블록 드롭 위치)", () => {
 			pos: doc2.content.size,
 			lineY: 140,
 		});
+	});
+});
+
+describe("findBlockAtY (블록 핸들 대상 탐색)", () => {
+	const doc = schema.node("doc", null, [p("hello"), image(), p()]);
+	const editor = makeGeoEditor(doc, rect(0, 300), [
+		rect(0, 40),
+		rect(40, 100),
+		rect(140, 20), // 트레일링 빈 문단
+	]);
+
+	it("마우스 Y가 속한 최상위 블록을 반환", () => {
+		expect(findBlockAtY(editor, 10)?.pos).toBe(0);
+		expect(findBlockAtY(editor, 90)?.pos).toBe(7);
+	});
+
+	it("트레일링 빈 문단은 대상에서 제외", () => {
+		expect(findBlockAtY(editor, 150)).toBeNull();
+	});
+
+	it("어떤 블록에도 속하지 않으면 null", () => {
+		expect(findBlockAtY(editor, 250)).toBeNull();
 	});
 });
 

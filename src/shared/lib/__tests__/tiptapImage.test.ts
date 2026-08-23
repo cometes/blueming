@@ -1,12 +1,12 @@
 import {
-	clearImageDragSource,
+	clearBlockDragSource,
 	filenameFromUrl,
-	imageDragSource,
+	blockDragSource,
 	isHttpUrl,
 	isImageUrl,
 	isYoutubeUrl,
 	loadImageSize,
-	setImageDragSource,
+	setBlockDragSource,
 } from "@/shared/lib/tiptapImage";
 
 describe("isImageUrl", () => {
@@ -64,17 +64,17 @@ describe("filenameFromUrl", () => {
 	});
 });
 
-describe("imageDragSource 추적", () => {
-	afterEach(() => clearImageDragSource());
+describe("blockDragSource 추적", () => {
+	afterEach(() => clearBlockDragSource());
 
 	it("set/clear가 모듈 싱글턴을 갱신한다", () => {
 		const fakeEditor = {};
-		setImageDragSource(fakeEditor, 7);
-		expect(imageDragSource.editor).toBe(fakeEditor);
-		expect(imageDragSource.from).toBe(7);
-		clearImageDragSource();
-		expect(imageDragSource.editor).toBeNull();
-		expect(imageDragSource.from).toBe(-1);
+		setBlockDragSource(fakeEditor, 7);
+		expect(blockDragSource.editor).toBe(fakeEditor);
+		expect(blockDragSource.from).toBe(7);
+		clearBlockDragSource();
+		expect(blockDragSource.editor).toBeNull();
+		expect(blockDragSource.from).toBe(-1);
 	});
 });
 

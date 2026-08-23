@@ -6,9 +6,9 @@ import { NodeViewWrapper } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { ImageBubbleMenu } from "@/components/tiptap-ui/image-bubble-menu/image-bubble-menu";
 import {
-	IMAGE_MOVE_MIME,
-	clearImageDragSource,
-	setImageDragSource,
+	BLOCK_MOVE_MIME,
+	clearBlockDragSource,
+	setBlockDragSource,
 } from "@/shared/lib/tiptapImage";
 
 export const ImageNodeView: React.FC<NodeViewProps> = ({
@@ -230,11 +230,11 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 						// 올바른 Dragging을 망가뜨리므로 절대 개입하지 않는다.
 						// 에디터 밖 드롭 지원을 위한 식별 정보만 기록한다.
 						const pos = getPos();
-						setImageDragSource(editor, pos);
-						e.dataTransfer.setData(IMAGE_MOVE_MIME, String(pos));
+						setBlockDragSource(editor, pos);
+						e.dataTransfer.setData(BLOCK_MOVE_MIME, String(pos));
 					}}
 					onDragEnd={() => {
-						clearImageDragSource();
+						clearBlockDragSource();
 					}}
 				/>
 			</div>
