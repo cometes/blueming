@@ -8,6 +8,7 @@ import { formatRelativeTime, dateTimeConvert } from "@/shared/lib/date";
 import {
 	Tooltip,
 	TooltipContent,
+	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { renderContentWithMentions } from "@/features/mention/lib/renderMentions";
@@ -137,18 +138,20 @@ export default function ThreadPostCard({
 							<Lock size={11} className="shrink-0 text-sub-text" />
 						)}
 						<span className="text-sub-text">·</span>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<span className="shrink-0 text-xs text-sub-text">
-									{formatRelativeTime(post.createdAt)}
-								</span>
-							</TooltipTrigger>
-							{post.createdAt && (
-								<TooltipContent>
-									{dateTimeConvert(post.createdAt)}
-								</TooltipContent>
-							)}
-						</Tooltip>
+						<TooltipProvider delayDuration={150}>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<span className="shrink-0 text-xs text-sub-text">
+										{formatRelativeTime(post.createdAt)}
+									</span>
+								</TooltipTrigger>
+								{post.createdAt && (
+									<TooltipContent>
+										{dateTimeConvert(post.createdAt)}
+									</TooltipContent>
+								)}
+							</Tooltip>
+						</TooltipProvider>
 					</div>
 
 					{post.locked ? (
