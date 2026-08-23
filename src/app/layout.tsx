@@ -119,10 +119,18 @@ export default async function RootLayout({
 	return (
 		<html lang="en">
 			<head>
-				<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+				<link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+				{/* dynamic-subset: unicode-range로 분할되어 실제 사용 글리프 청크만
+				    내려받는다 — static 전체 웨이트(수백 KB~MB) 대비 전송량 대폭 감소.
+				    preload로 CSS 페치를 HTML 파싱과 동시에 시작한다. */}
+				<link
+					rel="preload"
+					as="style"
+					href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css"
+				/>
 				<link
 					rel="stylesheet"
-					href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+					href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css"
 				/>
 				{preloadImages.map((url) => (
 					<link key={url} rel="preload" as="image" href={url} />

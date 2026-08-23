@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { getDb } from "@/app/api/_lib/admin";
 import { jsonError } from "@/app/api/_lib/response";
@@ -36,6 +37,7 @@ export async function DELETE(
 		const updatedThemes = themes.filter((theme) => theme?.id !== themeId);
 
 		await generalDocRef.set({ theme: updatedThemes }, { merge: true });
+		revalidateTag("settings");
 
 		return NextResponse.json({ success: true, themes: updatedThemes });
 	} catch (error) {

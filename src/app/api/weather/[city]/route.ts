@@ -75,29 +75,42 @@ const getFallbackAdminUid = async () => {
 	return snapshot.docs[0]?.id ?? null;
 };
 
+// API 키는 거의 변하지 않으므로 인스턴스 메모리에 캐시한다.
+// 캐시 미스 시에만 (본인 키 → 관리자 폴백) 최대 3회의 Firestore 왕복이 발생.
+const KEY_CACHE_TTL_MS = 10 * 60 * 1000;
+const apiKeyCache = new Map<string, { key: string; expiresAt: number }>();
+
+const resolveApiKey = async (uid: string | null): Promise<string> => {
+	const cacheKey = uid ?? "anon";
+	const cached = apiKeyCache.get(cacheKey);
+	if (cached && cached.expiresAt > Date.now()) return cached.key;
+
+	let key = "";
+	if (uid) {
+		key = (await getWeatherKeyForUid(uid)) ?? "";
+	}
+	if (!key) {
+		const adminUid = await getFallbackAdminUid();
+		if (adminUid) {
+			key = (await getWeatherKeyForUid(adminUid)) ?? "";
+		}
+	}
+	if (!key) {
+		key = process.env.OPENWEATHERMAP_API_KEY ?? "";
+	}
+	apiKeyCache.set(cacheKey, { key, expiresAt: Date.now() + KEY_CACHE_TTL_MS });
+	return key;
+};
+
 export async function GET(
 	_req: NextRequest,
 	{ params }: { params: Promise<{ city?: string }> }
 ) {
 	try {
 		const { city } = await params;
-		let apiKey = "";
 
 		const auth = await getAuthContext();
-		if (auth?.uid) {
-			apiKey = (await getWeatherKeyForUid(auth.uid)) ?? "";
-		}
-
-		if (!apiKey) {
-			const adminUid = await getFallbackAdminUid();
-			if (adminUid) {
-				apiKey = (await getWeatherKeyForUid(adminUid)) ?? "";
-			}
-		}
-
-		if (!apiKey) {
-			apiKey = process.env.OPENWEATHERMAP_API_KEY ?? "";
-		}
+		const apiKey = await resolveApiKey(auth?.uid ?? null);
 
 		if (!apiKey) {
 			console.error("OPENWEATHERMAP_API_KEY is not set");
@@ -116,7 +129,7 @@ export async function GET(
 		});
 
 		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), 8000);
+		const timeoutId = setTimeout(() => controller.abort(), 5000);
 		const response = await fetch(
 			`https://api.openweathermap.org/data/2.5/weather?${query.toString()}`,
 			{ cache: "no-store", signal: controller.signal }
@@ -138,15 +151,24 @@ export async function GET(
 			return jsonError(500, "Failed to fetch weather data");
 		}
 
-		return jsonOk({
-			city: data.name,
-			temperature: Math.round(data.main.temp),
-			feelsLike: Math.round(data.main.feels_like),
-			condition: mapWeatherIdToCondition(weather.id),
-			description: weather.description,
-			humidity: data.main.humidity,
-			timezone: data.timezone,
-		});
+		return jsonOk(
+			{
+				city: data.name,
+				temperature: Math.round(data.main.temp),
+				feelsLike: Math.round(data.main.feels_like),
+				condition: mapWeatherIdToCondition(weather.id),
+				description: weather.description,
+				humidity: data.main.humidity,
+				timezone: data.timezone,
+			},
+			{
+				// 날씨는 10분 정도의 신선도면 충분 — CDN이 도시별로 캐시해
+				// OpenWeatherMap 왕복과 함수 실행 자체를 흡수한다.
+				headers: {
+					"Cache-Control": "public, s-maxage=600, stale-while-revalidate=1800",
+				},
+			}
+		);
 	} catch (error) {
 		console.error("Error fetching weather data:", error);
 		if ((error as Error)?.name === "AbortError") {

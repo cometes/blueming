@@ -89,20 +89,36 @@ export async function GET(req: NextRequest) {
 			"";
 		const query = queryParam.trim().toLowerCase();
 
-		const snapshot = await db.collection(COLLECTION_NAME).get();
+		// 기본 경로(필터 없음): 서버 사이드 페이징 — 컬렉션 전량 로드 방지
+		if (!tag && !query) {
+			const [countSnapshot, pageSnapshot] = await Promise.all([
+				db.collection(COLLECTION_NAME).count().get(),
+				db
+					.collection(COLLECTION_NAME)
+					.orderBy("createdAt", sort === "oldest" ? "asc" : "desc")
+					.offset((page - 1) * limit)
+					.limit(limit)
+					.get(),
+			]);
+			const items = pageSnapshot.docs.map(toGalleryItem);
+			return jsonOk({ items, total: countSnapshot.data().count, page, limit });
+		}
+
+		// 태그 필터는 서버 where로 좁힌 뒤 인메모리 정렬/페이징
+		// (orderBy를 함께 걸면 복합 인덱스가 필요해 where만 사용)
+		let filterQuery: FirebaseFirestore.Query = db.collection(COLLECTION_NAME);
+		if (tag) {
+			filterQuery = filterQuery.where("tags", "array-contains", tag);
+		}
+		const snapshot = await filterQuery.get();
 		if (snapshot.empty) {
 			return jsonOk({ items: [], total: 0, page, limit });
 		}
 
 		const allItems = snapshot.docs.map(toGalleryItem);
-		const filteredByTag = tag
-			? allItems.filter(
-					(item) => Array.isArray(item.tags) && item.tags.includes(tag)
-			  )
-			: allItems;
 		const filtered = query
-			? filteredByTag.filter((item) => matchesQuery(item, query))
-			: filteredByTag;
+			? allItems.filter((item) => matchesQuery(item, query))
+			: allItems;
 		const sorted = sortItems(filtered, sort);
 		const total = sorted.length;
 		const startIndex = (page - 1) * limit;

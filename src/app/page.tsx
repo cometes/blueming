@@ -73,8 +73,19 @@ const IMAGE_WIDGET_IDS = [
 	"이미지 위젯 4",
 ];
 
-// 로딩 대기에서 제외할 위젯 (비동기 로딩이 불안정하거나 선택적인 위젯)
-const EXCLUDE_FROM_LOADING: string[] = [];
+// onReady를 호출하는 위젯 타입 목록 — 여기 없는 타입(알 수 없는 위젯)은
+// ready 게이트 없이 즉시 표시한다.
+const KNOWN_WIDGET_TYPES = new Set([
+	"슬라이드 배너",
+	"프로필",
+	"공지",
+	"텍스트바",
+	"디데이",
+	"최신글",
+	"스티커보드",
+	"날씨&시계",
+	...IMAGE_WIDGET_IDS,
+]);
 
 export default function Home() {
 	const { main } = useSettings();
@@ -108,27 +119,11 @@ export default function Home() {
 		[activeWidgetIds, layout]
 	);
 
-	// Coordinated Loading State
+	// 위젯별 개별 로딩 상태 — 준비된 위젯부터 순서대로 표시한다.
+	// (전역 all-or-nothing 게이트는 가장 느린 위젯(외부 API를 타는 날씨 등)이
+	//  전체 그리드를 붙잡는 문제가 있어 제거. 셀 크기는 grid span으로 확정되어
+	//  있고 스켈레톤이 absolute 오버레이라 개별 전환해도 레이아웃 이동은 없다.)
 	const [readyWidgets, setReadyWidgets] = useState<Set<string>>(new Set());
-	const [isAllReady, setIsAllReady] = useState(false);
-
-	// 로딩 대기 대상 위젯 (제외 목록에 없는 위젯들만)
-	const widgetsToWaitFor = useMemo(
-		() => activeLayout.filter((item) => !EXCLUDE_FROM_LOADING.includes(item.i)),
-		[activeLayout]
-	);
-
-	useEffect(() => {
-		if (widgetsToWaitFor.length === 0) {
-			setIsAllReady(true);
-			return;
-		}
-		// 대기 대상 위젯들이 모두 ready인지 확인
-		const allWaitingReady = widgetsToWaitFor.every((item) => readyWidgets.has(item.i));
-		if (allWaitingReady) {
-			setIsAllReady(true);
-		}
-	}, [readyWidgets, widgetsToWaitFor]);
 
 	const handleWidgetReady = useCallback((id: string) => {
 		setReadyWidgets((prev) => {
@@ -165,8 +160,7 @@ export default function Home() {
 					return <WidgetWeatherClock {...props} />;
 				// Add other widgets here as needed
 				default:
-					// Unknown widgets are considered ready immediately
-					setTimeout(() => handleWidgetReady(instanceId), 0);
+					// 알 수 없는 위젯은 KNOWN_WIDGET_TYPES에 없으므로 게이트 없이 즉시 표시됨
 					return (
 						<div className="p-4 bg-gray-100 rounded-lg text-center w-full h-full">
 							<span className="text-gray-600">{widgetType}</span>
@@ -192,27 +186,33 @@ export default function Home() {
 					}`}
 				style={{ aspectRatio: isMobile ? "2 / 3" : "5 / 4" }}
 			>
-				{activeLayout.map((item) => (
-					<div
-						key={item.i}
-						className="widget-container w-full h-full relative"
-						style={{
-							gridColumn: `${item.x + 1} / span ${item.w}`,
-							gridRow: `${item.y + 1} / span ${item.h}`,
-						}}
-					>
-						{/* Overlay Skeleton: Visible until ALL widgets are ready */}
-						{!isAllReady && (
-							<div className="absolute inset-0 z-20 transition-opacity duration-300">
-								<WidgetSkeleton />
+				{activeLayout.map((item) => {
+					const isReady =
+						readyWidgets.has(item.i) || !KNOWN_WIDGET_TYPES.has(item.i);
+					return (
+						<div
+							key={item.i}
+							className="widget-container w-full h-full relative"
+							style={{
+								gridColumn: `${item.x + 1} / span ${item.w}`,
+								gridRow: `${item.y + 1} / span ${item.h}`,
+							}}
+						>
+							{/* Overlay Skeleton: 해당 위젯이 준비될 때까지만 표시 */}
+							{!isReady && (
+								<div className="absolute inset-0 z-20 transition-opacity duration-300">
+									<WidgetSkeleton />
+								</div>
+							)}
+							{/* Actual Widget */}
+							<div
+								className={`w-full h-full ${!isReady ? "invisible" : "animate-in fade-in duration-300"}`}
+							>
+								{renderWidget(item.i, item.i)}
 							</div>
-						)}
-						{/* Actual Widget */}
-						<div className={`w-full h-full ${!isAllReady ? "invisible" : "animate-in fade-in zoom-in-95 duration-500"}`}>
-							{renderWidget(item.i, item.i)}
 						</div>
-					</div>
-				))}
+					);
+				})}
 			</section>
 		</main>
 	);

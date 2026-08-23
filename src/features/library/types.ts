@@ -9,11 +9,6 @@ export interface FetchLibraryListParams {
 	query?: string;
 }
 
-export interface FetchLibraryListOptions {
-	useCache?: boolean;
-	staleTimeMs?: number;
-}
-
 export interface CreateLibraryPayload {
 	title: string;
 	subtitle?: string;

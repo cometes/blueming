@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { getDb } from "@/app/api/_lib/admin";
 import { jsonError } from "@/app/api/_lib/response";
@@ -27,6 +28,7 @@ export async function POST(req: NextRequest) {
 		}
 
 		await mainDocRef.set({ profile: value }, { merge: true });
+		revalidateTag("settings");
 		const updatedMainDoc = await mainDocRef.get();
 		return NextResponse.json({ main: updatedMainDoc.data() });
 	} catch (error) {

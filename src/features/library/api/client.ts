@@ -4,7 +4,6 @@ import type {
 	CreateLibraryPayload,
 	CreateLibraryResponse,
 	DeleteLibraryResponse,
-	FetchLibraryListOptions,
 	FetchLibraryListParams,
 	LibraryDetailAccessOptions,
 	LibraryDetailData,
@@ -16,9 +15,7 @@ import type {
 
 export const fetchLibraryList = async (
 	params: FetchLibraryListParams = {},
-	options: FetchLibraryListOptions = {},
 ) => {
-	void options;
 	const requestParams: Record<string, string | number> = {};
 	if (params.page) requestParams.page = params.page;
 	if (params.limit) requestParams.limit = params.limit;
@@ -41,28 +38,17 @@ export const fetchLibrarySeries = async () => {
 	return { data: result.data };
 };
 
-export const fetchLibraryDetail = async (
-	id: string | string[],
-	options: FetchLibraryListOptions = {},
-) => {
-	void options;
+export const fetchLibraryDetail = async (id: string | string[]) => {
 	const request = await httpClient.get<LibraryDetailData>(`/library/detail/${id}`);
 	return { data: request.data };
 };
 
-export const fetchLibrarySeriesList = async (
-	series: string | string[],
-	options: FetchLibraryListOptions = {},
-) => {
-	void options;
+export const fetchLibrarySeriesList = async (series: string | string[]) => {
 	const result = await httpClient.get(`/library/series/${series}`);
 	return { data: result.data };
 };
 
-export const fetchLibraryTags = async (
-	options: FetchLibraryListOptions = {},
-) => {
-	void options;
+export const fetchLibraryTags = async () => {
 	const result = await httpClient.get("/library/tags");
 	return { data: result.data };
 };

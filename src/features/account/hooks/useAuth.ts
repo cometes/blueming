@@ -20,12 +20,8 @@ export const useAuth = () => {
 	// 사용자 정보 가져오기
 	const fetchUser = useCallback(async () => {
 		try {
-			console.log("[auth] fetch user start");
 			const data = await fetchAuthStatus();
 			if (data?.user) {
-				console.log("[auth] fetch user ok", {
-					hasUser: !!data?.user,
-				});
 				const user: AuthUser = toAuthUser(data.user) as AuthUser;
 				setAuthData({
 					isAuthenticated: true,
@@ -40,7 +36,6 @@ export const useAuth = () => {
 				user: null,
 				isLoading: false,
 			});
-			console.log("[auth] fetch user unauthenticated");
 			return false;
 		} catch {
 			setAuthData({
@@ -48,7 +43,6 @@ export const useAuth = () => {
 				user: null,
 				isLoading: false,
 			});
-			console.warn("[auth] fetch user error");
 			return false;
 		}
 	}, [setAuthData]);
@@ -174,7 +168,6 @@ export const useAuth = () => {
 
 	// 초기화 함수
 	const initializeAuth = useCallback(() => {
-		console.log("[auth] initialize");
 		void fetchUser();
 		return () => {};
 	}, [fetchUser]);
