@@ -137,21 +137,26 @@ export default function ThreadPostCard({
 						{post.visibility === "member" && (
 							<Lock size={11} className="shrink-0 text-sub-text" />
 						)}
-						<span className="text-sub-text">·</span>
-						<TooltipProvider delayDuration={150}>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<span className="shrink-0 text-xs text-sub-text">
-										{formatRelativeTime(post.createdAt)}
-									</span>
-								</TooltipTrigger>
-								{post.createdAt && (
-									<TooltipContent>
-										{dateTimeConvert(post.createdAt)}
-									</TooltipContent>
-								)}
-							</Tooltip>
-						</TooltipProvider>
+						{/* 상세 강조 글은 절대시각을 본문 아래에 표기(트위터식)하므로 헤더 시간 생략 */}
+						{!isFocused && (
+							<>
+								<span className="text-sub-text">·</span>
+								<TooltipProvider delayDuration={150}>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<span className="shrink-0 text-xs text-sub-text">
+												{formatRelativeTime(post.createdAt)}
+											</span>
+										</TooltipTrigger>
+										{post.createdAt && (
+											<TooltipContent>
+												{dateTimeConvert(post.createdAt)}
+											</TooltipContent>
+										)}
+									</Tooltip>
+								</TooltipProvider>
+							</>
+						)}
 					</div>
 
 					{post.locked ? (
@@ -161,7 +166,12 @@ export default function ThreadPostCard({
 						</p>
 					) : (
 						<>
-							<div className="mt-0.5 whitespace-pre-wrap break-words text-sm text-main-text leading-relaxed">
+							<div
+								className={cn(
+									"mt-0.5 whitespace-pre-wrap break-words text-main-text leading-relaxed",
+									isFocused ? "text-[16px]" : "text-sm",
+								)}
+							>
 								{renderContentWithMentions(post.content ?? "", post.mentions)}
 							</div>
 
@@ -197,10 +207,19 @@ export default function ThreadPostCard({
 						</>
 					)}
 
+					{/* 상세 강조 글엔 트위터식 절대시각 표기 */}
+					{isFocused && post.createdAt && (
+						<p className="mt-3 text-xs text-sub-text">
+							{dateTimeConvert(post.createdAt)}
+						</p>
+					)}
+
 					{/* 액션 바 — 답글 수 + 인용 (onQuote 전달 시 버튼, 아니면 수 표시만) */}
-					<div className="mt-2 flex items-center gap-5 text-sub-text">
-						<span className="flex items-center gap-1 text-xs">
-							<MessageCircle size={14} />
+					<div className="mt-1.5 -mb-1 flex items-center gap-12 text-sub-text">
+						<span className="-ml-1.5 flex items-center text-xs">
+							<span className="flex h-7 w-7 items-center justify-center rounded-full">
+								<MessageCircle size={15} />
+							</span>
 							{post.replyCount > 0 ? post.replyCount : ""}
 						</span>
 						{onQuote && !post.locked ? (
@@ -210,16 +229,20 @@ export default function ThreadPostCard({
 									e.stopPropagation();
 									onQuote(post);
 								}}
-								className="flex items-center gap-1 text-xs hover:text-theme-primary"
+								className="group flex items-center text-xs hover:text-theme-primary"
 								aria-label="인용하기"
 							>
-								<Quote size={13} />
+								<span className="flex h-7 w-7 items-center justify-center rounded-full group-hover:bg-theme-primary/10">
+									<Quote size={14} />
+								</span>
 								{post.quoteCount > 0 ? post.quoteCount : ""}
 							</button>
 						) : (
 							post.quoteCount > 0 && (
-								<span className="flex items-center gap-1 text-xs">
-									<Quote size={13} />
+								<span className="flex items-center text-xs">
+									<span className="flex h-7 w-7 items-center justify-center rounded-full">
+										<Quote size={14} />
+									</span>
 									{post.quoteCount}
 								</span>
 							)

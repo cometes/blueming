@@ -12,7 +12,7 @@ import {
 import type { AuthContext } from "@/app/api/_lib/auth";
 import type { ThreadFeedResponse, ThreadPost } from "@/features/thread/types";
 
-/** RSC 초기 데이터용 — 전체 탭 첫 페이지 (HTTP 왕복 없음) */
+/** RSC 초기 데이터용 — 홈(루트 글만) 탭 첫 페이지 (HTTP 왕복 없음) */
 export async function fetchThreadFeedDirect(
 	authContext: AuthContext | null,
 ): Promise<ThreadFeedResponse> {
@@ -20,6 +20,7 @@ export async function fetchThreadFeedDirect(
 		const db = getDb();
 		const snapshot = await db
 			.collection(COLLECTION_NAME)
+			.where("parentId", "==", null)
 			.orderBy("createdAt", "desc")
 			.orderBy(FieldPath.documentId(), "desc")
 			.limit(DEFAULT_LIMIT + 1)

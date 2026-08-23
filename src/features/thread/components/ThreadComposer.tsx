@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import { Globe, ImagePlus, Lock, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
+import { useAuthStore } from "@/store/auth/store";
 import { Button } from "@/components/ui/button";
 import MentionTextarea from "@/components/common/MentionTextarea";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
@@ -47,6 +48,7 @@ export default function ThreadComposer({
 	placeholder = "무슨 일이 일어나고 있나요?",
 	onPosted,
 }: ThreadComposerProps) {
+	const user = useAuthStore((state) => state.user);
 	const [content, setContent] = useState("");
 	const [mentions, setMentions] = useState<MentionEntry[]>([]);
 	const [visibility, setVisibility] = useState<ThreadVisibility>("public");
@@ -121,7 +123,21 @@ export default function ThreadComposer({
 
 	return (
 		<div className="border-b border-card-border px-4 py-3">
-			<MentionTextarea
+			<div className="flex items-start gap-3">
+				<span className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-card bg-card-bg text-xs text-sub-text">
+					{user?.photoURL ? (
+						<img
+							src={user.photoURL}
+							alt=""
+							className="h-full w-full object-cover"
+						/>
+					) : (
+						(user?.displayName || "?").charAt(0)
+					)}
+				</span>
+
+				<div className="min-w-0 flex-1">
+					<MentionTextarea
 				value={content}
 				onValueChange={setContent}
 				mentions={mentions}
@@ -201,10 +217,10 @@ export default function ThreadComposer({
 							}
 						}}
 						disabled={isSubmitting}
-						className="flex h-8 w-8 items-center justify-center rounded-card border border-card bg-card-bg text-sub-text hover:text-theme-primary"
+						className="flex h-8 w-8 items-center justify-center rounded-full text-theme-primary hover:bg-theme-primary/10"
 						aria-label="사진 첨부"
 					>
-						<ImagePlus size={14} />
+						<ImagePlus size={15} />
 					</button>
 
 					{!isReply && !quoteForcesMember && (
@@ -262,6 +278,8 @@ export default function ThreadComposer({
 						<Send size={13} />
 						{isReply ? "답글" : "게시"}
 					</Button>
+				</div>
+			</div>
 				</div>
 			</div>
 

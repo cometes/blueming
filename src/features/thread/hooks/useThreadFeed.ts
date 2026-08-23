@@ -11,17 +11,17 @@ import type {
 
 /**
  * 스레드 피드 상태: 탭/태그 전환, 커서 페이징 append, 새 글 prepend.
- * initialData는 RSC(serverDirect)가 넣어준 전체 탭 첫 페이지.
+ * initialData는 RSC(serverDirect)가 넣어준 홈(루트만) 탭 첫 페이지.
  */
 export function useThreadFeed(initialData: ThreadFeedResponse) {
-	const [tab, setTab] = useState<ThreadTab>("all");
+	const [tab, setTab] = useState<ThreadTab>("roots");
 	const [tag, setTag] = useState("");
 	const [items, setItems] = useState<ThreadPost[]>(initialData.items);
 	const [nextCursor, setNextCursor] = useState<string | null>(
 		initialData.nextCursor,
 	);
 	const [isLoading, setIsLoading] = useState(false);
-	// 첫 마운트에서는 initialData(전체 탭)를 그대로 사용
+	// 첫 마운트에서는 initialData(홈 탭)를 그대로 사용
 	const skipInitialLoadRef = useRef(true);
 	const requestSeqRef = useRef(0);
 
