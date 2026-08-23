@@ -15,6 +15,7 @@ export interface MemoReply {
 	createdAt: string | null;
 	updatedAt: string | null;
 	imageUrls?: string[];
+	mentions?: Array<{ uid: string; name: string }>;
 }
 
 export interface MemoItem {

@@ -9,6 +9,7 @@ import type {
 	CustomLayout,
 	DdayData,
 	DdayDisplayMode,
+	MusicPlayerSettings,
 	ImageWidgetSettings,
 	MemoSettings,
 	Notice,
@@ -119,6 +120,22 @@ export const setSettingsMainWeatherClock = async (value: WeatherClockSettings) =
 		});
 	} catch (error) {
 		throw new Error(getApiErrorMessage(error, "날씨/시계 설정 저장에 실패했습니다."));
+	}
+};
+
+export const setSettingsMainMusicPlayer = async (value: MusicPlayerSettings) => {
+	try {
+		const headers = await getAuthHeader();
+		return await withSettingsRevalidation(async () => {
+			const response = await httpClient.post(
+				"/settings/main/musicPlayer",
+				{ value },
+				{ headers },
+			);
+			return response.data;
+		});
+	} catch (error) {
+		throw new Error(getApiErrorMessage(error, "음악 설정 저장에 실패했습니다."));
 	}
 };
 

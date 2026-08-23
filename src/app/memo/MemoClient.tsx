@@ -41,6 +41,7 @@ export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 		() => ({
 			postsPerRow: 3,
 			writePermission: "member" as const,
+			replyPermission: "author" as const,
 		}),
 		[],
 	);
@@ -59,16 +60,27 @@ export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 	const [writePermission, setWritePermission] = useState<
 		"admin" | "manager" | "member"
 	>(resolvedMemoSettings.writePermission);
+	const [replyPermission, setReplyPermission] = useState<"author" | "member">(
+		resolvedMemoSettings.replyPermission,
+	);
 	const [tempPostsPerRow, setTempPostsPerRow] = useState(postsPerRow);
 	const [tempWritePermission, setTempWritePermission] =
 		useState(writePermission);
+	const [tempReplyPermission, setTempReplyPermission] =
+		useState(replyPermission);
 
 	useEffect(() => {
-		const { postsPerRow: newRows, writePermission: newPermission } =
-			resolvedMemoSettings;
+		const {
+			postsPerRow: newRows,
+			writePermission: newPermission,
+			replyPermission: newReplyPermission,
+		} = resolvedMemoSettings;
 		setPostsPerRow((prev) => (newRows !== prev ? newRows : prev));
 		setWritePermission((prev) =>
 			newPermission !== prev ? newPermission : prev,
+		);
+		setReplyPermission((prev) =>
+			newReplyPermission !== prev ? newReplyPermission : prev,
 		);
 	}, [resolvedMemoSettings]);
 
@@ -76,8 +88,9 @@ export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 		if (isDialogOpen) {
 			setTempPostsPerRow(postsPerRow);
 			setTempWritePermission(writePermission);
+			setTempReplyPermission(replyPermission);
 		}
-	}, [isDialogOpen, postsPerRow, writePermission]);
+	}, [isDialogOpen, postsPerRow, writePermission, replyPermission]);
 
 	const normalizedQuery = appliedQuery.trim().toLowerCase();
 	const filteredMemos = useMemo(() => {
@@ -106,12 +119,14 @@ export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 			const payload = {
 				postsPerRow: tempPostsPerRow,
 				writePermission: tempWritePermission,
+				replyPermission: tempReplyPermission,
 			};
 			await setSettingsMainMemo(payload);
 			updateMain?.({ memo: payload });
 			await refreshSettings?.({ broadcast: true });
 			setPostsPerRow(payload.postsPerRow);
 			setWritePermission(payload.writePermission);
+			setReplyPermission(payload.replyPermission);
 			setIsDialogOpen(false);
 			toast.success("저장되었습니다.");
 		} catch (error) {
@@ -237,6 +252,8 @@ export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 							setTempPostsPerRow={setTempPostsPerRow}
 							tempWritePermission={tempWritePermission}
 							setTempWritePermission={setTempWritePermission}
+							tempReplyPermission={tempReplyPermission}
+							setTempReplyPermission={setTempReplyPermission}
 							showManagerOption
 							title="메모 페이지 설정"
 							onSave={handleSaveSettings}

@@ -4,6 +4,7 @@
  */
 export interface BaseCommentEntry {
 	id: string;
+	mentions?: Array<{ uid: string; name: string }>;
 	authorType: "user" | "anon";
 	displayName: string;
 	uid?: string | null;

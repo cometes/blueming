@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import MenuAuthButton from "@/components/common/MenuAuthButton";
 import NotificationBell from "@/components/common/NotificationBell";
+import { useMusicPlayerStore } from "@/features/music/store/useMusicPlayerStore";
 import { cn } from "@/shared/lib/utils";
 import type { OpenFolders } from "@/features/settings/lib/widgetMenu";
 import type { MenuDesign, MenuItem } from "@/features/settings/types";
@@ -73,6 +74,8 @@ export default function WidgetMenuDesktop({
 	getItemBackgroundStyle,
 	className,
 }: Props) {
+	const toggleMusicPlayer = useMusicPlayerStore((state) => state.toggleOpen);
+	const isMusicPlaying = useMusicPlayerStore((state) => state.isPlaying);
 	return (
 		<aside
 			className={cn(
@@ -172,6 +175,7 @@ export default function WidgetMenuDesktop({
 						)}
 						style={{ transition: "all 300ms ease-in-out" }}
 						aria-label="음악"
+							onClick={toggleMusicPlayer}
 					>
 						<div className="flex items-end justify-center w-4 h-4">
 							{[0, 0.1, 0.2, 0.3, 0.4].map((delay, index) => (
@@ -184,6 +188,7 @@ export default function WidgetMenuDesktop({
 										margin: "0 1px",
 										height: ["6px", "8px", "10px", "13px", "15px"][index],
 										animation: `musicBar 1.2s ease infinite ${delay}s`,
+										animationPlayState: isMusicPlaying ? "running" : "paused",
 									}}
 								/>
 							))}

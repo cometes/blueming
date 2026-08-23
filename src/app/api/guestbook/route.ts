@@ -22,6 +22,10 @@ import {
 	getAdminRecipientUids,
 	type NotificationActor,
 } from "@/app/api/_lib/notifications";
+import {
+	emitMentionNotifications,
+	validateMentions,
+} from "@/app/api/_lib/mentions";
 
 export const runtime = "nodejs";
 
@@ -29,12 +33,13 @@ export const runtime = "nodejs";
 const notifyNewGuestbookEntry = async (
 	actor: NotificationActor,
 	message: string,
-	isSecret: boolean
+	isSecret: boolean,
+	excludeUids: string[] = []
 ) => {
 	const admins = await getAdminRecipientUids();
 	await emitNotification({
 		actor,
-		recipients: admins,
+		recipients: admins.filter((uid) => !excludeUids.includes(uid)),
 		type: "guestbook",
 		category: "comment",
 		message: `${actor.name}님이 방명록을 남겼습니다`,
@@ -94,6 +99,8 @@ export async function GET(req: NextRequest) {
 				uid: data.uid || null,
 				photoURL: data.photoURL || null,
 				message: displayMessage,
+				mentions:
+					canViewDirectly && Array.isArray(data.mentions) ? data.mentions : [],
 				imageUrls: displayImageUrls,
 				isSecret,
 				isAdmin: data.isAdmin === true,
@@ -145,6 +152,8 @@ export async function POST(req: NextRequest) {
 			return jsonError(400, "Message is required.");
 		}
 
+		const mentions = await validateMentions(body?.mentions, message);
+
 		if (authContext?.uid) {
 			const entry = {
 				authorType: "user",
@@ -155,13 +164,22 @@ export async function POST(req: NextRequest) {
 				isSecret,
 				imageUrls,
 				message,
+				mentions,
 				createdAt: admin.firestore.FieldValue.serverTimestamp(),
 				updatedAt: null,
 			};
 
 			const docRef = await db.collection("guestbook").add(entry);
 			try {
-				await notifyNewGuestbookEntry(actorFromAuth(authContext), message, isSecret);
+				const actor = actorFromAuth(authContext);
+				const excerpt = isSecret ? "비밀글입니다." : message;
+				const mentioned = await emitMentionNotifications({
+					actor,
+					mentions,
+					excerpt,
+					link: "/guestbook",
+				});
+				await notifyNewGuestbookEntry(actor, message, isSecret, mentioned);
 			} catch (notifyError) {
 				console.error("Error emitting guestbook notification:", notifyError);
 			}
@@ -182,6 +200,7 @@ export async function POST(req: NextRequest) {
 			isSecret,
 			imageUrls,
 			message,
+			mentions,
 			pinSalt: salt,
 			pinHash: hash,
 			createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -190,7 +209,15 @@ export async function POST(req: NextRequest) {
 
 		const docRef = await db.collection("guestbook").add(entry);
 		try {
-			await notifyNewGuestbookEntry(anonActor(displayName), message, isSecret);
+			const actor = anonActor(displayName);
+			const excerpt = isSecret ? "비밀글입니다." : message;
+			const mentioned = await emitMentionNotifications({
+				actor,
+				mentions,
+				excerpt,
+				link: "/guestbook",
+			});
+			await notifyNewGuestbookEntry(actor, message, isSecret, mentioned);
 		} catch (notifyError) {
 			console.error("Error emitting guestbook notification:", notifyError);
 		}

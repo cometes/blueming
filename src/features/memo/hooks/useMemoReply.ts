@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { MentionEntry } from "@/features/mention/types";
 import { toast } from "sonner";
 import {
 	createMemoReply,
@@ -91,6 +92,8 @@ export function useMemoReply({ memoId, isOwner, onReplyChange }: UseMemoReplyArg
 		[imageManager],
 	);
 
+	const [mentions, setMentions] = useState<MentionEntry[]>([]);
+
 	// ── 텍스트 핸들러 ─────────────────────────────────────────────────────────
 	const handleMessageChange = useCallback((value: string) => {
 		setMessage(value);
@@ -108,8 +111,10 @@ export function useMemoReply({ memoId, isOwner, onReplyChange }: UseMemoReplyArg
 			await createMemoReply(memoId, {
 				content: message.trim(),
 				imageUrls: finalImageUrls,
+				mentions: mentions.length > 0 ? mentions : undefined,
 			});
 			setMessage("");
+			setMentions([]);
 			setImages([]);
 			if (messageRef.current) messageRef.current.style.height = "auto";
 			await onReplyChange();
@@ -121,7 +126,7 @@ export function useMemoReply({ memoId, isOwner, onReplyChange }: UseMemoReplyArg
 		} finally {
 			setIsSubmitting(false);
 		}
-	}, [canSubmit, images, memoId, message, onReplyChange, resolveImages]);
+	}, [canSubmit, images, memoId, mentions, message, onReplyChange, resolveImages]);
 
 	// ── 답글 수정 ─────────────────────────────────────────────────────────────
 	const openEditReply = useCallback((reply: {
@@ -202,6 +207,8 @@ export function useMemoReply({ memoId, isOwner, onReplyChange }: UseMemoReplyArg
 	return {
 		// 작성 폼
 		message,
+		mentions,
+		setMentions,
 		images,
 		isSubmitting,
 		canSubmit,

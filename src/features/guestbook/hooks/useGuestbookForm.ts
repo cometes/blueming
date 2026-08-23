@@ -3,6 +3,7 @@ import {
 	type CommentImage,
 	createImageId,
 } from "@/features/comment/hooks/useCommentForm";
+import type { MentionEntry } from "@/features/mention/types";
 
 // 기존 import 경로 호환을 위해 re-export
 export type GuestbookImage = CommentImage;
@@ -20,6 +21,7 @@ export const useGuestbookForm = ({ mode }: UseGuestbookFormProps) => {
 	const [displayName, setDisplayName] = useState("");
 	const [pin, setPin] = useState("");
 	const [message, setMessage] = useState("");
+	const [mentions, setMentions] = useState<MentionEntry[]>([]);
 	const [images, setImages] = useState<GuestbookImage[]>([]);
 	const [isSecret, setIsSecret] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,6 +37,7 @@ export const useGuestbookForm = ({ mode }: UseGuestbookFormProps) => {
 		setDisplayName("");
 		setPin("");
 		setMessage("");
+		setMentions([]);
 		setImages([]);
 		setIsSecret(false);
 		setIsSubmitting(false);
@@ -84,6 +87,8 @@ export const useGuestbookForm = ({ mode }: UseGuestbookFormProps) => {
 		setPin,
 		message,
 		setMessage,
+		mentions,
+		setMentions,
 		images,
 		setImages,
 		isSecret,

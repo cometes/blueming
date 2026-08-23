@@ -2,6 +2,7 @@
 
 import { ArrowLeft } from "lucide-react";
 import { useAdmin } from "@/features/admin/hooks/useAdmin";
+import { useSettings } from "@/contexts/SettingsContext";
 import { Button } from "@/components/ui/button";
 import type { MemoDetail } from "@/features/memo/types";
 import { useMemoDetailController } from "@/features/memo/hooks/useMemoDetailController";
@@ -33,6 +34,8 @@ export default function MemoDetailClient({
 		passwordError,
 		isVerifying,
 		message,
+		mentions,
+		setMentions,
 		images,
 		isSubmitting,
 		isEditOpen,
@@ -75,6 +78,11 @@ export default function MemoDetailClient({
 		initialMemo,
 	});
 	const { isAdmin } = useAdmin();
+	const { main } = useSettings();
+	// 답글 권한: 기본은 메모 작성자만, 설정이 member면 로그인 회원 누구나
+	const canReply =
+		isOwner ||
+		(main?.memo?.replyPermission === "member" && Boolean(user?.uid));
 
 	const contentNode = (() => {
 		if (!memo) {
@@ -109,10 +117,12 @@ export default function MemoDetailClient({
 
 				<MemoReplySection
 					replies={replies}
-					isOwner={isOwner}
+					canReply={canReply}
 					isAuthLoading={isAuthLoading}
 					currentUserId={user?.uid}
 					message={message}
+					mentions={mentions}
+					onMentionsChange={setMentions}
 					images={images}
 					isSubmitting={isSubmitting}
 					canSubmit={canSubmit}

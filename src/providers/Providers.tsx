@@ -15,6 +15,12 @@ const NotificationPoller = dynamic(
 	{ ssr: false },
 );
 
+// 플로팅 음악 플레이어 — 라우트 전환에도 언마운트되지 않아 재생이 유지됨
+const MusicPlayerDock = dynamic(
+	() => import("@/features/music/components/MusicPlayerDock"),
+	{ ssr: false },
+);
+
 interface ProvidersProps {
 	children: React.ReactNode;
 	initialSettings: SettingsSnapshot | null;
@@ -47,6 +53,7 @@ export default function Providers({
 						</AuthInitializer>
 						<Toaster position="top-center" richColors />
 						<NotificationPoller />
+					<MusicPlayerDock />
 					</ThemeProvider>
 			</ThemesProvider>
 		</SettingsProvider>

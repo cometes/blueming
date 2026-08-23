@@ -57,7 +57,11 @@ export const createMemo = async (payload: {
 
 export const createMemoReply = async (
 	id: string,
-	payload: { content: string; imageUrls?: string[] },
+	payload: {
+		content: string;
+		imageUrls?: string[];
+		mentions?: Array<{ uid: string; name: string }>;
+	},
 ) => {
 	try {
 		const headers = await getAuthHeader();

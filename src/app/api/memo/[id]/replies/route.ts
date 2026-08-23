@@ -16,6 +16,10 @@ import {
 	emitNotification,
 	getAdminRecipientUids,
 } from "@/app/api/_lib/notifications";
+import {
+	emitMentionNotifications,
+	validateMentions,
+} from "@/app/api/_lib/mentions";
 
 export const runtime = "nodejs";
 
@@ -57,7 +61,7 @@ export async function POST(
 			return jsonError(400, "내용을 입력해주세요.");
 		}
 		const imageUrls = normalizeImageUrls(body?.imageUrls);
-
+		const mentions = await validateMentions(body?.mentions, content);
 		const db = getDb();
 		const docRef = db.collection(COLLECTION_NAME).doc(id);
 		const snapshot = await docRef.get();
@@ -66,7 +70,18 @@ export async function POST(
 		}
 		const data = (snapshot.data() || {}) as Record<string, unknown>;
 		const authorId = typeof data.authorId === "string" ? data.authorId : null;
-		if (!authorId || auth.auth.uid !== authorId) {
+		// 답글 권한: 설정(memo.replyPermission)이 "member"면 로그인 회원 누구나,
+		// 기본("author")은 메모 작성자만 (기존 동작 유지)
+		const settingsSnapshot = await db.collection("settings").doc("main").get();
+		const memoSettings = (settingsSnapshot.data()?.memo ?? {}) as {
+			replyPermission?: string;
+		};
+		const replyPermission =
+			memoSettings.replyPermission === "member" ? "member" : "author";
+		if (
+			replyPermission === "author" &&
+			(!authorId || auth.auth.uid !== authorId)
+		) {
 			return jsonError(403, "작성자만 답글을 작성할 수 있습니다.");
 		}
 
@@ -76,6 +91,7 @@ export async function POST(
 		const replyRef = await docRef.collection(REPLY_COLLECTION).add({
 			content,
 			imageUrls,
+			mentions,
 			author: {
 				id: auth.auth.uid,
 				name: authorName,
@@ -93,9 +109,18 @@ export async function POST(
 
 		try {
 			const memoTitle = typeof data.title === "string" ? data.title : "";
+			const actor = actorFromAuth(auth.auth);
+			const mentioned = await emitMentionNotifications({
+				actor,
+				mentions,
+				excerpt: content,
+				link: `/memo/${id}`,
+			});
 			await emitNotification({
-				actor: actorFromAuth(auth.auth),
-				recipients: [...(await getAdminRecipientUids()), authorId],
+				actor,
+				recipients: [...(await getAdminRecipientUids()), authorId].filter(
+					(uid) => !uid || !mentioned.includes(uid)
+				),
 				type: "memoReply",
 				category: "comment",
 				message: `${authorName}님이 ${memoTitle ? `"${memoTitle}"에 ` : ""}답글을 남겼습니다`,
