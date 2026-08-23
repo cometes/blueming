@@ -115,6 +115,7 @@ export default function MusicPlayerDock() {
 		setPlaying,
 		setCurrentIndex,
 		setVolume,
+		applyDefaultVolume,
 		togglePlaylist,
 	} = useMusicPlayerStore();
 
@@ -229,6 +230,13 @@ export default function MusicPlayerDock() {
 		}, 1000);
 		return () => clearInterval(timer);
 	}, [isPlaying]);
+
+	// 관리자 기본 볼륨 — 방문자가 직접 조절한 적 없을 때만 초기 적용
+	useEffect(() => {
+		if (typeof settings?.defaultVolume === "number") {
+			applyDefaultVolume(settings.defaultVolume);
+		}
+	}, [settings?.defaultVolume, applyDefaultVolume]);
 
 	// 볼륨 반영
 	useEffect(() => {

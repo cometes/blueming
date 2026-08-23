@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -37,6 +38,7 @@ export default function MusicSettingClient() {
 
 	const [enabled, setEnabled] = useState(false);
 	const [items, setItems] = useState<MusicPlayerItem[]>([]);
+	const [defaultVolume, setDefaultVolume] = useState(50);
 	const [isSyncing, setIsSyncing] = useState(true);
 	const [importUrl, setImportUrl] = useState("");
 	const [isImporting, setIsImporting] = useState(false);
@@ -54,9 +56,10 @@ export default function MusicSettingClient() {
 		const baseline = settings.main?.musicPlayer || { enabled: false, items: [] };
 		return (
 			enabled !== baseline.enabled ||
+			defaultVolume !== (baseline.defaultVolume ?? 50) ||
 			JSON.stringify(items) !== JSON.stringify(baseline.items || [])
 		);
-	}, [enabled, items, settings.main?.musicPlayer, isSyncing]);
+	}, [enabled, items, defaultVolume, settings.main?.musicPlayer, isSyncing]);
 
 	useSettingStatus("music", isDirty ? "dirty" : "saved");
 	useSettingHeaderAction(
@@ -82,6 +85,7 @@ export default function MusicSettingClient() {
 		if (musicPlayer) {
 			setEnabled(musicPlayer.enabled);
 			setItems(musicPlayer.items || []);
+			setDefaultVolume(musicPlayer.defaultVolume ?? 50);
 		}
 		setIsSyncing(false);
 	}, [settings.main?.musicPlayer]);
@@ -162,7 +166,7 @@ export default function MusicSettingClient() {
 		async (e: React.FormEvent) => {
 			e.preventDefault();
 			try {
-				const payload = { enabled, items };
+				const payload = { enabled, items, defaultVolume };
 				await setSettingsMainMusicPlayer(payload);
 				updateMain?.({ musicPlayer: payload });
 				await refreshSettings?.({ broadcast: true });
@@ -173,7 +177,7 @@ export default function MusicSettingClient() {
 				);
 			}
 		},
-		[enabled, items, refreshSettings, updateMain],
+		[enabled, items, defaultVolume, refreshSettings, updateMain],
 	);
 
 	const handleSaveKey = useCallback(async () => {
@@ -212,7 +216,28 @@ export default function MusicSettingClient() {
 						<Switch checked={enabled} onCheckedChange={setEnabled} />
 					</div>
 
-					{/* URL 임포트 */}
+					{/* 기본 볼륨 */}
+				<div className="section-box flex items-center">
+					<div className="text-box w-[220px] pr-5">
+						<h3 className="font-medium text-sub-text">기본 볼륨</h3>
+						<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+							방문자에게 처음 적용될 볼륨 — 방문자가 직접 조절하면 그 값이 유지됩니다
+						</p>
+					</div>
+					<div className="flex flex-1 items-center gap-4">
+						<Slider
+							min={0}
+							max={100}
+							step={5}
+							value={[defaultVolume]}
+							onValueChange={(value) => setDefaultVolume(value[0])}
+							className="flex-1 min-w-[200px] max-w-[320px]"
+						/>
+						<span className="w-10 text-sm text-sub-text">{defaultVolume}</span>
+					</div>
+				</div>
+
+				{/* URL 임포트 */}
 					<div className="section-box flex items-start">
 						<div className="text-box w-[220px] pr-5 pt-2">
 							<h3 className="font-medium text-sub-text">곡 추가</h3>

@@ -244,6 +244,8 @@ export interface MusicPlayerSettings {
 	enabled: boolean;
 	items: MusicPlayerItem[];
 	defaultItemId?: string;
+	/** 방문자 초기 볼륨(0~100). 방문자가 직접 조절하면 그 값이 우선 */
+	defaultVolume?: number;
 }
 
 export interface MainSettings {

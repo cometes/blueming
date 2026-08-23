@@ -13,6 +13,8 @@ type MusicPlayerSettings = {
 	enabled: boolean;
 	items: MusicPlayerItem[];
 	defaultItemId?: string;
+	/** 방문자 초기 볼륨(0~100). 방문자가 직접 조절하면 그 값이 우선 */
+	defaultVolume?: number;
 };
 
 type PhotoboardSettings = {
@@ -149,10 +151,16 @@ export const validateMusicPlayerSettings = (
 			? defaultItemId.trim() || undefined
 			: undefined;
 
+	const defaultVolumeRaw = Number(value.defaultVolume);
+	const defaultVolume = Number.isFinite(defaultVolumeRaw)
+		? clampNumber(Math.round(defaultVolumeRaw), 0, 100)
+		: null;
+
 	return {
 		enabled,
 		items: normalizedItems,
 		...(normalizedDefaultItemId ? { defaultItemId: normalizedDefaultItemId } : {}),
+		...(defaultVolume !== null ? { defaultVolume } : {}),
 	};
 };
 
