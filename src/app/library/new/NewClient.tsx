@@ -19,6 +19,7 @@ import ProtectedContentGate from "./ProtectedContentGate";
 import EditorImageDropZone from "@/components/editor/EditorImageDropZone";
 import UrlPasteMenu from "@/components/editor/UrlPasteMenu";
 import BlockDropIndicator from "@/components/editor/BlockDropIndicator";
+import BlockDragHandle from "@/components/editor/BlockDragHandle";
 import { toast } from "sonner";
 import { useAdmin } from "@/features/admin/hooks/useAdmin";
 import { useAuthStore } from "@/store/auth/store";
@@ -142,6 +143,7 @@ export default function LibararyNewClient({
 			{dropIndicatorY != null && (
 				<BlockDropIndicator editor={editor} y={dropIndicatorY} />
 			)}
+			<BlockDragHandle editor={editor} />
 			<CreateModal
 				open={composer.metaOpen}
 				onOpenChange={composer.setMetaOpen}

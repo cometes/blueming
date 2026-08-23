@@ -3,28 +3,33 @@
 
 const MAX_INSERT_WIDTH = 800;
 
-/** 에디터 내 이미지 노드 이동 드래그를 식별하는 커스텀 MIME (dragstart 위치 기록) */
-export const IMAGE_MOVE_MIME = "application/x-blueming-image-move";
+/** 에디터 내 블록 이동 드래그를 식별하는 커스텀 MIME (dragstart 위치 기록) */
+export const BLOCK_MOVE_MIME = "application/x-blueming-block-move";
+/** @deprecated BLOCK_MOVE_MIME 사용 (이미지 전용이던 시절의 이름) */
+export const IMAGE_MOVE_MIME = BLOCK_MOVE_MIME;
 
 /**
- * 진행 중인 이미지 이동 드래그의 소스 정보.
+ * 진행 중인 블록 이동 드래그(이미지 본체 드래그·블록 핸들 드래그)의 소스 정보.
  * PM의 view.dragging은 실제 드래그 파이프라인에서 소실될 수 있어(브라우저/확장
  * 개입, NodeView stopEvent 등) 신뢰하지 않고 자체적으로 추적한다.
  * editor는 순환 의존을 피하기 위해 unknown으로 보관.
+ *
+ * 주의: Chrome은 <img> 드래그 시 dataTransfer.types에 Files를 포함시키므로,
+ * "내부 이동인지"의 판별은 types가 아니라 이 싱글턴으로만 해야 한다.
  */
-export const imageDragSource: { editor: unknown | null; from: number } = {
+export const blockDragSource: { editor: unknown | null; from: number } = {
 	editor: null,
 	from: -1,
 };
 
-export const setImageDragSource = (editor: unknown, from: number) => {
-	imageDragSource.editor = editor;
-	imageDragSource.from = from;
+export const setBlockDragSource = (editor: unknown, from: number) => {
+	blockDragSource.editor = editor;
+	blockDragSource.from = from;
 };
 
-export const clearImageDragSource = () => {
-	imageDragSource.editor = null;
-	imageDragSource.from = -1;
+export const clearBlockDragSource = () => {
+	blockDragSource.editor = null;
+	blockDragSource.from = -1;
 };
 
 export const IMAGE_URL_PATTERN =

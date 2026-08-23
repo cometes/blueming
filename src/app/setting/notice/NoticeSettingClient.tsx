@@ -4,6 +4,7 @@ import { EditorContent } from "@tiptap/react";
 import EditorImageDropZone from "@/components/editor/EditorImageDropZone";
 import UrlPasteMenu from "@/components/editor/UrlPasteMenu";
 import BlockDropIndicator from "@/components/editor/BlockDropIndicator";
+import BlockDragHandle from "@/components/editor/BlockDragHandle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -233,6 +234,7 @@ export default function NoticeSettingClient() {
 			{dropIndicatorY != null && (
 				<BlockDropIndicator editor={editor} y={dropIndicatorY} />
 			)}
+			<BlockDragHandle editor={editor} />
 
 			<Separator className="my-12" />
 

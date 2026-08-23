@@ -5,6 +5,7 @@ import { useRichEditor } from "@/components/editor/useRichEditor";
 import EditorImageDropZone from "@/components/editor/EditorImageDropZone";
 import UrlPasteMenu from "@/components/editor/UrlPasteMenu";
 import BlockDropIndicator from "@/components/editor/BlockDropIndicator";
+import BlockDragHandle from "@/components/editor/BlockDragHandle";
 import type { AnyExtension } from "@tiptap/core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -189,15 +190,16 @@ export default function ProfileSettingClient() {
 											<SimpleTiptapToolbar editor={editor} />
 										</div>
 
-										{/* Editor */}
-										<div className="border-card rounded-card bg-card-bg p-3.5 min-h-[120px]">
-											<EditorImageDropZone editor={editor}>
-												<EditorContent
-													editor={editor}
-													className="h-full w-full"
-												/>
-											</EditorImageDropZone>
-										</div>
+										{/* Editor — 카드(패딩 포함) 전체가 이미지 드롭존 */}
+										<EditorImageDropZone
+											editor={editor}
+											className="border-card rounded-card bg-card-bg p-3.5 min-h-[120px]"
+										>
+											<EditorContent
+												editor={editor}
+												className="h-full w-full"
+											/>
+										</EditorImageDropZone>
 										{urlPaste && (
 											<UrlPasteMenu
 												editor={editor}
@@ -208,6 +210,7 @@ export default function ProfileSettingClient() {
 										{dropIndicatorY != null && (
 											<BlockDropIndicator editor={editor} y={dropIndicatorY} />
 										)}
+										<BlockDragHandle editor={editor} />
 									</div>
 								)}
 							</div>
