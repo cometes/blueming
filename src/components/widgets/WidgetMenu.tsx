@@ -31,6 +31,7 @@ export default function WidgetMenu() {
 			갤러리: "/gallery",
 			메모: "/memo",
 			포토보드: "/photoboard",
+			스레드: "/thread",
 			방명록: "/guestbook",
 			설정: "/setting",
 		}),

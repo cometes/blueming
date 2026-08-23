@@ -11,6 +11,9 @@ export type NotificationType =
 	| "photoboard"
 	| "gallery"
 	| "libraryPost"
+	| "thread"
+	| "threadReply"
+	| "threadQuote"
 	| "mention";
 
 /** 알림 패널 탭 매핑: 전체 = 모두, 댓글 = comment, 멘션 = mention */

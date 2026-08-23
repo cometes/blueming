@@ -251,6 +251,10 @@ export interface MusicPlayerSettings {
 /** 디데이 위젯에서 여러 디데이를 보여주는 방식 */
 export type DdayDisplayMode = "grid" | "fade" | "slide";
 
+export interface ThreadsSettings {
+	writePermission?: "admin" | "manager" | "member";
+}
+
 export interface MainSettings {
 	customLayout?: CustomLayout;
 	slide?: SlideItem[];
@@ -264,6 +268,7 @@ export interface MainSettings {
 	photoboard?: PhotoboardSettings;
 	memo?: MemoSettings;
 	musicPlayer?: MusicPlayerSettings;
+	threads?: ThreadsSettings;
 }
 
 export interface LibrarySettings {

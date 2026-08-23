@@ -1,0 +1,208 @@
+"use client";
+
+/* eslint-disable @next/next/no-img-element */
+import { useRouter } from "next/navigation";
+import { CornerUpLeft, Lock, MessageCircle, Quote } from "lucide-react";
+import { cn } from "@/shared/lib/utils";
+import { formatRelativeTime, dateTimeConvert } from "@/shared/lib/date";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { renderContentWithMentions } from "@/features/mention/lib/renderMentions";
+import type { ThreadPost } from "@/features/thread/types";
+
+/** 유튜브 lazy 임베드 — 클릭 전엔 썸네일만 */
+export function YouTubeEmbed({ videoId }: { videoId: string }) {
+	return (
+		<div className="mt-2 overflow-hidden rounded-card border border-card aspect-video">
+			<iframe
+				src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+				title="YouTube video"
+				allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+				allowFullScreen
+				loading="lazy"
+				className="h-full w-full"
+			/>
+		</div>
+	);
+}
+
+export function ThreadImageGrid({
+	imageUrls,
+	onOpenImage,
+}: {
+	imageUrls: string[];
+	onOpenImage?: (urls: string[], index: number) => void;
+}) {
+	if (imageUrls.length === 0) return null;
+	return (
+		<div
+			className={cn(
+				"grid gap-1.5 mt-2",
+				imageUrls.length === 1 && "grid-cols-1",
+				imageUrls.length === 2 && "grid-cols-2",
+				imageUrls.length >= 3 && "grid-cols-2 grid-rows-2",
+			)}
+		>
+			{imageUrls.slice(0, 4).map((url, index) => (
+				<button
+					key={`${url}-${index}`}
+					type="button"
+					onClick={(e) => {
+						e.stopPropagation();
+						onOpenImage?.(imageUrls, index);
+					}}
+					className={cn(
+						"relative overflow-hidden rounded-card border border-card text-left",
+						imageUrls.length === 1 ? "aspect-[4/3]" : "aspect-square",
+						imageUrls.length === 3 && index === 0 && "row-span-2",
+					)}
+					aria-label={`이미지 ${index + 1} 확대 보기`}
+				>
+					<img
+						src={url}
+						alt="첨부 이미지"
+						className="absolute inset-0 h-full w-full object-cover"
+					/>
+				</button>
+			))}
+		</div>
+	);
+}
+
+interface ThreadPostCardProps {
+	post: ThreadPost;
+	onSelectTag?: (tag: string) => void;
+	onOpenImage?: (urls: string[], index: number) => void;
+	/** 상세 페이지에서 현재 보고 있는 글이면 강조 + 카드 클릭 이동 비활성 */
+	isFocused?: boolean;
+}
+
+/** 트위터식 피드 카드 — 카드 클릭 시 스레드 상세로 이동, 내부 요소는 stopPropagation */
+export default function ThreadPostCard({
+	post,
+	onSelectTag,
+	onOpenImage,
+	isFocused = false,
+}: ThreadPostCardProps) {
+	const router = useRouter();
+	const threadLink = `/thread/${post.rootId ?? post.id}`;
+
+	const handleCardClick = () => {
+		if (isFocused) return;
+		router.push(threadLink);
+	};
+
+	return (
+		<article
+			onClick={handleCardClick}
+			className={cn(
+				"border-b border-card-border px-4 py-3.5 transition-colors",
+				!isFocused && "cursor-pointer hover:bg-card-bg/40",
+				isFocused && "bg-card-bg/30",
+			)}
+		>
+			{post.replyToAuthorName && (
+				<p className="mb-1 flex items-center gap-1 text-xs text-sub-text">
+					<CornerUpLeft size={12} />
+					{post.replyToAuthorName}님의 글에 답글
+				</p>
+			)}
+
+			<div className="flex items-start gap-3">
+				<span className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-card bg-card-bg flex items-center justify-center text-xs text-sub-text">
+					{(post.author?.avatarUrl ?? "") ? (
+						<img
+							src={post.author?.avatarUrl}
+							alt=""
+							className="h-full w-full object-cover"
+						/>
+					) : (
+						(post.author?.name || "?").charAt(0)
+					)}
+				</span>
+
+				<div className="min-w-0 flex-1">
+					<div className="flex items-center gap-1.5 text-sm">
+						<span className="font-medium text-main-text truncate">
+							{post.author?.name || "사용자"}
+						</span>
+						{post.visibility === "member" && (
+							<Lock size={11} className="shrink-0 text-sub-text" />
+						)}
+						<span className="text-sub-text">·</span>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<span className="shrink-0 text-xs text-sub-text">
+									{formatRelativeTime(post.createdAt)}
+								</span>
+							</TooltipTrigger>
+							{post.createdAt && (
+								<TooltipContent>
+									{dateTimeConvert(post.createdAt)}
+								</TooltipContent>
+							)}
+						</Tooltip>
+					</div>
+
+					{post.locked ? (
+						<p className="mt-1.5 flex items-center gap-1.5 rounded-card border border-dashed border-card px-3 py-2.5 text-xs text-sub-text">
+							<Lock size={12} />
+							멤버 공개 게시글입니다. 로그인 후 볼 수 있어요.
+						</p>
+					) : (
+						<>
+							<div className="mt-0.5 whitespace-pre-wrap break-words text-sm text-main-text leading-relaxed">
+								{renderContentWithMentions(post.content ?? "", post.mentions)}
+							</div>
+
+							<ThreadImageGrid
+								imageUrls={post.imageUrls}
+								onOpenImage={onOpenImage}
+							/>
+							{post.youtubeVideoId && (
+								<div onClick={(e) => e.stopPropagation()}>
+									<YouTubeEmbed videoId={post.youtubeVideoId} />
+								</div>
+							)}
+
+							{post.tags.length > 0 && (
+								<div className="mt-2 flex flex-wrap gap-1.5">
+									{post.tags.map((tag) => (
+										<button
+											key={tag}
+											type="button"
+											onClick={(e) => {
+												e.stopPropagation();
+												onSelectTag?.(tag);
+											}}
+											className="rounded-full border border-card bg-card-bg px-2 py-0.5 text-[11px] text-sub-text hover:border-theme-primary hover:text-theme-primary"
+										>
+											#{tag}
+										</button>
+									))}
+								</div>
+							)}
+						</>
+					)}
+
+					{/* 액션 바 — 1차: 답글 수 + 인용 수(표시만, 인용 플로우는 PR3) */}
+					<div className="mt-2 flex items-center gap-5 text-sub-text">
+						<span className="flex items-center gap-1 text-xs">
+							<MessageCircle size={14} />
+							{post.replyCount > 0 ? post.replyCount : ""}
+						</span>
+						{post.quoteCount > 0 && (
+							<span className="flex items-center gap-1 text-xs">
+								<Quote size={13} />
+								{post.quoteCount}
+							</span>
+						)}
+					</div>
+				</div>
+			</div>
+		</article>
+	);
+}
