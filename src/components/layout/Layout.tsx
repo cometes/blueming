@@ -1,11 +1,16 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { cn } from "@/shared/lib/utils";
 import WidgetMenu from "../widgets/WidgetMenu";
-import BackgroundEffect from "../effects/BackgroundEffect";
 import { useSettings } from "@/contexts/SettingsContext";
+
+// 순수 장식 레이어 — 초기 번들·SSR에서 제외해 첫 페인트를 막지 않는다
+const BackgroundEffect = dynamic(() => import("../effects/BackgroundEffect"), {
+	ssr: false,
+});
 
 interface LayoutProps {
 	children: React.ReactNode;

@@ -45,10 +45,7 @@ export const useLibraryListData = ({
 
 		const loadTags = async () => {
 			try {
-				const { data } = await fetchLibraryTags({
-					useCache: true,
-					staleTimeMs: 60_000,
-				});
+				const { data } = await fetchLibraryTags();
 				if (Array.isArray(data)) {
 					setTagOptions(data);
 				}
