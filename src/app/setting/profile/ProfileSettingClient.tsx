@@ -190,15 +190,16 @@ export default function ProfileSettingClient() {
 											<SimpleTiptapToolbar editor={editor} />
 										</div>
 
-										{/* Editor */}
-										<div className="border-card rounded-card bg-card-bg p-3.5 min-h-[120px]">
-											<EditorImageDropZone editor={editor}>
-												<EditorContent
-													editor={editor}
-													className="h-full w-full"
-												/>
-											</EditorImageDropZone>
-										</div>
+										{/* Editor — 카드(패딩 포함) 전체가 이미지 드롭존 */}
+										<EditorImageDropZone
+											editor={editor}
+											className="border-card rounded-card bg-card-bg p-3.5 min-h-[120px]"
+										>
+											<EditorContent
+												editor={editor}
+												className="h-full w-full"
+											/>
+										</EditorImageDropZone>
 										{urlPaste && (
 											<UrlPasteMenu
 												editor={editor}
@@ -209,7 +210,7 @@ export default function ProfileSettingClient() {
 										{dropIndicatorY != null && (
 											<BlockDropIndicator editor={editor} y={dropIndicatorY} />
 										)}
-			<BlockDragHandle editor={editor} />
+										<BlockDragHandle editor={editor} />
 									</div>
 								)}
 							</div>
