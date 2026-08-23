@@ -43,7 +43,7 @@ export const editorHasContent = (editor: Editor) => {
 };
 
 /** 삽입 시작 위치 계산: 노드 선택(이미지 등)을 대체하지 않도록 항상 selection 끝 기준 */
-const resolveInsertPos = (editor: Editor, insertPos?: number | "end") => {
+export const resolveInsertPos = (editor: Editor, insertPos?: number | "end") => {
 	if (insertPos === "end") {
 		// "문서 끝" = 트레일링 빈 문단이 있으면 그 앞.
 		// doc.content.size(빈 문단 뒤)에 넣으면 그 빈 문단이 이미지 위에 남는다.
@@ -102,7 +102,7 @@ export const getBlockDrop = (
 };
 
 /** 추적 중인 이미지(imageDragSource)를 clientY 기준 블록 위치로 이동 (한 트랜잭션) */
-const moveTrackedImageTo = (editor: Editor, clientY: number) => {
+export const moveTrackedImageTo = (editor: Editor, clientY: number) => {
 	const from = imageDragSource.from;
 	const view = editor.view;
 	const node = from >= 0 ? view.state.doc.nodeAt(from) : null;
