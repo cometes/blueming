@@ -8,6 +8,7 @@ import { revalidateSettingsCache } from "@/shared/lib/http/revalidateSettings";
 import type {
 	CustomLayout,
 	DdayData,
+	DdayDisplayMode,
 	ImageWidgetSettings,
 	MemoSettings,
 	Notice,
@@ -121,11 +122,18 @@ export const setSettingsMainWeatherClock = async (value: WeatherClockSettings) =
 	}
 };
 
-export const setSettingsMainDday = async (value: DdayData[]) => {
+export const setSettingsMainDday = async (
+	value: DdayData[],
+	displayMode?: DdayDisplayMode,
+) => {
 	try {
 		const headers = await getAuthHeader();
 		return await withSettingsRevalidation(async () => {
-			const response = await httpClient.post("/settings/main/dday", { value }, { headers });
+			const response = await httpClient.post(
+				"/settings/main/dday",
+				{ value, ...(displayMode !== undefined && { displayMode }) },
+				{ headers },
+			);
 			return response.data;
 		});
 	} catch (error) {

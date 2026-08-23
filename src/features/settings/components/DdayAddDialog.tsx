@@ -125,21 +125,21 @@ export default function DdayAddDialog({
 			return;
 		}
 
-		if (!pendingImage) {
-			toast.error("이미지를 업로드해주세요.");
-			return;
-		}
-
 		try {
-			const uploadedUrl = await uploadFile(pendingImage.file);
+			// 파일 업로드는 선택 시에만 — 에셋에서 고른 경우 URL을 그대로 사용
+			const imageUrl = pendingImage
+				? await uploadFile(pendingImage.file)
+				: thumbnail;
 			onAdd({
 				title,
 				date: format(date, "yyyy-MM-dd"),
-				image: uploadedUrl,
+				image: imageUrl,
 				target: addToWidget ? "true" : "false",
 			});
 
-			URL.revokeObjectURL(pendingImage.previewUrl);
+			if (pendingImage) {
+				URL.revokeObjectURL(pendingImage.previewUrl);
+			}
 			setPendingImage(null);
 			setThumbnail("");
 			setTitle("");
@@ -272,11 +272,6 @@ export default function DdayAddDialog({
 								maxLength={8}
 								className="rounded-card border-card bg-card-bg"
 							/>
-							{date ? (
-								<p className="text-xs text-sub-text">
-									변환됨: {format(date, "yyyy-MM-dd")}
-								</p>
-							) : null}
 							{dateError ? (
 								<p className="text-xs text-red-500">{dateError}</p>
 							) : null}
