@@ -20,24 +20,36 @@ import { useSettingStatus } from "@/hooks/useSettingStatus";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
 import DdayItem from "@/features/settings/components/dday/DdayItem";
 import DdayAddDialog from "@/features/settings/components/DdayAddDialog";
+import RadioItem from "@/components/items/RadioItem";
 import { setSettingsMainDday } from "@/features/settings/api/main";
-import type { DdayData } from "@/features/settings/types";
+import type { DdayData, DdayDisplayMode } from "@/features/settings/types";
 
 const MAX_DDAY = 8;
+
+const DISPLAY_MODES: Array<{ value: DdayDisplayMode; label: string }> = [
+	{ value: "grid", label: "그리드 (전부 표시)" },
+	{ value: "fade", label: "페이드 전환" },
+	{ value: "slide", label: "슬라이드 전환" },
+];
 
 export default function DdaySettingClient() {
 	const settings = useSettings();
 	const refreshSettings = settings.refreshSettings;
 	const updateMain = settings.updateMain;
 	const [ddayList, setDdayList] = useState<DdayData[]>([]);
+	const [displayMode, setDisplayMode] = useState<DdayDisplayMode>("grid");
 	const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 	const [showResetDialog, setShowResetDialog] = useState(false);
 	const [isSyncing, setIsSyncing] = useState(true);
 	const isDirty = useMemo(() => {
 		if (isSyncing) return false;
 		const baseline = settings.main?.dday || [];
-		return JSON.stringify(ddayList) !== JSON.stringify(baseline);
-	}, [ddayList, settings.main?.dday, isSyncing]);
+		const baselineMode = settings.main?.ddayDisplayMode || "grid";
+		return (
+			JSON.stringify(ddayList) !== JSON.stringify(baseline) ||
+			displayMode !== baselineMode
+		);
+	}, [ddayList, displayMode, settings.main?.dday, settings.main?.ddayDisplayMode, isSyncing]);
 	useSettingStatus("dday", isDirty ? "dirty" : "saved");
 	useSettingHeaderAction(
 		<Button
@@ -64,8 +76,9 @@ export default function DdaySettingClient() {
 		if (settings.main?.dday) {
 			setDdayList(settings.main.dday);
 		}
+		setDisplayMode(settings.main?.ddayDisplayMode || "grid");
 		setIsSyncing(false);
-	}, [settings.main?.dday]);
+	}, [settings.main?.dday, settings.main?.ddayDisplayMode]);
 
 	// Add dday
 	const handleAddDday = useCallback(
@@ -132,8 +145,8 @@ export default function DdaySettingClient() {
 			e.preventDefault();
 
 			try {
-				await setSettingsMainDday(ddayList);
-				updateMain?.({ dday: ddayList });
+				await setSettingsMainDday(ddayList, displayMode);
+				updateMain?.({ dday: ddayList, ddayDisplayMode: displayMode });
 				await refreshSettings?.({ broadcast: true });
 
 				const channel = new BroadcastChannel("ddayUpdated");
@@ -145,7 +158,7 @@ export default function DdaySettingClient() {
 				toast.error("저장에 실패했습니다.");
 			}
 		},
-		[ddayList, refreshSettings, updateMain]
+		[ddayList, displayMode, refreshSettings, updateMain]
 	);
 
 	// Reset
@@ -184,6 +197,25 @@ export default function DdaySettingClient() {
 					</p>
 
 					<div className="section-wrap mt-6">
+						<div className="section-box flex items-center mb-6">
+							<div className="text-box w-[220px] pr-5">
+								<h3 className="font-medium text-sub-text">위젯 표시 방식</h3>
+								<p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+									위젯에 추가된 디데이가 여러 개일 때 보여지는 방식
+								</p>
+							</div>
+							<div className="grid grid-cols-3 gap-3">
+								{DISPLAY_MODES.map((mode) => (
+									<RadioItem
+										key={mode.value}
+										onClickRadio={() => setDisplayMode(mode.value)}
+										checked={displayMode === mode.value}
+										content={mode.label}
+									/>
+								))}
+							</div>
+						</div>
+
 						<div className="flex justify-end mb-6">
 							<Button type="button" onClick={() => setIsAddDialogOpen(true)}>
 								<Plus size={14} className="mr-2" />
