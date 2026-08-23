@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
 			filename: file.filename,
 			mimeType: file.mimeType,
 			url: file.url,
+			// 삭제/정리 시 URL 역파싱 없이 쓸 수 있도록 노출
+			storagePath: file.storagePath,
 		})),
 	});
 }

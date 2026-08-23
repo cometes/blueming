@@ -4,6 +4,10 @@ import { jsonError, jsonOk } from "@/app/api/_lib/response";
 import { getBucket, getDb } from "@/app/api/_lib/admin";
 import { requireAuth } from "@/app/api/_lib/auth";
 import { normalizeStringArray } from "@/app/api/_lib/library";
+import {
+	EDITOR_IMAGE_PREFIX,
+	extractStoragePaths,
+} from "@/app/api/_lib/imageRefs";
 
 export const runtime = "nodejs";
 
@@ -64,14 +68,48 @@ export async function DELETE(
 		const series = typeof metadata?.series === "string" ? metadata.series : "";
 		const tags = normalizeStringArray(metadata?.tags);
 
+		// 본문 이미지 수집은 반드시 문서/본문 삭제 "전에" 수행한다.
+		// 삭제 대상은 에디터 업로드 prefix(library/create/images/) 아래로 한정 —
+		// 에셋 피커 등에서 온 공용 이미지를 지우지 않기 위함.
+		// (평면 폴더라 여러 글이 같은 파일을 참조(복붙)할 수 있는 이론적 리스크는
+		//  개인 블로그 규모에서 수용, 잔여물은 관리자 일괄 정리가 안전망)
+		const contentPath = `library/create/contents/${documentId}/content.json`;
+		const imagePaths = new Set<string>();
+		try {
+			const [contentBuffer] = await bucket.file(contentPath).download();
+			for (const path of extractStoragePaths(
+				contentBuffer.toString("utf-8"),
+				bucket.name,
+			)) {
+				if (path.startsWith(EDITOR_IMAGE_PREFIX)) imagePaths.add(path);
+			}
+		} catch {
+			// 본문 파일이 없어도 글 삭제는 진행
+		}
+		// 썸네일 등 문서 메타데이터에 박힌 자기 버킷 이미지도 수집
+		for (const path of extractStoragePaths(JSON.stringify(metadata), bucket.name)) {
+			if (path.startsWith(EDITOR_IMAGE_PREFIX)) imagePaths.add(path);
+		}
+
 		await docRef.delete();
 
-		const contentPath = `library/create/contents/${documentId}/content.json`;
 		try {
 			await bucket.file(contentPath).delete({ ignoreNotFound: true });
 		} catch (error) {
 			console.error("Error deleting content file:", error);
 		}
+
+		// 본문 이미지 삭제 실패는 비치명 — 로그만 남기고 계속 진행
+		await Promise.all(
+			Array.from(imagePaths).map((path) =>
+				bucket
+					.file(path)
+					.delete({ ignoreNotFound: true })
+					.catch((error) =>
+						console.warn(`Error deleting post image ${path}:`, error),
+					),
+			),
+		);
 
 		if (series) {
 			await removeCollectionPost(db, "series", series, documentId);
