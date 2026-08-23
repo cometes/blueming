@@ -18,6 +18,9 @@ interface PhotoboardSettingsDialogProps {
 	tempWritePermission: "admin" | "manager" | "member";
 	setTempWritePermission: (permission: "admin" | "manager" | "member") => void;
 	showManagerOption?: boolean;
+	/** 지정 시 "답글 작성 권한" 섹션 표시 (메모 페이지 전용) */
+	tempReplyPermission?: "author" | "member";
+	setTempReplyPermission?: (permission: "author" | "member") => void;
 	title?: string;
 	onSave: () => void;
 	trigger: React.ReactNode;
@@ -31,6 +34,8 @@ export default function PhotoboardSettingsDialog({
 	tempWritePermission,
 	setTempWritePermission,
 	showManagerOption = false,
+	tempReplyPermission,
+	setTempReplyPermission,
 	title = "포토보드 페이지 설정",
 	onSave,
 	trigger,
@@ -108,6 +113,32 @@ export default function PhotoboardSettingsDialog({
 									</Button>
 								</div>
 							</div>
+							{tempReplyPermission !== undefined && setTempReplyPermission ? (
+								<div>
+									<p className="font-title">답글 작성 권한</p>
+									<div className="flex gap-2 mt-2">
+										<Button
+											variant={
+												tempReplyPermission === "author" ? "default" : "ghost"
+											}
+											onClick={() => setTempReplyPermission("author")}
+										>
+											<Lock /> 작성자만
+										</Button>
+										<Button
+											variant={
+												tempReplyPermission === "member" ? "default" : "ghost"
+											}
+											onClick={() => setTempReplyPermission("member")}
+										>
+											<User /> 회원 누구나
+										</Button>
+									</div>
+									<p className="text-xs text-sub-text mt-1.5">
+										회원 누구나로 설정하면 다른 회원이 메모 타래에 답글을 이을 수 있습니다
+									</p>
+								</div>
+							) : null}
 						</div>
 					</div>
 				</DialogHeader>

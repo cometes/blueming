@@ -129,6 +129,8 @@ export const useMemoDetailController = ({
 		handleVerifyPassword: memoData.handleVerifyPassword,
 		// memoReply
 		message: memoReply.message,
+		mentions: memoReply.mentions,
+		setMentions: memoReply.setMentions,
 		images: memoReply.images,
 		isSubmitting: memoReply.isSubmitting,
 		canSubmit: memoReply.canSubmit,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { renderContentWithMentions } from "@/features/mention/lib/renderMentions";
 import { Lock, Pencil, ShieldCheck, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -217,7 +218,7 @@ export default function CommentItem({
 								isOwn ? "text-white" : "text-main-text",
 							)}
 						>
-							{displayMessage}
+							{renderContentWithMentions(displayMessage, comment.mentions)}
 						</p>
 					)}
 

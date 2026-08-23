@@ -24,6 +24,7 @@ export const createGuestbookEntry = async (payload: {
 	pin?: string;
 	isSecret?: boolean;
 	imageUrls?: string[];
+	mentions?: Array<{ uid: string; name: string }>;
 }) => {
 	try {
 		const response = await httpClient.post("/guestbook", payload);

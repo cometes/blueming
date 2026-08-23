@@ -7,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 import { ImagePlus, Lock, Send } from "lucide-react";
 import type { CommentImage } from "@/features/comment/hooks/useCommentForm";
+import MentionTextarea from "@/components/common/MentionTextarea";
+import type { MentionEntry } from "@/features/mention/types";
 
 const MAX_IMAGE_COUNT = 8;
 
@@ -19,6 +21,8 @@ interface CommentFormProps {
 	onPinChange: (value: string) => void;
 	message: string;
 	onMessageChange: (value: string) => void;
+	mentions: MentionEntry[];
+	onMentionsChange: (mentions: MentionEntry[]) => void;
 	isSecret: boolean;
 	onIsSecretChange: (value: boolean) => void;
 	images: CommentImage[];
@@ -39,6 +43,8 @@ export default function CommentForm({
 	onPinChange,
 	message,
 	onMessageChange,
+	mentions,
+	onMentionsChange,
 	isSecret,
 	onIsSecretChange,
 	images,
@@ -83,10 +89,12 @@ export default function CommentForm({
 
 						{/* 메시지 입력 */}
 						<div className="relative">
-							<textarea
+							<MentionTextarea
 								value={message}
-								onChange={(e) => onMessageChange(e.target.value)}
-								placeholder="메시지를 입력하세요..."
+								onValueChange={onMessageChange}
+								mentions={mentions}
+								onMentionsChange={onMentionsChange}
+								placeholder="메시지를 입력하세요... (@로 회원 언급)"
 								maxLength={500}
 								rows={2}
 								className="w-full rounded-card border-card bg-card px-3 py-2 pr-10 text-sm text-main-text resize-none"

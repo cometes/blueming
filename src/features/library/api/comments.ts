@@ -29,6 +29,7 @@ export const createComment = async (
 		pin?: string;
 		isSecret?: boolean;
 		imageUrls?: string[];
+		mentions?: Array<{ uid: string; name: string }>;
 	},
 ) => {
 	const response = await httpClient.post<{ id: string }>(

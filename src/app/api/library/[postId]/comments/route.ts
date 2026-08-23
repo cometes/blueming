@@ -21,6 +21,10 @@ import {
 	getAdminRecipientUids,
 	type NotificationActor,
 } from "@/app/api/_lib/notifications";
+import {
+	emitMentionNotifications,
+	validateMentions,
+} from "@/app/api/_lib/mentions";
 
 export const runtime = "nodejs";
 
@@ -35,7 +39,8 @@ const notifyNewComment = async (
 	postId: string,
 	actor: NotificationActor,
 	message: string,
-	isSecret: boolean
+	isSecret: boolean,
+	excludeUids: string[] = []
 ) => {
 	const postSnapshot = await db.collection("library").doc(postId).get();
 	const postData = postSnapshot.exists ? postSnapshot.data() || {} : {};
@@ -51,7 +56,9 @@ const notifyNewComment = async (
 	const admins = await getAdminRecipientUids();
 	await emitNotification({
 		actor,
-		recipients: [...admins, postAuthorId],
+		recipients: [...admins, postAuthorId].filter(
+			(uid) => !uid || !excludeUids.includes(uid)
+		),
 		type: "comment",
 		category: "comment",
 		message: `${actor.name}님이 ${title ? `"${title}"에 ` : ""}댓글을 남겼습니다`,
@@ -145,6 +152,8 @@ export async function GET(
 				isOwn,
 				displayMessage,
 				displayImageUrls,
+				mentions:
+					canViewDirectly && Array.isArray(data.mentions) ? data.mentions : [],
 				authorLabel,
 				createdAt: data.createdAt?.toDate?.()?.toISOString() ?? null,
 				updatedAt: data.updatedAt?.toDate?.()?.toISOString() ?? null,
@@ -197,6 +206,8 @@ export async function POST(
 			return jsonError(400, "Message is required.");
 		}
 
+		const mentions = await validateMentions(body?.mentions, message);
+
 		if (authContext?.uid) {
 			const entry = {
 				postId,
@@ -208,6 +219,7 @@ export async function POST(
 				isSecret,
 				imageUrls,
 				message,
+				mentions,
 				createdAt: admin.firestore.FieldValue.serverTimestamp(),
 				updatedAt: null,
 			};
@@ -215,7 +227,15 @@ export async function POST(
 			const docRef = await getCommentCollection(db, postId).add(entry);
 			await updateLibraryCommentCount(postId, 1);
 			try {
-				await notifyNewComment(db, postId, actorFromAuth(authContext), message, isSecret);
+				const actor = actorFromAuth(authContext);
+				const excerpt = isSecret ? "비밀 댓글입니다." : message;
+				const mentioned = await emitMentionNotifications({
+					actor,
+					mentions,
+					excerpt,
+					link: `/library/${postId}`,
+				});
+				await notifyNewComment(db, postId, actor, message, isSecret, mentioned);
 			} catch (notifyError) {
 				console.error("Error emitting comment notification:", notifyError);
 			}
@@ -237,6 +257,7 @@ export async function POST(
 			isSecret,
 			imageUrls,
 			message,
+			mentions,
 			pinSalt: salt,
 			pinHash: hash,
 			createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -246,7 +267,15 @@ export async function POST(
 		const docRef = await getCommentCollection(db, postId).add(entry);
 		await updateLibraryCommentCount(postId, 1);
 		try {
-			await notifyNewComment(db, postId, anonActor(displayName), message, isSecret);
+			const actor = anonActor(displayName);
+			const excerpt = isSecret ? "비밀 댓글입니다." : message;
+			const mentioned = await emitMentionNotifications({
+				actor,
+				mentions,
+				excerpt,
+				link: `/library/${postId}`,
+			});
+			await notifyNewComment(db, postId, actor, message, isSecret, mentioned);
 		} catch (notifyError) {
 			console.error("Error emitting comment notification:", notifyError);
 		}

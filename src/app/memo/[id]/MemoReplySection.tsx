@@ -2,7 +2,9 @@
 
 import { ImagePlus, MoreHorizontal, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import MentionTextarea from "@/components/common/MentionTextarea";
+import { renderContentWithMentions } from "@/features/mention/lib/renderMentions";
+import type { MentionEntry } from "@/features/mention/types";
 import { cn } from "@/shared/lib/utils";
 import { dateTimeConvert } from "@/shared/lib/date";
 import {
@@ -17,10 +19,13 @@ import type { RefObject } from "react";
 
 interface MemoReplySectionProps {
 	replies: MemoReply[];
-	isOwner: boolean;
+	/** 답글 작성 폼 노출 여부 (작성자 또는 replyPermission=member인 경우 회원) */
+	canReply: boolean;
 	isAuthLoading: boolean;
 	currentUserId: string | undefined | null;
 	message: string;
+	mentions: MentionEntry[];
+	onMentionsChange: (mentions: MentionEntry[]) => void;
 	images: CommentImage[];
 	isSubmitting: boolean;
 	canSubmit: boolean;
@@ -36,10 +41,12 @@ interface MemoReplySectionProps {
 
 export default function MemoReplySection({
 	replies,
-	isOwner,
+	canReply,
 	isAuthLoading,
 	currentUserId,
 	message,
+	mentions,
+	onMentionsChange,
 	images,
 	isSubmitting,
 	canSubmit,
@@ -116,7 +123,7 @@ export default function MemoReplySection({
 									)}
 								</div>
 								<div className="text-sm text-main-text whitespace-pre-line leading-relaxed mt-2.5">
-									{reply.content}
+									{renderContentWithMentions(reply.content, reply.mentions)}
 								</div>
 								{reply.imageUrls && (reply.imageUrls?.length ?? 0) > 0 && (
 									<div
@@ -162,7 +169,7 @@ export default function MemoReplySection({
 				</div>
 			)}
 
-			{replies.length === 0 && !isOwner && (
+			{replies.length === 0 && !canReply && (
 				<>
 					<hr className="border-card-border" />
 					<div className="p-6 text-center text-sub-text">
@@ -171,20 +178,22 @@ export default function MemoReplySection({
 				</>
 			)}
 
-			{isOwner && (
+			{canReply && (
 				<div className="border-t border-card-border p-3 bg-card-bg">
 					{isAuthLoading ? (
 						<div className="text-xs text-sub-text">로딩 중...</div>
 					) : (
 						<div className="space-y-2">
 							<div className="relative">
-								<Textarea
+								<MentionTextarea
 									ref={messageRef}
 									value={message}
-									onChange={(e) => onMessageChange(e.target.value)}
-									placeholder="메시지를 입력하세요..."
+									onValueChange={onMessageChange}
+									mentions={mentions}
+									onMentionsChange={onMentionsChange}
+									placeholder="메시지를 입력하세요... (@로 회원 언급)"
 									rows={2}
-									className="w-full pr-10 resize-none overflow-hidden"
+									className="w-full min-h-16 rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs md:text-sm pr-10 resize-none overflow-hidden"
 									onKeyDown={(e) => {
 										if (e.key === "Enter" && !e.shiftKey && canSubmit) {
 											e.preventDefault();

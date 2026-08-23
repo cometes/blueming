@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import MentionTextarea from "@/components/common/MentionTextarea";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -142,10 +143,12 @@ export default function GuestbookClient({
 					)}
 					<div>
 						<p className="text-sm text-sub-text mb-1">message</p>
-						<textarea
+						<MentionTextarea
 							value={form.message}
-							onChange={(e) => form.setMessage(e.target.value)}
-							placeholder="메시지를 입력해주세요"
+							onValueChange={form.setMessage}
+							mentions={form.mentions}
+							onMentionsChange={form.setMentions}
+							placeholder="메시지를 입력해주세요 (@로 회원 언급)"
 							maxLength={500}
 							className="w-full min-h-[120px] rounded-card border-card bg-card-bg px-4 py-3 text-sm text-main-text resize-none"
 						/>

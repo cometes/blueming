@@ -99,6 +99,7 @@ export function useGuestbookController({
 			);
 			await createGuestbookEntry({
 				message: form.message,
+				mentions: form.mentions.length > 0 ? form.mentions : undefined,
 				displayName: resolvedMode === "anon" ? form.displayName : undefined,
 				pin: resolvedMode === "anon" ? form.pin : undefined,
 				isSecret: form.isSecret,

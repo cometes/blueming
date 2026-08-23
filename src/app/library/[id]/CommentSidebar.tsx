@@ -16,6 +16,7 @@ import AssetGrid from "@/components/asset/AssetGrid";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth/store";
 import { createImageId, type CommentImage } from "@/features/comment/hooks/useCommentForm";
+import type { MentionEntry } from "@/features/mention/types";
 import {
 	revokeCommentImageUrls,
 	useCommentImageManager,
@@ -44,6 +45,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 	const [displayName, setDisplayName] = useState("");
 	const [pin, setPin] = useState("");
 	const [message, setMessage] = useState("");
+	const [mentions, setMentions] = useState<MentionEntry[]>([]);
 	const [images, setImages] = useState<CommentImage[]>([]);
 	const [isSecret, setIsSecret] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -192,6 +194,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 			);
 			await createComment(postId, {
 				message,
+				mentions: mentions.length > 0 ? mentions : undefined,
 				displayName: resolvedMode === "anon" ? displayName : undefined,
 				pin: resolvedMode === "anon" ? pin : undefined,
 				isSecret,
@@ -199,6 +202,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 			});
 			toast.success("댓글이 등록되었습니다.");
 			setMessage("");
+			setMentions([]);
 			setIsSecret(false);
 			revokeCommentImageUrls(images);
 			setImages([]);
@@ -223,6 +227,7 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 		isSecret,
 		imageManager,
 		loadComments,
+		mentions,
 		message,
 		images,
 		pin,
@@ -351,6 +356,8 @@ export default function CommentSidebar({ postId }: CommentSidebarProps) {
 				pin={pin}
 				onPinChange={setPin}
 				message={message}
+				mentions={mentions}
+				onMentionsChange={setMentions}
 				onMessageChange={setMessage}
 				isSecret={isSecret}
 				onIsSecretChange={setIsSecret}

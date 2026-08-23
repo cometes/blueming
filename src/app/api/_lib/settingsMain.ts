@@ -21,6 +21,8 @@ type PhotoboardSettings = {
 type MemoSettings = {
 	postsPerRow: number;
 	writePermission: "admin" | "manager" | "member";
+	/** 답글 권한: author = 메모 작성자만(기본), member = 활성 회원 누구나 */
+	replyPermission: "author" | "member";
 };
 
 const YT_VIDEO_ID_RE = /^[a-zA-Z0-9_-]{11}$/;
@@ -174,9 +176,13 @@ export const validateMemoSettings = (value: unknown): MemoSettings | null => {
 	)
 		return null;
 
+	const replyPermission =
+		value.replyPermission === "member" ? "member" : "author";
+
 	return {
 		postsPerRow: clampNumber(Math.floor(postsPerRow), 1, 5),
 		writePermission,
+		replyPermission,
 	};
 };
 

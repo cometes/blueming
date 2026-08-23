@@ -225,6 +225,8 @@ export interface PhotoboardSettings {
 export interface MemoSettings {
 	postsPerRow?: number;
 	writePermission?: "admin" | "manager" | "member";
+	/** 답글 권한: author = 메모 작성자만(기본), member = 활성 회원 누구나 */
+	replyPermission?: "author" | "member";
 }
 
 export interface MainSettings {

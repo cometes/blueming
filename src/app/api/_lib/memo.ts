@@ -88,6 +88,7 @@ export const toMemoReply = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
 		createdAt: formatTimestamp(data.createdAt),
 		updatedAt: formatTimestamp(data.updatedAt),
 		imageUrls: Array.isArray(data.imageUrls) ? data.imageUrls : [],
+		mentions: Array.isArray(data.mentions) ? data.mentions : [],
 	};
 };
 

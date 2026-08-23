@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { renderContentWithMentions } from "@/features/mention/lib/renderMentions";
 import { Lock, Pencil, ShieldCheck, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/shared/lib/utils";
@@ -86,7 +87,7 @@ export default function GuestbookItem({
 							</div>
 						) : (
 							<p className="text-sm text-sub-text break-words">
-								{displayMessage}
+								{renderContentWithMentions(displayMessage, entry.mentions)}
 							</p>
 						)}
 						{imageUrls.length > 0 && showSecretContent && (
