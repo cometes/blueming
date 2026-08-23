@@ -45,16 +45,12 @@ export const useSettingsSync = ({
 						? new URL(settingsPath, "http://localhost")
 						: new URL(settingsPath, window.location.origin);
 
-				if (options?.noCache ?? true) {
-					url.searchParams.set("ts", Date.now().toString());
-				}
-
-				const res = await fetch(url.toString(), {
-					cache: "no-store",
-					headers: {
-						"Cache-Control": "no-cache",
-					},
-				});
+				// 캐시버스터(?ts=)와 no-store를 쓰지 않는다 — 서버 신선도는
+				// 쓰기 라우트의 revalidateTag("settings")가 보장하고, 브라우저는
+				// ETag 협상(304)으로 전송량을 아낀다. options.noCache는 하위
+				// 호환을 위해 시그니처만 유지한다.
+				void options?.noCache;
+				const res = await fetch(url.toString());
 
 				if (!res.ok) {
 					setLoading(false);
