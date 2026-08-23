@@ -38,5 +38,28 @@ export const createThreadPost = async (
 	}
 };
 
+export interface ThreadDetailResponse {
+	requiresMemberAccess: boolean;
+	root: ThreadPost | null;
+	replies: ThreadPost[];
+	focusId?: string | null;
+}
+
+export const fetchThreadDetail = async (
+	id: string,
+): Promise<ThreadDetailResponse> => {
+	const response = await httpClient.get<ThreadDetailResponse>(`/thread/${id}`);
+	return response.data;
+};
+
+export const deleteThreadPost = async (id: string): Promise<void> => {
+	try {
+		const headers = await getAuthHeader();
+		await httpClient.delete(`/thread/${id}`, { headers });
+	} catch (error) {
+		throw new Error(getApiErrorMessage(error, "글 삭제에 실패했습니다."));
+	}
+};
+
 export const uploadThreadImages = async (files: File[]): Promise<string[]> =>
 	uploadFiles({ files, endpoint: "/api/thread/uploadImage" });
