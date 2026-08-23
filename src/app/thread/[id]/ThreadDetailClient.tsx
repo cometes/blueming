@@ -63,6 +63,8 @@ export default function ThreadDetailClient({
 		urls: string[];
 		index: number;
 	} | null>(null);
+	/** 분기 답글 대상 (null = 루트에 답글) */
+	const [replyTarget, setReplyTarget] = useState<ThreadPost | null>(null);
 
 	const reload = useCallback(async () => {
 		try {
@@ -100,7 +102,19 @@ export default function ThreadDetailClient({
 		setRoot((prev) =>
 			prev ? { ...prev, replyCount: prev.replyCount + 1 } : prev,
 		);
+		setReplyTarget(null);
 	}, []);
+
+	// 답글 아이콘 클릭 → 그 글을 답글 대상으로 지정하고 컴포저로 스크롤
+	const handleSelectReplyTarget = useCallback(
+		(post: ThreadPost) => {
+			setReplyTarget(post.id === root?.id ? null : post);
+			document
+				.getElementById("thread-reply-composer")
+				?.scrollIntoView({ behavior: "smooth", block: "center" });
+		},
+		[root?.id],
+	);
 
 	const handleDelete = useCallback(
 		async (post: ThreadPost) => {
@@ -157,6 +171,8 @@ export default function ThreadDetailClient({
 				connectBottom={options.connectBottom}
 				noBorder={options.noBorder}
 				hideReplyLabel={options.hideReplyLabel}
+				disableNavigation
+				onReply={canWrite ? handleSelectReplyTarget : undefined}
 				onOpenImage={(urls, index) => setImageModal({ urls, index })}
 				onSelectTag={() => router.push("/thread")}
 			/>
@@ -221,21 +237,37 @@ export default function ThreadDetailClient({
 					<>
 						{renderPost(root, { isFocused: true })}
 						{canWrite && (
-							<ThreadComposer
-								parentId={root.id}
-								parentVisibility={root.visibility}
-								placeholder="답글을 남겨보세요..."
-								onPosted={handleReplyPosted}
-							/>
+							<div id="thread-reply-composer">
+								<ThreadComposer
+									parentId={replyTarget?.id ?? root.id}
+									parentVisibility={root.visibility}
+									replyToName={
+										replyTarget
+											? replyTarget.author?.name || "사용자"
+											: null
+									}
+									onClearReplyTarget={() => setReplyTarget(null)}
+									placeholder="답글을 남겨보세요..."
+									onPosted={handleReplyPosted}
+								/>
+							</div>
 						)}
-						{replies.map((reply, index) =>
-							renderPost(reply, {
-								connectTop: index > 0,
-								connectBottom: index < replies.length - 1,
+						{replies.map((reply, index) => {
+							// 분기 답글(루트가 아닌 답글에 단 답글)은 라벨을 보여주고 연결선을 끊는다
+							const isBranch = Boolean(
+								reply.parentId && reply.parentId !== reply.rootId,
+							);
+							const next = replies[index + 1];
+							const nextIsBranch = next
+								? Boolean(next.parentId && next.parentId !== next.rootId)
+								: false;
+							return renderPost(reply, {
+								connectTop: index > 0 && !isBranch,
+								connectBottom: index < replies.length - 1 && !nextIsBranch,
 								noBorder: true,
-								hideReplyLabel: true,
-							}),
-						)}
+								hideReplyLabel: !isBranch,
+							});
+						})}
 					</>
 				) : null}
 			</section>

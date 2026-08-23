@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { useCallback, useState } from "react";
-import { Globe, ImagePlus, Lock, Send, X } from "lucide-react";
+import { CornerUpLeft, Globe, ImagePlus, Lock, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
 import { useAuthStore } from "@/store/auth/store";
@@ -35,6 +35,9 @@ interface ThreadComposerProps {
 	/** 인용 모드: 인용할 대상 글 (parentId와 배타) */
 	quoteTarget?: ThreadPost | null;
 	onClearQuote?: () => void;
+	/** 답글 모드에서 루트가 아닌 특정 답글에 다는 분기 답글이면 대상 이름 표시 */
+	replyToName?: string | null;
+	onClearReplyTarget?: () => void;
 	placeholder?: string;
 	onPosted: (post: ThreadPost) => void;
 }
@@ -45,6 +48,8 @@ export default function ThreadComposer({
 	parentVisibility,
 	quoteTarget = null,
 	onClearQuote,
+	replyToName = null,
+	onClearReplyTarget,
 	placeholder = "무슨 일이 일어나고 있나요?",
 	onPosted,
 }: ThreadComposerProps) {
@@ -137,6 +142,25 @@ export default function ThreadComposer({
 				</span>
 
 				<div className="min-w-0 flex-1">
+					{replyToName && (
+						<div className="mb-1 flex items-center gap-1.5 text-xs text-sub-text">
+							<CornerUpLeft size={12} />
+							<span>
+								<span className="text-theme-primary">{replyToName}</span>
+								님에게 답글
+							</span>
+							{onClearReplyTarget && (
+								<button
+									type="button"
+									onClick={onClearReplyTarget}
+									className="rounded-full p-0.5 hover:bg-card-bg/60"
+									aria-label="답글 대상 해제"
+								>
+									<X size={11} />
+								</button>
+							)}
+						</div>
+					)}
 					<MentionTextarea
 				value={content}
 				onValueChange={setContent}

@@ -90,6 +90,10 @@ interface ThreadPostCardProps {
 	noBorder?: boolean;
 	/** "OO님의 글에 답글" 라벨 숨김 (상세 타임라인 — 연결선으로 문맥 표현) */
 	hideReplyLabel?: boolean;
+	/** 답글 아이콘을 버튼화 — 클릭 시 이 글을 답글 대상으로 (상세 분기 답글) */
+	onReply?: (post: ThreadPost) => void;
+	/** 카드 클릭 이동 비활성 (상세 페이지 — 이미 해당 스레드를 보는 중) */
+	disableNavigation?: boolean;
 }
 
 /** 트위터식 피드 카드 — 카드 클릭 시 스레드 상세로 이동, 내부 요소는 stopPropagation */
@@ -103,12 +107,16 @@ export default function ThreadPostCard({
 	connectBottom = false,
 	noBorder = false,
 	hideReplyLabel = false,
+	onReply,
+	disableNavigation = false,
 }: ThreadPostCardProps) {
 	const router = useRouter();
-	const threadLink = `/thread/${post.rootId ?? post.id}`;
+	// 답글 카드는 자기 id로 이동 — 상세가 루트로 승격 후 focusId로 스크롤
+	const threadLink = `/thread/${post.id}`;
+	const isClickable = !isFocused && !disableNavigation;
 
 	const handleCardClick = () => {
-		if (isFocused) return;
+		if (!isClickable) return;
 		router.push(threadLink);
 	};
 
@@ -118,7 +126,7 @@ export default function ThreadPostCard({
 			className={cn(
 				"relative px-4 py-3.5 transition-colors",
 				!noBorder && "border-b border-card-border",
-				!isFocused && "cursor-pointer hover:bg-card-bg/40",
+				isClickable && "cursor-pointer hover:bg-card-bg/40",
 				isFocused && "bg-card-bg/30",
 			)}
 		>
@@ -244,12 +252,29 @@ export default function ThreadPostCard({
 								: "mt-1.5",
 						)}
 					>
-						<span className="-ml-1.5 flex items-center text-xs">
-							<span className="flex h-7 w-7 items-center justify-center rounded-full">
-								<MessageCircle size={15} />
+						{onReply && !post.locked ? (
+							<button
+								type="button"
+								onClick={(e) => {
+									e.stopPropagation();
+									onReply(post);
+								}}
+								className="group -ml-1.5 flex items-center text-xs hover:text-theme-primary"
+								aria-label="이 글에 답글 달기"
+							>
+								<span className="flex h-7 w-7 items-center justify-center rounded-full group-hover:bg-theme-primary/10">
+									<MessageCircle size={15} />
+								</span>
+								{post.replyCount > 0 ? post.replyCount : ""}
+							</button>
+						) : (
+							<span className="-ml-1.5 flex items-center text-xs">
+								<span className="flex h-7 w-7 items-center justify-center rounded-full">
+									<MessageCircle size={15} />
+								</span>
+								{post.replyCount > 0 ? post.replyCount : ""}
 							</span>
-							{post.replyCount > 0 ? post.replyCount : ""}
-						</span>
+						)}
 						{onQuote && !post.locked ? (
 							<button
 								type="button"
