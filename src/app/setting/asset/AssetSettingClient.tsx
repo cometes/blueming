@@ -15,6 +15,7 @@ import {
 import type { StickerAsset } from "@/features/stickerboard-editor/model";
 import { useSettingHeaderAction } from "@/contexts/SettingHeaderActionContext";
 import { useSettingStatus } from "@/hooks/useSettingStatus";
+import StorageCleanupSection from "./StorageCleanupSection";
 
 export default function AssetSettingClient() {
 	const [assets, setAssets] = useState<StickerAsset[]>([]);
@@ -219,6 +220,7 @@ export default function AssetSettingClient() {
 	}, [pendingUploads]);
 
 	return (
+		<>
 		<section className="space-y-6">
 			<div>
 				<h2 className="text-[20px] font-semibold font-title">에셋 관리</h2>
@@ -418,5 +420,7 @@ export default function AssetSettingClient() {
 				</div>
 			)}
 		</section>
+		<StorageCleanupSection />
+		</>
 	);
 }
