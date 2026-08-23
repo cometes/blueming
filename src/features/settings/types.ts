@@ -248,11 +248,15 @@ export interface MusicPlayerSettings {
 	defaultVolume?: number;
 }
 
+/** 디데이 위젯에서 여러 디데이를 보여주는 방식 */
+export type DdayDisplayMode = "grid" | "fade" | "slide";
+
 export interface MainSettings {
 	customLayout?: CustomLayout;
 	slide?: SlideItem[];
 	notice?: Notice;
 	dday?: DdayItem[];
+	ddayDisplayMode?: DdayDisplayMode;
 	profile?: Profile;
 	stickerBoard?: StickerBoardSettings;
 	imageWidget?: ImageWidgetSettings;

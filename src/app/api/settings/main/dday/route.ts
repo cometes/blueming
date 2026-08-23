@@ -26,8 +26,23 @@ export async function POST(req: NextRequest) {
 		if (!value || typeof value !== "object") {
 			return jsonError(400, "Invalid data structure in request body");
 		}
+		const displayMode = body?.displayMode;
+		if (
+			displayMode !== undefined &&
+			displayMode !== "grid" &&
+			displayMode !== "fade" &&
+			displayMode !== "slide"
+		) {
+			return jsonError(400, "Invalid dday displayMode");
+		}
 
-		await mainDocRef.set({ dday: value }, { merge: true });
+		await mainDocRef.set(
+			{
+				dday: value,
+				...(displayMode !== undefined && { ddayDisplayMode: displayMode }),
+			},
+			{ merge: true }
+		);
 		revalidateTag("settings");
 		const updatedMainDoc = await mainDocRef.get();
 		return NextResponse.json({ main: updatedMainDoc.data() });
