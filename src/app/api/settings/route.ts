@@ -1,64 +1,23 @@
 import type { NextRequest } from "next/server";
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { createHash } from "crypto";
 import { getDb } from "@/app/api/_lib/admin";
 import { jsonError } from "@/app/api/_lib/response";
 import { requireManager } from "@/app/api/_lib/auth";
-import { normalizeGeneralData } from "@/app/api/_lib/settings";
+import { getServerSettings } from "@/app/api/_lib/settingsServer";
 
 export const runtime = "nodejs";
 
-const normalizeSettings = (data: unknown) => {
-	if (!data || typeof data !== "object") return data;
-	const value = data as Record<string, unknown>;
-	return {
-		...value,
-		general: normalizeGeneralData(value.general),
-	};
-};
-
-const fetchSubCollections = async (
-	docRef: FirebaseFirestore.DocumentReference,
-	docData: Record<string, unknown>
-) => {
-	const subCollections = await docRef.listCollections();
-	const subCollectionPromises = subCollections.map(async (subCollection) => {
-		const subCollectionSnapshot = await subCollection.get();
-		const subCollectionData = subCollectionSnapshot.docs.reduce(
-			(acc, doc) => {
-				acc[doc.id] = doc.data();
-				return acc;
-			},
-			{} as Record<string, unknown>
-		);
-		return { [subCollection.id]: subCollectionData };
-	});
-
-	const subCollectionResults = await Promise.all(subCollectionPromises);
-	return subCollectionResults.reduce(
-		(acc, curr) => ({ ...acc, ...curr }),
-		docData
-	);
-};
-
 export async function GET(req: NextRequest) {
 	try {
-		const db = getDb();
-		const settingsSnapshot = await db.collection("settings").get();
+		// SSR과 동일한 데이터 캐시(tag: settings)를 공유 — 캐시 히트 시 Firestore 왕복 0회.
+		// 신선도는 설정 쓰기 라우트들의 revalidateTag("settings")가 보장한다.
+		const payload = await getServerSettings();
+		if (!payload) {
+			return jsonError(500, "Failed to fetch settings.");
+		}
 
-		const settingsDataPromises = settingsSnapshot.docs.map(async (doc) => {
-			const docData = doc.exists ? (doc.data() ?? {}) : {};
-			const fullData = await fetchSubCollections(doc.ref, docData);
-			return { [doc.id]: fullData };
-		});
-
-		const settingsData = await Promise.all(settingsDataPromises);
-		const result = settingsData.reduce(
-			(acc, curr) => ({ ...acc, ...curr }),
-			{} as Record<string, unknown>
-		);
-
-		const payload = normalizeSettings(result);
 		const etag = `"${createHash("sha1").update(JSON.stringify(payload)).digest("hex")}"`;
 		if (req.headers.get("if-none-match") === etag) {
 			return new NextResponse(null, {
@@ -125,6 +84,7 @@ export async function PATCH(req: NextRequest) {
 		await db.collection("settings").doc("gallery").set(gallerySettings, {
 			merge: true,
 		});
+		revalidateTag("settings");
 
 		return NextResponse.json({ message: "Gallery settings updated" });
 	} catch (error) {

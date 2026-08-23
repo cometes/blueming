@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { getFireAuth } from "@/app/api/_lib/admin";
 import type { DecodedIdToken } from "firebase-admin/auth";
@@ -15,19 +16,25 @@ export type AuthContext = {
 
 const OWNER_UID = process.env.FIREBASE_OWNER_UID?.trim() ?? "";
 
-export const getAuthContext = async (): Promise<AuthContext | null> => {
+// React cache: 한 요청 안에서 requireAuth/requireManager 등이 중복 호출돼도
+// 세션 검증은 1회만 수행된다.
+export const getAuthContext = cache(async (): Promise<AuthContext | null> => {
 	try {
 		const store = await cookies();
 		const session =
 			store.get("__session")?.value ?? store.get("session")?.value ?? null;
 		if (!session) return null;
 
-		const decoded = await getFireAuth().verifySessionCookie(session, true);
+		// checkRevoked=false: 로컬 JWT 검증만 수행 (공개키는 프로세스 캐시).
+		// true일 땐 요청마다 Google Identity Toolkit 왕복이 발생해 모든 인증
+		// 요청의 최소 지연이 됐었다. 트레이드오프: 세션을 강제 취소해도 쿠키
+		// 만료 전까지 기존 로그인이 유지된다 — 관리자 1인 서비스라 수용.
+		const decoded = await getFireAuth().verifySessionCookie(session, false);
 		return buildAuthContextFromDecoded(decoded);
 	} catch {
 		return null;
 	}
-};
+});
 
 export const buildAuthContextFromDecoded = (decoded: DecodedIdToken): AuthContext => {
 	const roleClaim = typeof decoded.role === "string" ? decoded.role : null;

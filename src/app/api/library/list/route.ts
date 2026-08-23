@@ -58,25 +58,18 @@ export async function GET(req: NextRequest) {
 				usedTokenSearch = true;
 			}
 
+			// 토큰 검색 1회 → 매칭이 없을 때만 전체 스캔 1회로 폴백.
+			// (기존에는 최악의 경우 전체 컬렉션을 직렬로 4번 읽었음)
 			const snapshot = await searchQuery.get();
-			let searchItems = snapshot.docs.map(toLibraryItem);
+			let filtered = snapshot.docs
+				.map(toLibraryItem)
+				.filter((item) => matchesQuery(item, query));
 
-			if (snapshot.empty && usedTokenSearch) {
-				const fallbackSnapshot = await baseQuery.get();
-				searchItems = fallbackSnapshot.docs.map(toLibraryItem);
-			}
-
-			let filtered = searchItems.filter((item) => matchesQuery(item, query));
 			if (filtered.length === 0 && usedTokenSearch) {
 				const fallbackSnapshot = await baseQuery.get();
-				const fallbackItems = fallbackSnapshot.docs.map(toLibraryItem);
-				filtered = fallbackItems.filter((item) => matchesQuery(item, query));
-			}
-
-			if (filtered.length === 0) {
-				const broadSnapshot = await db.collection("library").get();
-				const broadItems = broadSnapshot.docs.map(toLibraryItem);
-				filtered = broadItems.filter((item) => matchesQuery(item, query));
+				filtered = fallbackSnapshot.docs
+					.map(toLibraryItem)
+					.filter((item) => matchesQuery(item, query));
 			}
 
 			if (filtered.length === 0) {
@@ -90,18 +83,26 @@ export async function GET(req: NextRequest) {
 			return jsonOk({ items, total, page, limit });
 		}
 
-		const snapshot = await db.collection("library").get();
-		if (snapshot.empty) {
+		// 기본 경로: 서버 사이드 페이징 (photoboard 패턴).
+		// baseQuery는 이미 pinned desc + 정렬 필드 순 — 고정글이 항상 앞에
+		// 오므로 고정글 수만큼 offset 하면 비고정글 페이지가 정확히 잘린다.
+		// (이 복합 정렬은 기존 검색 경로에서 사용 중이라 인덱스가 이미 존재)
+		const [pinnedSnapshot, countSnapshot] = await Promise.all([
+			db.collection("library").where("pinned", "==", true).get(),
+			db.collection("library").count().get(),
+		]);
+		const pinnedItems = pinnedSnapshot.docs.map(toLibraryItem);
+		const total = Math.max(0, countSnapshot.data().count - pinnedItems.length);
+
+		if (total === 0 && pinnedItems.length === 0) {
 			return jsonOk({ items: [], pinnedItems: [], total: 0, page, limit });
 		}
 
-		const allItems = snapshot.docs.map(toLibraryItem);
-		const pinnedItems = allItems.filter((item) => item.pinned);
-		const nonPinnedItems = allItems.filter((item) => !item.pinned);
-		const sorted = sortItems(nonPinnedItems, sort);
-		const total = sorted.length;
-		const startIndex = (page - 1) * limit;
-		const items = sorted.slice(startIndex, startIndex + limit);
+		const pageSnapshot = await baseQuery
+			.offset(pinnedItems.length + (page - 1) * limit)
+			.limit(limit)
+			.get();
+		const items = pageSnapshot.docs.map(toLibraryItem);
 
 		return jsonOk({ items, pinnedItems, total, page, limit });
 	} catch (error) {

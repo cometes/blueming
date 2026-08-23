@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
 		const docRef = db.collection("settings").doc("library");
 		await docRef.set(payload, { merge: true });
 		revalidateTag("library-settings");
+		revalidateTag("settings");
 
 		const updated = await docRef.get();
 		return NextResponse.json({ library: updated.data() ?? {} });

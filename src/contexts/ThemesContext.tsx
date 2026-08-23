@@ -4,6 +4,7 @@ import {
 	useContext,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 	useCallback,
 } from "react";
@@ -44,6 +45,8 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 	const { general, main, updateGeneral, updateMain, refreshSettings } = useSettings();
 	const [themes, setThemes] = useState<ThemeData[]>([]);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+	// API 폴백은 1회만 — general 갱신 때마다 테마 fetch가 반복되는 것 방지
+	const fetchedFallbackRef = useRef(false);
 
 	const loadThemes = useCallback(async () => {
 		try {
@@ -63,7 +66,8 @@ export const ThemesProvider: React.FC<{ children: React.ReactNode }> = ({
 				} else {
 					setThemes([]);
 				}
-			} else {
+			} else if (!fetchedFallbackRef.current) {
+				fetchedFallbackRef.current = true;
 				const response = await getSettingsTheme();
 
 				if (response.data && Array.isArray(response.data)) {
