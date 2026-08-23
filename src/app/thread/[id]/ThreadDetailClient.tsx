@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Lock, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
@@ -63,8 +63,67 @@ export default function ThreadDetailClient({
 		urls: string[];
 		index: number;
 	} | null>(null);
-	/** 분기 답글 대상 (null = 루트에 답글) */
+	/** 답글 대상 (null = 현재 포커스 글에 답글) */
 	const [replyTarget, setReplyTarget] = useState<ThreadPost | null>(null);
+
+	// ── parentId 트리 구성 — 트위터식 포커스 중심 렌더링 ──────────────────────
+	const byId = useMemo(() => {
+		const map = new Map<string, ThreadPost>();
+		if (root) map.set(root.id, root);
+		for (const reply of replies) map.set(reply.id, reply);
+		return map;
+	}, [root, replies]);
+
+	const childrenByParent = useMemo(() => {
+		const map = new Map<string, ThreadPost[]>();
+		if (!root) return map;
+		for (const reply of replies) {
+			// 부모가 삭제된 고아 답글은 루트 아래로 편입 (타임라인에서 사라지지 않게)
+			const parentId =
+				reply.parentId && byId.has(reply.parentId) ? reply.parentId : root.id;
+			const list = map.get(parentId) ?? [];
+			list.push(reply);
+			map.set(parentId, list);
+		}
+		return map;
+	}, [replies, byId, root]);
+
+	/** 현재 포커스 글 — URL의 id (삭제됐으면 루트로 폴백) */
+	const focused = byId.get(threadId) ?? root;
+
+	/** 포커스 글 위에 보여줄 조상 체인 (루트 → … → 부모) */
+	const ancestors = useMemo(() => {
+		if (!focused) return [];
+		const chain: ThreadPost[] = [];
+		let cursor = focused.parentId ? byId.get(focused.parentId) : undefined;
+		let guard = 0;
+		while (cursor && guard < 100) {
+			chain.unshift(cursor);
+			cursor = cursor.parentId ? byId.get(cursor.parentId) : undefined;
+			guard += 1;
+		}
+		// 부모가 삭제된 고아 포커스면 루트만이라도 위에 보여준다
+		if (chain.length === 0 && root && focused.id !== root.id) {
+			chain.unshift(root);
+		}
+		return chain;
+	}, [focused, byId, root]);
+
+	/** 포커스 글의 직접 답글들 = 분리된 브랜치 그룹 */
+	const branches = focused ? (childrenByParent.get(focused.id) ?? []) : [];
+
+	const directCount = useCallback(
+		(id: string) => childrenByParent.get(id)?.length ?? 0,
+		[childrenByParent],
+	);
+	/** 상세에서는 답글 수를 직접 답글 수로 표시 (트위터식) */
+	const withCount = useCallback(
+		(post: ThreadPost): ThreadPost => ({
+			...post,
+			replyCount: directCount(post.id),
+		}),
+		[directCount],
+	);
 
 	const reload = useCallback(async () => {
 		try {
@@ -108,12 +167,12 @@ export default function ThreadDetailClient({
 	// 답글 아이콘 클릭 → 그 글을 답글 대상으로 지정하고 컴포저로 스크롤
 	const handleSelectReplyTarget = useCallback(
 		(post: ThreadPost) => {
-			setReplyTarget(post.id === root?.id ? null : post);
+			setReplyTarget(post.id === focused?.id ? null : post);
 			document
 				.getElementById("thread-reply-composer")
 				?.scrollIntoView({ behavior: "smooth", block: "center" });
 		},
-		[root?.id],
+		[focused?.id],
 	);
 
 	const handleDelete = useCallback(
@@ -171,7 +230,6 @@ export default function ThreadDetailClient({
 				connectBottom={options.connectBottom}
 				noBorder={options.noBorder}
 				hideReplyLabel={options.hideReplyLabel}
-				disableNavigation
 				onReply={canWrite ? handleSelectReplyTarget : undefined}
 				onOpenImage={(urls, index) => setImageModal({ urls, index })}
 				onSelectTag={() => router.push("/thread")}
@@ -233,13 +291,27 @@ export default function ThreadDetailClient({
 						<Lock size={20} />
 						멤버 공개 스레드입니다. 로그인 후 볼 수 있어요.
 					</div>
-				) : root ? (
+				) : root && focused ? (
 					<>
-						{renderPost(root, { isFocused: true })}
+						{/* 조상 체인 (루트 → … → 부모) — 연결선으로 포커스 글까지 이어짐 */}
+						{ancestors.map((ancestor, index) =>
+							renderPost(withCount(ancestor), {
+								connectTop: index > 0,
+								connectBottom: true,
+								noBorder: true,
+								hideReplyLabel: true,
+							}),
+						)}
+
+						{renderPost(withCount(focused), {
+							isFocused: true,
+							connectTop: ancestors.length > 0,
+						})}
+
 						{canWrite && (
 							<div id="thread-reply-composer">
 								<ThreadComposer
-									parentId={replyTarget?.id ?? root.id}
+									parentId={replyTarget?.id ?? focused.id}
 									parentVisibility={root.visibility}
 									replyToName={
 										replyTarget
@@ -252,22 +324,33 @@ export default function ThreadDetailClient({
 								/>
 							</div>
 						)}
-						{replies.map((reply, index) => {
-							// 분기 답글(루트가 아닌 답글에 단 답글)은 라벨을 보여주고 연결선을 끊는다
-							const isBranch = Boolean(
-								reply.parentId && reply.parentId !== reply.rootId,
-							);
-							const next = replies[index + 1];
-							const nextIsBranch = next
-								? Boolean(next.parentId && next.parentId !== next.rootId)
-								: false;
-							return renderPost(reply, {
-								connectTop: index > 0 && !isBranch,
-								connectBottom: index < replies.length - 1 && !nextIsBranch,
-								noBorder: true,
-								hideReplyLabel: !isBranch,
-							});
-						})}
+
+						{/* 포커스 글의 직접 답글 = 분리된 브랜치 그룹, 하위 답글은 '답글 보기'로 진입 */}
+						{branches.map((branch) => (
+							<div key={branch.id} className="border-b border-card-border">
+								{renderPost(withCount(branch), {
+									noBorder: true,
+									connectBottom: directCount(branch.id) > 0,
+									hideReplyLabel: true,
+								})}
+								{directCount(branch.id) > 0 && (
+									<button
+										type="button"
+										onClick={() => router.push(`/thread/${branch.id}`)}
+										className="flex w-full items-center gap-3 px-4 py-1.5 text-left hover:bg-card-bg/40"
+									>
+										<span className="flex w-9 shrink-0 flex-col items-center gap-[3px]">
+											<span className="h-1 w-0.5 rounded-full bg-card-border" />
+											<span className="h-1 w-0.5 rounded-full bg-card-border" />
+											<span className="h-1 w-0.5 rounded-full bg-card-border" />
+										</span>
+										<span className="text-[13px] text-theme-primary hover:underline">
+											답글 보기
+										</span>
+									</button>
+								)}
+							</div>
+						))}
 					</>
 				) : null}
 			</section>
