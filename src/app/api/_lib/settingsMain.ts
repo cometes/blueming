@@ -128,17 +128,19 @@ export const validateMusicPlayerSettings = (
 
 		const thumbnail = raw.thumbnail;
 		const artist = raw.artist;
+		const normalizedArtist =
+			typeof artist === "string" && artist.trim()
+				? artist.trim().slice(0, 100)
+				: null;
 
+		// 주의: Firestore는 undefined 값을 거부하므로 없는 필드는 키 자체를 뺀다
 		normalizedItems.push({
 			id: id.trim(),
 			title: title.trim(),
-			videoId: normalizedVideoId ?? undefined,
-			playlistId: normalizedPlaylistId ?? undefined,
-			thumbnail: validateUrl(thumbnail) ? thumbnail : undefined,
-			artist:
-				typeof artist === "string" && artist.trim()
-					? artist.trim().slice(0, 100)
-					: undefined,
+			...(normalizedVideoId ? { videoId: normalizedVideoId } : {}),
+			...(normalizedPlaylistId ? { playlistId: normalizedPlaylistId } : {}),
+			...(validateUrl(thumbnail) ? { thumbnail } : {}),
+			...(normalizedArtist ? { artist: normalizedArtist } : {}),
 		});
 	}
 
@@ -150,7 +152,7 @@ export const validateMusicPlayerSettings = (
 	return {
 		enabled,
 		items: normalizedItems,
-		defaultItemId: normalizedDefaultItemId,
+		...(normalizedDefaultItemId ? { defaultItemId: normalizedDefaultItemId } : {}),
 	};
 };
 
