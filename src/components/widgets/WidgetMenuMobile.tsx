@@ -9,6 +9,7 @@ import { cn } from "@/shared/lib/utils";
 import { useSettings } from "@/contexts/SettingsContext";
 import MenuAuthButton from "@/components/common/MenuAuthButton";
 import NotificationBell from "@/components/common/NotificationBell";
+import { useMusicPlayerStore } from "@/features/music/store/useMusicPlayerStore";
 import type { OpenFolders } from "@/features/settings/lib/widgetMenu";
 import type { MenuDesign, MenuItem } from "@/features/settings/types";
 
@@ -59,6 +60,8 @@ export default function WidgetMenuMobile({
 	getItemBackgroundStyle,
 	className,
 }: Props) {
+	const toggleMusicPlayer = useMusicPlayerStore((state) => state.toggleOpen);
+	const isMusicPlaying = useMusicPlayerStore((state) => state.isPlaying);
 	const [isOpen, setIsOpen] = useState(false);
 	const pendingNavigationRef = useRef<(() => void) | null>(null);
 	const { general } = useSettings();
@@ -323,6 +326,7 @@ export default function WidgetMenuMobile({
 									)}
 									style={{ transition: "all 300ms ease-in-out" }}
 									aria-label="음악"
+							onClick={toggleMusicPlayer}
 								>
 									<div className="flex items-end justify-center w-4 h-4">
 										{[0, 0.1, 0.2, 0.3, 0.4].map((delay, index) => (
@@ -335,6 +339,7 @@ export default function WidgetMenuMobile({
 													margin: "0 1px",
 													height: ["6px", "8px", "10px", "13px", "15px"][index],
 													animation: `musicBar 1.2s ease infinite ${delay}s`,
+										animationPlayState: isMusicPlaying ? "running" : "paused",
 												}}
 											/>
 										))}

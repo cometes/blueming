@@ -5,6 +5,8 @@ type MusicPlayerItem = {
 	title: string;
 	videoId?: string;
 	playlistId?: string;
+	thumbnail?: string;
+	artist?: string;
 };
 
 type MusicPlayerSettings = {
@@ -41,7 +43,7 @@ const validateUrl = (url: unknown): url is string => {
 	}
 };
 
-const extractYouTubeVideoId = (input: unknown): string | null => {
+export const extractYouTubeVideoId = (input: unknown): string | null => {
 	if (typeof input !== "string") return null;
 	const raw = input.trim();
 	if (!raw) return null;
@@ -73,7 +75,7 @@ const extractYouTubeVideoId = (input: unknown): string | null => {
 	}
 };
 
-const extractYouTubePlaylistId = (input: unknown): string | null => {
+export const extractYouTubePlaylistId = (input: unknown): string | null => {
 	if (typeof input !== "string") return null;
 	const raw = input.trim();
 	if (!raw) return null;
@@ -124,11 +126,19 @@ export const validateMusicPlayerSettings = (
 			(validateUrl(url) ? extractYouTubePlaylistId(url) : null);
 		if (!normalizedVideoId && !normalizedPlaylistId) return null;
 
+		const thumbnail = raw.thumbnail;
+		const artist = raw.artist;
+
 		normalizedItems.push({
 			id: id.trim(),
 			title: title.trim(),
 			videoId: normalizedVideoId ?? undefined,
 			playlistId: normalizedPlaylistId ?? undefined,
+			thumbnail: validateUrl(thumbnail) ? thumbnail : undefined,
+			artist:
+				typeof artist === "string" && artist.trim()
+					? artist.trim().slice(0, 100)
+					: undefined,
 		});
 	}
 

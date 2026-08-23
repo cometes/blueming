@@ -229,6 +229,23 @@ export interface MemoSettings {
 	replyPermission?: "author" | "member";
 }
 
+export interface MusicPlayerItem {
+	id: string;
+	title: string;
+	videoId?: string;
+	playlistId?: string;
+	thumbnail?: string;
+	artist?: string;
+	/** 구 형식 항목의 원본 URL (videoId/playlistId 미보유 시 파생용) */
+	url?: string;
+}
+
+export interface MusicPlayerSettings {
+	enabled: boolean;
+	items: MusicPlayerItem[];
+	defaultItemId?: string;
+}
+
 export interface MainSettings {
 	customLayout?: CustomLayout;
 	slide?: SlideItem[];
@@ -240,6 +257,7 @@ export interface MainSettings {
 	weatherClock?: WeatherClockSettings;
 	photoboard?: PhotoboardSettings;
 	memo?: MemoSettings;
+	musicPlayer?: MusicPlayerSettings;
 }
 
 export interface LibrarySettings {
