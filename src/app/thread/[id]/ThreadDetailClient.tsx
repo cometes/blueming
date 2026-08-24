@@ -65,6 +65,8 @@ export default function ThreadDetailClient({
 	} | null>(null);
 	/** 답글 대상 (null = 현재 포커스 글에 답글) */
 	const [replyTarget, setReplyTarget] = useState<ThreadPost | null>(null);
+	/** 인라인 수정 중인 글 id */
+	const [editingId, setEditingId] = useState<string | null>(null);
 
 	// ── parentId 트리 구성 — 트위터식 포커스 중심 렌더링 ──────────────────────
 	const byId = useMemo(() => {
@@ -212,6 +214,20 @@ export default function ThreadDetailClient({
 		[user?.uid, isAdmin],
 	);
 
+	const handleUpdated = useCallback(
+		(updated: ThreadPost) => {
+			if (root && updated.id === root.id) {
+				setRoot(updated);
+			} else {
+				setReplies((prev) =>
+					prev.map((item) => (item.id === updated.id ? updated : item)),
+				);
+			}
+			setEditingId(null);
+		},
+		[root],
+	);
+
 	const renderPost = (
 		post: ThreadPost,
 		options: {
@@ -221,7 +237,20 @@ export default function ThreadDetailClient({
 			noBorder?: boolean;
 			hideReplyLabel?: boolean;
 		} = {},
-	) => (
+	) => {
+		// 수정 중이면 카드 자리에 인라인 수정 컴포저
+		if (editingId === post.id) {
+			return (
+				<div key={post.id} id={`thread-post-${post.id}`}>
+					<ThreadComposer
+						editTarget={post}
+						onUpdated={handleUpdated}
+						onCancelEdit={() => setEditingId(null)}
+					/>
+				</div>
+			);
+		}
+		return (
 		<div key={post.id} id={`thread-post-${post.id}`} className="relative">
 			<ThreadPostCard
 				post={post}
@@ -251,6 +280,9 @@ export default function ThreadDetailClient({
 							align="end"
 							className="rounded-card border-card bg-card-bg backdrop-blur-card"
 						>
+							<DropdownMenuItem onSelect={() => setEditingId(post.id)}>
+								수정하기
+							</DropdownMenuItem>
 							<DropdownMenuItem
 								className="text-red-400"
 								onSelect={() => void handleDelete(post)}
@@ -262,7 +294,8 @@ export default function ThreadDetailClient({
 				</div>
 			)}
 		</div>
-	);
+		);
+	};
 
 	return (
 		<div className="w-full max-w-xl mx-auto mt-[90px] mb-[40px]">

@@ -161,10 +161,11 @@ export async function POST(req: NextRequest) {
 
 		const body = await req.json();
 		const content = normalizeContent(body?.content);
-		if (!content) {
-			return jsonError(400, "내용을 입력해주세요.");
-		}
 		const imageUrls = normalizeImageUrls(body?.imageUrls);
+		// 이미지만 있는 글 허용 — 내용과 이미지 둘 다 없을 때만 거부
+		if (!content && imageUrls.length === 0) {
+			return jsonError(400, "내용 또는 이미지를 입력해주세요.");
+		}
 		const tags = normalizeTags(body?.tags);
 		let visibility = normalizeVisibility(body?.visibility);
 		const parentId =

@@ -6,6 +6,7 @@ import type {
 	ThreadFeedResponse,
 	ThreadPost,
 	ThreadTab,
+	UpdateThreadPayload,
 } from "@/features/thread/types";
 
 export const fetchThreadFeed = async (params: {
@@ -50,6 +51,23 @@ export const fetchThreadDetail = async (
 ): Promise<ThreadDetailResponse> => {
 	const response = await httpClient.get<ThreadDetailResponse>(`/thread/${id}`);
 	return response.data;
+};
+
+export const updateThreadPost = async (
+	id: string,
+	payload: UpdateThreadPayload,
+): Promise<ThreadPost> => {
+	try {
+		const headers = await getAuthHeader();
+		const response = await httpClient.patch<ThreadPost>(
+			`/thread/${id}`,
+			payload,
+			{ headers },
+		);
+		return response.data;
+	} catch (error) {
+		throw new Error(getApiErrorMessage(error, "글 수정에 실패했습니다."));
+	}
 };
 
 export const deleteThreadPost = async (id: string): Promise<void> => {

@@ -60,3 +60,10 @@ export interface CreateThreadPayload {
 	quoteId?: string;
 	mentions?: MentionEntry[];
 }
+
+export interface UpdateThreadPayload {
+	content: string;
+	imageUrls?: string[];
+	tags?: string[];
+	mentions?: MentionEntry[];
+}

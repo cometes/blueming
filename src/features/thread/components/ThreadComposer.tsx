@@ -14,10 +14,14 @@ import {
 	useCommentImageManager,
 	revokeCommentImageUrls,
 } from "@/features/comment/hooks/useCommentImageManager";
-import type { CommentImage } from "@/features/comment/hooks/useCommentForm";
+import {
+	createImageId,
+	type CommentImage,
+} from "@/features/comment/hooks/useCommentForm";
 import type { MentionEntry } from "@/features/mention/types";
 import {
 	createThreadPost,
+	updateThreadPost,
 	uploadThreadImages,
 } from "@/features/thread/api/client";
 import type { ThreadPost, ThreadVisibility } from "@/features/thread/types";
@@ -38,8 +42,12 @@ interface ThreadComposerProps {
 	/** 답글 모드에서 루트가 아닌 특정 답글에 다는 분기 답글이면 대상 이름 표시 */
 	replyToName?: string | null;
 	onClearReplyTarget?: () => void;
+	/** 수정 모드: 기존 글 내용/이미지를 프리필하고 PATCH로 저장 (공개범위 수정 불가) */
+	editTarget?: ThreadPost | null;
+	onUpdated?: (post: ThreadPost) => void;
+	onCancelEdit?: () => void;
 	placeholder?: string;
-	onPosted: (post: ThreadPost) => void;
+	onPosted?: (post: ThreadPost) => void;
 }
 
 /** 스레드 작성 컴포저 — 피드 상단(루트) / 상세 하단(답글) 겸용 */
@@ -50,14 +58,25 @@ export default function ThreadComposer({
 	onClearQuote,
 	replyToName = null,
 	onClearReplyTarget,
+	editTarget = null,
+	onUpdated,
+	onCancelEdit,
 	placeholder = "무슨 일이 일어나고 있나요?",
 	onPosted,
 }: ThreadComposerProps) {
 	const user = useAuthStore((state) => state.user);
-	const [content, setContent] = useState("");
-	const [mentions, setMentions] = useState<MentionEntry[]>([]);
+	const isEdit = Boolean(editTarget);
+	const [content, setContent] = useState(editTarget?.content ?? "");
+	const [mentions, setMentions] = useState<MentionEntry[]>(
+		editTarget?.mentions ?? [],
+	);
 	const [visibility, setVisibility] = useState<ThreadVisibility>("public");
-	const [images, setImages] = useState<CommentImage[]>([]);
+	const [images, setImages] = useState<CommentImage[]>(() =>
+		(editTarget?.imageUrls ?? []).map((url) => ({
+			id: createImageId(),
+			url,
+		})),
+	);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const imageManager = useCommentImageManager({ maxImageCount: MAX_IMAGES });
 	const { imageDialog, assets } = imageManager;
@@ -71,7 +90,11 @@ export default function ThreadComposer({
 			? "member"
 			: visibility;
 	const remaining = MAX_CONTENT - content.length;
-	const canSubmit = content.trim().length > 0 && remaining >= 0 && !isSubmitting;
+	// 이미지만 있는 글도 허용 — 내용·이미지 둘 다 없을 때만 비활성
+	const canSubmit =
+		(content.trim().length > 0 || images.length > 0) &&
+		remaining >= 0 &&
+		!isSubmitting;
 	// 본문에서 태그(#단어)와 유튜브 미리보기 파생
 	const previewVideoId = extractFirstYouTubeVideoIdFromContent(content);
 	const tags = Array.from(
@@ -88,22 +111,36 @@ export default function ThreadComposer({
 				images,
 				uploadThreadImages,
 			);
-			const post = await createThreadPost({
-				content: content.trim(),
-				imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
-				tags: tags.length > 0 ? tags : undefined,
-				visibility: effectiveVisibility,
-				parentId,
-				quoteId: quoteTarget?.id,
-				mentions: mentions.length > 0 ? mentions : undefined,
-			});
-			onPosted(post);
-			onClearQuote?.();
-			setContent("");
-			setMentions([]);
-			revokeCommentImageUrls(images);
-			setImages([]);
-			toast.success(isReply ? "답글이 등록되었습니다." : "글이 등록되었습니다.");
+			if (editTarget) {
+				const updated = await updateThreadPost(editTarget.id, {
+					content: content.trim(),
+					imageUrls,
+					tags: tags.length > 0 ? tags : undefined,
+					mentions: mentions.length > 0 ? mentions : undefined,
+				});
+				onUpdated?.(updated);
+				revokeCommentImageUrls(images);
+				toast.success("수정되었습니다.");
+			} else {
+				const post = await createThreadPost({
+					content: content.trim(),
+					imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+					tags: tags.length > 0 ? tags : undefined,
+					visibility: effectiveVisibility,
+					parentId,
+					quoteId: quoteTarget?.id,
+					mentions: mentions.length > 0 ? mentions : undefined,
+				});
+				onPosted?.(post);
+				onClearQuote?.();
+				setContent("");
+				setMentions([]);
+				revokeCommentImageUrls(images);
+				setImages([]);
+				toast.success(
+					isReply ? "답글이 등록되었습니다." : "글이 등록되었습니다.",
+				);
+			}
 		} catch (error) {
 			toast.error(
 				error instanceof Error ? error.message : "작성에 실패했습니다.",
@@ -114,6 +151,7 @@ export default function ThreadComposer({
 	}, [
 		canSubmit,
 		content,
+		editTarget,
 		effectiveVisibility,
 		imageManager,
 		images,
@@ -121,6 +159,7 @@ export default function ThreadComposer({
 		mentions,
 		onClearQuote,
 		onPosted,
+		onUpdated,
 		parentId,
 		quoteTarget,
 		tags,
@@ -236,7 +275,11 @@ export default function ThreadComposer({
 					<button
 						type="button"
 						onClick={() => {
-							if (!imageManager.openDialog("create", images.length)) {
+							// 다이얼로그 내부 상한(8)과 별개로 스레드 상한 4를 직접 강제
+							if (
+								images.length >= MAX_IMAGES ||
+								!imageManager.openDialog("create", images.length)
+							) {
 								toast.error(`이미지는 최대 ${MAX_IMAGES}장까지 첨부할 수 있어요.`);
 							}
 						}}
@@ -247,7 +290,7 @@ export default function ThreadComposer({
 						<ImagePlus size={15} />
 					</button>
 
-					{!isReply && !quoteForcesMember && (
+					{!isReply && !quoteForcesMember && !isEdit && (
 						<button
 							type="button"
 							onClick={() =>
@@ -292,6 +335,17 @@ export default function ThreadComposer({
 					>
 						{remaining}
 					</span>
+					{isEdit && onCancelEdit && (
+						<Button
+							type="button"
+							size="sm"
+							variant="ghost"
+							onClick={onCancelEdit}
+							className="h-8 rounded-full px-3 text-sub-text"
+						>
+							취소
+						</Button>
+					)}
 					<Button
 						type="button"
 						size="sm"
@@ -300,7 +354,7 @@ export default function ThreadComposer({
 						className="h-8 gap-1.5 rounded-full px-3.5"
 					>
 						<Send size={13} />
-						{isReply ? "답글" : "게시"}
+						{isEdit ? "수정" : isReply ? "답글" : "게시"}
 					</Button>
 				</div>
 			</div>
@@ -317,7 +371,15 @@ export default function ThreadComposer({
 					imageDialog.setMultipleFiles([file], [previewUrl]);
 				}}
 				onFilesSelect={(files, previewUrls) => {
-					imageDialog.setMultipleFiles(files, previewUrls);
+					// 남은 슬롯만큼만 받는다 (최대 4장)
+					const room = Math.max(0, MAX_IMAGES - images.length);
+					if (files.length > room) {
+						toast.error(`이미지는 최대 ${MAX_IMAGES}장까지 첨부할 수 있어요.`);
+					}
+					imageDialog.setMultipleFiles(
+						files.slice(0, room),
+						previewUrls.slice(0, room),
+					);
 				}}
 				onUpload={(url) => {
 					if (imageManager.addUploadedImages(url, setImages)) {
