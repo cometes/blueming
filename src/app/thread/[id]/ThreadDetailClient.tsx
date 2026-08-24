@@ -287,7 +287,7 @@ export default function ThreadDetailClient({
 								수정하기
 							</DropdownMenuItem>
 							<DropdownMenuItem
-								className="text-red-400"
+								className="text-red-400 focus:text-red-400 focus:bg-theme-primary/10"
 								onSelect={() => void handleDelete(post)}
 							>
 								삭제하기
