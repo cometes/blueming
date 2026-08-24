@@ -40,6 +40,7 @@ export const useSettingMenu = () => {
 		{ label: "갤러리", value: "갤러리" },
 		{ label: "메모", value: "메모" },
 		{ label: "포토보드", value: "포토보드" },
+		{ label: "스레드", value: "스레드" },
 		{ label: "방명록", value: "방명록" },
 		{ label: "설정", value: "설정" },
 	];

@@ -16,6 +16,7 @@ import type {
 	PhotoboardSettings,
 	ProfileData,
 	SlideData,
+	ThreadsSettings,
 	WeatherClockSettings,
 } from "@/features/settings/types";
 import type { GallerySettings } from "@/features/gallery/types";
@@ -183,6 +184,22 @@ export const setSettingsMainMemo = async (value: MemoSettings) => {
 		});
 	} catch (error) {
 		throw new Error(getApiErrorMessage(error, "메모 설정 저장에 실패했습니다."));
+	}
+};
+
+export const setSettingsMainThreads = async (value: ThreadsSettings) => {
+	try {
+		const headers = await getAuthHeader();
+		return await withSettingsRevalidation(async () => {
+			const response = await httpClient.post(
+				"/settings/main/threads",
+				{ value },
+				{ headers },
+			);
+			return response.data;
+		});
+	} catch (error) {
+		throw new Error(getApiErrorMessage(error, "스레드 설정 저장에 실패했습니다."));
 	}
 };
 

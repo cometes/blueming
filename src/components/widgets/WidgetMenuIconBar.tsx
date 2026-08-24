@@ -16,6 +16,7 @@ import type { OpenFolders } from "@/features/settings/lib/widgetMenu";
 import type { MenuDesign, MenuItem } from "@/features/settings/types";
 import {
 	Square,
+	AtSign,
 	Book,
 	Archive,
 	Image as ImageIcon,
@@ -69,6 +70,8 @@ const getMenuIcon = (category: string) => {
 			return <MessageCircle size={16} className="text-sub-text" />;
 		case "방명록":
 			return <MessageCircle size={16} className="text-sub-text" />;
+		case "스레드":
+			return <AtSign size={16} className="text-sub-text" />;
 		case "설정":
 			return <Settings size={16} className="text-sub-text" />;
 		case "폴더":
