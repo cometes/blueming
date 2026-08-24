@@ -19,6 +19,7 @@ import ThreadComposer from "@/features/thread/components/ThreadComposer";
 import {
 	deleteThreadPost,
 	fetchThreadDetail,
+	setThreadPostLike,
 } from "@/features/thread/api/client";
 import type { ThreadPost } from "@/features/thread/types";
 
@@ -214,6 +215,51 @@ export default function ThreadDetailClient({
 		[user?.uid, isAdmin],
 	);
 
+	/** 루트/답글 상태를 id로 부분 갱신 (좋아요 옵티미스틱용) */
+	const updatePostState = useCallback(
+		(id: string, updater: (post: ThreadPost) => ThreadPost) => {
+			setRoot((prev) => (prev && prev.id === id ? updater(prev) : prev));
+			setReplies((prev) =>
+				prev.map((item) => (item.id === id ? updater(item) : item)),
+			);
+		},
+		[],
+	);
+
+	// 마음에 들어요 — 옵티미스틱 반영 후 서버 결과로 확정, 실패 시 롤백
+	const handleToggleLike = useCallback(
+		(post: ThreadPost) => {
+			const nextLiked = !post.likedByMe;
+			const delta = nextLiked ? 1 : -1;
+			updatePostState(post.id, (item) => ({
+				...item,
+				likedByMe: nextLiked,
+				likeCount: Math.max(0, item.likeCount + delta),
+			}));
+			setThreadPostLike(post.id, nextLiked)
+				.then((result) => {
+					updatePostState(post.id, (item) => ({
+						...item,
+						likedByMe: result.liked,
+						likeCount: result.likeCount,
+					}));
+				})
+				.catch((error) => {
+					updatePostState(post.id, (item) => ({
+						...item,
+						likedByMe: !nextLiked,
+						likeCount: Math.max(0, item.likeCount - delta),
+					}));
+					toast.error(
+						error instanceof Error
+							? error.message
+							: "마음에 들어요 처리에 실패했습니다.",
+					);
+				});
+		},
+		[updatePostState],
+	);
+
 	const handleUpdated = useCallback(
 		(updated: ThreadPost) => {
 			if (root && updated.id === root.id) {
@@ -260,6 +306,7 @@ export default function ThreadDetailClient({
 				noBorder={options.noBorder}
 				hideReplyLabel={options.hideReplyLabel}
 				onReply={canWrite ? handleSelectReplyTarget : undefined}
+				onToggleLike={isAuthenticated ? handleToggleLike : undefined}
 				onOpenImage={(urls, index) => setImageModal({ urls, index })}
 				onSelectTag={() => router.push("/thread")}
 			/>

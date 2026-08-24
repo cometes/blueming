@@ -6,6 +6,7 @@ import { getAuthContext, requireAuth } from "@/app/api/_lib/auth";
 import {
 	COLLECTION_NAME,
 	TIMELINE_CAP,
+	attachLikedByMe,
 	deleteQueryInBatches,
 	normalizeContent,
 	normalizeImageUrls,
@@ -64,12 +65,21 @@ export async function GET(
 			.limit(TIMELINE_CAP)
 			.get();
 
+		const [rootItem, ...replyItems] = await attachLikedByMe(
+			db,
+			[
+				toThreadItem(rootSnapshot, { viewerIsMember }),
+				...repliesSnapshot.docs.map((doc) =>
+					toThreadItem(doc, { viewerIsMember }),
+				),
+			],
+			auth?.uid ?? null,
+		);
+
 		return jsonOk({
 			requiresMemberAccess: false,
-			root: toThreadItem(rootSnapshot, { viewerIsMember }),
-			replies: repliesSnapshot.docs.map((doc) =>
-				toThreadItem(doc, { viewerIsMember }),
-			),
+			root: rootItem,
+			replies: replyItems,
 			focusId: rootId === id ? null : id,
 		});
 	} catch (error) {

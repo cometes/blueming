@@ -81,3 +81,32 @@ export const deleteThreadPost = async (id: string): Promise<void> => {
 
 export const uploadThreadImages = async (files: File[]): Promise<string[]> =>
 	uploadFiles({ files, endpoint: "/api/thread/uploadImage" });
+
+export interface ThreadLikeResult {
+	liked: boolean;
+	likeCount: number;
+}
+
+/** 마음에 들어요 토글 — nextLiked가 true면 좋아요, false면 취소 */
+export const setThreadPostLike = async (
+	id: string,
+	nextLiked: boolean,
+): Promise<ThreadLikeResult> => {
+	try {
+		const headers = await getAuthHeader();
+		const response = nextLiked
+			? await httpClient.post<ThreadLikeResult>(
+					`/thread/${id}/like`,
+					{},
+					{ headers },
+				)
+			: await httpClient.delete<ThreadLikeResult>(`/thread/${id}/like`, {
+					headers,
+				});
+		return response.data;
+	} catch (error) {
+		throw new Error(
+			getApiErrorMessage(error, "마음에 들어요 처리에 실패했습니다."),
+		);
+	}
+};

@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { useRouter } from "next/navigation";
-import { CornerUpLeft, Lock, MessageCircle, Quote } from "lucide-react";
+import { CornerUpLeft, Heart, Lock, MessageCircle, Quote } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { formatRelativeTime, dateTimeConvert } from "@/shared/lib/date";
 import {
@@ -92,6 +92,8 @@ interface ThreadPostCardProps {
 	hideReplyLabel?: boolean;
 	/** 답글 아이콘을 버튼화 — 클릭 시 이 글을 답글 대상으로 (상세 분기 답글) */
 	onReply?: (post: ThreadPost) => void;
+	/** 마음에 들어요 토글 (로그인 시 전달 — 옵티미스틱 처리는 호출부) */
+	onToggleLike?: (post: ThreadPost) => void;
 	/** 카드 클릭 이동 비활성 (상세 페이지 — 이미 해당 스레드를 보는 중) */
 	disableNavigation?: boolean;
 }
@@ -108,6 +110,7 @@ export default function ThreadPostCard({
 	noBorder = false,
 	hideReplyLabel = false,
 	onReply,
+	onToggleLike,
 	disableNavigation = false,
 }: ThreadPostCardProps) {
 	const router = useRouter();
@@ -297,6 +300,41 @@ export default function ThreadPostCard({
 										<Quote size={14} />
 									</span>
 									{post.quoteCount}
+								</span>
+							)
+						)}
+						{onToggleLike && !post.locked ? (
+							<button
+								type="button"
+								onClick={(e) => {
+									e.stopPropagation();
+									onToggleLike(post);
+								}}
+								className={cn(
+									"group flex items-center text-xs",
+									post.likedByMe
+										? "text-rose-500"
+										: "hover:text-rose-500",
+								)}
+								aria-label={
+									post.likedByMe ? "마음에 들어요 취소" : "마음에 들어요"
+								}
+							>
+								<span className="flex h-7 w-7 items-center justify-center rounded-full group-hover:bg-rose-500/10">
+									<Heart
+										size={14}
+										fill={post.likedByMe ? "currentColor" : "none"}
+									/>
+								</span>
+								{post.likeCount > 0 ? post.likeCount : ""}
+							</button>
+						) : (
+							post.likeCount > 0 && (
+								<span className="flex items-center text-xs">
+									<span className="flex h-7 w-7 items-center justify-center rounded-full">
+										<Heart size={14} />
+									</span>
+									{post.likeCount}
 								</span>
 							)
 						)}

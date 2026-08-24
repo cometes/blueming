@@ -8,7 +8,9 @@ import { buildRateLimitKey, checkRateLimit } from "@/app/api/_lib/rateLimit";
 import {
 	COLLECTION_NAME,
 	DEFAULT_LIMIT,
+	LIKES_COLLECTION,
 	MAX_LIMIT,
+	attachLikedByMe,
 	attachPreviewReplies,
 	decodeThreadCursor,
 	encodeThreadCursor,
@@ -33,10 +35,17 @@ import {
 
 export const runtime = "nodejs";
 
-type ThreadTab = "all" | "roots" | "mine" | "tag";
+type ThreadTab = "all" | "roots" | "mine" | "tag" | "likes";
 
 const parseTab = (value: string | null): ThreadTab => {
-	if (value === "roots" || value === "mine" || value === "tag") return value;
+	if (
+		value === "roots" ||
+		value === "mine" ||
+		value === "tag" ||
+		value === "likes"
+	) {
+		return value;
+	}
 	return "all";
 };
 
@@ -57,12 +66,61 @@ export async function GET(req: NextRequest) {
 		const cursor = decodeThreadCursor(params.get("cursor"));
 
 		const auth = await getAuthContext();
-		if (tab === "mine" && !auth) {
+		if ((tab === "mine" || tab === "likes") && !auth) {
 			return jsonError(401, "로그인이 필요합니다.");
 		}
 		const viewerIsMember = Boolean(auth);
 
 		const db = getDb();
+
+		// 마음에 들어요 탭 — threadLikes를 커서 페이징하고 글을 getAll로 일괄 조회
+		if (tab === "likes" && auth) {
+			let likesQuery: FirebaseFirestore.Query = db
+				.collection(LIKES_COLLECTION)
+				.where("uid", "==", auth.uid)
+				.orderBy("createdAt", "desc")
+				.orderBy(FieldPath.documentId(), "desc");
+			if (cursor) {
+				likesQuery = likesQuery.startAfter(
+					admin.firestore.Timestamp.fromMillis(cursor.c),
+					cursor.id,
+				);
+			}
+			const likesSnapshot = await likesQuery.limit(limit + 1).get();
+			const likeDocs = likesSnapshot.docs.slice(0, limit);
+			const postIds = likeDocs
+				.map((doc) => (doc.get("postId") as string) || "")
+				.filter(Boolean);
+			const postSnapshots =
+				postIds.length > 0
+					? await db.getAll(
+							...postIds.map((postId) =>
+								db.collection(COLLECTION_NAME).doc(postId),
+							),
+						)
+					: [];
+			// 원본이 삭제된 좋아요는 건너뛴다
+			const items = postSnapshots
+				.filter((snapshot) => snapshot.exists)
+				.map((snapshot) => ({
+					...toThreadItem(snapshot, { viewerIsMember: true }),
+					likedByMe: true,
+				}));
+			const lastLike = likeDocs[likeDocs.length - 1];
+			const nextCursor =
+				likesSnapshot.docs.length > limit && lastLike
+					? encodeThreadCursor({
+							c:
+								(
+									lastLike.get("createdAt") as
+										| { toMillis?: () => number }
+										| undefined
+								)?.toMillis?.() ?? 0,
+							id: lastLike.id,
+						})
+					: null;
+			return jsonOk({ items, nextCursor });
+		}
 		let query: FirebaseFirestore.Query = db.collection(COLLECTION_NAME);
 		if (tab === "roots") {
 			query = query.where("parentId", "==", null);
@@ -90,6 +148,7 @@ export async function GET(req: NextRequest) {
 			// 홈 탭은 트위터식 타래 미리보기 부착
 			items = await attachPreviewReplies(db, items, { viewerIsMember });
 		}
+		items = await attachLikedByMe(db, items, auth?.uid ?? null);
 		const last = docs[docs.length - 1];
 		const nextCursor =
 			snapshot.docs.length > limit && last

@@ -16,6 +16,7 @@ import AdminOnly from "@/components/common/AdminOnly";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/contexts/SettingsContext";
 import { setSettingsMainThreads } from "@/features/settings/api/main";
+import { setThreadPostLike } from "@/features/thread/api/client";
 import type { ThreadFeedResponse, ThreadPost } from "@/features/thread/types";
 
 type ThreadWritePermission = "admin" | "manager" | "member";
@@ -37,6 +38,7 @@ export default function ThreadClient({ initialData }: ThreadClientProps) {
 		selectTab,
 		selectTag,
 		prependPost,
+		updatePost,
 	} = useThreadFeed(initialData);
 	const sentinelRef = useInfiniteScroll({ hasMore, isLoading, onLoadMore: loadMore });
 
@@ -87,6 +89,40 @@ export default function ThreadClient({ initialData }: ThreadClientProps) {
 		window.scrollTo({ top: 0, behavior: "smooth" });
 	}, []);
 
+	// 마음에 들어요 — 옵티미스틱 반영 후 서버 결과로 확정, 실패 시 롤백
+	const handleToggleLike = useCallback(
+		(post: ThreadPost) => {
+			const nextLiked = !post.likedByMe;
+			const delta = nextLiked ? 1 : -1;
+			updatePost(post.id, (item) => ({
+				...item,
+				likedByMe: nextLiked,
+				likeCount: Math.max(0, item.likeCount + delta),
+			}));
+			setThreadPostLike(post.id, nextLiked)
+				.then((result) => {
+					updatePost(post.id, (item) => ({
+						...item,
+						likedByMe: result.liked,
+						likeCount: result.likeCount,
+					}));
+				})
+				.catch((error) => {
+					updatePost(post.id, (item) => ({
+						...item,
+						likedByMe: !nextLiked,
+						likeCount: Math.max(0, item.likeCount - delta),
+					}));
+					toast.error(
+						error instanceof Error
+							? error.message
+							: "마음에 들어요 처리에 실패했습니다.",
+					);
+				});
+		},
+		[updatePost],
+	);
+
 	return (
 		<div className="w-full max-w-xl mx-auto mt-[90px] mb-[40px]">
 			<section className="bg-card rounded-card border-card backdrop-blur-card overflow-hidden">
@@ -136,7 +172,9 @@ export default function ThreadClient({ initialData }: ThreadClientProps) {
 					<div className="py-16 text-center text-sm text-sub-text">
 						{tab === "tag"
 							? "이 태그의 글이 없습니다."
-							: "아직 글이 없습니다. 첫 글을 남겨보세요!"}
+							: tab === "likes"
+								? "아직 마음에 들어요 한 글이 없습니다."
+								: "아직 글이 없습니다. 첫 글을 남겨보세요!"}
 					</div>
 				) : (
 					items.map((post) => (
@@ -146,6 +184,7 @@ export default function ThreadClient({ initialData }: ThreadClientProps) {
 							onSelectTag={selectTag}
 							onOpenImage={(urls, index) => setImageModal({ urls, index })}
 							onQuote={canWrite ? handleQuote : undefined}
+							onToggleLike={isAuthenticated ? handleToggleLike : undefined}
 						/>
 					))
 				)}
