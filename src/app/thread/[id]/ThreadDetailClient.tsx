@@ -280,7 +280,10 @@ export default function ThreadDetailClient({
 							align="end"
 							className="rounded-card border-card bg-card-bg backdrop-blur-card"
 						>
-							<DropdownMenuItem onSelect={() => setEditingId(post.id)}>
+							<DropdownMenuItem
+								className="text-main-text focus:text-theme-primary focus:bg-theme-primary/10"
+								onSelect={() => setEditingId(post.id)}
+							>
 								수정하기
 							</DropdownMenuItem>
 							<DropdownMenuItem
