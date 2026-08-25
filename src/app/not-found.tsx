@@ -3,7 +3,7 @@ import Link from "next/link";
 /** 존재하지 않는 경로 — 루트 레이아웃(테마·메뉴) 안에서 렌더링된다 */
 export default function NotFound() {
 	return (
-		<div className="w-full max-w-xl mx-auto mt-[90px] mb-[40px] px-4">
+		<div className="flex min-h-[calc(100dvh-180px)] w-full max-w-xl mx-auto mt-[90px] mb-[40px] items-center justify-center px-4">
 			<section className="bg-card rounded-card border-card backdrop-blur-card flex flex-col items-center gap-3 px-6 py-16 text-center">
 				<p className="text-5xl font-semibold font-title text-theme-primary">
 					404
