@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import { renderContentWithMentions } from "@/features/mention/lib/renderMentions";
 import ThreadQuoteCard from "@/features/thread/components/ThreadQuoteCard";
+import ThreadAvatar from "@/features/thread/components/ThreadAvatar";
 import type { ThreadPost } from "@/features/thread/types";
 
 /** 유튜브 lazy 임베드 — 클릭 전엔 썸네일만 */
@@ -149,17 +150,11 @@ export default function ThreadPostCard({
 			)}
 
 			<div className="flex items-start gap-3">
-				<span className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-card bg-card-bg flex items-center justify-center text-xs text-sub-text">
-					{(post.author?.avatarUrl ?? "") ? (
-						<img
-							src={post.author?.avatarUrl}
-							alt=""
-							className="h-full w-full object-cover"
-						/>
-					) : (
-						(post.author?.name || "?").charAt(0)
-					)}
-				</span>
+				<ThreadAvatar
+					src={post.author?.avatarUrl}
+					name={post.author?.name}
+					className="h-9 w-9"
+				/>
 
 				<div className="min-w-0 flex-1">
 					<div className="flex items-center gap-1.5 text-sm">
