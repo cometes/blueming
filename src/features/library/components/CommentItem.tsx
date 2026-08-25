@@ -11,6 +11,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/shared/lib/utils";
+import Avatar from "@/components/common/Avatar";
 import type { LibraryComment as Comment } from "@/features/library/types";
 import ImageSlideModal from "@/components/modal/ImageSlideModal";
 
@@ -86,20 +87,12 @@ export default function CommentItem({
 		>
 			{/* 프로필 이미지 */}
 			{!isOwn && (
-				<div className="flex-shrink-0">
-					{comment.photoURL ? (
-						// eslint-disable-next-line @next/next/no-img-element
-						<img
-							src={comment.photoURL}
-							alt={comment.displayName}
-							className="w-8 h-8 rounded-full object-cover"
-						/>
-					) : (
-						<div className="w-8 h-8 rounded-full bg-card border border-card flex items-center justify-center text-xs text-sub-text">
-							{comment.displayName?.charAt(0) || "U"}
-						</div>
-					)}
-				</div>
+				<Avatar
+					src={comment.photoURL}
+					name={comment.displayName}
+					alt={comment.displayName}
+					className="h-8 w-8 bg-card"
+				/>
 			)}
 
 			{/* 메시지 영역 */}
@@ -303,20 +296,12 @@ export default function CommentItem({
 
 			{/* 내 댓글일 때 프로필 (우측) */}
 			{isOwn && (
-				<div className="flex-shrink-0">
-					{comment.photoURL ? (
-						// eslint-disable-next-line @next/next/no-img-element
-						<img
-							src={comment.photoURL}
-							alt={comment.displayName}
-							className="w-8 h-8 rounded-full object-cover"
-						/>
-					) : (
-						<div className="w-8 h-8 rounded-full bg-theme-primary/20 border border-theme-primary/30 flex items-center justify-center text-xs text-theme-primary">
-							{comment.displayName?.charAt(0) || "U"}
-						</div>
-					)}
-				</div>
+				<Avatar
+					src={comment.photoURL}
+					name={comment.displayName}
+					alt={comment.displayName}
+					className="h-8 w-8 bg-theme-primary/20 border-theme-primary/30 text-theme-primary"
+				/>
 			)}
 
 			{/* 이미지 모달 */}

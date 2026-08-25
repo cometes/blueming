@@ -2,6 +2,7 @@
 
 import { ImagePlus, MoreHorizontal, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Avatar from "@/components/common/Avatar";
 import MentionTextarea from "@/components/common/MentionTextarea";
 import { renderContentWithMentions } from "@/features/mention/lib/renderMentions";
 import type { MentionEntry } from "@/features/mention/types";
@@ -70,20 +71,12 @@ export default function MemoReplySection({
 							<div key={reply.id} className="p-5 border-t border-card-border">
 								<div className="flex items-center justify-between text-sm text-sub-text">
 									<div className="flex items-center gap-2.5">
-										<div className="w-8 h-8 rounded-full overflow-hidden border border-card">
-											{reply.author?.avatarUrl ? (
-												// eslint-disable-next-line @next/next/no-img-element
-												<img
-													src={reply.author.avatarUrl}
-													alt={reply.author?.name ?? "작성자"}
-													className="w-full h-full object-cover"
-												/>
-											) : (
-												<div className="w-full h-full flex items-center justify-center text-xs font-medium">
-													{reply.author?.name?.charAt(0) ?? "?"}
-												</div>
-											)}
-										</div>
+										<Avatar
+											src={reply.author?.avatarUrl}
+											name={reply.author?.name}
+											alt={reply.author?.name ?? "작성자"}
+											className="h-8 w-8"
+										/>
 										<span>{reply.author?.name ?? "게스트"}</span>
 										<span suppressHydrationWarning>
 											{reply.createdAt ? dateTimeConvert(reply.createdAt) : ""}

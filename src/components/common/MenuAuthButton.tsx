@@ -128,6 +128,7 @@ export default function MenuAuthButton({
 						<img
 							src={user.photoURL}
 							alt={displayLabel || "프로필"}
+							referrerPolicy="no-referrer"
 							className="w-full h-full rounded-full object-cover"
 							onError={() => setImageFailed(true)}
 						/>

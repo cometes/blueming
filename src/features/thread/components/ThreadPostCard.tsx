@@ -11,6 +11,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import Avatar from "@/components/common/Avatar";
 import { renderContentWithMentions } from "@/features/mention/lib/renderMentions";
 import ThreadQuoteCard from "@/features/thread/components/ThreadQuoteCard";
 import type { ThreadPost } from "@/features/thread/types";
@@ -146,17 +147,7 @@ export default function ThreadPostCard({
 			)}
 
 			<div className="flex items-start gap-3">
-				<span className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-card bg-card-bg flex items-center justify-center text-xs text-sub-text">
-					{(post.author?.avatarUrl ?? "") ? (
-						<img
-							src={post.author?.avatarUrl}
-							alt=""
-							className="h-full w-full object-cover"
-						/>
-					) : (
-						(post.author?.name || "?").charAt(0)
-					)}
-				</span>
+				<Avatar src={post.author?.avatarUrl} name={post.author?.name} />
 
 				<div className="min-w-0 flex-1">
 					<div className="flex items-center gap-1.5 text-sm">

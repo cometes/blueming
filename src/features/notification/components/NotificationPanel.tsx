@@ -1,10 +1,10 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
+import Avatar from "@/components/common/Avatar";
 import {
 	deleteNotifications,
 	fetchNotifications,
@@ -175,17 +175,11 @@ export default function NotificationPanel({
 										!item.read && "bg-theme-primary/5",
 									)}
 								>
-									<span className="mt-0.5 h-7 w-7 shrink-0 overflow-hidden rounded-full bg-card-bg border border-card flex items-center justify-center text-[11px] text-sub-text">
-										{item.actor?.avatarUrl ? (
-											<img
-												src={item.actor.avatarUrl}
-												alt=""
-												className="h-full w-full object-cover"
-											/>
-										) : (
-											(item.actor?.name || "?").charAt(0)
-										)}
-									</span>
+									<Avatar
+										src={item.actor?.avatarUrl}
+										name={item.actor?.name}
+										className="mt-0.5 h-7 w-7 text-[11px]"
+									/>
 									<span className="min-w-0 flex-1">
 										<span className="block text-xs text-main-text leading-snug">
 											{item.message}

@@ -2,6 +2,7 @@
 "use client";
 
 import { MoreHorizontal } from "lucide-react";
+import Avatar from "@/components/common/Avatar";
 import { cn } from "@/shared/lib/utils";
 import { dateTimeConvert } from "@/shared/lib/date";
 import type { MemoDetail } from "@/features/memo/types";
@@ -32,19 +33,11 @@ export default function MemoArticle({
 		<article className="p-5">
 			<div className="flex items-center justify-between text-sm text-sub-text">
 				<div className="flex items-center gap-2.5">
-					<div className="w-9 h-9 rounded-full overflow-hidden border border-card">
-						{memo.author?.avatarUrl ? (
-							<img
-								src={memo.author.avatarUrl}
-								alt={memo.author?.name ?? "작성자"}
-								className="w-full h-full object-cover"
-							/>
-						) : (
-							<div className="w-full h-full flex items-center justify-center text-xs font-medium">
-								{memo.author?.name?.charAt(0) ?? "?"}
-							</div>
-						)}
-					</div>
+					<Avatar
+						src={memo.author?.avatarUrl}
+						name={memo.author?.name}
+						alt={memo.author?.name ?? "작성자"}
+					/>
 					<span>{memo.author?.name ?? "게스트"}</span>
 					<span suppressHydrationWarning>
 						{memo.createdAt ? dateTimeConvert(memo.createdAt) : ""}

@@ -16,6 +16,7 @@ import type { MemoItem } from "@/features/memo/types";
 import type { CommentImage } from "@/features/comment/hooks/useCommentForm";
 import { dateConvert } from "@/shared/lib/date";
 import AdminOnly from "@/components/common/AdminOnly";
+import Avatar from "@/components/common/Avatar";
 import { useSettings } from "@/contexts/SettingsContext";
 import { setSettingsMainMemo } from "@/features/settings/api/main";
 import PhotoboardSettingsDialog from "@/features/photoboard/components/PhotoboardSettingsDialog";
@@ -320,20 +321,12 @@ export default function MemoClient({ initialMemos = [] }: MemoClientProps) {
 							{/* 작성자 및 날짜 */}
 							<div className="flex items-center justify-between text-xs text-sub-text">
 								<div className="flex items-center gap-2">
-									<div className="w-5 h-5 rounded-full overflow-hidden border border-card">
-										{memo.author?.avatarUrl ? (
-											// eslint-disable-next-line @next/next/no-img-element
-											<img
-												src={memo.author.avatarUrl}
-												alt={memo.author?.name ?? "작성자"}
-												className="w-full h-full object-cover"
-											/>
-										) : (
-											<div className="w-full h-full flex items-center justify-center text-[10px] font-medium">
-												{memo.author?.name?.charAt(0) ?? "?"}
-											</div>
-										)}
-									</div>
+									<Avatar
+										src={memo.author?.avatarUrl}
+										name={memo.author?.name}
+										alt={memo.author?.name ?? "작성자"}
+										className="h-5 w-5 text-[10px]"
+									/>
 									<span>{memo.author?.name ?? "게스트"}</span>
 								</div>
 
