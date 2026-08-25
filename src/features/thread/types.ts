@@ -35,6 +35,9 @@ export interface ThreadPost {
 	tags: string[];
 	replyCount: number;
 	quoteCount: number;
+	likeCount: number;
+	/** 조회자가 마음에 들어요 했는지 (로그인 시 서버 부착) */
+	likedByMe?: boolean;
 	locked: boolean;
 	createdAt: string | null;
 	updatedAt: string | null;
@@ -44,7 +47,7 @@ export interface ThreadPost {
 	hiddenReplyCount?: number;
 }
 
-export type ThreadTab = "all" | "roots" | "mine" | "tag";
+export type ThreadTab = "all" | "roots" | "mine" | "tag" | "likes";
 
 export interface ThreadFeedResponse {
 	items: ThreadPost[];

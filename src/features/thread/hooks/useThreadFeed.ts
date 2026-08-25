@@ -88,6 +88,27 @@ export function useThreadFeed(initialData: ThreadFeedResponse) {
 		setItems((prev) => [post, ...prev]);
 	}, []);
 
+	/** 특정 글(타래 미리보기 포함)을 부분 갱신 — 좋아요 옵티미스틱 반영용 */
+	const updatePost = useCallback(
+		(id: string, updater: (post: ThreadPost) => ThreadPost) => {
+			setItems((prev) =>
+				prev.map((item) => {
+					const next = item.id === id ? updater(item) : item;
+					if (!next.previewReplies?.some((reply) => reply.id === id)) {
+						return next;
+					}
+					return {
+						...next,
+						previewReplies: next.previewReplies.map((reply) =>
+							reply.id === id ? updater(reply) : reply,
+						),
+					};
+				}),
+			);
+		},
+		[],
+	);
+
 	return {
 		tab,
 		tag,
@@ -98,5 +119,6 @@ export function useThreadFeed(initialData: ThreadFeedResponse) {
 		selectTab,
 		selectTag,
 		prependPost,
+		updatePost,
 	};
 }
