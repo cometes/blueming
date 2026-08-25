@@ -58,7 +58,10 @@ describe("collectThemeVariables", () => {
 		expect(map["--color-main"]).toBe("#111111");
 		expect(map["--color-sub"]).toBe("#666666");
 		expect(map["--bg-color"]).toBe("#ffffff");
-		expect(map["--bg-image"]).toBe('url("https://example.com/bg.png")');
+		// 원격 배경 이미지는 Next 이미지 옵티마이저 URL로 감싸 서빙한다
+		expect(map["--bg-image"]).toBe(
+			'url("/_next/image?url=https%3A%2F%2Fexample.com%2Fbg.png&w=2048&q=75")',
+		);
 		expect(unset).toEqual([]);
 	});
 

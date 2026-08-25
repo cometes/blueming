@@ -11,6 +11,9 @@ const config = {
 		"^@/(.*)$": "<rootDir>/src/$1",
 	},
 	testMatch: ["**/__tests__/**/*.test.(ts|tsx)", "**/*.test.(ts|tsx)"],
+	// .claude/worktrees(백그라운드 세션 워크트리)의 소스 복사본이 스캔되면
+	// 메인 코드와 교차 실행돼 오탐이 난다
+	testPathIgnorePatterns: ["/node_modules/", "/.claude/"],
 	passWithNoTests: true,
 };
 
