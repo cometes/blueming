@@ -6,6 +6,7 @@ import {
 	COLLECTION_NAME,
 	DEFAULT_LIMIT,
 	TIMELINE_CAP,
+	attachLikedByMe,
 	attachPreviewReplies,
 	encodeThreadCursor,
 	toThreadItem,
@@ -29,10 +30,14 @@ export async function fetchThreadFeedDirect(
 
 		const docs = snapshot.docs.slice(0, DEFAULT_LIMIT);
 		const viewerIsMember = Boolean(authContext);
-		const items = (await attachPreviewReplies(
+		const items = (await attachLikedByMe(
 			db,
-			docs.map((doc) => toThreadItem(doc, { viewerIsMember })),
-			{ viewerIsMember },
+			await attachPreviewReplies(
+				db,
+				docs.map((doc) => toThreadItem(doc, { viewerIsMember })),
+				{ viewerIsMember },
+			),
+			authContext?.uid ?? null,
 		)) as unknown as ThreadPost[];
 		const last = docs[docs.length - 1];
 		const nextCursor =
@@ -97,14 +102,21 @@ export async function fetchThreadDetailDirect(
 			.limit(TIMELINE_CAP)
 			.get();
 
+		const [rootItem, ...replyItems] = await attachLikedByMe(
+			db,
+			[
+				toThreadItem(rootSnapshot, { viewerIsMember }),
+				...repliesSnapshot.docs.map((doc) =>
+					toThreadItem(doc, { viewerIsMember }),
+				),
+			],
+			authContext?.uid ?? null,
+		);
+
 		return {
 			requiresMemberAccess: false,
-			root: toThreadItem(rootSnapshot, {
-				viewerIsMember,
-			}) as unknown as ThreadPost,
-			replies: repliesSnapshot.docs.map((doc) =>
-				toThreadItem(doc, { viewerIsMember }),
-			) as unknown as ThreadPost[],
+			root: rootItem as unknown as ThreadPost,
+			replies: replyItems as unknown as ThreadPost[],
 			focusId: rootId === id ? null : id,
 		};
 	} catch {

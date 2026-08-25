@@ -9,6 +9,7 @@ interface ThreadConversationProps {
 	onSelectTag?: (tag: string) => void;
 	onOpenImage?: (urls: string[], index: number) => void;
 	onQuote?: (post: ThreadPost) => void;
+	onToggleLike?: (post: ThreadPost) => void;
 }
 
 /**
@@ -21,6 +22,7 @@ export default function ThreadConversation({
 	onSelectTag,
 	onOpenImage,
 	onQuote,
+	onToggleLike,
 }: ThreadConversationProps) {
 	const router = useRouter();
 	const replies = post.previewReplies ?? [];
@@ -33,6 +35,7 @@ export default function ThreadConversation({
 				onSelectTag={onSelectTag}
 				onOpenImage={onOpenImage}
 				onQuote={onQuote}
+				onToggleLike={onToggleLike}
 			/>
 		);
 	}
@@ -44,6 +47,7 @@ export default function ThreadConversation({
 				onSelectTag={onSelectTag}
 				onOpenImage={onOpenImage}
 				onQuote={onQuote}
+				onToggleLike={onToggleLike}
 				noBorder
 				connectBottom
 			/>
@@ -73,6 +77,7 @@ export default function ThreadConversation({
 					onSelectTag={onSelectTag}
 					onOpenImage={onOpenImage}
 					onQuote={onQuote}
+					onToggleLike={onToggleLike}
 					noBorder
 					connectTop
 					connectBottom={index < replies.length - 1}

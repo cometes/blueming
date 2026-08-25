@@ -9,6 +9,10 @@ import {
 } from "@/app/api/_lib/normalizers";
 
 export const COLLECTION_NAME = "threadPosts";
+export const LIKES_COLLECTION = "threadLikes";
+
+/** 좋아요 문서 id — 글당 사용자 1개 보장 */
+export const likeDocId = (postId: string, uid: string) => `${postId}_${uid}`;
 export const MAX_CONTENT_LENGTH = 500;
 export const MAX_TAGS = 5;
 export const MAX_IMAGE_COUNT = 4;
@@ -92,6 +96,9 @@ export interface ThreadItemView {
 	tags: string[];
 	replyCount: number;
 	quoteCount: number;
+	likeCount: number;
+	/** 조회자가 마음에 들어요 했는지 — attachLikedByMe로 부착 */
+	likedByMe?: boolean;
 	/** member 글을 비회원이 볼 때 true — 본문/이미지/임베드/인용이 null 처리됨 */
 	locked: boolean;
 	createdAt: string | null;
@@ -145,6 +152,7 @@ export const toThreadItem = (
 		tags: locked ? [] : Array.isArray(data.tags) ? (data.tags as string[]) : [],
 		replyCount: (data.replyCount as number) || 0,
 		quoteCount: (data.quoteCount as number) || 0,
+		likeCount: (data.likeCount as number) || 0,
 		locked,
 		createdAt: formatTimestamp(data.createdAt),
 		updatedAt: formatTimestamp(data.updatedAt),
@@ -204,6 +212,45 @@ export const attachPreviewReplies = async (
 			hiddenReplyCount: replies.length - preview.length,
 		};
 	});
+};
+
+/**
+ * 조회자의 마음에 들어요 여부 부착 — threadLikes/{postId_uid} 문서 존재 여부를
+ * getAll(문서 직접 조회)로 일괄 확인. previewReplies 항목도 함께 처리한다.
+ * uid가 없으면(비로그인) 그대로 반환.
+ */
+export const attachLikedByMe = async (
+	db: FirebaseFirestore.Firestore,
+	items: ThreadItemView[],
+	uid: string | null,
+): Promise<ThreadItemView[]> => {
+	if (!uid || items.length === 0) return items;
+
+	const postIds = new Set<string>();
+	for (const item of items) {
+		postIds.add(item.id);
+		for (const reply of item.previewReplies ?? []) {
+			postIds.add(reply.id);
+		}
+	}
+	const ids = [...postIds];
+	const refs = ids.map((id) =>
+		db.collection(LIKES_COLLECTION).doc(likeDocId(id, uid)),
+	);
+	const snapshots = await db.getAll(...refs);
+	const liked = new Set<string>();
+	snapshots.forEach((snapshot, index) => {
+		if (snapshot.exists) liked.add(ids[index]);
+	});
+
+	return items.map((item) => ({
+		...item,
+		likedByMe: liked.has(item.id),
+		previewReplies: item.previewReplies?.map((reply) => ({
+			...reply,
+			likedByMe: liked.has(reply.id),
+		})),
+	}));
 };
 
 // ── 설정 ────────────────────────────────────────────────────────────────────

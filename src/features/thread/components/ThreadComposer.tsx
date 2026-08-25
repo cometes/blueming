@@ -28,6 +28,7 @@ import type { ThreadPost, ThreadVisibility } from "@/features/thread/types";
 import { extractFirstYouTubeVideoIdFromContent } from "@/shared/lib/youtube";
 import { YouTubeEmbed } from "@/features/thread/components/ThreadPostCard";
 import ThreadQuoteCard from "@/features/thread/components/ThreadQuoteCard";
+import ThreadAvatar from "@/features/thread/components/ThreadAvatar";
 
 const MAX_CONTENT = 500;
 const MAX_IMAGES = 4;
@@ -168,17 +169,11 @@ export default function ThreadComposer({
 	return (
 		<div className="border-b border-card-border px-4 py-3">
 			<div className="flex items-start gap-3">
-				<span className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-card bg-card-bg text-xs text-sub-text">
-					{user?.photoURL ? (
-						<img
-							src={user.photoURL}
-							alt=""
-							className="h-full w-full object-cover"
-						/>
-					) : (
-						(user?.displayName || "?").charAt(0)
-					)}
-				</span>
+				<ThreadAvatar
+					src={user?.photoURL}
+					name={user?.displayName}
+					className="mt-1 h-9 w-9"
+				/>
 
 				<div className="min-w-0 flex-1">
 					{replyToName && (

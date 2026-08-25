@@ -4,9 +4,9 @@ import { X } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import type { ThreadTab } from "@/features/thread/types";
 
-// "전체" 탭은 제거 — 이 자리에 추후 "마음에 들어요"(좋아요 모아보기) 탭 예정
 const TABS: Array<{ value: ThreadTab; label: string; requiresAuth?: boolean }> = [
 	{ value: "roots", label: "홈" },
+	{ value: "likes", label: "마음에 들어요", requiresAuth: true },
 	{ value: "mine", label: "내 글", requiresAuth: true },
 ];
 
