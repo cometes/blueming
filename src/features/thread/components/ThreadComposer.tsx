@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
 import { useAuthStore } from "@/store/auth/store";
 import { Button } from "@/components/ui/button";
+import Avatar from "@/components/common/Avatar";
 import MentionTextarea from "@/components/common/MentionTextarea";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import AssetGrid from "@/components/asset/AssetGrid";
@@ -28,7 +29,6 @@ import type { ThreadPost, ThreadVisibility } from "@/features/thread/types";
 import { extractFirstYouTubeVideoIdFromContent } from "@/shared/lib/youtube";
 import { YouTubeEmbed } from "@/features/thread/components/ThreadPostCard";
 import ThreadQuoteCard from "@/features/thread/components/ThreadQuoteCard";
-import ThreadAvatar from "@/features/thread/components/ThreadAvatar";
 
 const MAX_CONTENT = 500;
 const MAX_IMAGES = 4;
@@ -169,10 +169,10 @@ export default function ThreadComposer({
 	return (
 		<div className="border-b border-card-border px-4 py-3">
 			<div className="flex items-start gap-3">
-				<ThreadAvatar
+				<Avatar
 					src={user?.photoURL}
 					name={user?.displayName}
-					className="mt-1 h-9 w-9"
+					className="mt-1"
 				/>
 
 				<div className="min-w-0 flex-1">

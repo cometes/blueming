@@ -12,6 +12,7 @@ import {
 	Bookmark,
 } from "lucide-react";
 import Image from "next/image";
+import Avatar from "@/components/common/Avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -24,8 +25,6 @@ interface PhotoboardDetailModalProps {
 	hasNext?: boolean;
 	hasPrev?: boolean;
 }
-
-const getInitial = (value: string) => value.trim().charAt(0).toUpperCase();
 
 export default function PhotoboardDetailModal({
 	post,
@@ -111,21 +110,12 @@ export default function PhotoboardDetailModal({
 						{/* Header */}
 						<div className="flex items-center justify-between p-4 border-b border-card-border">
 							<div className="flex items-center gap-3">
-								<div className="w-8 h-8 rounded-full overflow-hidden border border-card-border bg-card-bg flex items-center justify-center">
-									{post.author?.avatarUrl ? (
-										<Image
-											src={post.author.avatarUrl}
-											alt={post.author.name}
-											width={32}
-											height={32}
-											className="w-full h-full object-cover"
-										/>
-									) : (
-										<span className="text-xs font-semibold text-sub-text">
-											{getInitial(post.author?.name || "G")}
-										</span>
-									)}
-								</div>
+								<Avatar
+									src={post.author?.avatarUrl}
+									name={post.author?.name || "게스트"}
+									alt={post.author?.name || "게스트"}
+									className="h-8 w-8 border-card-border"
+								/>
 								<div className="flex flex-col">
 									<span className="text-sm font-semibold text-main-text hover:underline cursor-pointer">
 										{post.author?.name || "게스트"}

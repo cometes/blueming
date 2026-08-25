@@ -1,7 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Avatar from "@/components/common/Avatar";
 import { useAuthStore } from "@/store/auth/store";
 import type { User, UserStatus, UserRole } from "@/features/admin/types";
 import { format } from "date-fns";
@@ -171,10 +171,11 @@ export default function UserDetailModal({
 
                 <div className="space-y-6">
                     <div className="flex items-center gap-4">
-                        <img
-                            src={user.photoURL || "/default-avatar.png"}
+                        <Avatar
+                            src={user.photoURL}
+                            name={user.displayName}
                             alt={user.displayName || "User"}
-                            className="w-20 h-20 rounded-full"
+                            className="h-20 w-20 text-2xl"
                         />
                         <div>
                             <h4 className="text-lg font-semibold text-main-text">

@@ -11,9 +11,9 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import Avatar from "@/components/common/Avatar";
 import { renderContentWithMentions } from "@/features/mention/lib/renderMentions";
 import ThreadQuoteCard from "@/features/thread/components/ThreadQuoteCard";
-import ThreadAvatar from "@/features/thread/components/ThreadAvatar";
 import type { ThreadPost } from "@/features/thread/types";
 
 /** 유튜브 lazy 임베드 — 클릭 전엔 썸네일만 */
@@ -150,11 +150,7 @@ export default function ThreadPostCard({
 			)}
 
 			<div className="flex items-start gap-3">
-				<ThreadAvatar
-					src={post.author?.avatarUrl}
-					name={post.author?.name}
-					className="h-9 w-9"
-				/>
+				<Avatar src={post.author?.avatarUrl} name={post.author?.name} />
 
 				<div className="min-w-0 flex-1">
 					<div className="flex items-center gap-1.5 text-sm">

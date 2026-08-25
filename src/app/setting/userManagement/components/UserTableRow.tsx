@@ -1,7 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import type { User } from "@/features/admin/types";
+import Avatar from "@/components/common/Avatar";
 import { Button } from "@/components/ui/button";
 
 interface UserTableRowProps {
@@ -25,10 +25,11 @@ export default function UserTableRow({ user, onClick }: UserTableRowProps) {
             className="flex items-center justify-between gap-4 rounded-card border border-card bg-card px-4 py-3 hover:bg-card-bg transition-colors cursor-pointer"
         >
             <div className="flex items-center gap-3 min-w-0">
-                <img
-                    src={user.photoURL || "/default-avatar.png"}
+                <Avatar
+                    src={user.photoURL}
+                    name={user.displayName}
                     alt={user.displayName || "User"}
-                    className="w-10 h-10 rounded-full"
+                    className="h-10 w-10"
                 />
                 <div className="min-w-0">
                     <div className="text-sm font-medium text-main-text truncate">

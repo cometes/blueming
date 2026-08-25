@@ -2,7 +2,6 @@
 "use client";
 
 import { useMemo } from "react";
-import Image from "next/image";
 import {
 	Bookmark,
 	Heart,
@@ -12,6 +11,7 @@ import {
 	Share2,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import Avatar from "@/components/common/Avatar";
 import type { PhotoBoardPost } from "@/data/photoboard";
 import {
 	DropdownMenu,
@@ -74,8 +74,6 @@ interface PhotoboardItemProps {
 	onClick: () => void;
 }
 
-const getInitial = (value: string) => value.trim().charAt(0).toUpperCase();
-const isRemoteImage = (src: string) => src.startsWith("http");
 const shouldTruncate = (caption: string) => caption.length > 120;
 
 export default function PhotoboardItem({
@@ -108,29 +106,11 @@ export default function PhotoboardItem({
 		>
 			<div className="flex items-center justify-between px-4 py-3">
 				<div className="flex items-center gap-3">
-					<div className="w-9 h-9 rounded-full overflow-hidden border border-card bg-card-bg flex items-center justify-center">
-						{post.author?.avatarUrl ? (
-							isRemoteImage(post.author.avatarUrl) ? (
-								<Image
-									src={post.author.avatarUrl}
-									alt={post.author.name}
-									width={36}
-									height={36}
-									className="w-full h-full object-cover"
-								/>
-							) : (
-								<img
-									src={post.author.avatarUrl}
-									alt={post.author.name}
-									className="w-full h-full object-cover"
-								/>
-							)
-						) : (
-							<span className="text-xs font-semibold text-sub-text">
-								{getInitial(post.author?.name || "게스트")}
-							</span>
-						)}
-					</div>
+					<Avatar
+						src={post.author?.avatarUrl}
+						name={post.author?.name || "게스트"}
+						alt={post.author?.name || "게스트"}
+					/>
 					<div className="flex flex-col">
 						<span className="text-sm font-semibold text-main-text">
 							{post.author?.name || "게스트"}

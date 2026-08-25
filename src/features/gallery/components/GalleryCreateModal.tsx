@@ -6,6 +6,7 @@ import { ImagePlus, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
 import { useAuthStore } from "@/store/auth/store";
+import Avatar from "@/components/common/Avatar";
 import {
 	Dialog,
 	DialogContent,
@@ -55,7 +56,6 @@ export default function GalleryCreateModal({
 
 	const displayName = user?.displayName || "게스트";
 	const avatarUrl = user?.photoURL || "";
-	const initial = displayName.trim().charAt(0).toUpperCase();
 
 	const resetComposer = useCallback(() => {
 		setTitleInput("");
@@ -211,19 +211,12 @@ export default function GalleryCreateModal({
 						<div className="p-4 flex-1 flex flex-col gap-4 min-h-0">
 							{/* User Profile */}
 							<div className="flex items-center gap-3">
-								<div className="w-8 h-8 rounded-full overflow-hidden">
-									{avatarUrl ? (
-										<img
-											src={avatarUrl}
-											alt={displayName}
-											className="w-full h-full object-cover"
-										/>
-									) : (
-										<div className="w-full h-full flex items-center justify-center text-xs font-medium">
-											{initial}
-										</div>
-									)}
-								</div>
+								<Avatar
+									src={avatarUrl}
+									name={displayName}
+									alt={displayName}
+									className="h-8 w-8"
+								/>
 								<span className="text-sm font-semibold">{displayName}</span>
 							</div>
 

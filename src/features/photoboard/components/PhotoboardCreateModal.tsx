@@ -6,6 +6,7 @@ import { ImagePlus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/utils";
 import { useAuthStore } from "@/store/auth/store";
+import Avatar from "@/components/common/Avatar";
 import { type PhotoBoardPost } from "@/data/photoboard";
 import {
 	createPhotoboardPost,
@@ -29,8 +30,6 @@ interface PhotoboardCreateModalProps {
 	mode?: "create" | "edit";
 	post?: PhotoBoardPost | null;
 }
-
-const getInitial = (value: string) => value.trim().charAt(0).toUpperCase();
 
 export default function PhotoboardCreateModal({
 	isOpen,
@@ -240,19 +239,12 @@ export default function PhotoboardCreateModal({
 						<div className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto">
 							{/* User Profile */}
 							<div className="flex items-center gap-3">
-								<div className="w-8 h-8 rounded-full overflow-hidden">
-									{avatarUrl ? (
-										<img
-											src={avatarUrl}
-											alt={displayName}
-											className="w-full h-full object-cover"
-										/>
-									) : (
-										<div className="w-full h-full flex items-center justify-center text-xs font-medium">
-											{getInitial(displayName)}
-										</div>
-									)}
-								</div>
+								<Avatar
+									src={avatarUrl}
+									name={displayName}
+									alt={displayName}
+									className="h-8 w-8"
+								/>
 								<span className="text-sm font-semibold">{displayName}</span>
 							</div>
 

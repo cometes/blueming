@@ -6,6 +6,7 @@ import { renderContentWithMentions } from "@/features/mention/lib/renderMentions
 import { Lock, Pencil, ShieldCheck, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/shared/lib/utils";
+import Avatar from "@/components/common/Avatar";
 import ImageSlideModal from "@/components/modal/ImageSlideModal";
 import type { GuestbookEntry } from "@/features/guestbook/types";
 
@@ -38,17 +39,12 @@ export default function GuestbookItem({
 			<div className="flex items-start justify-between gap-4">
 				<div className="min-w-0">
 					<div className="flex items-center gap-2">
-						{entry.photoURL ? (
-							<img
-								src={entry.photoURL}
-								alt={entry.displayName}
-								className="w-7 h-7 rounded-full object-cover"
-							/>
-						) : (
-							<div className="w-7 h-7 rounded-full bg-card border border-card flex items-center justify-center text-xs text-sub-text">
-								{entry.displayName?.charAt(0) || "U"}
-							</div>
-						)}
+						<Avatar
+							src={entry.photoURL}
+							name={entry.displayName}
+							alt={entry.displayName}
+							className="h-7 w-7 bg-card"
+						/>
 						<span className="text-sm font-medium text-main-text">
 							{entry.displayName}
 						</span>

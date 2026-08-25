@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { ImagePlus, X } from "lucide-react";
 import { useAuthStore } from "@/store/auth/store";
+import Avatar from "@/components/common/Avatar";
 import ImageUploadDialog from "@/components/modal/ImageUploadDialog";
 import AssetGrid from "@/components/asset/AssetGrid";
 import {
@@ -68,7 +69,6 @@ export default function MemoCreateModal({
 
 	const displayName = user?.displayName || "게스트";
 	const avatarUrl = user?.photoURL || "";
-	const initial = displayName.trim().charAt(0).toUpperCase();
 
 	useEffect(() => {
 		setIsMounted(true);
@@ -90,19 +90,7 @@ export default function MemoCreateModal({
 				<div className="flex flex-col md:flex-row items-stretch min-h-0">
 					<div className="w-full md:w-[60%] p-4 flex flex-col gap-4 border-b md:border-b-0 md:border-r border-card-border">
 						<div className="flex items-center gap-3">
-							<div className="w-9 h-9 rounded-full overflow-hidden border border-card">
-								{avatarUrl ? (
-									<img
-										src={avatarUrl}
-										alt={displayName}
-										className="w-full h-full object-cover"
-									/>
-								) : (
-									<div className="w-full h-full flex items-center justify-center text-xs font-medium">
-										{initial}
-									</div>
-								)}
-							</div>
+							<Avatar src={avatarUrl} name={displayName} alt={displayName} />
 							<span className="text-sm font-semibold">{displayName}</span>
 						</div>
 

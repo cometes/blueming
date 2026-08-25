@@ -1,7 +1,7 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
 import * as React from "react";
+import Avatar from "@/components/common/Avatar";
 import { cn } from "@/shared/lib/utils";
 import { httpClient } from "@/shared/lib/http/client";
 import { useAuthStore } from "@/store/auth/store";
@@ -197,17 +197,11 @@ const MentionTextarea = React.forwardRef<HTMLTextAreaElement, MentionTextareaPro
 										: "hover:bg-theme-primary/10",
 								)}
 							>
-								<span className="h-5 w-5 shrink-0 overflow-hidden rounded-full bg-card-bg border border-card flex items-center justify-center text-[10px] text-sub-text">
-									{candidate.photoURL ? (
-										<img
-											src={candidate.photoURL}
-											alt=""
-											className="h-full w-full object-cover"
-										/>
-									) : (
-										candidate.displayName.charAt(0)
-									)}
-								</span>
+								<Avatar
+									src={candidate.photoURL}
+									name={candidate.displayName}
+									className="h-5 w-5 text-[10px]"
+								/>
 								<span className="truncate">@{candidate.displayName}</span>
 							</button>
 						</li>
