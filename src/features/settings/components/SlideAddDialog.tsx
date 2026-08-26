@@ -96,14 +96,19 @@ export default function SlideAddDialog({
 	};
 
 	const handleAdd = async () => {
-		if (!pendingImage) {
+		if (!image) {
 			toast.error("이미지를 업로드해주세요.");
 			return;
 		}
 		try {
-			const uploadedUrl = await uploadFile(pendingImage.file);
+			// 파일 업로드는 선택 시에만 — 에셋에서 고른 경우 URL을 그대로 사용
+			const uploadedUrl = pendingImage
+				? await uploadFile(pendingImage.file)
+				: image;
 			onAdd({ image: uploadedUrl, url, target });
-			URL.revokeObjectURL(pendingImage.previewUrl);
+			if (pendingImage) {
+				URL.revokeObjectURL(pendingImage.previewUrl);
+			}
 			setPendingImage(null);
 			setImage("");
 			setUrl("");

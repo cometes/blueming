@@ -3,7 +3,7 @@ import "./globals.css";
 import Layout from "@/components/layout/Layout";
 import Providers from "@/providers/Providers";
 import { getServerSettings, type ServerSettings } from "@/app/api/_lib/settingsServer";
-import { buildThemeStyleCSS } from "@/shared/lib/theme";
+import { buildThemeStyleCSS, optimizeBackgroundImageUrl } from "@/shared/lib/theme";
 import type { Design, General } from "@/features/settings/types";
 
 type AppSettings = ServerSettings;
@@ -34,17 +34,21 @@ const buildThemeStyle = (settings: ServerSettings | null) => {
 	);
 };
 
+/** 페이지 배경 이미지 — CSS(--bg-image)와 동일한 최적화 URL로 preload해야 이중 다운로드가 없다 */
+const getBackgroundImageUrl = (settings: AppSettings | null) => {
+	const image =
+		settings?.general?.design?.background?.type === "이미지"
+			? settings.general?.design?.background?.image
+			: undefined;
+	return image ? optimizeBackgroundImageUrl(image) : undefined;
+};
+
 const getPreloadImageUrls = (settings: AppSettings | null) => {
 	if (!settings) return [];
 
-	const backgroundImage =
-		settings.general?.design?.background?.type === "이미지" ?
-			settings.general?.design?.background?.image :
-			undefined;
 	const menuDesign = settings.general?.menu?.design;
 
 	const urls = [
-		backgroundImage,
 		menuDesign?.backgroundImage,
 		menuDesign?.iconBarBackgroundImage,
 		menuDesign?.logoImage,
@@ -114,6 +118,7 @@ export default async function RootLayout({
 }>) {
 	const settings = await getSettings();
 	const themeStyle = buildThemeStyle(settings);
+	const backgroundImageUrl = getBackgroundImageUrl(settings);
 	const preloadImages = getPreloadImageUrls(settings);
 
 	return (
@@ -132,6 +137,15 @@ export default async function RootLayout({
 					rel="stylesheet"
 					href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css"
 				/>
+				{/* 페이지 배경은 첫 페인트를 좌우하므로 최우선 preload */}
+				{backgroundImageUrl && (
+					<link
+						rel="preload"
+						as="image"
+						href={backgroundImageUrl}
+						fetchPriority="high"
+					/>
+				)}
 				{preloadImages.map((url) => (
 					<link key={url} rel="preload" as="image" href={url} />
 				))}

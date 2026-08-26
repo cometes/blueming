@@ -9,6 +9,16 @@ export const formatFontFamily = (value: string) => {
 	return v;
 };
 
+/**
+ * 페이지 배경 전용 이미지 최적화 — 스토리지 원본은 그대로 두고, 배경으로 그릴 때만
+ * Next 이미지 옵티마이저(/_next/image)를 거쳐 화면 해상도 WebP로 서빙한다.
+ * (원본 PNG 수 MB → 수백 KB, Vercel CDN 캐시) 원격 http(s) URL만 감싼다.
+ */
+export const optimizeBackgroundImageUrl = (url: string): string => {
+	if (!/^https?:\/\//.test(url)) return url;
+	return `/_next/image?url=${encodeURIComponent(url)}&w=2048&q=75`;
+};
+
 export interface ThemeVariables {
 	set: Array<[name: string, value: string]>;
 	unset: string[];
@@ -61,7 +71,10 @@ export const collectThemeVariables = (
 	add("--bg-color", background?.color);
 	if (background?.type !== undefined) {
 		if (background.type === "이미지" && background.image) {
-			set.push(["--bg-image", `url("${background.image}")`]);
+			set.push([
+				"--bg-image",
+				`url("${optimizeBackgroundImageUrl(background.image)}")`,
+			]);
 		} else {
 			unset.push("--bg-image");
 		}
